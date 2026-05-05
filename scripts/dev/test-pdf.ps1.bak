@@ -1,0 +1,114 @@
+$ErrorActionPreference = "Stop"
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "..\.."))
+
+Set-Location $ProjectRoot
+
+$VenvActivate = Join-Path $ProjectRoot ".venv\Scripts\Activate.ps1"
+
+if (-not (Test-Path $VenvActivate)) {
+    throw "Virtual environment not found. Run: python -m venv .venv"
+}
+
+. $VenvActivate
+
+$RequiredScripts = @(
+    ".\services\api\pdf_extract.py",
+    ".\services\api\ocr_report.py",
+    ".\services\api\outline_builder.py",
+    ".\services\api\normalize_outline.py",
+    ".\services\api\course_generator.py",
+    ".\services\api\course_polisher.py"
+)
+
+foreach ($Script in $RequiredScripts) {
+    if (-not (Test-Path $Script)) {
+        throw "Missing required script: $Script"
+    }
+}
+
+$pdf = Get-ChildItem -Path ".\data\input" -Filter "*.pdf" |
+  Sort-Object LastWriteTime -Descending |
+  Select-Object -First 1
+
+if (-not $pdf) {
+    Write-Host ""
+    Write-Host "Nu am găsit niciun PDF în:"
+    Write-Host "  $ProjectRoot\data\input"
+    Write-Host ""
+    Write-Host "Copiază un PDF acolo, apoi rulează:"
+    Write-Host "  .\scripts\dev\test-pdf.ps1"
+    exit 1
+}
+
+Write-Host ""
+Write-Host "=== Voila! v0.1 input PDF ==="
+Write-Host $pdf.FullName
+
+Write-Host ""
+Write-Host "=== 1. PDF extract ==="
+python .\services\api\pdf_extract.py $pdf.FullName --output-dir .\data\output
+
+$outputDir = Join-Path ".\data\output" $pdf.BaseName
+$pagesJson = Join-Path $outputDir "pages.json"
+
+if (-not (Test-Path $pagesJson)) {
+    throw "pages.json was not generated: $pagesJson"
+}
+
+Write-Host ""
+Write-Host "=== 2. OCR report ==="
+python .\services\api\ocr_report.py $pagesJson
+
+Write-Host ""
+Write-Host "=== 3. Course outline ==="
+python .\services\api\outline_builder.py $pagesJson
+
+$outlineJson = Join-Path $outputDir "course_outline.json"
+
+if (-not (Test-Path $outlineJson)) {
+    throw "course_outline.json was not generated: $outlineJson"
+}
+
+Write-Host ""
+Write-Host "=== 4. Normalize outline ==="
+python .\services\api\normalize_outline.py $outlineJson
+
+$normalizedJson = Join-Path $outputDir "course_outline.normalized.json"
+
+if (-not (Test-Path $normalizedJson)) {
+    throw "course_outline.normalized.json was not generated: $normalizedJson"
+}
+
+Write-Host ""
+Write-Host "=== 5. Generate course files ==="
+python .\services\api\course_generator.py $normalizedJson
+
+Write-Host ""
+Write-Host "=== 6. Polish course ==="
+python .\services\api\course_polisher.py $normalizedJson
+
+Write-Host ""
+Write-Host "=== Generated files ==="
+Get-ChildItem $outputDir |
+  Select-Object Name, Length, LastWriteTime |
+  Format-Table -AutoSize
+
+Write-Host ""
+Write-Host "=== Main output files ==="
+Write-Host "Raw course:"
+Write-Host "  $outputDir\course.md"
+Write-Host "Clean course:"
+Write-Host "  $outputDir\course.cleaned.md"
+Write-Host "Glossary:"
+Write-Host "  $outputDir\glossary.json"
+Write-Host "Quiz:"
+Write-Host "  $outputDir\quiz.json"
+Write-Host "Flashcards:"
+Write-Host "  $outputDir\flashcards.json"
+Write-Host "OCR corrections:"
+Write-Host "  $outputDir\ocr_corrections.json"
+
+Write-Host ""
+Write-Host "Done."

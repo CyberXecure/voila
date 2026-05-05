@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+
+.env
+.env.local
+
+data/input/*
+data/output/*
+
+!data/input/.gitkeep
+!data/output/.gitkeep
+
+.DS_Store
+Thumbs.db
