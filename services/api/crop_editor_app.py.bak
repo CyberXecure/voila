@@ -1,0 +1,402 @@
+from __future__ import annotations
+
+import html
+import json
+from pathlib import Path
+from urllib.parse import quote
+
+import fitz
+from fastapi import FastAPI, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+INPUT_DIR = PROJECT_ROOT / "data" / "input"
+OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
+
+app = FastAPI(title="Voila! Crop Editor")
+
+app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
+
+
+def latest_pdf() -> Path | None:
+    pdfs = sorted(INPUT_DIR.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return pdfs[0] if pdfs else None
+
+
+def validate_pdf_name(pdf_name: str | None) -> Path:
+    if pdf_name:
+        pdf = INPUT_DIR / Path(pdf_name).name
+    else:
+        pdf = latest_pdf()
+
+    if not pdf or not pdf.exists() or pdf.suffix.lower() != ".pdf":
+        raise FileNotFoundError("No valid PDF found in data/input.")
+
+    return pdf
+
+
+def output_url(*parts: str) -> str:
+    raw = "/".join(str(part).replace("\\", "/") for part in parts)
+    return "/output/" + quote(raw, safe="/")
+
+
+def manifest_path_for(pdf: Path) -> Path:
+    return OUTPUT_DIR / pdf.stem / "figures_hybrid" / "figures_manifest.hybrid.json"
+
+
+def load_manifest(pdf: Path) -> dict:
+    manifest_path = manifest_path_for(pdf)
+
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Hybrid manifest not found: {manifest_path}")
+
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
+def save_manifest(pdf: Path, manifest: dict) -> None:
+    manifest_path = manifest_path_for(pdf)
+    backup_path = manifest_path.with_suffix(".json.bak")
+
+    if manifest_path.exists() and not backup_path.exists():
+        backup_path.write_text(manifest_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def clamp_rect(rect: list[float], page: fitz.Page) -> list[float]:
+    x0, y0, x1, y1 = rect
+
+    x0 = max(0, min(page.rect.width, x0))
+    x1 = max(0, min(page.rect.width, x1))
+    y0 = max(0, min(page.rect.height, y0))
+    y1 = max(0, min(page.rect.height, y1))
+
+    min_size = 12
+
+    if x1 - x0 < min_size:
+        x1 = min(page.rect.width, x0 + min_size)
+
+    if y1 - y0 < min_size:
+        y1 = min(page.rect.height, y0 + min_size)
+
+    return [x0, y0, x1, y1]
+
+
+def rerender_crop(pdf: Path, item: dict, zoom: float) -> None:
+    page_no = int(item["pdf_page"])
+    rect = item["crop_rect"]
+
+    doc = fitz.open(pdf)
+    page = doc[page_no - 1]
+
+    rect = clamp_rect(rect, page)
+    item["crop_rect"] = rect
+
+    clip = fitz.Rect(rect)
+
+    output_path = Path(item["path"])
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    pixmap = page.get_pixmap(
+        matrix=fitz.Matrix(zoom, zoom),
+        clip=clip,
+        alpha=False,
+    )
+    pixmap.save(output_path)
+
+    doc.close()
+
+
+def adjust_item(pdf: Path, index: int, side: str, direction: str, amount: float) -> None:
+    manifest = load_manifest(pdf)
+    items = manifest.get("figure_crops", [])
+
+    if index < 0 or index >= len(items):
+        raise IndexError("Invalid figure index.")
+
+    item = items[index]
+    rect = [float(value) for value in item["crop_rect"]]
+
+    x0, y0, x1, y1 = rect
+
+    if side == "left":
+        x0 = x0 - amount if direction == "expand" else x0 + amount
+
+    if side == "right":
+        x1 = x1 + amount if direction == "expand" else x1 - amount
+
+    if side == "top":
+        y0 = y0 - amount if direction == "expand" else y0 + amount
+
+    if side == "bottom":
+        y1 = y1 + amount if direction == "expand" else y1 - amount
+
+    doc = fitz.open(pdf)
+    page = doc[int(item["pdf_page"]) - 1]
+    item["crop_rect"] = clamp_rect([x0, y0, x1, y1], page)
+    doc.close()
+
+    zoom = float(manifest.get("render_zoom") or 3.0)
+
+    rerender_crop(pdf, item, zoom)
+    save_manifest(pdf, manifest)
+
+
+def page(title: str, body: str) -> HTMLResponse:
+    doc = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{html.escape(title)}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {{
+      --bg: #e8dfd0;
+      --paper: #f5ecd9;
+      --paper-soft: #efe3cc;
+      --text: #2f2a24;
+      --heading: #241e19;
+      --muted: #75695c;
+      --accent: #8a5a32;
+      --border: #d7c5a8;
+      --shadow: rgba(62, 45, 28, 0.16);
+    }}
+
+    * {{
+      box-sizing: border-box;
+    }}
+
+    body {{
+      margin: 0;
+      background: linear-gradient(180deg, #eee4d2 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.55;
+    }}
+
+    main {{
+      max-width: 1280px;
+      margin: 34px auto;
+      padding: 28px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 22px 58px var(--shadow);
+    }}
+
+    h1 {{
+      margin: 0 0 8px;
+      color: var(--heading);
+      font-size: 34px;
+      letter-spacing: -0.03em;
+    }}
+
+    .meta {{
+      color: var(--muted);
+      margin-bottom: 20px;
+    }}
+
+    .toolbar {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0 24px;
+    }}
+
+    .btn,
+    button {{
+      border: 1px solid var(--border);
+      background: var(--paper-soft);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 13px;
+    }}
+
+    button.primary,
+    .btn.primary {{
+      background: var(--accent);
+      color: #fffaf0;
+      border-color: var(--accent);
+    }}
+
+    .grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+      gap: 22px;
+    }}
+
+    .card {{
+      background: rgba(255,255,255,0.34);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+    }}
+
+    .card h2 {{
+      margin: 0 0 8px;
+      color: var(--heading);
+      font-size: 22px;
+    }}
+
+    .card p {{
+      margin: 6px 0;
+    }}
+
+    img {{
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 14px 0;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: white;
+    }}
+
+    .controls {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }}
+
+    .controls form {{
+      display: flex;
+      gap: 6px;
+    }}
+
+    .controls button {{
+      width: 100%;
+    }}
+
+    .fine {{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+
+    code {{
+      background: var(--paper-soft);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px 6px;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    {body}
+  </main>
+</body>
+</html>
+"""
+    return HTMLResponse(doc)
+
+
+@app.get("/", response_class=HTMLResponse)
+def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
+    try:
+        pdf_path = validate_pdf_name(pdf)
+        manifest = load_manifest(pdf_path)
+    except Exception as exc:
+        body = f"""
+        <h1>Voila! Crop Editor</h1>
+        <div class="meta">Cannot open crop editor.</div>
+        <p><strong>Error:</strong> {html.escape(str(exc))}</p>
+        <p>First generate hybrid figures for the PDF.</p>
+        """
+        return page("Voila! Crop Editor", body)
+
+    items = manifest.get("figure_crops", [])
+    cards = []
+
+    for index, item in enumerate(items):
+        rel = Path(item["relative_path"]).as_posix()
+        src = output_url(pdf_path.stem, "figures_hybrid", rel)
+        mtime = Path(item["path"]).stat().st_mtime if Path(item["path"]).exists() else 0
+
+        number = html.escape(str(item.get("number", "")))
+        caption = html.escape(str(item.get("caption", "")))
+        pdf_page = html.escape(str(item.get("pdf_page", "")))
+        method = html.escape(str(item.get("crop_method", "")))
+        rect = ", ".join(f"{float(v):.1f}" for v in item.get("crop_rect", []))
+
+        def form(side: str, direction: str, label: str, amount: int = 16) -> str:
+            return f"""
+            <form method="post" action="/adjust">
+              <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+              <input type="hidden" name="index" value="{index}">
+              <input type="hidden" name="side" value="{side}">
+              <input type="hidden" name="direction" value="{direction}">
+              <input type="hidden" name="amount" value="{amount}">
+              <button type="submit">{label}</button>
+            </form>
+            """
+
+        cards.append(
+            f"""
+            <article class="card">
+              <h2>Figure {number}</h2>
+              <p>{caption}</p>
+              <p class="meta">PDF page {pdf_page} · {method}</p>
+              <img src="{src}?v={mtime}" alt="Figure {number}">
+              <div class="controls">
+                {form("left", "expand", "← Expand left")}
+                {form("left", "shrink", "Shrink left →")}
+                {form("right", "shrink", "← Shrink right")}
+                {form("right", "expand", "Expand right →")}
+                {form("top", "expand", "↑ Expand top")}
+                {form("top", "shrink", "Shrink top ↓")}
+                {form("bottom", "shrink", "↑ Shrink bottom")}
+                {form("bottom", "expand", "Expand bottom ↓")}
+              </div>
+              <div class="fine">
+                crop_rect: <code>{html.escape(rect)}</code>
+              </div>
+            </article>
+            """
+        )
+
+    gallery_url = output_url(pdf_path.stem, "figures_hybrid", "figures_hybrid.html")
+
+    body = f"""
+    <h1>Voila! Crop Editor</h1>
+    <div class="meta">
+      PDF: <code>{html.escape(pdf_path.name)}</code><br>
+      Items: {len(items)}
+    </div>
+    <div class="toolbar">
+      <a class="btn primary" href="{gallery_url}" target="_blank">Open hybrid gallery</a>
+      <a class="btn" href="http://127.0.0.1:8787" target="_blank">Back to Voila!</a>
+    </div>
+    <div class="grid">
+      {''.join(cards)}
+    </div>
+    """
+
+    return page("Voila! Crop Editor", body)
+
+
+@app.post("/adjust")
+def adjust(
+    pdf_name: str = Form(...),
+    index: int = Form(...),
+    side: str = Form(...),
+    direction: str = Form(...),
+    amount: float = Form(...),
+) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    adjust_item(pdf_path, index, side, direction, amount)
+
+    return RedirectResponse(
+        url="/?pdf=" + quote(pdf_path.name),
+        status_code=303,
+    )

@@ -19,7 +19,7 @@ $RequiredScripts = @(
     ".\services\api\course_generator.py",
     ".\services\api\course_polisher.py",
     ".\services\api\course_cleaned_finalizer.py",
-    ".\services\api\figure_exporter_anchor.py",
+    ".\services\api\figure_exporter_hybrid.py",
     ".\services\api\html_exporter.py"
 )
 
@@ -108,7 +108,7 @@ Write-Host "=== 7. Final cleanup ==="
 
 Write-Host ""
 Write-Host "=== 8. Export figures ==="
-& $Python .\services\api\figure_exporter_anchor.py $pdf.FullName
+& $Python .\services\api\figure_exporter_hybrid.py $pdf.FullName
 
 Write-Host ""
 Write-Host "=== 9. Export HTML course ==="
@@ -146,3 +146,4 @@ Write-Host "  $outputDir\ocr_corrections.json"
 
 Write-Host ""
 Write-Host "Done."
+

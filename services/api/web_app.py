@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import html
+import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import FastAPI, Form, Query
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+
+from study_engine import get_study_view, record_answer, reset_study_state
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -137,6 +141,58 @@ def page(title: str, body: str) -> HTMLResponse:
       border-radius: 16px;
       padding: 14px 16px;
       margin-bottom: 20px;
+    }}
+
+
+    .upload-box {{
+      background: var(--paper-soft);
+      border: 1px dashed var(--accent);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }}
+
+    .upload-box h2 {{
+      margin: 0 0 8px;
+      color: var(--heading);
+      font-size: 20px;
+    }}
+
+    .upload-form {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }}
+
+    input[type="file"] {{
+      border: 1px solid var(--border);
+      background: var(--paper);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px 6px 6px;
+      max-width: 100%;
+      min-width: 420px;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }}
+
+    input[type="file"]::file-selector-button {{
+      border: 1px solid var(--border);
+      background: var(--paper-soft);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 15px;
+      margin-right: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+
+    input[type="file"]::file-selector-button:hover {{
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fffaf0;
     }}
 
     .grid {{
@@ -290,6 +346,23 @@ def validate_pdf_name(pdf_name: str) -> Path:
     return pdf_path
 
 
+
+def safe_upload_name(filename: str) -> str:
+    name = Path(filename or "").name
+    suffix = Path(name).suffix.lower()
+
+    if suffix != ".pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+
+    stem = Path(name).stem
+    stem = re.sub(r"[^A-Za-z0-9._ -]+", "_", stem).strip(" ._")
+
+    if not stem:
+        stem = "document"
+
+    return stem + ".pdf"
+
+
 def run_step(label: str, args: list[str], log_lines: list[str], optional: bool = False) -> None:
     cmd = [sys.executable, *args]
 
@@ -385,7 +458,7 @@ def generate_for_pdf(pdf_path: Path) -> Path:
 
     run_step(
         "8. Export figures",
-        [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_anchor.py"), str(pdf_path)],
+        [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_hybrid.py"), str(pdf_path)],
         log_lines,
         optional=True,
     )
@@ -408,14 +481,28 @@ def health() -> dict:
 
 
 @app.get("/", response_class=HTMLResponse)
-def home(generated: str | None = Query(default=None)) -> HTMLResponse:
+def home(generated: str | None = Query(default=None), uploaded: str | None = Query(default=None)) -> HTMLResponse:
     cards = []
+
+    upload_box = """
+        <div class="upload-box">
+          <h2>Upload PDF</h2>
+          <div class="meta">Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.</div>
+          <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
+            <input type="file" name="file" accept="application/pdf" required>
+            <button class="primary" type="submit">Upload PDF</button>
+          </form>
+        </div>
+        """
 
     for pdf in pdfs():
         out_dir = OUTPUT_DIR / pdf.stem
         course_html = out_dir / "course.cleaned.html"
         figures_html = out_dir / "figures" / "figures.html"
+        hybrid_figures_html = out_dir / "figures_hybrid" / "figures_hybrid.html"
+        hybrid_manifest = out_dir / "figures_hybrid" / "figures_manifest.hybrid.json"
         log_file = out_dir / "last_run.log"
+        quiz_file = out_dir / "quiz.json"
 
         size_mb = pdf.stat().st_size / (1024 * 1024)
 
@@ -439,9 +526,24 @@ def home(generated: str | None = Query(default=None)) -> HTMLResponse:
                 f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "course.cleaned.html")}">Open course</a>'
             )
 
-        if figures_html.exists():
+        if hybrid_figures_html.exists():
+            actions.append(
+                f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">Figures</a>'
+            )
+
+        elif figures_html.exists():
             actions.append(
                 f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "figures", "figures.html")}">Figures</a>'
+            )
+
+        if hybrid_manifest.exists():
+            actions.append(
+                f'<a class="btn" target="_blank" href="http://127.0.0.1:8790/?pdf={quote(pdf.name)}">Edit crops</a>'
+            )
+
+        if quiz_file.exists():
+            actions.append(
+                f'<a class="btn" target="_blank" href="/study?pdf={quote(pdf.name)}">Study</a>'
             )
 
         if log_file.exists():
@@ -462,21 +564,29 @@ def home(generated: str | None = Query(default=None)) -> HTMLResponse:
         )
 
     if not cards:
-        body = """
+        body = upload_box + """
         <div class="notice">
           No PDF files found. Put a PDF in <code>data/input</code>, then refresh this page.
         </div>
         """
     else:
         notice = ""
+
+        if uploaded:
+            notice += f"""
+            <div class="notice">
+              Uploaded: <strong>{html.escape(uploaded)}</strong>
+            </div>
+            """
+
         if generated:
-            notice = f"""
+            notice += f"""
             <div class="notice">
               Generated: <strong>{html.escape(generated)}</strong>
             </div>
             """
 
-        body = f"""
+        body = upload_box + f"""
         {notice}
         <div class="notice">
           Source Mode: no translation, local processing, original PDF text preserved.
@@ -500,6 +610,199 @@ def generate(pdf_name: str = Form(...)) -> RedirectResponse:
     )
 
 
+@app.post("/upload")
+async def upload_pdf(file: UploadFile = File(...)) -> RedirectResponse:
+    filename = safe_upload_name(file.filename or "document.pdf")
+    destination = INPUT_DIR / filename
+
+    if destination.exists():
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        destination = INPUT_DIR / f"{destination.stem}_{stamp}.pdf"
+
+    with destination.open("wb") as handle:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            handle.write(chunk)
+
+    return RedirectResponse(
+        url="/?uploaded=" + quote(destination.name),
+        status_code=303,
+    )
+
+
+
+@app.get("/study", response_class=HTMLResponse)
+def study(pdf: str = Query(...)) -> HTMLResponse:
+    pdf_path = validate_pdf_name(pdf)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    try:
+        view = get_study_view(output_dir)
+    except Exception as exc:
+        body = f"""
+        <h1>Study Mode</h1>
+        <div class="notice">
+          Cannot open Study Mode for <strong>{html.escape(pdf_path.name)}</strong>.
+        </div>
+        <p>Error: <code>{html.escape(str(exc))}</code></p>
+        """
+        return page("Voila! Study", body)
+
+    current = view.get("current_question")
+    concepts = view.get("concepts", [])
+    last_attempt = view.get("last_attempt")
+
+    last_html = ""
+
+    if last_attempt:
+        result = "Correct" if last_attempt.get("correct") else "Incorrect"
+        before = round(float(last_attempt.get("mastery_before", 0)) * 100)
+        after = round(float(last_attempt.get("mastery_after", 0)) * 100)
+
+        last_html = f"""
+        <div class="notice">
+          Last answer: <strong>{result}</strong>.
+          Mastery changed from <strong>{before}%</strong> to <strong>{after}%</strong>.
+        </div>
+        """
+
+    if current:
+        answer_html = ""
+
+        if current.get("answer"):
+            answer_html = f"""
+            <details>
+              <summary>Show expected answer / explanation</summary>
+              <p>{html.escape(str(current.get("answer")))}</p>
+            </details>
+            """
+
+        question_html = f"""
+        <article class="card">
+          <h2>Recommended question</h2>
+          <div class="meta">Lesson / concept: <strong>{html.escape(str(current.get("lesson_id")))}</strong></div>
+          <p style="font-size: 20px;"><strong>{html.escape(str(current.get("question")))}</strong></p>
+          {answer_html}
+
+          <div class="actions">
+            <form method="post" action="/study-answer">
+              <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+              <input type="hidden" name="question_id" value="{html.escape(str(current.get("question_id")))}">
+              <input type="hidden" name="correct" value="true">
+              <button class="primary" type="submit">Correct</button>
+            </form>
+
+            <form method="post" action="/study-answer">
+              <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+              <input type="hidden" name="question_id" value="{html.escape(str(current.get("question_id")))}">
+              <input type="hidden" name="correct" value="false">
+              <button type="submit">Incorrect</button>
+            </form>
+          </div>
+        </article>
+        """
+    else:
+        question_html = """
+        <article class="card">
+          <h2>No questions available</h2>
+          <p>Generate course files first, then Study Mode will use quiz.json.</p>
+        </article>
+        """
+
+    concept_cards = []
+
+    for concept in concepts:
+        mastery = int(concept.get("mastery_percent", 0))
+        concept_id = html.escape(str(concept.get("concept_id", "")))
+        status = html.escape(str(concept.get("status", "")))
+        attempts = int(concept.get("attempts", 0))
+        correct_count = int(concept.get("correct", 0))
+        incorrect_count = int(concept.get("incorrect", 0))
+
+        concept_cards.append(
+            f"""
+            <article class="card">
+              <h2>{concept_id}</h2>
+              <div class="meta">Status: <strong>{status}</strong></div>
+              <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
+              <div class="meta">
+                Attempts: {attempts}<br>
+                Correct: {correct_count}<br>
+                Incorrect: {incorrect_count}
+              </div>
+            </article>
+            """
+        )
+
+    reset_form = f"""
+    <form method="post" action="/study-reset">
+      <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+      <button type="submit">Reset study progress</button>
+    </form>
+    """
+
+    body = f"""
+    <h1>Voila! Study Mode</h1>
+    <div class="notice">
+      PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
+      Questions: <strong>{view.get("total_questions")}</strong> ·
+      Answered: <strong>{view.get("answered_count")}</strong> ·
+      Overall mastery: <strong>{view.get("overall_mastery_percent")}%</strong> ·
+      Status: <strong>{html.escape(str(view.get("overall_status")))}</strong>
+    </div>
+
+    {last_html}
+
+    <div class="grid">
+      {question_html}
+    </div>
+
+    <h2 style="margin-top: 28px;">Concept mastery</h2>
+    <div class="grid">
+      {''.join(concept_cards)}
+    </div>
+
+    <div class="actions" style="margin-top: 24px;">
+      <a class="btn" href="/">Back to Voila!</a>
+      {reset_form}
+    </div>
+    """
+
+    return page("Voila! Study", body)
+
+
+@app.post("/study-answer")
+def study_answer(
+    pdf_name: str = Form(...),
+    question_id: str = Form(...),
+    correct: bool = Form(...),
+) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    record_answer(output_dir, question_id, correct)
+
+    return RedirectResponse(
+        url="/study?pdf=" + quote(pdf_path.name),
+        status_code=303,
+    )
+
+
+@app.post("/study-reset")
+def study_reset(pdf_name: str = Form(...)) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    reset_study_state(output_dir)
+
+    return RedirectResponse(
+        url="/study?pdf=" + quote(pdf_path.name),
+        status_code=303,
+    )
+
+
 @app.get("/log")
 def log(pdf: str = Query(...)) -> PlainTextResponse:
     pdf_path = validate_pdf_name(pdf)
@@ -509,3 +812,5 @@ def log(pdf: str = Query(...)) -> PlainTextResponse:
         return PlainTextResponse("No log file found yet.", status_code=404)
 
     return PlainTextResponse(log_path.read_text(encoding="utf-8"))
+
+
