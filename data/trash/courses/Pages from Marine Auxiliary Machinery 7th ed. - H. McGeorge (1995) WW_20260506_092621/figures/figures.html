@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Voila! Anchored Figures</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #e8dfd0;
+      --paper: #f5ecd9;
+      --paper-soft: #efe3cc;
+      --text: #2f2a24;
+      --heading: #241e19;
+      --muted: #75695c;
+      --border: #d7c5a8;
+      --accent: #8a5a32;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #eee4d2 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 40px auto;
+      padding: 34px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 22px 58px rgba(62, 45, 28, 0.16);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: var(--heading);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.34);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      color: var(--heading);
+      font-size: 22px;
+    }
+
+    .card p {
+      margin: 6px 0;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Voila! Anchored Figure Crops</h1>
+    <p>Source: <code>D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf</code></p>
+    <p>Figures: 5</p>
+    <div class="grid">
+      
+            <article class="card">
+              <h2>Figure 4.23</h2>
+              <p>Automatic pumping or vacuum trap</p>
+              <p class="meta">PDF page 1</p>
+              <img src="crops/figure_4_23_page_001.png" alt="Figure 4.23 Automatic pumping or vacuum trap">
+            </article>
+            
+            <article class="card">
+              <h2>Figure 4.24</h2>
+              <p>Single strainers for high pressure water, steam or oil service and low pressure water or oil service</p>
+              <p class="meta">PDF page 3</p>
+              <img src="crops/figure_4_24_page_003.png" alt="Figure 4.24 Single strainers for high pressure water, steam or oil service and low pressure water or oil service">
+            </article>
+            
+            <article class="card">
+              <h2>Figure 4.25</h2>
+              <p>The Auto-Klean strainer showing circular straining plates, separation washers and spider</p>
+              <p class="meta">PDF page 3</p>
+              <img src="crops/figure_4_25_page_003.png" alt="Figure 4.25 The Auto-Klean strainer showing circular straining plates, separation washers and spider">
+            </article>
+            
+            <article class="card">
+              <h2>Figure 4.26</h2>
+              <p>Cartridge filters</p>
+              <p class="meta">PDF page 4</p>
+              <img src="crops/figure_4_26_page_004.png" alt="Figure 4.26 Cartridge filters">
+            </article>
+            
+            <article class="card">
+              <h2>Figure 4.27</h2>
+              <p>Magnetic filter</p>
+              <p class="meta">PDF page 5</p>
+              <img src="crops/figure_4_27_page_005.png" alt="Figure 4.27 Magnetic filter">
+            </article>
+            
+    </div>
+  </main>
+</body>
+</html>

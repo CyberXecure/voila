@@ -1,0 +1,62 @@
+Voila! local generation
+Input PDF: D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf
+
+=== 1. PDF extract ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\pdf_extract.py D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf --output-dir D:\dev\projects\voila\data\output
+Voila! PDF extracted successfully.
+Input:  D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf
+Output: D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\pages.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\pages.md
+
+=== 2. OCR report ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\ocr_report.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\pages.json
+Voila! OCR report generated successfully.
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\ocr_report.json
+
+=== 3. Course outline ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\outline_builder.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\pages.json
+Voila! course outline generated successfully.
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.md
+
+=== 4. Normalize outline ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\normalize_outline.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.json
+Voila! normalized outline generated successfully.
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.normalized.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.normalized.md
+
+=== 5. Generate course files ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\course_generator.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.normalized.json
+Voila! course files generated successfully.
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.md
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\glossary.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\quiz.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\flashcards.json
+
+=== 6. Polish course ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\course_polisher.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course_outline.normalized.json
+Voila! polished course generated successfully.
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.md
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\ocr_corrections.json
+OCR corrections applied: 19
+
+=== 7. Final cleanup ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\course_cleaned_finalizer.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.md
+Voila! final cleaned text applied.
+- Updated: D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.md
+- Backup:  D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.md.bak
+
+=== 8. Export figures ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\figure_exporter_anchor.py D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf
+Voila! anchored figures exported successfully.
+Output: D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\figures
+Figure crops: 5
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\figures\figures_manifest.json
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\figures\figures.html
+
+=== 9. Export HTML course ===
+D:\dev\projects\voila\.venv\Scripts\python.exe D:\dev\projects\voila\services\api\html_exporter.py D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.md
+Voila! HTML course exported successfully.
+Figures linked: 5
+- D:\dev\projects\voila\data\output\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\course.cleaned.html

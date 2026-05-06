@@ -1,0 +1,333 @@
+[
+  {
+    "term": "pumping trap",
+    "definition": "A trap arrangement that uses steam pressure to drive accumulated water out of the trap.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "non-return valve",
+    "definition": "A valve that allows flow in one direction and prevents reverse flow.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "exhaust valve",
+    "definition": "A valve used to release or exhaust fluid or vapour from a chamber.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "steam valve",
+    "definition": "A valve that admits or controls steam flow.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "float",
+    "definition": "A buoyant component that rises and falls with the liquid level.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "collar",
+    "definition": "A fitted ring or shoulder used to engage or limit movement.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "magnet",
+    "definition": "A component used to hold or release a mechanism by magnetic attraction.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "spring",
+    "definition": "An elastic component that stores mechanical energy.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "spindle",
+    "definition": "A shaft or stem used to transmit motion in a valve or mechanism.",
+    "lesson_id": "L001",
+    "source_pdf_pages": [
+      1
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "steam trap",
+    "definition": "A device used in steam systems to discharge condensate while limiting the loss of live steam.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "vacuum trap",
+    "definition": "A trap associated with condensate removal under vacuum or low pressure conditions.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "non-return valve",
+    "definition": "A valve that allows flow in one direction and prevents reverse flow.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "exhaust valve",
+    "definition": "A valve used to release or exhaust fluid or vapour from a chamber.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "steam valve",
+    "definition": "A valve that admits or controls steam flow.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "float",
+    "definition": "A buoyant component that rises and falls with the liquid level.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "collar",
+    "definition": "A fitted ring or shoulder used to engage or limit movement.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "magnet",
+    "definition": "A component used to hold or release a mechanism by magnetic attraction.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "spring",
+    "definition": "An elastic component that stores mechanical energy.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "spindle",
+    "definition": "A shaft or stem used to transmit motion in a valve or mechanism.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "strainer",
+    "definition": "A device used to retain larger foreign objects that could cause damage or blockage.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "thermodynamic type",
+    "definition": "A steam trap type whose operation may be checked by its characteristic clicking action.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "thermostatic traps",
+    "definition": "Steam traps using temperature-sensitive elements.",
+    "lesson_id": "L002",
+    "source_pdf_pages": [
+      1,
+      2
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "strainer",
+    "definition": "A device used to retain larger foreign objects that could cause damage or blockage.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "filter",
+    "definition": "A device intended to prevent unwanted solids from passing further through a system.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "basket strainer",
+    "definition": "A strainer using a perforated metal or wire basket inside a container.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "perforated plate",
+    "definition": "A plate containing holes through which fluid passes while larger solids are retained.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "bilge system",
+    "definition": "A system used to collect and remove water or fluids from bilge spaces.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "knife edge strainer",
+    "definition": "A strainer with discs and thin fingers that remove trapped particles by rotation.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "cartridge filter",
+    "definition": "A filter using removable or renewable cartridge elements.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "magnetic filter",
+    "definition": "A filter that captures ferrous wear particles using magnetic attraction.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "wire mesh",
+    "definition": "A mesh made from wire, used as a straining or filtering medium.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  },
+  {
+    "term": "filter cartridge",
+    "definition": "A replaceable or cleanable filter element.",
+    "lesson_id": "L003",
+    "source_pdf_pages": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "generation_method": "rule_based_no_ai"
+  }
+]

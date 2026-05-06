@@ -1,0 +1,83 @@
+{
+  "source_file": "D:\\dev\\projects\\voila\\data\\input\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf",
+  "crop_config": "D:\\dev\\projects\\voila\\data\\figure_crops.anchor.json",
+  "render_zoom": 4.0,
+  "method": "text_anchor_offsets_v1",
+  "figure_crops": [
+    {
+      "number": "4.23",
+      "caption": "Automatic pumping or vacuum trap",
+      "pdf_page": 1,
+      "path": "D:\\dev\\projects\\voila\\data\\output\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\\figures\\crops\\figure_4_23_page_001.png",
+      "relative_path": "crops\\figure_4_23_page_001.png",
+      "crop_rect": [
+        24.429600219726563,
+        362.47100830078125,
+        374.58720336914064,
+        671.450927734375
+      ],
+      "anchor": "Figure 4.23",
+      "prefer_y": 0.78
+    },
+    {
+      "number": "4.24",
+      "caption": "Single strainers for high pressure water, steam or oil service and low pressure water or oil service",
+      "pdf_page": 3,
+      "path": "D:\\dev\\projects\\voila\\data\\output\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\\figures\\crops\\figure_4_24_page_003.png",
+      "relative_path": "crops\\figure_4_24_page_003.png",
+      "crop_rect": [
+        28.50120025634766,
+        64.69998168945312,
+        378.6588034057617,
+        262.7179870605469
+      ],
+      "anchor": "Figure 4.24",
+      "prefer_y": 0.37
+    },
+    {
+      "number": "4.25",
+      "caption": "The Auto-Klean strainer showing circular straining plates, separation washers and spider",
+      "pdf_page": 3,
+      "path": "D:\\dev\\projects\\voila\\data\\output\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\\figures\\crops\\figure_4_25_page_003.png",
+      "relative_path": "crops\\figure_4_25_page_003.png",
+      "crop_rect": [
+        28.50120025634766,
+        419.03997802734375,
+        382.7304034423828,
+        660.9329833984375
+      ],
+      "anchor": "Figure 4.25",
+      "prefer_y": 0.86
+    },
+    {
+      "number": "4.26",
+      "caption": "Cartridge filters",
+      "pdf_page": 4,
+      "path": "D:\\dev\\projects\\voila\\data\\output\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\\figures\\crops\\figure_4_26_page_004.png",
+      "relative_path": "crops\\figure_4_26_page_004.png",
+      "crop_rect": [
+        20.35800018310547,
+        0.0,
+        386.8020034790039,
+        410.043701171875
+      ],
+      "anchor": "Figure 4.26",
+      "prefer_y": 0.68
+    },
+    {
+      "number": "4.27",
+      "caption": "Magnetic filter",
+      "pdf_page": 5,
+      "path": "D:\\dev\\projects\\voila\\data\\output\\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW\\figures\\crops\\figure_4_27_page_005.png",
+      "relative_path": "crops\\figure_4_27_page_005.png",
+      "crop_rect": [
+        24.429600219726563,
+        48.662994384765625,
+        382.7304034423828,
+        304.1936950683594
+      ],
+      "anchor": "Figure 4.27",
+      "prefer_y": 0.36
+    }
+  ]
+}

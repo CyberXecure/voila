@@ -19,6 +19,7 @@ $RequiredScripts = @(
     ".\services\api\course_generator.py",
     ".\services\api\course_polisher.py",
     ".\services\api\course_cleaned_finalizer.py",
+    ".\services\api\study_quiz_builder.py",
     ".\services\api\figure_exporter_hybrid.py",
     ".\services\api\html_exporter.py"
 )
@@ -107,11 +108,31 @@ Write-Host "=== 7. Final cleanup ==="
 & $Python .\services\api\course_cleaned_finalizer.py $courseCleaned
 
 Write-Host ""
-Write-Host "=== 8. Export figures ==="
+Write-Host "=== 8. Build study quiz ==="
+
+$StudyConfigPath = ".\data\study_config.json"
+$StudyMinPage = 1
+
+if (Test-Path $StudyConfigPath) {
+    $StudyConfig = Get-Content $StudyConfigPath -Raw | ConvertFrom-Json
+
+    if ($StudyConfig.default_min_page) {
+        $StudyMinPage = [int]$StudyConfig.default_min_page
+    }
+
+    if ($StudyConfig.per_pdf.$($pdf.BaseName).min_page) {
+        $StudyMinPage = [int]$StudyConfig.per_pdf.$($pdf.BaseName).min_page
+    }
+}
+
+& $Python .\services\api\study_quiz_builder.py $outputDir --min-page $StudyMinPage --max-per-lesson 4 --max-total 350
+
+Write-Host ""
+Write-Host "=== 9. Export figures ==="
 & $Python .\services\api\figure_exporter_hybrid.py $pdf.FullName
 
 Write-Host ""
-Write-Host "=== 9. Export HTML course ==="
+Write-Host "=== 10. Export HTML course ==="
 & $Python .\services\api\html_exporter.py $courseCleaned
 
 $htmlCourse = Join-Path $outputDir "course.cleaned.html"
@@ -146,4 +167,5 @@ Write-Host "  $outputDir\ocr_corrections.json"
 
 Write-Host ""
 Write-Host "Done."
+
 

@@ -53,7 +53,13 @@ def load_manifest(pdf: Path) -> dict:
     if not manifest_path.exists():
         raise FileNotFoundError(f"Hybrid manifest not found: {manifest_path}")
 
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    for item in manifest.get("figure_crops", []):
+        if "path" not in item and item.get("relative_path"):
+            item["path"] = str(OUTPUT_DIR / pdf.stem / "figures_hybrid" / item["relative_path"])
+
+    return manifest
 
 
 def save_manifest(pdf: Path, manifest: dict) -> None:
@@ -67,6 +73,24 @@ def save_manifest(pdf: Path, manifest: dict) -> None:
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+
+
+
+def item_output_path(pdf: Path, item: dict) -> Path:
+    raw_path = item.get("path")
+
+    if raw_path:
+        return Path(raw_path)
+
+    rel = item.get("relative_path")
+
+    if rel:
+        output_path = OUTPUT_DIR / pdf.stem / "figures_hybrid" / rel
+        item["path"] = str(output_path)
+        return output_path
+
+    raise KeyError("Figure item has neither 'path' nor 'relative_path'.")
 
 
 def clamp_rect(rect: list[float], page: fitz.Page) -> list[float]:
@@ -100,7 +124,7 @@ def rerender_crop(pdf: Path, item: dict, zoom: float) -> None:
 
     clip = fitz.Rect(rect)
 
-    output_path = Path(item["path"])
+    output_path = item_output_path(pdf, item)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     pixmap = page.get_pixmap(
@@ -455,7 +479,8 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
 
     for index, item in enumerate(items):
         src = item_image_url(pdf_path, item)
-        mtime = Path(item["path"]).stat().st_mtime if Path(item["path"]).exists() else time.time()
+        image_path = item_output_path(pdf_path, item)
+        mtime = image_path.stat().st_mtime if image_path.exists() else time.time()
 
         number = html.escape(str(item.get("number", "")))
         caption = html.escape(str(item.get("caption", "")))
@@ -490,8 +515,8 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
       Items: {len(items)}
     </div>
     <div class="toolbar">
-      <a class="btn primary" href="{gallery_url}" target="_blank">Open hybrid gallery</a>
-      <a class="btn" href="http://127.0.0.1:8787" target="_blank">Back to Voila!</a>
+      <a class="btn primary" href="{gallery_url}">Open hybrid gallery</a>
+      <a class="btn" href="http://127.0.0.1:8787">Back to Voila!</a>
     </div>
 
     <div class="grid">

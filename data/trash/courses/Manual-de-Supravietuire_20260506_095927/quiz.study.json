@@ -1,0 +1,1779 @@
+{
+  "version": "0.3.5",
+  "mode": "source_only",
+  "generator": "study_quiz_builder_v0.3.5",
+  "min_page": 1,
+  "question_count": 93,
+  "questions": [
+    {
+      "question_id": "SQ0001",
+      "lesson_id": "L003",
+      "concept_id": "L003 — Lipsa de gândire",
+      "concept_title": "Lipsa de gândire",
+      "lesson_title": "Lipsa de gândire",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Lipsa de gândire?",
+      "answer": "Studiile psihologice arată că numai o mică parte din accidente este „întâmplătoare\", datorită unor factori din afară. În majoritatea cazurilor persoana respectivă se pune singură în situaţia dificilă (şi-o face cu mâna ei...).",
+      "source_pdf_pages": [
+        6,
+        7,
+        8
+      ],
+      "source_sentence": "Studiile psihologice arată că numai o mică parte din accidente este „întâmplătoare\", datorită unor factori din afară. În majoritatea cazurilor persoana respectivă se pune singură în situaţia dificilă (şi-o face cu mâna ei...).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0002",
+      "lesson_id": "L003",
+      "concept_id": "L003 — Lipsa de gândire",
+      "concept_title": "Lipsa de gândire",
+      "lesson_title": "Lipsa de gândire",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Lipsa de gândire?",
+      "answer": "Foarte adesea accidentul este rezultatul unei purtări neconştiente a viitoarei victime (fără să se gândească), pentru a-şi satisface o nevoie sau o pornire subconştientă (de exemplu să impresioneze sau să atragă atenţia cuiva; ca scuză pentru o anumită comportare; să pedepsească pe altcineva sau pe el însuşi ş.a.m.d.).",
+      "source_pdf_pages": [
+        6,
+        7,
+        8
+      ],
+      "source_sentence": "Foarte adesea accidentul este rezultatul unei purtări neconştiente a viitoarei victime (fără să se gândească), pentru a-şi satisface o nevoie sau o pornire subconştientă (de exemplu să impresioneze sau să atragă atenţia cuiva; ca scuză pentru o anumită comportare; să pedepsească pe altcineva sau pe el însuşi ş.a.m.d.).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0003",
+      "lesson_id": "L004",
+      "concept_id": "L004 — Pericolele exterioare",
+      "concept_title": "Pericolele exterioare",
+      "lesson_title": "Pericolele exterioare",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Pericolele exterioare?",
+      "answer": "Noi suntem de vină că mai adesea am învăţat relele: organizarea crimei - nu ordinea publică; şpaga - nu eficienţa administraţiei; grevele - nu eficienţa muncii; noile tehnologii ale fărădelegilor - nu cinstea şi datoria.",
+      "source_pdf_pages": [
+        8,
+        9
+      ],
+      "source_sentence": "Noi suntem de vină că mai adesea am învăţat relele: organizarea crimei - nu ordinea publică; şpaga - nu eficienţa administraţiei; grevele - nu eficienţa muncii; noile tehnologii ale fărădelegilor - nu cinstea şi datoria.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0004",
+      "lesson_id": "L005",
+      "concept_id": "L005 — Ce ne va aduce Viitorul",
+      "concept_title": "Ce ne va aduce Viitorul",
+      "lesson_title": "Ce ne va aduce Viitorul",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce ne va aduce Viitorul?",
+      "answer": "Dar prezentul e mult diferit de trecut - iar viitorul va fi şi mai surprinzător.",
+      "source_pdf_pages": [
+        9,
+        10
+      ],
+      "source_sentence": "Dar prezentul e mult diferit de trecut - iar viitorul va fi şi mai surprinzător.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0005",
+      "lesson_id": "L007",
+      "concept_id": "L007 — Supravieţuirea pe termen lung",
+      "concept_title": "Supravieţuirea pe termen lung",
+      "lesson_title": "Supravieţuirea pe termen lung",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Supravieţuirea pe termen lung?",
+      "answer": "Aşa sunt situaţiile grave în care se pune problema dispariţiei lente, după un timp: de exemplu războiul armat, psihologic, economic, cultural, religios; conflictele interetnice; detenţia în închisoare; o boală sau epidemie gravă; poluarea morală sau a mediului; dispariţia limbii materne ş.a.m.d.",
+      "source_pdf_pages": [
+        11,
+        12
+      ],
+      "source_sentence": "Aşa sunt situaţiile grave în care se pune problema dispariţiei lente, după un timp: de exemplu războiul armat, psihologic, economic, cultural, religios; conflictele interetnice; detenţia în închisoare; o boală sau epidemie gravă; poluarea morală sau a mediului; dispariţia limbii materne ş.a.m.d.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0006",
+      "lesson_id": "L007",
+      "concept_id": "L007 — Supravieţuirea pe termen lung",
+      "concept_title": "Supravieţuirea pe termen lung",
+      "lesson_title": "Supravieţuirea pe termen lung",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Supravieţuirea pe termen lung?",
+      "answer": "Cea mai evidentă (şi totodată tristă) manifestare a avantajelor ştiinţei o reprezintă capacitatea distructivă a armelor moderne cu care naţiunile se apară (dar cu care pot să şi atace).",
+      "source_pdf_pages": [
+        11,
+        12
+      ],
+      "source_sentence": "Cea mai evidentă (şi totodată tristă) manifestare a avantajelor ştiinţei o reprezintă capacitatea distructivă a armelor moderne cu care naţiunile se apară (dar cu care pot să şi atace).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0007",
+      "lesson_id": "L009",
+      "concept_id": "L009 — Ce te faci?",
+      "concept_title": "Ce te faci?",
+      "lesson_title": "Ce te faci?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Ce te faci??",
+      "answer": "Sunt diverse păreri asupra cantităţii şi felului de echipament sau pregătirilor necesare ca să scapi dintr-o situaţie neobişnuită sau o catastrofă. În mod paradoxal, nu atât muşchii, rezistenţa fizică, priceperea ori echipamentul contează; mai importantă este atitudinea mentală faţă de situaţia critică.",
+      "source_pdf_pages": [
+        12,
+        13
+      ],
+      "source_sentence": "Sunt diverse păreri asupra cantităţii şi felului de echipament sau pregătirilor necesare ca să scapi dintr-o situaţie neobişnuită sau o catastrofă. În mod paradoxal, nu atât muşchii, rezistenţa fizică, priceperea ori echipamentul contează; mai importantă este atitudinea mentală faţă de situaţia critică.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0008",
+      "lesson_id": "L009",
+      "concept_id": "L009 — Ce te faci?",
+      "concept_title": "Ce te faci?",
+      "lesson_title": "Ce te faci?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce te faci??",
+      "answer": "Din cauza atitudinii mentale diferite - unii scapă şi alţii nu.",
+      "source_pdf_pages": [
+        12,
+        13
+      ],
+      "source_sentence": "Din cauza atitudinii mentale diferite - unii scapă şi alţii nu.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0009",
+      "lesson_id": "L010",
+      "concept_id": "L010 — Fii atent!",
+      "concept_title": "Fii atent!",
+      "lesson_title": "Fii atent!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Fii atent!?",
+      "answer": "De aceea chinezii spun: când îţi merge bine - fii atent; când îţi merge rău - fii demn.",
+      "source_pdf_pages": [
+        13
+      ],
+      "source_sentence": "De aceea chinezii spun: când îţi merge bine - fii atent; când îţi merge rău - fii demn.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0010",
+      "lesson_id": "L011",
+      "concept_id": "L011 — Fii activ!",
+      "concept_title": "Fii activ!",
+      "lesson_title": "Fii activ!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Fii activ!?",
+      "answer": "Vorba marelui explorator Nansen: ai reuşit - continuă; n-ai reuşit - continuă! în funcţie de comportamentul lor într-o situaţie grea, oamenii se împart în 3 categorii: unii se străduiesc şi încearcă să rezolve problema, alţii stau şi analizează situaţia, iar ceilalţi comentează, se minunează de cele întâmplate.",
+      "source_pdf_pages": [
+        13
+      ],
+      "source_sentence": "Vorba marelui explorator Nansen: ai reuşit - continuă; n-ai reuşit - continuă! în funcţie de comportamentul lor într-o situaţie grea, oamenii se împart în 3 categorii: unii se străduiesc şi încearcă să rezolve problema, alţii stau şi analizează situaţia, iar ceilalţi comentează, se minunează de cele întâmplate.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0011",
+      "lesson_id": "L013",
+      "concept_id": "L013 — Fii responsabil!",
+      "concept_title": "Fii responsabil!",
+      "lesson_title": "Fii responsabil!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Fii responsabil!?",
+      "answer": "Din păcate, deprinderea de a lua decizii bune, rapide este o calitate rară, care se poate învăţa numai prin experienţă, antrenament specific.",
+      "source_pdf_pages": [
+        13,
+        14
+      ],
+      "source_sentence": "Din păcate, deprinderea de a lua decizii bune, rapide este o calitate rară, care se poate învăţa numai prin experienţă, antrenament specific.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0012",
+      "lesson_id": "L013",
+      "concept_id": "L013 — Fii responsabil!",
+      "concept_title": "Fii responsabil!",
+      "lesson_title": "Fii responsabil!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Fii responsabil!?",
+      "answer": "Deci, gândeşte-te de două (ba chiar de trei) ori înainte de a face ceva iremediabil - cum e de fapt orice face omul pe lumea asta; nici o situaţie, oportunitate nu se mai repetă identică!",
+      "source_pdf_pages": [
+        13,
+        14
+      ],
+      "source_sentence": "Deci, gândeşte-te de două (ba chiar de trei) ori înainte de a face ceva iremediabil - cum e de fapt orice face omul pe lumea asta; nici o situaţie, oportunitate nu se mai repetă identică!",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0013",
+      "lesson_id": "L014",
+      "concept_id": "L014 — Fii eficient!",
+      "concept_title": "Fii eficient!",
+      "lesson_title": "Fii eficient!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Fii eficient!?",
+      "answer": "Un exemplu simplu: în oraş fă-ţi nevoile fiziologice din timp, într-un loc amenajat; nu aştepta să-ţi vină pofta când eşti pe stradă, în public şi nu găseşti unde.",
+      "source_pdf_pages": [
+        14,
+        15
+      ],
+      "source_sentence": "Un exemplu simplu: în oraş fă-ţi nevoile fiziologice din timp, într-un loc amenajat; nu aştepta să-ţi vină pofta când eşti pe stradă, în public şi nu găseşti unde.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0014",
+      "lesson_id": "L014",
+      "concept_id": "L014 — Fii eficient!",
+      "concept_title": "Fii eficient!",
+      "lesson_title": "Fii eficient!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Fii eficient!?",
+      "answer": "Indiferent pentru ce perioadă plănuieşti, nu gândi în mic, cu bătaie scurtă, ci gândeşte global şi acţionează local. la exemplu de la campionii de şah: ei joacă în perspectivă, prevăd nu numai mutarea următoare a adversarului, ci pe a cincea, a zecea, ba chiar şi pe ultima, victoria.",
+      "source_pdf_pages": [
+        14,
+        15
+      ],
+      "source_sentence": "Indiferent pentru ce perioadă plănuieşti, nu gândi în mic, cu bătaie scurtă, ci gândeşte global şi acţionează local. la exemplu de la campionii de şah: ei joacă în perspectivă, prevăd nu numai mutarea următoare a adversarului, ci pe a cincea, a zecea, ba chiar şi pe ultima, victoria.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0015",
+      "lesson_id": "L015",
+      "concept_id": "L015 — Fii optimist!",
+      "concept_title": "Fii optimist!",
+      "lesson_title": "Fii optimist!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Fii optimist!?",
+      "answer": "Cel cu o gândire pozitivă, constructivă, nu stă, nu lâncezeşte, nu aşteaptă, nu se vaită, nu condamnă, ci caută soluţii, valorifică puţinele posibilităţi existente (însă şi pe unele care nu există, dar apar din senin când este suficientă preocupare - căci aşa e viaţa) şi luptă fără teamă cu adversitatea.",
+      "source_pdf_pages": [
+        15
+      ],
+      "source_sentence": "Cel cu o gândire pozitivă, constructivă, nu stă, nu lâncezeşte, nu aşteaptă, nu se vaită, nu condamnă, ci caută soluţii, valorifică puţinele posibilităţi existente (însă şi pe unele care nu există, dar apar din senin când este suficientă preocupare - căci aşa e viaţa) şi luptă fără teamă cu adversitatea.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0016",
+      "lesson_id": "L016",
+      "concept_id": "L016 — Inventează!",
+      "concept_title": "Inventează!",
+      "lesson_title": "Inventează!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Inventează!?",
+      "answer": "Inventivitatea este trăsătura, atitudinea care deosebeşte omul de animal şi determină succesul sau înfrângerea (mai ales în noua lume informatizată); până la urmă, chiar supravieţuirea sau moartea -fie imediat, fie pe termen lung.",
+      "source_pdf_pages": [
+        15,
+        16
+      ],
+      "source_sentence": "Inventivitatea este trăsătura, atitudinea care deosebeşte omul de animal şi determină succesul sau înfrângerea (mai ales în noua lume informatizată); până la urmă, chiar supravieţuirea sau moartea -fie imediat, fie pe termen lung.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0017",
+      "lesson_id": "L017",
+      "concept_id": "L017 — Comunică!",
+      "concept_title": "Comunică!",
+      "lesson_title": "Comunică!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Comunică!?",
+      "answer": "Majoritatea conflictelor cu alţi oameni apar din cauza lipsei respectului faţă de ei, manifestată şi prin: - Lipsa de comunicare, neconfruntarea deschisă a părerilor, necunoaşterea limbii celuilalt etc; - Surprinderea celuilalt cu o acţiune prea rapidă, neanunţată.",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_sentence": "Majoritatea conflictelor cu alţi oameni apar din cauza lipsei respectului faţă de ei, manifestată şi prin: - Lipsa de comunicare, neconfruntarea deschisă a părerilor, necunoaşterea limbii celuilalt etc; - Surprinderea celuilalt cu o acţiune prea rapidă, neanunţată.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0018",
+      "lesson_id": "L017",
+      "concept_id": "L017 — Comunică!",
+      "concept_title": "Comunică!",
+      "lesson_title": "Comunică!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Comunică!?",
+      "answer": "Dar şi de capacitatea, îndemânarea de a comunica, de a te pune în pielea celuilalt, de a gândi şi la nevoile celuilalt.",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_sentence": "Dar şi de capacitatea, îndemânarea de a comunica, de a te pune în pielea celuilalt, de a gândi şi la nevoile celuilalt.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0019",
+      "lesson_id": "L018",
+      "concept_id": "L018 — Respectă Natura!",
+      "concept_title": "Respectă Natura!",
+      "lesson_title": "Respectă Natura!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Respectă Natura!?",
+      "answer": "Planeta pare nesfârşită doar primitivilor; oamenii civilizaţi au văzut (cu ajutorul sateliţilor) că Terra este o planetă mică, cu spaţiu şi resurse limitate.",
+      "source_pdf_pages": [
+        16,
+        17
+      ],
+      "source_sentence": "Planeta pare nesfârşită doar primitivilor; oamenii civilizaţi au văzut (cu ajutorul sateliţilor) că Terra este o planetă mică, cu spaţiu şi resurse limitate.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0020",
+      "lesson_id": "L018",
+      "concept_id": "L018 — Respectă Natura!",
+      "concept_title": "Respectă Natura!",
+      "lesson_title": "Respectă Natura!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Respectă Natura!?",
+      "answer": "Mările sunt secătuite de peşte, rezervele mondiale de petrol epuizate, deşertificarea avansează rapid datorită pădurilor defrişate şi solului distrus prin chimizarea excesivă, gunoaiele ne sufocă.",
+      "source_pdf_pages": [
+        16,
+        17
+      ],
+      "source_sentence": "Mările sunt secătuite de peşte, rezervele mondiale de petrol epuizate, deşertificarea avansează rapid datorită pădurilor defrişate şi solului distrus prin chimizarea excesivă, gunoaiele ne sufocă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0021",
+      "lesson_id": "L019",
+      "concept_id": "L019 — Implică-te!",
+      "concept_title": "Implică-te!",
+      "lesson_title": "Implică-te!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Implică-te!?",
+      "answer": "Dezastrul social şi economic se amplifică de la sine: inculţii săraci fac mulţi copii (tot o formă - iraţională - de supravieţuire) care la rândul lor devin tot inculţi şi săraci.",
+      "source_pdf_pages": [
+        17,
+        18,
+        19,
+        20
+      ],
+      "source_sentence": "Dezastrul social şi economic se amplifică de la sine: inculţii săraci fac mulţi copii (tot o formă - iraţională - de supravieţuire) care la rândul lor devin tot inculţi şi săraci.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0022",
+      "lesson_id": "L019",
+      "concept_id": "L019 — Implică-te!",
+      "concept_title": "Implică-te!",
+      "lesson_title": "Implică-te!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Implică-te!?",
+      "answer": "Principiile de bază ale acestei cărţi sunt: - bazează-te pe tine (şi nu pe alţii); - fii gata să te descurci în orice situaţie, folosind în primul rând mintea; - improvizează ce-ţi trebuie din orice găseşti (fără să ai pregătite echipamente adecvate); - când încerci să scapi - gândeşte-te şi la ceilalţi.",
+      "source_pdf_pages": [
+        17,
+        18,
+        19,
+        20
+      ],
+      "source_sentence": "Principiile de bază ale acestei cărţi sunt: - bazează-te pe tine (şi nu pe alţii); - fii gata să te descurci în orice situaţie, folosind în primul rând mintea; - improvizează ce-ţi trebuie din orice găseşti (fără să ai pregătite echipamente adecvate); - când încerci să scapi - gândeşte-te şi la ceilalţi.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0023",
+      "lesson_id": "L020",
+      "concept_id": "L020 — Prevederea este mama înţelepciunii",
+      "concept_title": "Prevederea este mama înţelepciunii",
+      "lesson_title": "Prevederea este mama înţelepciunii",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Prevederea este mama înţelepciunii?",
+      "answer": "Din această cauză Gore-Tex rezistă la presiunea unei coloane de apă de 8 m. înălţime, dar permite trecerea aburului.",
+      "source_pdf_pages": [
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "source_sentence": "Din această cauză Gore-Tex rezistă la presiunea unei coloane de apă de 8 m. înălţime, dar permite trecerea aburului.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0024",
+      "lesson_id": "L020",
+      "concept_id": "L020 — Prevederea este mama înţelepciunii",
+      "concept_title": "Prevederea este mama înţelepciunii",
+      "lesson_title": "Prevederea este mama înţelepciunii",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Prevederea este mama înţelepciunii?",
+      "answer": "Nu planifica viteze prea mari de deplasare sau termene prea scurte.",
+      "source_pdf_pages": [
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "source_sentence": "Nu planifica viteze prea mari de deplasare sau termene prea scurte.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0025",
+      "lesson_id": "L020",
+      "concept_id": "L020 — Prevederea este mama înţelepciunii",
+      "concept_title": "Prevederea este mama înţelepciunii",
+      "lesson_title": "Prevederea este mama înţelepciunii",
+      "question_type": "prevention",
+      "question": "What problem is prevented or avoided according to the source?",
+      "answer": "Controlul medical: fa-ţi un control medical şi stomatologic cât mai cuprinzător. (Pe vremuri, englezii care plecau să lucreze sau să stea în colonii, la tropice, îşi scoteau preventiv toţi dinţii, chiar cei sănătoşi, şi puneau proteze dentare; ştiau că nu vor găsi vreun dentist pe acolo).",
+      "source_pdf_pages": [
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "source_sentence": "Controlul medical: fa-ţi un control medical şi stomatologic cât mai cuprinzător. (Pe vremuri, englezii care plecau să lucreze sau să stea în colonii, la tropice, îşi scoteau preventiv toţi dinţii, chiar cei sănătoşi, şi puneau proteze dentare; ştiau că nu vor găsi vreun dentist pe acolo).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0026",
+      "lesson_id": "L021",
+      "concept_id": "L021 — Prevedere, prevedere şi iar prevedere !",
+      "concept_title": "Prevedere, prevedere şi iar prevedere !",
+      "lesson_title": "Prevedere, prevedere şi iar prevedere !",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Prevedere, prevedere şi iar prevedere !?",
+      "answer": "Cuţit, bisturie, lame de ras - cel puţin două bucăţi de mărimi diferite; cuţitul poate fi prins cu leucoplast la exteriorul trusei; 13.",
+      "source_pdf_pages": [
+        24,
+        25
+      ],
+      "source_sentence": "Cuţit, bisturie, lame de ras - cel puţin două bucăţi de mărimi diferite; cuţitul poate fi prins cu leucoplast la exteriorul trusei; 13.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0027",
+      "lesson_id": "L021",
+      "concept_id": "L021 — Prevedere, prevedere şi iar prevedere !",
+      "concept_title": "Prevedere, prevedere şi iar prevedere !",
+      "lesson_title": "Prevedere, prevedere şi iar prevedere !",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Prevedere, prevedere şi iar prevedere !?",
+      "answer": "Sau, obişnuieşte-te şi fii mereu gata să acţionezi sau să reacţionezi (la orice oră din zi şi din noapte; la orice fel de situaţie sau încurcătură): de exemplu, când te descalţi, lasă încălţămintea cu vârfurile orientate spre ieşire ca să te poţi încălţa din mers (aşa fac japonezii, învăţaţi de cutremurele lor foarte dese).",
+      "source_pdf_pages": [
+        24,
+        25
+      ],
+      "source_sentence": "Sau, obişnuieşte-te şi fii mereu gata să acţionezi sau să reacţionezi (la orice oră din zi şi din noapte; la orice fel de situaţie sau încurcătură): de exemplu, când te descalţi, lasă încălţămintea cu vârfurile orientate spre ieşire ca să te poţi încălţa din mers (aşa fac japonezii, învăţaţi de cutremurele lor foarte dese).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0028",
+      "lesson_id": "L022",
+      "concept_id": "L022 — Bagajul sau rucsacul de salvare, pentru bejenie",
+      "concept_title": "Bagajul sau rucsacul de salvare, pentru bejenie",
+      "lesson_title": "Bagajul sau rucsacul de salvare, pentru bejenie",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Bagajul sau rucsacul de salvare, pentru bejenie?",
+      "answer": "15 kg), sau o sacoşă prinsă pe un cărucior cu 2 roţi mari.",
+      "source_pdf_pages": [
+        25,
+        26,
+        27
+      ],
+      "source_sentence": "15 kg), sau o sacoşă prinsă pe un cărucior cu 2 roţi mari.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0029",
+      "lesson_id": "L023",
+      "concept_id": "L023 — Totul e să fii calm!",
+      "concept_title": "Totul e să fii calm!",
+      "lesson_title": "Totul e să fii calm!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Totul e să fii calm!?",
+      "answer": "Verifică starea şi siguranţa celorlalţi membri ai grupului, dacă cineva s-a rănit sau a leşinat; dacă sunt în siguranţă.",
+      "source_pdf_pages": [
+        27,
+        28
+      ],
+      "source_sentence": "Verifică starea şi siguranţa celorlalţi membri ai grupului, dacă cineva s-a rănit sau a leşinat; dacă sunt în siguranţă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0030",
+      "lesson_id": "L023",
+      "concept_id": "L023 — Totul e să fii calm!",
+      "concept_title": "Totul e să fii calm!",
+      "lesson_title": "Totul e să fii calm!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Totul e să fii calm!?",
+      "answer": "Acţionează rapid, hotărât. Însă NU haotic; numai o acţiune logică, constructivă te poate salva - pe tine şi pe ceilalţi.",
+      "source_pdf_pages": [
+        27,
+        28
+      ],
+      "source_sentence": "Acţionează rapid, hotărât. Însă NU haotic; numai o acţiune logică, constructivă te poate salva - pe tine şi pe ceilalţi.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0031",
+      "lesson_id": "L024",
+      "concept_id": "L024 — N-ai încotro!",
+      "concept_title": "N-ai încotro!",
+      "lesson_title": "N-ai încotro!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about N-ai încotro!?",
+      "answer": "Temperatura corpului trebuie păstrată la, sau în jur de, +37°C.",
+      "source_pdf_pages": [
+        28,
+        29
+      ],
+      "source_sentence": "Temperatura corpului trebuie păstrată la, sau în jur de, +37°C.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0032",
+      "lesson_id": "L024",
+      "concept_id": "L024 — N-ai încotro!",
+      "concept_title": "N-ai încotro!",
+      "lesson_title": "N-ai încotro!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe N-ai încotro!?",
+      "answer": "Cel mai urgent este primul ajutor medical (vezi #19): opreşte sângerarea, fă respiraţia artificială, tratează şocul - într-un cuvânt, stabilizează problemele acute, ca să te poţi ocupa apoi de ansamblul situaţiei.",
+      "source_pdf_pages": [
+        28,
+        29
+      ],
+      "source_sentence": "Cel mai urgent este primul ajutor medical (vezi #19): opreşte sângerarea, fă respiraţia artificială, tratează şocul - într-un cuvânt, stabilizează problemele acute, ca să te poţi ocupa apoi de ansamblul situaţiei.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0033",
+      "lesson_id": "L025",
+      "concept_id": "L025 — Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "concept_title": "Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "lesson_title": "Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Când pierzi - nu pierde şi lecţia (respectivă)!?",
+      "answer": "Frica şi disperarea se manifestă prin crampe musculare, degete care se agaţă, tremur tendoane încordate care stau gata să plesnească etc.",
+      "source_pdf_pages": [
+        29,
+        30,
+        31
+      ],
+      "source_sentence": "Frica şi disperarea se manifestă prin crampe musculare, degete care se agaţă, tremur tendoane încordate care stau gata să plesnească etc.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0034",
+      "lesson_id": "L025",
+      "concept_id": "L025 — Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "concept_title": "Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "lesson_title": "Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Când pierzi - nu pierde şi lecţia (respectivă)!?",
+      "answer": "Totuşi, puţini oameni suferă cu adevărat de claustrofobie; foarte mulţi doar îşi închipuie că suferă de aşa ceva.",
+      "source_pdf_pages": [
+        29,
+        30,
+        31
+      ],
+      "source_sentence": "Totuşi, puţini oameni suferă cu adevărat de claustrofobie; foarte mulţi doar îşi închipuie că suferă de aşa ceva.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0035",
+      "lesson_id": "L026",
+      "concept_id": "L026 — Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "concept_title": "Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "lesson_title": "Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!?",
+      "answer": "Pentru a te linişti, verifică situaţia pe lumină.",
+      "source_pdf_pages": [
+        31
+      ],
+      "source_sentence": "Pentru a te linişti, verifică situaţia pe lumină.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0036",
+      "lesson_id": "L026",
+      "concept_id": "L026 — Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "concept_title": "Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "lesson_title": "Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!?",
+      "answer": "Oricum nu-ţi poate face nici un rău, pentru că: ar trebui să fie mai solidă, nu aşa de transparentă şi nu are corp, nici consistenţă; nu lasă nici o urmă, nu are umbră.",
+      "source_pdf_pages": [
+        31
+      ],
+      "source_sentence": "Oricum nu-ţi poate face nici un rău, pentru că: ar trebui să fie mai solidă, nu aşa de transparentă şi nu are corp, nici consistenţă; nu lasă nici o urmă, nu are umbră.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0037",
+      "lesson_id": "L029",
+      "concept_id": "L029 — Cum poţi avea succes când ceri ajutor?",
+      "concept_title": "Cum poţi avea succes când ceri ajutor?",
+      "lesson_title": "Cum poţi avea succes când ceri ajutor?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum poţi avea succes când ceri ajutor??",
+      "answer": "Planor din hârtie - Trasează literele SOS mari de 10-15 m. (de exemplu pe un câmp de zăpadă).",
+      "source_pdf_pages": [
+        32,
+        33,
+        34,
+        35,
+        36
+      ],
+      "source_sentence": "Planor din hârtie - Trasează literele SOS mari de 10-15 m. (de exemplu pe un câmp de zăpadă).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0038",
+      "lesson_id": "L029",
+      "concept_id": "L029 — Cum poţi avea succes când ceri ajutor?",
+      "concept_title": "Cum poţi avea succes când ceri ajutor?",
+      "lesson_title": "Cum poţi avea succes când ceri ajutor?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cum poţi avea succes când ceri ajutor??",
+      "answer": "Fă în aşa fel încât pata luminoasă să se reflecte pe o suprafaţă cât mai mare, care amplifică lumina: zăpadă, ziar; sau îndreaptă laterna spre cer ori spre orizont.",
+      "source_pdf_pages": [
+        32,
+        33,
+        34,
+        35,
+        36
+      ],
+      "source_sentence": "Fă în aşa fel încât pata luminoasă să se reflecte pe o suprafaţă cât mai mare, care amplifică lumina: zăpadă, ziar; sau îndreaptă laterna spre cer ori spre orizont.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0039",
+      "lesson_id": "L030",
+      "concept_id": "L030 — Dă şi vei primi!",
+      "concept_title": "Dă şi vei primi!",
+      "lesson_title": "Dă şi vei primi!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Dă şi vei primi!?",
+      "answer": "3.8); 8. În cazul unui tunel coborâtor, în pantă, nu înainta, şi nu te târî în jos cu ambele mâini înainte - o să-ţi fie imposibil să te întorci din drum.",
+      "source_pdf_pages": [
+        36,
+        37,
+        38
+      ],
+      "source_sentence": "3.8); 8. În cazul unui tunel coborâtor, în pantă, nu înainta, şi nu te târî în jos cu ambele mâini înainte - o să-ţi fie imposibil să te întorci din drum.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0040",
+      "lesson_id": "L030",
+      "concept_id": "L030 — Dă şi vei primi!",
+      "concept_title": "Dă şi vei primi!",
+      "lesson_title": "Dă şi vei primi!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Dă şi vei primi!?",
+      "answer": "GREUTĂŢILE MARI Indiferent de vârstă, sănătate, sex sau condiţie fizică, supravieţuirea înseamnă adeseori să ridici, să împingi, să tragi, să porţi sau să manevrezi anumite obiecte cu diverse greutăţi - câteodată foarte mari. În astfel de situaţii pot apărea accidente la articulaţii sau la coloana vertebrală.",
+      "source_pdf_pages": [
+        36,
+        37,
+        38
+      ],
+      "source_sentence": "GREUTĂŢILE MARI Indiferent de vârstă, sănătate, sex sau condiţie fizică, supravieţuirea înseamnă adeseori să ridici, să împingi, să tragi, să porţi sau să manevrezi anumite obiecte cu diverse greutăţi - câteodată foarte mari. În astfel de situaţii pot apărea accidente la articulaţii sau la coloana vertebrală.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0041",
+      "lesson_id": "L031",
+      "concept_id": "L031 — Miriapodele",
+      "concept_title": "Miriapodele",
+      "lesson_title": "Miriapodele",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Miriapodele?",
+      "answer": "Cei care pot trăi izolaţi fără să o ia razna (pustnici, exploratori, cercetători, speologi etc.) au o mentalitate tot atât de diferită de cea a omului obişnuit ca şi cei care pot trăi înghesuiţi fără să „explodeze\": astronauţi, marinari, călugări ş.a.m.d.",
+      "source_pdf_pages": [
+        38,
+        39
+      ],
+      "source_sentence": "Cei care pot trăi izolaţi fără să o ia razna (pustnici, exploratori, cercetători, speologi etc.) au o mentalitate tot atât de diferită de cea a omului obişnuit ca şi cei care pot trăi înghesuiţi fără să „explodeze\": astronauţi, marinari, călugări ş.a.m.d.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0042",
+      "lesson_id": "L033",
+      "concept_id": "L033 — Ce era de făcut?",
+      "concept_title": "Ce era de făcut?",
+      "lesson_title": "Ce era de făcut?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Ce era de făcut??",
+      "answer": "Ce poţi face dacă te atacă un singur lup: 1) Loveşte-1 peste nas; 2) Dă-i să-ţi apuce un braţ şi împinge-1 spre fundul botului; 3) Cuprinde-i corpul cu picioarele, încrucişează-le la spatele lui şi doboară-1 la pământ (tu ai 70-80 kg, el doar 40-50); 4) Strânge-1 cât poţi de tare cu genunchii peste coastele inferioare (fig.",
+      "source_pdf_pages": [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
+      ],
+      "source_sentence": "Ce poţi face dacă te atacă un singur lup: 1) Loveşte-1 peste nas; 2) Dă-i să-ţi apuce un braţ şi împinge-1 spre fundul botului; 3) Cuprinde-i corpul cu picioarele, încrucişează-le la spatele lui şi doboară-1 la pământ (tu ai 70-80 kg, el doar 40-50); 4) Strânge-1 cât poţi de tare cu genunchii peste coastele inferioare (fig.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0043",
+      "lesson_id": "L033",
+      "concept_id": "L033 — Ce era de făcut?",
+      "concept_title": "Ce era de făcut?",
+      "lesson_title": "Ce era de făcut?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce era de făcut??",
+      "answer": "Dacă la intrarea în casă apare o persoana care se pretinde „oficială\": înainte de a-i da drumul în casă: - Cere să-ţi arate legitimaţia de serviciu şi verific-o cu atenţie (de exemplu, dacă fotografia corespunde); - în caz de dubiu, telefonează şi verifică la întreprinderea sau primăria etc. care a emis legitimaţia.",
+      "source_pdf_pages": [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
+      ],
+      "source_sentence": "Dacă la intrarea în casă apare o persoana care se pretinde „oficială\": înainte de a-i da drumul în casă: - Cere să-ţi arate legitimaţia de serviciu şi verific-o cu atenţie (de exemplu, dacă fotografia corespunde); - în caz de dubiu, telefonează şi verifică la întreprinderea sau primăria etc. care a emis legitimaţia.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0044",
+      "lesson_id": "L034",
+      "concept_id": "L034 — Unii mimează excelent că ar fi morţi!",
+      "concept_title": "Unii mimează excelent că ar fi morţi!",
+      "lesson_title": "Unii mimează excelent că ar fi morţi!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Unii mimează excelent că ar fi morţi!?",
+      "answer": "Sau mai bine ia o bucată de pânză lată de vreo 50 cm şi lungă cât să-ţi înfăşori capul; despic-o în fâşii verticale care să atârne de o margine sau de o bandă, astfel încât să-ţi protejeze faţa, ceafa, gâtul.",
+      "source_pdf_pages": [
+        54,
+        55
+      ],
+      "source_sentence": "Sau mai bine ia o bucată de pânză lată de vreo 50 cm şi lungă cât să-ţi înfăşori capul; despic-o în fâşii verticale care să atârne de o margine sau de o bandă, astfel încât să-ţi protejeze faţa, ceafa, gâtul.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0045",
+      "lesson_id": "L034",
+      "concept_id": "L034 — Unii mimează excelent că ar fi morţi!",
+      "concept_title": "Unii mimează excelent că ar fi morţi!",
+      "lesson_title": "Unii mimează excelent că ar fi morţi!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Unii mimează excelent că ar fi morţi!?",
+      "answer": "Verifică cu mare atenţie zona înainte de a intra în apa adâncă.",
+      "source_pdf_pages": [
+        54,
+        55
+      ],
+      "source_sentence": "Verifică cu mare atenţie zona înainte de a intra în apa adâncă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0046",
+      "lesson_id": "L035",
+      "concept_id": "L035 — marine diesel engines",
+      "concept_title": "marine diesel engines",
+      "lesson_title": "Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "question_type": "prevention",
+      "question": "What problem is prevented or avoided according to the source?",
+      "answer": "Căpuşele transmit diverse boli, dintre care mai grave sunt: borelioza (eritem, înroşirea pielii pe o suprafaţă mare în jurul muşcăturii; nu există tratament) şi meningo- encefalita de primăvară (există un vaccin preventiv). * Păduchii se îngroapă sub unghiile de la picioare sau sub piele, pentru a-şi depune ouăle.",
+      "source_pdf_pages": [
+        55,
+        56,
+        57
+      ],
+      "source_sentence": "Căpuşele transmit diverse boli, dintre care mai grave sunt: borelioza (eritem, înroşirea pielii pe o suprafaţă mare în jurul muşcăturii; nu există tratament) şi meningo- encefalita de primăvară (există un vaccin preventiv). * Păduchii se îngroapă sub unghiile de la picioare sau sub piele, pentru a-şi depune ouăle.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0047",
+      "lesson_id": "L035",
+      "concept_id": "L035 — Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "concept_title": "Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "lesson_title": "Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Dacă te atacă - fugi (preferabil prin tufăriş)!?",
+      "answer": "Miriapodele: sunt animale de noapte. Într-un loc cu climă caldă, verifică hainele şi aşternutul înainte de a le folosi.",
+      "source_pdf_pages": [
+        55,
+        56,
+        57
+      ],
+      "source_sentence": "Miriapodele: sunt animale de noapte. Într-un loc cu climă caldă, verifică hainele şi aşternutul înainte de a le folosi.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0048",
+      "lesson_id": "L035",
+      "concept_id": "L035 — Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "concept_title": "Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "lesson_title": "Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Dacă te atacă - fugi (preferabil prin tufăriş)!?",
+      "answer": "Când ai apă destulă, bea mai multă decât simţi nevoia; când n-ai, micşorează transpiraţia (redu activitatea din timpul zilei şi lucrează sau călătoreşte noaptea) - dar nu raţionaliza apa.",
+      "source_pdf_pages": [
+        55,
+        56,
+        57
+      ],
+      "source_sentence": "Când ai apă destulă, bea mai multă decât simţi nevoia; când n-ai, micşorează transpiraţia (redu activitatea din timpul zilei şi lucrează sau călătoreşte noaptea) - dar nu raţionaliza apa.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0049",
+      "lesson_id": "L036",
+      "concept_id": "L036 — Dar să nu bei niciodată apă din mare!",
+      "concept_title": "Dar să nu bei niciodată apă din mare!",
+      "lesson_title": "Dar să nu bei niciodată apă din mare!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Dar să nu bei niciodată apă din mare!?",
+      "answer": "De asemenea, nu te culca direct pe sol, ci aşează-te pe ceva ridicat - temperatura e cu câteva grade mai scăzută la 30 cm. deasupra nisipului cald, solului sau stâncii.",
+      "source_pdf_pages": [
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65
+      ],
+      "source_sentence": "De asemenea, nu te culca direct pe sol, ci aşează-te pe ceva ridicat - temperatura e cu câteva grade mai scăzută la 30 cm. deasupra nisipului cald, solului sau stâncii.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0050",
+      "lesson_id": "L036",
+      "concept_id": "L036 — Dar să nu bei niciodată apă din mare!",
+      "concept_title": "Dar să nu bei niciodată apă din mare!",
+      "lesson_title": "Dar să nu bei niciodată apă din mare!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Dar să nu bei niciodată apă din mare!?",
+      "answer": "Valorifică orice obiect care poate pluti: scândură, scaun de automobil, cameră auto, roată de rezervă; - Apucă orice vestă sau colac de salvare; - Ocheşte şi agaţă-te de orice obiect din jurul tău care pluteşte pe apă.",
+      "source_pdf_pages": [
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65
+      ],
+      "source_sentence": "Valorifică orice obiect care poate pluti: scândură, scaun de automobil, cameră auto, roată de rezervă; - Apucă orice vestă sau colac de salvare; - Ocheşte şi agaţă-te de orice obiect din jurul tău care pluteşte pe apă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0051",
+      "lesson_id": "L038",
+      "concept_id": "L038 — Cum poţi scăpa într-o astfel de situaţie?",
+      "concept_title": "Cum poţi scăpa într-o astfel de situaţie?",
+      "lesson_title": "Cum poţi scăpa într-o astfel de situaţie?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum poţi scăpa într-o astfel de situaţie??",
+      "answer": "Dar NU: - Stropi sau umezi pielea cu produse petroliere; - Atinge cu pielea neprotejată, pe ger puternic, un obiect din metal; - Te aşeza direct pe zăpadă; - Freca pielea dintr-un loc dureros (îngheţat); - Băga în buzunar mănuşile pline de zăpadă.",
+      "source_pdf_pages": [
+        71,
+        72,
+        73
+      ],
+      "source_sentence": "Dar NU: - Stropi sau umezi pielea cu produse petroliere; - Atinge cu pielea neprotejată, pe ger puternic, un obiect din metal; - Te aşeza direct pe zăpadă; - Freca pielea dintr-un loc dureros (îngheţat); - Băga în buzunar mănuşile pline de zăpadă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0052",
+      "lesson_id": "L038",
+      "concept_id": "L038 — Cum poţi scăpa într-o astfel de situaţie?",
+      "concept_title": "Cum poţi scăpa într-o astfel de situaţie?",
+      "lesson_title": "Cum poţi scăpa într-o astfel de situaţie?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cum poţi scăpa într-o astfel de situaţie??",
+      "answer": "Verifică des dacă apare vreo amorţeală în picioare sau labe.",
+      "source_pdf_pages": [
+        71,
+        72,
+        73
+      ],
+      "source_sentence": "Verifică des dacă apare vreo amorţeală în picioare sau labe.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0053",
+      "lesson_id": "L039",
+      "concept_id": "L039 — Mişcă-te mereu!",
+      "concept_title": "Mişcă-te mereu!",
+      "lesson_title": "Mişcă-te mereu!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Mişcă-te mereu!?",
+      "answer": "Două lemne, crengi sau beţe se înfig paralele în pământ, înclinate, la o adâncime de 20-30 cm şi la o depărtare de 40-50 cm unul de altul; deasupra solului să rămână capetele de aproximativ 70-80 cm.",
+      "source_pdf_pages": [
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "source_sentence": "Două lemne, crengi sau beţe se înfig paralele în pământ, înclinate, la o adâncime de 20-30 cm şi la o depărtare de 40-50 cm unul de altul; deasupra solului să rămână capetele de aproximativ 70-80 cm.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0054",
+      "lesson_id": "L039",
+      "concept_id": "L039 — Mişcă-te mereu!",
+      "concept_title": "Mişcă-te mereu!",
+      "lesson_title": "Mişcă-te mereu!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Mişcă-te mereu!?",
+      "answer": "Nu folosi chibriturile sau bricheta dacă ai la dispoziţie alte mijloace. - Cu chibrituri: pentru a valorifica mai bine fiecare chibrit, nu încerca să aprinzi cu el direct focul, ci aprinde mai întâi o torţă - fabricată din hârtie, iarbă, vreascuri uscate; sau cel mai bine o lumânare.",
+      "source_pdf_pages": [
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "source_sentence": "Nu folosi chibriturile sau bricheta dacă ai la dispoziţie alte mijloace. - Cu chibrituri: pentru a valorifica mai bine fiecare chibrit, nu încerca să aprinzi cu el direct focul, ci aprinde mai întâi o torţă - fabricată din hârtie, iarbă, vreascuri uscate; sau cel mai bine o lumânare.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0055",
+      "lesson_id": "L040",
+      "concept_id": "L040 — Gândeşte şi improvizează!",
+      "concept_title": "Gândeşte şi improvizează!",
+      "lesson_title": "Gândeşte şi improvizează!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Gândeşte şi improvizează!?",
+      "answer": "NU staţi grupaţi, ci răsfiraţi la intervale de minim 2-3 m unul de altul; grupul e un concentrator de potenţial electric.",
+      "source_pdf_pages": [
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108
+      ],
+      "source_sentence": "NU staţi grupaţi, ci răsfiraţi la intervale de minim 2-3 m unul de altul; grupul e un concentrator de potenţial electric.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0056",
+      "lesson_id": "L040",
+      "concept_id": "L040 — Gândeşte şi improvizează!",
+      "concept_title": "Gândeşte şi improvizează!",
+      "lesson_title": "Gândeşte şi improvizează!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Gândeşte şi improvizează!?",
+      "answer": "11.7. ÎN LIFT Toate ascensoarele moderne au dispozitive de autofrânare automată care fac aproape imposibilă căderea sau prăbuşirea cabinei mai mult de 2-3 m.",
+      "source_pdf_pages": [
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108
+      ],
+      "source_sentence": "11.7. ÎN LIFT Toate ascensoarele moderne au dispozitive de autofrânare automată care fac aproape imposibilă căderea sau prăbuşirea cabinei mai mult de 2-3 m.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0057",
+      "lesson_id": "L041",
+      "concept_id": "L041 — Defecţiuni obişnuite",
+      "concept_title": "Defecţiuni obişnuite",
+      "lesson_title": "Defecţiuni obişnuite",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Defecţiuni obişnuite?",
+      "answer": "După un accident, naufragiu etc: - aminteşte-ţi lozinca SCOP; - primele acţiuni de salvare, conform #2.5.",
+      "source_pdf_pages": [
+        109
+      ],
+      "source_sentence": "După un accident, naufragiu etc: - aminteşte-ţi lozinca SCOP; - primele acţiuni de salvare, conform #2.5.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0058",
+      "lesson_id": "L041",
+      "concept_id": "L041 — Defecţiuni obişnuite",
+      "concept_title": "Defecţiuni obişnuite",
+      "lesson_title": "Defecţiuni obişnuite",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Defecţiuni obişnuite?",
+      "answer": "Navele în dificultate sunt căutate numai dacă au lansat semnalul SOS.",
+      "source_pdf_pages": [
+        109
+      ],
+      "source_sentence": "Navele în dificultate sunt căutate numai dacă au lansat semnalul SOS.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0059",
+      "lesson_id": "L042",
+      "concept_id": "L042 — Echipamentele improvizate",
+      "concept_title": "Echipamentele improvizate",
+      "lesson_title": "Echipamentele improvizate",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Echipamentele improvizate?",
+      "answer": "Orientativ se recomandă pauze de 5-10 minute la fiecare oră sau după fiecare 300 m diferenţă de nivel.",
+      "source_pdf_pages": [
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ],
+      "source_sentence": "Orientativ se recomandă pauze de 5-10 minute la fiecare oră sau după fiecare 300 m diferenţă de nivel.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0060",
+      "lesson_id": "L042",
+      "concept_id": "L042 — Echipamentele improvizate",
+      "concept_title": "Echipamentele improvizate",
+      "lesson_title": "Echipamentele improvizate",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Echipamentele improvizate?",
+      "answer": "Pune pe cap o pălărie sau o şapcă cu o bucată de pânză care atârnă la spate, pe ceafă, sau copiază moda arăbească: împătureşte de câteva ori o batistă şi pune-o pe creştetul capului, apoi ia o basma de pânză cu latura 120 cm şi îndoai-o pe diagonală; pune basmaua peste batistă, cu latura lungă spre faţă şi leag-o cu o sfoară împrejurul capului (fig.",
+      "source_pdf_pages": [
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145
+      ],
+      "source_sentence": "Pune pe cap o pălărie sau o şapcă cu o bucată de pânză care atârnă la spate, pe ceafă, sau copiază moda arăbească: împătureşte de câteva ori o batistă şi pune-o pe creştetul capului, apoi ia o basma de pânză cu latura 120 cm şi îndoai-o pe diagonală; pune basmaua peste batistă, cu latura lungă spre faţă şi leag-o cu o sfoară împrejurul capului (fig.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0061",
+      "lesson_id": "L043",
+      "concept_id": "L043 — Cum se pot pune în practică aceste idei?",
+      "concept_title": "Cum se pot pune în practică aceste idei?",
+      "lesson_title": "Cum se pot pune în practică aceste idei?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum se pot pune în practică aceste idei??",
+      "answer": "Cum sari şi cum aterizezi pe o pantă: 1. Înainte de cădere, coboară corpul prin atârnarea de mâini şi braţe (reduci înălţimea cu aproximativ 2 m); 2.",
+      "source_pdf_pages": [
+        145,
+        146
+      ],
+      "source_sentence": "Cum sari şi cum aterizezi pe o pantă: 1. Înainte de cădere, coboară corpul prin atârnarea de mâini şi braţe (reduci înălţimea cu aproximativ 2 m); 2.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0062",
+      "lesson_id": "L044",
+      "concept_id": "L044 — Cum?",
+      "concept_title": "Cum?",
+      "lesson_title": "Cum?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum??",
+      "answer": "Alege iute cu privirea un loc mai bun în care să intri în apă; 2.",
+      "source_pdf_pages": [
+        146,
+        147,
+        148
+      ],
+      "source_sentence": "Alege iute cu privirea un loc mai bun în care să intri în apă; 2.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0063",
+      "lesson_id": "L044",
+      "concept_id": "L044 — Cum?",
+      "concept_title": "Cum?",
+      "lesson_title": "Cum?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cum??",
+      "answer": "Există diferite metode de a coborî un invalid, alegerea fiind dictată de: rezistenţa funiilor, câte ajutoare participă la coborâre, starea în care sunt ajutoarele, cum e persoana care va fi coborâtă.",
+      "source_pdf_pages": [
+        146,
+        147,
+        148
+      ],
+      "source_sentence": "Există diferite metode de a coborî un invalid, alegerea fiind dictată de: rezistenţa funiilor, câte ajutoare participă la coborâre, starea în care sunt ajutoarele, cum e persoana care va fi coborâtă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0064",
+      "lesson_id": "L045",
+      "concept_id": "L045 — Foamea este cel mai bun bucătar",
+      "concept_title": "Foamea este cel mai bun bucătar",
+      "lesson_title": "Foamea este cel mai bun bucătar",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Foamea este cel mai bun bucătar?",
+      "answer": "Dacă: are coaja păroasă, cleioasă, mucilaginoasă; creşte în apropierea unui cadavru de animal - arunc-o.",
+      "source_pdf_pages": [
+        148,
+        149
+      ],
+      "source_sentence": "Dacă: are coaja păroasă, cleioasă, mucilaginoasă; creşte în apropierea unui cadavru de animal - arunc-o.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0065",
+      "lesson_id": "L045",
+      "concept_id": "L045 — Foamea este cel mai bun bucătar",
+      "concept_title": "Foamea este cel mai bun bucătar",
+      "lesson_title": "Foamea este cel mai bun bucătar",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Foamea este cel mai bun bucătar?",
+      "answer": "Nu amâna, ci caută rezerve şi verifică plantele comestibile din zonă - cât timp încă mai ai ce mânca.",
+      "source_pdf_pages": [
+        148,
+        149
+      ],
+      "source_sentence": "Nu amâna, ci caută rezerve şi verifică plantele comestibile din zonă - cât timp încă mai ai ce mânca.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0066",
+      "lesson_id": "L046",
+      "concept_id": "L046 — Plantele comestibile",
+      "concept_title": "Plantele comestibile",
+      "lesson_title": "Plantele comestibile",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Plantele comestibile?",
+      "answer": "Există multe varietăţi de bambus: de la un fel de iarbă înaltă (prin locurile umede) până la copaci de peste 30 m înălţime.",
+      "source_pdf_pages": [
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156
+      ],
+      "source_sentence": "Există multe varietăţi de bambus: de la un fel de iarbă înaltă (prin locurile umede) până la copaci de peste 30 m înălţime.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0067",
+      "lesson_id": "L046",
+      "concept_id": "L046 — Plantele comestibile",
+      "concept_title": "Plantele comestibile",
+      "lesson_title": "Plantele comestibile",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Plantele comestibile?",
+      "answer": "Dacă nu ştii sau nu poţi să identifici ce fel de plantă este, aplică-i metoda de verificare de mai sus.",
+      "source_pdf_pages": [
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156
+      ],
+      "source_sentence": "Dacă nu ştii sau nu poţi să identifici ce fel de plantă este, aplică-i metoda de verificare de mai sus.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0068",
+      "lesson_id": "L047",
+      "concept_id": "L047 — Ce peşte trebuie aruncat?",
+      "concept_title": "Ce peşte trebuie aruncat?",
+      "lesson_title": "Ce peşte trebuie aruncat?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce peşte trebuie aruncat??",
+      "answer": "Pentru sacrificare, animalul prins şi omorât se agaţă cu capul în jos de o creangă sau de un cui; i se taie beregata, se scurge bine sângele şi se jupoaie imediat, după care se scot măruntaiele.",
+      "source_pdf_pages": [
+        156,
+        157,
+        158,
+        159,
+        160
+      ],
+      "source_sentence": "Pentru sacrificare, animalul prins şi omorât se agaţă cu capul în jos de o creangă sau de un cui; i se taie beregata, se scurge bine sângele şi se jupoaie imediat, după care se scot măruntaiele.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0069",
+      "lesson_id": "L047",
+      "concept_id": "L047 — Ce peşte trebuie aruncat?",
+      "concept_title": "Ce peşte trebuie aruncat?",
+      "lesson_title": "Ce peşte trebuie aruncat?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Ce peşte trebuie aruncat??",
+      "answer": "Taie carnea în fâşii fără grăsime, de max 2,5 cm grosime şi atârnă-le deasupra frunzelor fumegânde, a jăraticului.",
+      "source_pdf_pages": [
+        156,
+        157,
+        158,
+        159,
+        160
+      ],
+      "source_sentence": "Taie carnea în fâşii fără grăsime, de max 2,5 cm grosime şi atârnă-le deasupra frunzelor fumegânde, a jăraticului.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0070",
+      "lesson_id": "L048",
+      "concept_id": "L048 — Sfera de foc, Torentul de noroi",
+      "concept_title": "Sfera de foc, Torentul de noroi",
+      "lesson_title": "Sfera de foc, Torentul de noroi",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Sfera de foc, Torentul de noroi?",
+      "answer": "VALUL URIAŞ (Tsunami) Un cutremur submarin poate produce fenomenul numit Tsunami, adică o serie de valuri uriaşe cu înălţimea până la 30 m, care se mişcă cu 300 km/h, străbat distanţe imense şi produc pagube îngrozitoare pe ţărmurile lovite.",
+      "source_pdf_pages": [
+        160,
+        161,
+        162,
+        163,
+        164
+      ],
+      "source_sentence": "VALUL URIAŞ (Tsunami) Un cutremur submarin poate produce fenomenul numit Tsunami, adică o serie de valuri uriaşe cu înălţimea până la 30 m, care se mişcă cu 300 km/h, străbat distanţe imense şi produc pagube îngrozitoare pe ţărmurile lovite.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0071",
+      "lesson_id": "L048",
+      "concept_id": "L048 — Sfera de foc, Torentul de noroi",
+      "concept_title": "Sfera de foc, Torentul de noroi",
+      "lesson_title": "Sfera de foc, Torentul de noroi",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Sfera de foc, Torentul de noroi?",
+      "answer": "Apare în zonele tropicale şi poartă diverse denumiri: hurricane (în Atlanticul de nord, Marea Caraibelor, Pacificul de nord şi sud-vest); ciclon (în Marea Arabiei, Golful Bengal, sudul Oceanului Indian); tai/un (În Marea Chinei); willy-willy (în nord-vestul Australiei).",
+      "source_pdf_pages": [
+        160,
+        161,
+        162,
+        163,
+        164
+      ],
+      "source_sentence": "Apare în zonele tropicale şi poartă diverse denumiri: hurricane (în Atlanticul de nord, Marea Caraibelor, Pacificul de nord şi sud-vest); ciclon (în Marea Arabiei, Golful Bengal, sudul Oceanului Indian); tai/un (În Marea Chinei); willy-willy (în nord-vestul Australiei).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0072",
+      "lesson_id": "L049",
+      "concept_id": "L049 — Când începe cutremurul: fii calm şi acţionează imediat!",
+      "concept_title": "Când începe cutremurul: fii calm şi acţionează imediat!",
+      "lesson_title": "Când începe cutremurul: fii calm şi acţionează imediat!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Când începe cutremurul: fii calm şi acţionează imediat!?",
+      "answer": "Locuri bune de stat sunt: un colţ al camerei; în golul uşii (mai ales dacă deasupra lui este o grindă puternică); la colţurile încăperii; la parter, subsol sau în pivniţă.",
+      "source_pdf_pages": [
+        164,
+        165
+      ],
+      "source_sentence": "Locuri bune de stat sunt: un colţ al camerei; în golul uşii (mai ales dacă deasupra lui este o grindă puternică); la colţurile încăperii; la parter, subsol sau în pivniţă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0073",
+      "lesson_id": "L049",
+      "concept_id": "L049 — Când începe cutremurul: fii calm şi acţionează imediat!",
+      "concept_title": "Când începe cutremurul: fii calm şi acţionează imediat!",
+      "lesson_title": "Când începe cutremurul: fii calm şi acţionează imediat!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Când începe cutremurul: fii calm şi acţionează imediat!?",
+      "answer": "Nu părăsi imediat clădirea - verifică dacă drumul e sigur.",
+      "source_pdf_pages": [
+        164,
+        165
+      ],
+      "source_sentence": "Nu părăsi imediat clădirea - verifică dacă drumul e sigur.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0074",
+      "lesson_id": "L050",
+      "concept_id": "L050 — Ce poate fi mai îngrozitor decât războiul?",
+      "concept_title": "Ce poate fi mai îngrozitor decât războiul?",
+      "lesson_title": "Ce poate fi mai îngrozitor decât războiul?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce poate fi mai îngrozitor decât războiul??",
+      "answer": "Diferenţa între mentalităţile oamenilor, ale culturilor, popoarelor sau civilizaţiilor, precum şi inegalităţile de resurse materiale disponibile, dar şi de educaţie, au dus şi pot duce oricând la conflicte de clasă, rasă, limbă, credinţă ş.a.m.d.",
+      "source_pdf_pages": [
+        165,
+        166
+      ],
+      "source_sentence": "Diferenţa între mentalităţile oamenilor, ale culturilor, popoarelor sau civilizaţiilor, precum şi inegalităţile de resurse materiale disponibile, dar şi de educaţie, au dus şi pot duce oricând la conflicte de clasă, rasă, limbă, credinţă ş.a.m.d.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0075",
+      "lesson_id": "L051",
+      "concept_id": "L051 — Ce poţi face tu?",
+      "concept_title": "Ce poţi face tu?",
+      "lesson_title": "Ce poţi face tu?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Ce poţi face tu??",
+      "answer": "Pentru alarmare sunt stabilite următoarele semnale acustice: - alarmă aeriană - sunet modulat de două minute cu periodicitate de 4 secunde; - alarmă chimică sau radioactivă - 5 sunete a 16 secunde fiecare, cu pauze de 10 secunde; - calamitate naturală - 3 sunete a 32 secunde fiecare, cu pauze de 12 secunde; - încetarea alarmei - sunet continuu de 2 minute.",
+      "source_pdf_pages": [
+        166,
+        167,
+        168,
+        169
+      ],
+      "source_sentence": "Pentru alarmare sunt stabilite următoarele semnale acustice: - alarmă aeriană - sunet modulat de două minute cu periodicitate de 4 secunde; - alarmă chimică sau radioactivă - 5 sunete a 16 secunde fiecare, cu pauze de 10 secunde; - calamitate naturală - 3 sunete a 32 secunde fiecare, cu pauze de 12 secunde; - încetarea alarmei - sunet continuu de 2 minute.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0076",
+      "lesson_id": "L051",
+      "concept_id": "L051 — Ce poţi face tu?",
+      "concept_title": "Ce poţi face tu?",
+      "lesson_title": "Ce poţi face tu?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ce poţi face tu??",
+      "answer": "Dacă te pregăteşti - poţi să supravieţuieşti, indiferent de neajutorarea ta aparentă.",
+      "source_pdf_pages": [
+        166,
+        167,
+        168,
+        169
+      ],
+      "source_sentence": "Dacă te pregăteşti - poţi să supravieţuieşti, indiferent de neajutorarea ta aparentă.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0077",
+      "lesson_id": "L052",
+      "concept_id": "L052 — Ca să rezişti ai nevoie de un adăpost!",
+      "concept_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "lesson_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Ca să rezişti ai nevoie de un adăpost!?",
+      "answer": "Una dintre ele este impregnarea ignifugă a ţesăturilor, de exemplu cu o soluţie preparată din: 101 de apă, 0,5 kg borax, 0,5 kg acid boric.",
+      "source_pdf_pages": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174
+      ],
+      "source_sentence": "Una dintre ele este impregnarea ignifugă a ţesăturilor, de exemplu cu o soluţie preparată din: 101 de apă, 0,5 kg borax, 0,5 kg acid boric.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0078",
+      "lesson_id": "L052",
+      "concept_id": "L052 — Ca să rezişti ai nevoie de un adăpost!",
+      "concept_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "lesson_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Ca să rezişti ai nevoie de un adăpost!?",
+      "answer": "Lista orientativă cu proviziile necesare unei persoane, pentru 14 zile: Conserve: de carne, peşte, salam - 2 kg; supe, preparate - 4 kg; legume - 4 kg.",
+      "source_pdf_pages": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174
+      ],
+      "source_sentence": "Lista orientativă cu proviziile necesare unei persoane, pentru 14 zile: Conserve: de carne, peşte, salam - 2 kg; supe, preparate - 4 kg; legume - 4 kg.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0079",
+      "lesson_id": "L052",
+      "concept_id": "L052 — Ca să rezişti ai nevoie de un adăpost!",
+      "concept_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "lesson_title": "Ca să rezişti ai nevoie de un adăpost!",
+      "question_type": "prevention",
+      "question": "What problem is prevented or avoided according to the source?",
+      "answer": "Poate că toată această muncă şi cheltuială preventivă pare excesivă, inutilă; dar uită-te la televizor: buletinele de ştiri sunt pline de situaţii în care, dacă ai ghinionul să ajungi, o să fii fericit că ai provizii pregătite.",
+      "source_pdf_pages": [
+        169,
+        170,
+        171,
+        172,
+        173,
+        174
+      ],
+      "source_sentence": "Poate că toată această muncă şi cheltuială preventivă pare excesivă, inutilă; dar uită-te la televizor: buletinele de ştiri sunt pline de situaţii în care, dacă ai ghinionul să ajungi, o să fii fericit că ai provizii pregătite.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0080",
+      "lesson_id": "L056",
+      "concept_id": "L056 — Cine (trebuie salvat primul)?",
+      "concept_title": "Cine (trebuie salvat primul)?",
+      "lesson_title": "Cine (trebuie salvat primul)?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cine (trebuie salvat primul)??",
+      "answer": "19.3). Ţine- le aşa vreo 15-20 sec, apoi coboară-le, sprijină-le pe ceva (scaun, geamantan etc.) şi lasă-le să stea mai sus decât corpul (vreo 30 cm); 2.",
+      "source_pdf_pages": [
+        175,
+        176,
+        177,
+        178,
+        179,
+        180
+      ],
+      "source_sentence": "19.3). Ţine- le aşa vreo 15-20 sec, apoi coboară-le, sprijină-le pe ceva (scaun, geamantan etc.) şi lasă-le să stea mai sus decât corpul (vreo 30 cm); 2.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0081",
+      "lesson_id": "L056",
+      "concept_id": "L056 — Cine (trebuie salvat primul)?",
+      "concept_title": "Cine (trebuie salvat primul)?",
+      "lesson_title": "Cine (trebuie salvat primul)?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cine (trebuie salvat primul)??",
+      "answer": "Sau aplică una sau câteva fâşii înguste de plasture (în funcţie de lungimea tăieturii), ca să ţină apropiate marginile rănii fără a o acoperi de tot (rana trebuie să „respire\"); - Aplică pe rană o compresă sterilă şi un strat de vată. - Fixează pansamentul cu leucoplast sau o fâşie de tifon.",
+      "source_pdf_pages": [
+        175,
+        176,
+        177,
+        178,
+        179,
+        180
+      ],
+      "source_sentence": "Sau aplică una sau câteva fâşii înguste de plasture (în funcţie de lungimea tăieturii), ca să ţină apropiate marginile rănii fără a o acoperi de tot (rana trebuie să „respire\"); - Aplică pe rană o compresă sterilă şi un strat de vată. - Fixează pansamentul cu leucoplast sau o fâşie de tifon.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0082",
+      "lesson_id": "L057",
+      "concept_id": "L057 — NU renunţa!",
+      "concept_title": "NU renunţa!",
+      "lesson_title": "NU renunţa!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about NU renunţa!?",
+      "answer": "Durata apăsării să fie aproximativ egală cu a revenirii, iar cursa de apăsare 3-4 cm; 4.",
+      "source_pdf_pages": [
+        180,
+        181,
+        182,
+        183
+      ],
+      "source_sentence": "Durata apăsării să fie aproximativ egală cu a revenirii, iar cursa de apăsare 3-4 cm; 4.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0083",
+      "lesson_id": "L057",
+      "concept_id": "L057 — NU renunţa!",
+      "concept_title": "NU renunţa!",
+      "lesson_title": "NU renunţa!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe NU renunţa!?",
+      "answer": "Aşează victima la fel ca pentru respiraţia artificială (pe spate, pe o suprafaţă tare etc); 2.",
+      "source_pdf_pages": [
+        180,
+        181,
+        182,
+        183
+      ],
+      "source_sentence": "Aşează victima la fel ca pentru respiraţia artificială (pe spate, pe o suprafaţă tare etc); 2.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0084",
+      "lesson_id": "L058",
+      "concept_id": "L058 — Cum se recunosc aceste cazuri grave?",
+      "concept_title": "Cum se recunosc aceste cazuri grave?",
+      "lesson_title": "Cum se recunosc aceste cazuri grave?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum se recunosc aceste cazuri grave??",
+      "answer": "Telefonează la Poliţie, la Deranjamente electrice. Îndepărtează spectatorii la cel puţin 30 m. de locul accidentului.",
+      "source_pdf_pages": [
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189
+      ],
+      "source_sentence": "Telefonează la Poliţie, la Deranjamente electrice. Îndepărtează spectatorii la cel puţin 30 m. de locul accidentului.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0085",
+      "lesson_id": "L058",
+      "concept_id": "L058 — Cum se recunosc aceste cazuri grave?",
+      "concept_title": "Cum se recunosc aceste cazuri grave?",
+      "lesson_title": "Cum se recunosc aceste cazuri grave?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cum se recunosc aceste cazuri grave??",
+      "answer": "Atenţie: în cazul intoxicaţiilor cu clor - NU se face respiraţie artificială; 4.",
+      "source_pdf_pages": [
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189
+      ],
+      "source_sentence": "Atenţie: în cazul intoxicaţiilor cu clor - NU se face respiraţie artificială; 4.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0086",
+      "lesson_id": "L059",
+      "concept_id": "L059 — A intrat ceva în ochi: NU FRECA ochiul!",
+      "concept_title": "A intrat ceva în ochi: NU FRECA ochiul!",
+      "lesson_title": "A intrat ceva în ochi: NU FRECA ochiul!",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about A intrat ceva în ochi: NU FRECA ochiul!?",
+      "answer": "Nu încerca să iei sau să mişti cu mâna un obiect prins pe centrul ochiului; intervenţia manuală este permisă numai pe pleoape sau pe albul globului ocular.",
+      "source_pdf_pages": [
+        189,
+        190
+      ],
+      "source_sentence": "Nu încerca să iei sau să mişti cu mâna un obiect prins pe centrul ochiului; intervenţia manuală este permisă numai pe pleoape sau pe albul globului ocular.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0087",
+      "lesson_id": "L059",
+      "concept_id": "L059 — A intrat ceva în ochi: NU FRECA ochiul!",
+      "concept_title": "A intrat ceva în ochi: NU FRECA ochiul!",
+      "lesson_title": "A intrat ceva în ochi: NU FRECA ochiul!",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe A intrat ceva în ochi: NU FRECA ochiul!?",
+      "answer": "Pipăie cu el, verifică locul pe care pui talpa, înainte de a lăsa greutatea corpului pe ea. Încearcă să mergi în felul acesta.",
+      "source_pdf_pages": [
+        189,
+        190
+      ],
+      "source_sentence": "Pipăie cu el, verifică locul pe care pui talpa, înainte de a lăsa greutatea corpului pe ea. Încearcă să mergi în felul acesta.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0088",
+      "lesson_id": "L060",
+      "concept_id": "L060 — Degeraaturile",
+      "concept_title": "Degeraaturile",
+      "lesson_title": "Degeraaturile",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Degeraaturile?",
+      "answer": "Numai după câteva ore victima poate fi trecută într-o cameră cu temperatura de +18...+20°C. În cazuri grave, când apare stopul cardio-respirator, se face respiraţia artificială sau masajul cardiac ş.a.m.d.",
+      "source_pdf_pages": [
+        190,
+        191
+      ],
+      "source_sentence": "Numai după câteva ore victima poate fi trecută într-o cameră cu temperatura de +18...+20°C. În cazuri grave, când apare stopul cardio-respirator, se face respiraţia artificială sau masajul cardiac ş.a.m.d.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0089",
+      "lesson_id": "L060",
+      "concept_id": "L060 — Degeraaturile",
+      "concept_title": "Degeraaturile",
+      "lesson_title": "Degeraaturile",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Degeraaturile?",
+      "answer": "Totuşi, scufundarea zonei atinse în apă puţin caldă (fix la +42 °C) ajută.",
+      "source_pdf_pages": [
+        190,
+        191
+      ],
+      "source_sentence": "Totuşi, scufundarea zonei atinse în apă puţin caldă (fix la +42 °C) ajută.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0090",
+      "lesson_id": "L061",
+      "concept_id": "L061 — Cum poate fi evitată?",
+      "concept_title": "Cum poate fi evitată?",
+      "lesson_title": "Cum poate fi evitată?",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Cum poate fi evitată??",
+      "answer": "Răul de altitudine - cauzat de lipsa de oxigen la înălţimi mari, de exemplu la munte, peste 3000 m.",
+      "source_pdf_pages": [
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198
+      ],
+      "source_sentence": "Răul de altitudine - cauzat de lipsa de oxigen la înălţimi mari, de exemplu la munte, peste 3000 m.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0091",
+      "lesson_id": "L061",
+      "concept_id": "L061 — Cum poate fi evitată?",
+      "concept_title": "Cum poate fi evitată?",
+      "lesson_title": "Cum poate fi evitată?",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Cum poate fi evitată??",
+      "answer": "Durerea de dinte sau măsea: dacă e o carie, astupă gaura cu puţină vată înmuiată în răşină proaspătă, lichidă (de la un conifer).",
+      "source_pdf_pages": [
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198
+      ],
+      "source_sentence": "Durerea de dinte sau măsea: dacă e o carie, astupă gaura cu puţină vată înmuiată în răşină proaspătă, lichidă (de la un conifer).",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0092",
+      "lesson_id": "L063",
+      "concept_id": "L063 — Wells)",
+      "concept_title": "Wells)",
+      "lesson_title": "Wells)",
+      "question_type": "condition",
+      "question": "Under what condition or operating situation does the source describe Wells)?",
+      "answer": "Un drum de 1000 km. Începe cu primul pas. * Sporturi recomandate: - Cros, jogging; - înot; - Drumeţie - la munte sau în deltă; - Alpinism, căţărare; - Arte marţiale: judo, karate, jujitsu, aikido, wushu, taekwondo. Şi alte sporturi (de mişcare!) sunt folositoare pentru întărirea corpului şi pentru supravieţuire, dar mai puţin decât cele specificate mai sus.",
+      "source_pdf_pages": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206
+      ],
+      "source_sentence": "Un drum de 1000 km. Începe cu primul pas. * Sporturi recomandate: - Cros, jogging; - înot; - Drumeţie - la munte sau în deltă; - Alpinism, căţărare; - Arte marţiale: judo, karate, jujitsu, aikido, wushu, taekwondo. Şi alte sporturi (de mişcare!) sunt folositoare pentru întărirea corpului şi pentru supravieţuire, dar mai puţin decât cele specificate mai sus.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    },
+    {
+      "question_id": "SQ0093",
+      "lesson_id": "L063",
+      "concept_id": "L063 — Wells)",
+      "concept_title": "Wells)",
+      "lesson_title": "Wells)",
+      "question_type": "technical_fact",
+      "question": "What technical point does the source state about Wells)?",
+      "answer": "Instrucţie ar fi asimilarea cunoştinţelor expuse în acest Manual; educaţia ar fi utilizarea lor corectă şi conştientă în contextul respectării simultane a regulilor de bun simţ, politeţe, etică, protecţia mediului etc.",
+      "source_pdf_pages": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206
+      ],
+      "source_sentence": "Instrucţie ar fi asimilarea cunoştinţelor expuse în acest Manual; educaţia ar fi utilizarea lor corectă şi conştientă în contextul respectării simultane a regulilor de bun simţ, politeţe, etică, protecţia mediului etc.",
+      "generator": "study_quiz_builder_v0.3.5_source_only"
+    }
+  ]
+}

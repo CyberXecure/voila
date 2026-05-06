@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>92176.pdf</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem("voila-theme");
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = saved || (prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #e8dfd0;
+      --paper: #f5ecd9;
+      --paper-soft: #efe3cc;
+      --text: #2f2a24;
+      --muted: #75695c;
+      --heading: #241e19;
+      --accent: #8a5a32;
+      --accent-soft: #ead7b8;
+      --accent-strong: #65401f;
+      --teal: #2f6f6d;
+      --border: #d7c5a8;
+      --source-bg: #efe4d0;
+      --source-text: #2d2923;
+      --source-border: #d2bea0;
+      --shadow: rgba(62, 45, 28, 0.16);
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #151a1d;
+      --paper: #20272b;
+      --paper-soft: #263035;
+      --text: #d8d0c3;
+      --muted: #a79d90;
+      --heading: #f1e7d8;
+      --accent: #d7a86e;
+      --accent-soft: #3a3026;
+      --accent-strong: #f0c98d;
+      --teal: #72b8b2;
+      --border: #3a444a;
+      --source-bg: #192023;
+      --source-text: #e2d8c9;
+      --source-border: #3a444a;
+      --shadow: rgba(0, 0, 0, 0.34);
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(138, 90, 50, 0.14), transparent 34%),
+        linear-gradient(180deg, var(--paper-soft) 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.72;
+      font-size: 17px;
+    }
+
+    html[data-theme="dark"] body {
+      background:
+        radial-gradient(circle at top left, rgba(215, 168, 110, 0.10), transparent 34%),
+        linear-gradient(180deg, #1b2226 0%, var(--bg) 100%);
+    }
+
+    .theme-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: flex-end;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 14px 20px 0;
+    }
+
+    .theme-toggle {
+      border: 1px solid var(--border);
+      background: var(--paper);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    main {
+      max-width: 1040px;
+      margin: 24px auto 42px;
+      padding: 46px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      box-shadow: 0 22px 58px var(--shadow);
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+      color: var(--heading);
+      font-size: 36px;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-top: 52px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--heading);
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+
+    h2::before {
+      content: "";
+      display: block;
+      width: 58px;
+      height: 5px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--teal));
+    }
+
+    h3 {
+      margin-top: 32px;
+      margin-bottom: 14px;
+      color: var(--accent-strong);
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 20px;
+      padding-left: 28px;
+    }
+
+    li {
+      margin: 9px 0;
+    }
+
+    li::marker {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    h3 + ul,
+    h3 + ol {
+      background: var(--paper-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 24px 18px 38px;
+    }
+
+    code {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      padding: 2px 7px;
+      border-radius: 7px;
+      font-size: 0.94em;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      background: var(--source-bg);
+      color: var(--source-text);
+      padding: 24px;
+      border-radius: 18px;
+      overflow-x: auto;
+      border: 1px solid var(--source-border);
+      font-size: 15.5px;
+      line-height: 1.68;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+
+    .figure-card {
+      margin: 18px 0 26px;
+      padding: 18px;
+      background: var(--paper-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .figure-card img {
+      display: block;
+      width: 100%;
+      max-width: 780px;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .figure-card figcaption {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .figure-card figcaption span {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    strong {
+      color: var(--heading);
+    }
+
+    @media (max-width: 760px) {
+      .theme-bar {
+        padding: 10px 10px 0;
+      }
+
+      main {
+        margin: 12px 0 0;
+        padding: 24px;
+        border-radius: 0;
+      }
+
+      body {
+        font-size: 16px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      h2 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="theme-bar">
+    <button class="theme-toggle" type="button" id="themeToggle">Toggle theme</button>
+  </div>
+
+  <main>
+<h1>92176.pdf</h1>
+<p>Generated by Voila! v0.1.2</p>
+<p>Mode: source language, no translation, no AI generation</p>
+<p>Text status: OCR-cleaned reading text; original source preserved in pages.md/pages.json</p>
+<p>Source: <code>D:\dev\projects\voila\data\input\Pages from Marine Auxiliary Machinery 7th ed. - H. McGeorge (1995) WW.pdf</code></p>
+<h2>L001 — Automatic Pumping or Vacuum Trap</h2>
+<p>Source PDF pages: 1</p>
+<p>Word count: 180</p>
+<h3>Figures</h3>
+
+<figure class="figure-card">
+  <img src="figures/crops/figure_4_23_page_001.png" alt="Figure 4.23 Automatic pumping or vacuum trap">
+  <figcaption>
+    <strong>Figure 4.23</strong> — Automatic pumping or vacuum trap
+    <span>PDF page 1</span>
+  </figcaption>
+</figure>
+
+<h3>Lesson summary</h3>
+<ul>
+<li>When the trap is empty, the exhaust valve C is open and the steam valve D is closed.</li>
+<li>Water flowing into the trap through the non-return valve raises the float E until it compresses the spring H, exerting a force which plucks the spindle J away from the magnet G so that the exhaust valve is projected into the closed position and the steam valve D is opened through the movement of the lever.</li>
+<li>Steam is therefore admitted to the trap and drives out the water through the non-return valve B.</li>
+<li>The float falls with the level of the water inside the trap and engages the collar F, pulling the spindle J down so that the exhaust valve opens and the steam valve closes.</li>
+<li>The cycle of operation is then repeated.</li>
+<li>Being float controlled, the trap operates only when water is flowing into it.</li>
+</ul>
+<h3>Review questions</h3>
+<ol>
+<li>What is the position of the exhaust valve and steam valve when the trap is empty?</li>
+<li>What causes the float to rise inside the trap?</li>
+<li>What happens when steam is admitted to the trap?</li>
+<li>Why does the trap operate only when water is flowing into it?</li>
+</ol>
+<h3>Cleaned source text</h3>
+<pre><code>When the trap is empty, the exhaust valve C is open and the steam valve D
+is closed. Water flowing into the trap through the non-return valve raises the
+float E until it compresses the spring H, exerting a force which plucks the
+spindle J away from the magnet G so that the exhaust valve is projected into
+the closed position and the steam valve D is opened through the movement of
+the lever. Steam is therefore admitted to the trap and drives out the water
+through the non-return valve B. The float falls with the level of the water inside
+the trap and engages the collar F, pulling the spindle J down so that the exhaust
+valve opens and the steam valve closes. The cycle of operation is then
+repeated. Being float controlled, the trap operates only when water is flowing
+into it.</code></pre>
+<h2>L002 — Maintenance of traps</h2>
+<p>Source PDF pages: 1, 2</p>
+<p>Word count: 316</p>
+<h3>Lesson summary</h3>
+<ul>
+<li>A defective trap wastes steam and fails to ensure adequate heating.</li>
+<li>Poor heater performance can sometimes be traced to a defective steam trap.</li>
+<li>The only exception is the thermodynamic type.</li>
+<li>Before inspecting any trap, it is advisable to check the strainer which should always be provided at the inlet of the trap.</li>
+<li>The contents of the strainer screen will give an indication of the cleanliness of the system.</li>
+<li>Fine dirt passing through the strainer is one of the chief causes of defective steam traps.</li>
+<li>Pieces of pipe scale or dirt jammed across the seat can prevent proper closure and if left for a period of time can give rise to wire drawing.</li>
+</ul>
+<h3>Maintenance / safety notes</h3>
+<ul>
+<li>A defective trap wastes steam and fails to ensure adequate heating.</li>
+<li>Poor heater performance can sometimes be traced to a defective steam trap.</li>
+<li>Fine dirt passing through the strainer is one of the chief causes of defective steam traps.</li>
+<li>Pieces of pipe scale or dirt jammed across the seat can prevent proper closure and if left for a period of time can give rise to wire drawing.</li>
+<li>If the thermodynamic type fails to operate after cleaning, then it could be that the disc and seat require lapping.</li>
+<li>Mechanical traps should be checked for defective floats and buckets and wear on any linkages, while the valves and seats should be renewed if necessary.</li>
+</ul>
+<h3>Review questions</h3>
+<ol>
+<li>What can a defective steam trap cause?</li>
+<li>Why should the inlet strainer be checked before inspecting a trap?</li>
+<li>How can a thermodynamic trap be checked during operation?</li>
+<li>What should be checked on mechanical traps?</li>
+<li>What problems can incorrect adjustment of bimetallic steam traps cause?</li>
+</ol>
+<h3>Cleaned source text</h3>
+<pre><code>A defective trap wastes steam and fails to ensure adequate heating. Poor heater
+performance can sometimes be traced to a defective steam trap. One remedy is
+to close in the steam outlet valve to perhaps half or quarter of a turn. Most traps
+can be regularly opened for inspection. The only exception is the
+thermodynamic type. When operating correctly this gives a characteristic
+&#x27;click&#x27;, usually at intervals of between 20 and 30 s so that its performance can be
+checked simply by listening.
+Before inspecting any trap, it is advisable to check the strainer which should
+always be provided at the inlet of the trap. The contents of the strainer screen
+will give an indication of the cleanliness of the system. Fine dirt passing
+through the strainer is one of the chief causes of defective steam traps. Pieces of
+pipe scale or dirt jammed across the seat can prevent proper closure and if left
+for a period of time can give rise to wire drawing.
+In most cases cleaning and reassembling should be sufficient to ensure
+satisfactory operation. If the thermodynamic type fails to operate after
+cleaning, then it could be that the disc and seat require lapping. Mechanical
+traps should be checked for defective floats and buckets and wear on any
+linkages, while the valves and seats should be renewed if necessary. In the case
+of thermostatic traps, the elements should be checked to ensure that they are
+sound. Particular care should be taken with the elements of bimetallic steam
+traps. Incorrect adjustment can give rise to excessive waterlogging or cause the
+traps to blow steam 1 while the elements themselves can sometimes assume a
+permanent &#x27;set&#x27;.</code></pre>
+<h2>L003 — Strainers and filters</h2>
+<p>Source PDF pages: 2, 3, 4, 5</p>
+<p>Word count: 668</p>
+<h3>Figures</h3>
+
+<figure class="figure-card">
+  <img src="figures/crops/figure_4_24_page_003.png" alt="Figure 4.24 Single strainers for high pressure water, steam or oil service and low pressure water or oil service">
+  <figcaption>
+    <strong>Figure 4.24</strong> — Single strainers for high pressure water, steam or oil service and low pressure water or oil service
+    <span>PDF page 3</span>
+  </figcaption>
+</figure>
+
+
+<figure class="figure-card">
+  <img src="figures/crops/figure_4_25_page_003.png" alt="Figure 4.25 The Auto-Klean strainer showing circular straining plates, separation washers and spider">
+  <figcaption>
+    <strong>Figure 4.25</strong> — The Auto-Klean strainer showing circular straining plates, separation washers and spider
+    <span>PDF page 3</span>
+  </figcaption>
+</figure>
+
+
+<figure class="figure-card">
+  <img src="figures/crops/figure_4_26_page_004.png" alt="Figure 4.26 Cartridge filters">
+  <figcaption>
+    <strong>Figure 4.26</strong> — Cartridge filters
+    <span>PDF page 4</span>
+  </figcaption>
+</figure>
+
+
+<figure class="figure-card">
+  <img src="figures/crops/figure_4_27_page_005.png" alt="Figure 4.27 Magnetic filter">
+  <figcaption>
+    <strong>Figure 4.27</strong> — Magnetic filter
+    <span>PDF page 5</span>
+  </figcaption>
+</figure>
+
+<h3>Lesson summary</h3>
+<ul>
+<li>The term strainer is sometimes used specifically for a simple device made up with a single layer of coarse gauze, a very coarse wire mesh or a drilled or perforated plate.</li>
+<li>The term filters also describes a device designed to prevent the passage of unwanted solids into or further along a system, but the implication is that the particles are very small and the filter cartridge or element has a more complex or elaborate make up.</li>
+<li>The simplest strainer consists of a box with a removable lid in which a flat perforated plate is inserted such that the fluid must pass through the perforations.</li>
+<li>Strainer plates corrode and erode and when cleaning due attention should be paid to the condition of the plate.</li>
+<li>For high pressure water, steam or oil services simple basket strainers are used.</li>
+<li>The knife edge strainer, (Figure 4.25) has a series of discs ganged to a shaft.</li>
+<li>Cartridge filters (Figure 4.26) are usually of the duplex type and have various types of element.</li>
+</ul>
+<h3>Maintenance / safety notes</h3>
+<ul>
+<li>The strainer in this sense is installed to hold large foreign objects which could cause damage or blockage.</li>
+<li>The term filters also describes a device designed to prevent the passage of unwanted solids into or further along a system, but the implication is that the particles are very small and the filter cartridge or element has a more complex or elaborate make up.</li>
+<li>Strainer plates corrode and erode and when cleaning due attention should be paid to the condition of the plate.</li>
+<li>If a gap has formed at the top or bottom of the plate (so that solid objects or rags could pass through) or if it is in danger of breaking up then it should be renewed.</li>
+<li>Since these covers are frequently of cast iron and are secured by lugs and thumb screws care must be taken not to use undue force when closing them.</li>
+<li>It is essential to operate these strainers regularly to prevent clogging when rotation may be difficult.</li>
+</ul>
+<h3>Review questions</h3>
+<ol>
+<li>How does the source distinguish between a strainer and a filter?</li>
+<li>Where are simple flat-plate strainers found according to the source?</li>
+<li>Why should strainer plates be inspected during cleaning?</li>
+<li>How does a knife edge strainer remove trapped particles?</li>
+<li>What extra protection do magnetic filters provide?</li>
+</ol>
+<h3>Cleaned source text</h3>
+<pre><code>The term strainer is sometimes used specifically for a simple device made up
+with a single layer of coarse gauze, a very coarse wire mesh or a drilled or
+perforated plate. The strainer in this sense is installed to hold large foreign
+objects which could cause damage or blockage. The term filters also describes a
+device designed to prevent the passage of unwanted solids into or further
+along a system, but the implication is that the particles are very small and the
+filter cartridge or element has a more complex or elaborate make up.
+The simplest strainer consists of a box with a removable lid in which a flat
+perforated plate is inserted such that the fluid must pass through the
+perforations. Such strainers are found in bilge systems immediately before
+bilge valves. Perforation sizes vary according to duty and manufacture but are
+usually in the range 3-12 mm.
+Strainer plates corrode and erode and when cleaning due attention should be
+paid to the condition of the plate. If a gap has formed at the top or bottom of
+the plate (so that solid objects or rags could pass through) or if it is in danger of
+breaking up then it should be renewed. These strainers protect the pump. If
+strainer covers are hinged the hinges are made loose to avoid the problem of
+poor seating. The state of the gasket should be checked, mating surfaces must
+be clean and care should be taken when closing the cover. Since these covers
+are frequently of cast iron and are secured by lugs and thumb screws care must
+be taken not to use undue force when closing them.
+For high pressure water, steam or oil services simple basket strainers are
+used. These consist of a cylindrical container in which a perforated metal or
+wire basket is suspended (shown left Figure 4.24). Flow through these units is
+from the top, into. the basket and out from the outside of the basket. They may
+be installed as duplex units with three way cocks at inlet and outlet so that one
+or both baskets can be in use, but one can be shut down for cleaning. Close to
+136
+Single strainers for (left) high pressure water, steam or oil
+having air release cocks, are installed.
+Lubricating oil systems are. fitted with a wide variety of strainers some of
+which can be cleaned in situ. The knife edge strainer, (Figure 4.25) has a series of
+discs ganged to a shaft. Interspaced between the discs are a number of thin
+fingers. The solid particles are trapped on the edges of, and between, the discs.
+By rotating the disc shaft. the particles are cleared by the fingers and fall to a
+sump, which is drained periodically. It is essential to operate these strainers
+regularly to prevent clogging when rotation may be difficult. Some have been
+fitted with electric motors for continuous operation.
+Cartridge filters (Figure 4.26) are usually of the duplex type and have
+various types of element. Some cartridges can be removed for cleaning; others
+Cartridges can be of gauze layers with different mesh sizes; others are made up with layers of mesh and felt, some use membrane type
+materials.
+Magnetic filters (Figure 4.27) provide extra protection for engines and
+gearboxes where iron or steel wear particles are likely to be present.</code></pre>
+  </main>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const button = document.getElementById("themeToggle");
+
+      function label(theme) {
+        button.textContent = theme === "dark" ? "☀ Light mode" : "🌙 Dark mode";
+      }
+
+      function setTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        localStorage.setItem("voila-theme", theme);
+        label(theme);
+      }
+
+      const current = root.getAttribute("data-theme") || "light";
+      label(current);
+
+      button.addEventListener("click", function () {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        setTheme(next);
+      });
+    })();
+  </script>
+
+<!-- VOILA_FIXED_COURSE_NAV_START -->
+<style>
+  body {
+    padding-bottom: 112px !important;
+  }
+
+  .voila-course-fixed-nav {
+    position: fixed;
+    left: 50%;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 2147483000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+    padding: 10px;
+    background: rgba(24, 33, 35, 0.90);
+    border: 1px solid rgba(215, 197, 168, 0.45);
+    border-radius: 999px;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.36);
+    backdrop-filter: blur(10px);
+  }
+
+  .voila-course-fixed-nav a,
+  .voila-course-fixed-nav button {
+    border: 1px solid rgba(215, 197, 168, 0.55);
+    background: #e0ae6b;
+    color: #fffaf0;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
+    line-height: 1;
+    font-family: inherit;
+  }
+
+  .voila-course-fixed-nav a.secondary,
+  .voila-course-fixed-nav button.secondary {
+    background: rgba(239, 227, 204, 0.12);
+    color: #f5ecd9;
+  }
+
+  .voila-course-fixed-nav a:hover,
+  .voila-course-fixed-nav button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  @media (max-width: 760px) {
+    body {
+      padding-bottom: 158px !important;
+    }
+
+    .voila-course-fixed-nav {
+      left: 10px;
+      right: 10px;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      transform: none;
+      max-width: none;
+      flex-wrap: wrap;
+      border-radius: 22px;
+      padding: 10px;
+    }
+
+    .voila-course-fixed-nav a,
+    .voila-course-fixed-nav button {
+      flex: 1 1 30%;
+      min-width: 88px;
+      padding: 10px 8px;
+      font-size: 13px;
+      text-align: center;
+    }
+  }
+</style>
+
+<nav class="voila-course-fixed-nav" aria-label="Voila course navigation">
+  <a href="http://127.0.0.1:8787/">Back</a>
+  <a class="secondary" href="http://127.0.0.1:8787/study?pdf=Pages%20from%20Marine%20Auxiliary%20Machinery%207th%20ed.%20-%20H.%20McGeorge%20%281995%29%20WW.pdf">Study</a>
+  <a class="secondary" href="http://127.0.0.1:8787/progress?pdf=Pages%20from%20Marine%20Auxiliary%20Machinery%207th%20ed.%20-%20H.%20McGeorge%20%281995%29%20WW.pdf">Progress</a>
+  <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">↑ Top</button>
+  <button type="button" onclick="window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })">↓ Bottom</button>
+</nav>
+
+<script>
+  (function () {
+    document.addEventListener("click", function (event) {
+      const link = event.target.closest("a");
+      if (!link) return;
+
+      const href = link.getAttribute("href") || "";
+
+      if (
+        href.startsWith("/") ||
+        href.startsWith("http://127.0.0.1") ||
+        href.startsWith("http://localhost") ||
+        href.startsWith("figures_hybrid/")
+      ) {
+        link.removeAttribute("target");
+      }
+    });
+  })();
+</script>
+<!-- VOILA_FIXED_COURSE_NAV_END -->
+
+</body>
+</html>

@@ -99,7 +99,7 @@ def normalize_quiz(raw: Any) -> list[dict]:
             {
                 "question_id": str(item.get("question_id") or item.get("id") or f"Q{index:03d}"),
                 "lesson_id": lesson_id,
-                "concept_id": lesson_id,
+                "concept_id": str(item.get("concept_id") or item.get("concept") or lesson_id).strip(),
                 "question": question,
                 "answer": str(answer).strip(),
                 "source": item,
@@ -110,7 +110,13 @@ def normalize_quiz(raw: Any) -> list[dict]:
 
 
 def load_questions(output_dir: Path) -> list[dict]:
-    quiz_path = output_dir / "quiz.json"
+    study_quiz_path = output_dir / "quiz.study.json"
+    default_quiz_path = output_dir / "quiz.json"
+
+    if study_quiz_path.exists():
+        quiz_path = study_quiz_path
+    else:
+        quiz_path = default_quiz_path
 
     if not quiz_path.exists():
         return []

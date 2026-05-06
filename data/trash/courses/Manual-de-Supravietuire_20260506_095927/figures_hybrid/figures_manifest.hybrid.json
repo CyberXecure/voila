@@ -1,0 +1,10 @@
+{
+  "source_file": "D:\\dev\\projects\\voila\\data\\input\\Manual-de-Supravietuire.pdf",
+  "method": "hybrid_embedded_image_plus_vector_bbox_v1",
+  "page_from": 1,
+  "page_to": 234,
+  "render_zoom": 3.0,
+  "max_figures": 120,
+  "figure_crops": [],
+  "errors": []
+}

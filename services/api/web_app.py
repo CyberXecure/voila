@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import html
+import json
+import shutil
+import datetime as dt
 import re
 import subprocess
 import sys
@@ -275,6 +278,141 @@ def page(title: str, body: str) -> HTMLResponse:
       padding: 2px 6px;
       border-radius: 7px;
     }}
+      .floating-nav button {{
+        min-width: 84px;
+        padding: 7px 10px;
+        font-size: 12px;
+      }}
+    }}
+      .floating-nav button {{
+        min-width: 84px;
+        padding: 7px 10px;
+        font-size: 12px;
+      }}
+    }}
+
+  
+    /* Voila fixed navigation */
+    body {{
+      padding-bottom: 108px;
+    }}
+
+    .app-fixed-nav {{
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 2147483000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      max-width: calc(100vw - 32px);
+      padding: 10px;
+      background: rgba(24, 33, 35, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.36);
+      backdrop-filter: blur(10px);
+    }}
+
+    .app-fixed-nav a,
+    .app-fixed-nav button {{
+      border: 1px solid var(--border);
+      background: var(--paper-soft);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      white-space: nowrap;
+      line-height: 1;
+    }}
+
+    .app-fixed-nav a.primary,
+    .app-fixed-nav button.primary {{
+      background: var(--accent);
+      color: #fffaf0;
+      border-color: var(--accent);
+    }}
+
+    .app-fixed-nav button.danger {{
+      background: rgba(151, 75, 58, 0.92);
+      color: #fffaf0;
+      border-color: rgba(151, 75, 58, 0.92);
+    }}
+
+    .app-fixed-nav a:hover,
+    .app-fixed-nav button:hover {{
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }}
+
+
+    .app-fixed-nav[hidden] {{
+      display: none !important;
+    }}
+
+    .app-fixed-nav [hidden] {{
+      display: none !important;
+    }}
+
+    @media (max-width: 760px) {{
+      body {{
+        padding-bottom: 142px;
+      }}
+
+      .app-fixed-nav {{
+        left: 10px;
+        right: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        transform: none;
+        max-width: none;
+        flex-wrap: wrap;
+        justify-content: center;
+        border-radius: 22px;
+        padding: 10px;
+      }}
+
+      .app-fixed-nav a,
+      .app-fixed-nav button {{
+        flex: 1 1 30%;
+        min-width: 92px;
+        padding: 10px 8px;
+        font-size: 13px;
+        text-align: center;
+      }}
+    }}
+    /* End Voila fixed navigation */
+
+  
+    .inline-form {{
+      display: inline;
+      margin: 0;
+    }}
+
+    .btn.danger,
+    button.danger {{
+      background: rgba(151, 75, 58, 0.92);
+      color: #fffaf0;
+      border-color: rgba(151, 75, 58, 0.92);
+    }}
+
+  
+    .btn.danger,
+    button.danger {{
+      background: rgba(151, 75, 58, 0.92);
+      color: #fffaf0;
+      border-color: rgba(151, 75, 58, 0.92);
+    }}
+
+    .delete-library-form {{
+      display: inline-flex;
+      margin: 0;
+    }}
+
   </style>
   <script>
     (function () {{
@@ -319,6 +457,186 @@ def page(title: str, body: str) -> HTMLResponse:
       label();
     }})();
   </script>
+
+    <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
+      <a class="primary" href="/">Back</a>
+      <a id="fixedStudyLink" href="/" hidden>Study</a>
+      <a id="fixedProgressLink" href="/" hidden>Progress</a>
+      <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ Top</button>
+      <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ Bottom</button>
+      <button id="fixedResetButton" class="danger" type="button" hidden>Reset</button>
+    </nav>
+
+    <script>
+      (function () {{
+        const params = new URLSearchParams(window.location.search);
+        const pdf = params.get("pdf");
+        const path = window.location.pathname;
+
+        const studyLink = document.getElementById("fixedStudyLink");
+        const progressLink = document.getElementById("fixedProgressLink");
+        const resetButton = document.getElementById("fixedResetButton");
+
+        if (pdf) {{
+          const encodedPdf = encodeURIComponent(pdf);
+
+          if (studyLink && path !== "/study") {{
+            studyLink.href = "/study?pdf=" + encodedPdf;
+            studyLink.hidden = false;
+          }}
+
+          if (progressLink && path !== "/progress") {{
+            progressLink.href = "/progress?pdf=" + encodedPdf;
+            progressLink.hidden = false;
+          }}
+
+          if (resetButton && (path === "/study" || path === "/progress")) {{
+            resetButton.hidden = false;
+
+            resetButton.addEventListener("click", function () {{
+              const ok = window.confirm("Reset study progress for this PDF?");
+
+              if (!ok) {{
+                return;
+              }}
+
+              const form = document.createElement("form");
+              form.method = "POST";
+              form.action = "/study-reset";
+
+              const input = document.createElement("input");
+              input.type = "hidden";
+              input.name = "pdf_name";
+              input.value = pdf;
+
+              form.appendChild(input);
+              document.body.appendChild(form);
+              form.submit();
+            }});
+          }}
+        }}
+      }})();
+    </script>
+
+
+    <script id="same-tab-navigation">
+      (function () {{
+        document.addEventListener("click", function (event) {{
+          const link = event.target.closest("a");
+
+          if (!link) {{
+            return;
+          }}
+
+          const href = link.getAttribute("href") || "";
+
+          if (
+            href.startsWith("/") ||
+            href.startsWith("http://127.0.0.1") ||
+            href.startsWith("http://localhost")
+          ) {{
+            link.removeAttribute("target");
+          }}
+        }});
+      }})();
+    </script>
+
+
+    
+
+
+    <script id="hide-fixed-nav-on-home">
+      (function () {{
+        function hideHomeNav() {{
+          const path = window.location.pathname;
+          const nav = document.getElementById("appFixedNav");
+
+          if ((path === "/" || path === "") && nav) {{
+            nav.remove();
+            document.body.style.paddingBottom = "0";
+          }}
+        }}
+
+        hideHomeNav();
+
+        if (document.readyState === "loading") {{
+          document.addEventListener("DOMContentLoaded", hideHomeNav);
+        }} else {{
+          hideHomeNav();
+        }}
+      }})();
+    </script>
+
+
+    <script id="delete-from-library-injector">
+      (function () {{
+        function injectDeleteButtons() {{
+          const path = window.location.pathname;
+
+          if (path !== "/" && path !== "") {{
+            return;
+          }}
+
+          const cards = document.querySelectorAll(".card");
+
+          cards.forEach(function (card) {{
+            if (card.querySelector(".delete-library-form")) {{
+              return;
+            }}
+
+            const title = card.querySelector("h2, h3");
+
+            if (!title) {{
+              return;
+            }}
+
+            const pdfName = (title.innerText || "").replace(/\s+/g, " ").trim();
+
+            if (!pdfName.toLowerCase().endsWith(".pdf")) {{
+              return;
+            }}
+
+            const form = document.createElement("form");
+            form.className = "delete-library-form";
+            form.method = "POST";
+            form.action = "/delete-from-library";
+            form.onsubmit = function () {{
+              return window.confirm("Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted.");
+            }};
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "pdf_name";
+            input.value = pdfName;
+
+            const button = document.createElement("button");
+            button.className = "btn danger";
+            button.type = "submit";
+            button.textContent = "Delete from library";
+
+            form.appendChild(input);
+            form.appendChild(button);
+
+            const actions = card.querySelector(".actions");
+
+            if (actions) {{
+              actions.appendChild(form);
+            }} else {{
+              card.appendChild(form);
+            }}
+          }});
+        }}
+
+        injectDeleteButtons();
+
+        if (document.readyState === "loading") {{
+          document.addEventListener("DOMContentLoaded", injectDeleteButtons);
+        }} else {{
+          injectDeleteButtons();
+        }}
+      }})();
+    </script>
+
 </body>
 </html>
 """
@@ -396,6 +714,27 @@ def run_step(label: str, args: list[str], log_lines: list[str], optional: bool =
         raise RuntimeError(message)
 
 
+
+def study_min_page_for_pdf(pdf_path: Path) -> int:
+    config_path = PROJECT_ROOT / "data" / "study_config.json"
+
+    if not config_path.exists():
+        return 1
+
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        min_page = int(config.get("default_min_page") or 1)
+        per_pdf = config.get("per_pdf") or {}
+        pdf_config = per_pdf.get(pdf_path.stem) or {}
+
+        if "min_page" in pdf_config:
+            min_page = int(pdf_config["min_page"])
+
+        return max(1, min_page)
+    except Exception:
+        return 1
+
+
 def generate_for_pdf(pdf_path: Path) -> Path:
     output_dir = OUTPUT_DIR / pdf_path.stem
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -456,16 +795,45 @@ def generate_for_pdf(pdf_path: Path) -> Path:
         log_lines,
     )
 
+    study_min_page = study_min_page_for_pdf(pdf_path)
+
     run_step(
-        "8. Export figures",
+        "8. Build study quiz",
+        [
+            str(PROJECT_ROOT / "services" / "api" / "study_quiz_builder.py"),
+            str(output_dir),
+            "--min-page",
+            str(study_min_page),
+            "--max-per-lesson",
+            "4",
+            "--max-total",
+            "350",
+        ],
+        log_lines,
+    )
+
+    run_step(
+        "9. Export figures",
         [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_hybrid.py"), str(pdf_path)],
         log_lines,
         optional=True,
     )
 
     run_step(
-        "9. Export HTML course",
+        "10. Export HTML course",
         [str(PROJECT_ROOT / "services" / "api" / "html_exporter.py"), str(course_cleaned)],
+        log_lines,
+    )
+
+    course_html = output_dir / "course.cleaned.html"
+
+    run_step(
+        "11. Inject course navigation",
+        [
+            str(PROJECT_ROOT / "services" / "api" / "course_nav_injector.py"),
+            str(course_html),
+            pdf_path.name,
+        ],
         log_lines,
     )
 
@@ -523,34 +891,36 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if course_html.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "course.cleaned.html")}">Open course</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">Open course</a>'
             )
 
         if hybrid_figures_html.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">Figures</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">Figures</a>'
             )
 
         elif figures_html.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="{output_url(pdf.stem, "figures", "figures.html")}">Figures</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "figures", "figures.html")}">Figures</a>'
             )
 
         if hybrid_manifest.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="http://127.0.0.1:8790/?pdf={quote(pdf.name)}">Edit crops</a>'
+                f'<a class="btn" href="http://127.0.0.1:8790/?pdf={quote(pdf.name)}">Edit crops</a>'
             )
 
         if quiz_file.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="/study?pdf={quote(pdf.name)}">Study</a>'
+                f'<a class="btn" href="/study?pdf={quote(pdf.name)}">Study</a>'
+            )
+            actions.append(
+                f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">Progress</a>'
             )
 
         if log_file.exists():
             actions.append(
-                f'<a class="btn" target="_blank" href="/log?pdf={quote(pdf.name)}">Logs</a>'
+                f'<a class="btn" href="/log?pdf={quote(pdf.name)}">Logs</a>'
             )
-
         cards.append(
             f"""
             <article class="card">
@@ -631,6 +1001,249 @@ async def upload_pdf(file: UploadFile = File(...)) -> RedirectResponse:
         status_code=303,
     )
 
+
+
+
+
+def trash_course_output(output_dir: Path) -> Path | None:
+    if not output_dir.exists():
+        return None
+
+    trash_dir = PROJECT_ROOT / "data" / "trash" / "courses"
+    trash_dir.mkdir(parents=True, exist_ok=True)
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    target = trash_dir / f"{output_dir.name}_{stamp}"
+
+    shutil.move(str(output_dir), str(target))
+
+    return target
+
+
+
+def trash_input_pdf(pdf_path: Path) -> Path | None:
+    if not pdf_path.exists():
+        return None
+
+    trash_dir = PROJECT_ROOT / "data" / "trash" / "pdfs"
+    trash_dir.mkdir(parents=True, exist_ok=True)
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    target = trash_dir / f"{pdf_path.stem}_{stamp}{pdf_path.suffix}"
+
+    shutil.move(str(pdf_path), str(target))
+
+    return target
+
+
+@app.post("/delete-course")
+def delete_course(pdf_name: str = Form(...)) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    trash_course_output(output_dir)
+    trash_input_pdf(pdf_path)
+
+    return RedirectResponse(
+        url="/",
+        status_code=303,
+    )
+
+
+
+def move_to_trash(source: Path, trash_subdir: str) -> Path | None:
+    if not source.exists():
+        return None
+
+    trash_dir = PROJECT_ROOT / "data" / "trash" / trash_subdir
+    trash_dir.mkdir(parents=True, exist_ok=True)
+
+    stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    if source.is_dir():
+        target = trash_dir / f"{source.name}_{stamp}"
+    else:
+        target = trash_dir / f"{source.stem}_{stamp}{source.suffix}"
+
+    shutil.move(str(source), str(target))
+
+    return target
+
+
+@app.post("/delete-from-library")
+def delete_from_library(pdf_name: str = Form(...)) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    move_to_trash(output_dir, "courses")
+    move_to_trash(pdf_path, "pdfs")
+
+    return RedirectResponse(
+        url="/",
+        status_code=303,
+    )
+
+
+@app.get("/progress", response_class=HTMLResponse)
+def progress(pdf: str = Query(...)) -> HTMLResponse:
+    pdf_path = validate_pdf_name(pdf)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    try:
+        view = get_study_view(output_dir)
+    except Exception as exc:
+        body = f"""
+        <h1>Voila! Progress</h1>
+        <div class="notice">
+          Cannot open Progress Dashboard for <strong>{html.escape(pdf_path.name)}</strong>.
+        </div>
+        <p>Error: <code>{html.escape(str(exc))}</code></p>
+        """
+        return page("Voila! Progress", body)
+
+    concepts = view.get("concepts", [])
+    total_questions = int(view.get("total_questions") or 0)
+    answered_count = int(view.get("answered_count") or 0)
+    overall_mastery = int(view.get("overall_mastery_percent") or 0)
+    overall_status = html.escape(str(view.get("overall_status") or "No status"))
+
+    weak = [item for item in concepts if float(item.get("mastery", 0)) < 0.40]
+    review = [item for item in concepts if 0.40 <= float(item.get("mastery", 0)) < 0.75]
+    almost = [item for item in concepts if 0.75 <= float(item.get("mastery", 0)) < 0.90]
+    mastered = [item for item in concepts if float(item.get("mastery", 0)) >= 0.90]
+
+    if total_questions > 0:
+        answered_percent = round((answered_count / total_questions) * 100)
+    else:
+        answered_percent = 0
+
+    def concept_list(title: str, items: list, empty: str) -> str:
+        rows = []
+
+        for item in items[:12]:
+            concept_id = html.escape(str(item.get("concept_id") or ""))
+            mastery = int(item.get("mastery_percent") or 0)
+            attempts = int(item.get("attempts") or 0)
+            correct = int(item.get("correct") or 0)
+            incorrect = int(item.get("incorrect") or 0)
+            status = html.escape(str(item.get("status") or ""))
+
+            rows.append(
+                f"""
+                <article class="card">
+                  <h2>{concept_id}</h2>
+                  <div class="meta">Status: <strong>{status}</strong></div>
+                  <p style="font-size: 30px; margin: 8px 0;"><strong>{mastery}%</strong></p>
+                  <div style="height: 12px; background: var(--paper-soft); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
+                    <div style="height: 100%; width: {mastery}%; background: var(--accent);"></div>
+                  </div>
+                  <div class="meta" style="margin-top: 10px;">
+                    Attempts: {attempts}<br>
+                    Correct: {correct}<br>
+                    Incorrect: {incorrect}
+                  </div>
+                </article>
+                """
+            )
+
+        if not rows:
+            rows.append(
+                f"""
+                <article class="card">
+                  <h2>{html.escape(title)}</h2>
+                  <p>{html.escape(empty)}</p>
+                </article>
+                """
+            )
+
+        return f"""
+        <h2 style="margin-top: 30px;">{html.escape(title)}</h2>
+        <div class="grid">
+          {''.join(rows)}
+        </div>
+        """
+
+    recommended = None
+
+    if weak:
+        recommended = weak[0]
+    elif review:
+        recommended = review[0]
+    elif almost:
+        recommended = almost[0]
+    elif concepts:
+        recommended = concepts[0]
+
+    if recommended:
+        recommended_html = f"""
+        <div class="notice">
+          Recommended next focus:
+          <strong>{html.escape(str(recommended.get("concept_id") or ""))}</strong>
+          — mastery <strong>{int(recommended.get("mastery_percent") or 0)}%</strong>.
+        </div>
+        """
+    else:
+        recommended_html = """
+        <div class="notice">
+          No study recommendation yet. Generate a study quiz first.
+        </div>
+        """
+
+    body = f"""
+    <h1>Voila! Progress Dashboard</h1>
+
+    <div class="notice">
+      PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
+      Overall mastery: <strong>{overall_mastery}%</strong> ·
+      Status: <strong>{overall_status}</strong><br>
+      Questions answered: <strong>{answered_count}</strong> / <strong>{total_questions}</strong>
+      ({answered_percent}%)
+    </div>
+
+    {recommended_html}
+
+    <div class="grid">
+      <article class="card">
+        <h2>Overall mastery</h2>
+        <p style="font-size: 34px; margin: 8px 0;"><strong>{overall_mastery}%</strong></p>
+        <div style="height: 14px; background: var(--paper-soft); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
+          <div style="height: 100%; width: {overall_mastery}%; background: var(--accent);"></div>
+        </div>
+        <div class="meta" style="margin-top: 10px;">{overall_status}</div>
+      </article>
+
+      <article class="card">
+        <h2>Study coverage</h2>
+        <p style="font-size: 34px; margin: 8px 0;"><strong>{answered_percent}%</strong></p>
+        <div class="meta">
+          Answered: {answered_count}<br>
+          Total questions: {total_questions}
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Concept status</h2>
+        <div class="meta">
+          Needs review: <strong>{len(weak)}</strong><br>
+          In progress: <strong>{len(review)}</strong><br>
+          Almost mastered: <strong>{len(almost)}</strong><br>
+          Mastered: <strong>{len(mastered)}</strong>
+        </div>
+      </article>
+    </div>
+
+    <div class="actions" style="margin-top: 24px;">
+      <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">Continue Study</a>
+      <a class="btn" href="/">Back to Voila!</a>
+    </div>
+
+    {concept_list("Needs review", weak, "No weak concepts yet.")}
+    {concept_list("In progress", review, "No concepts in this range yet.")}
+    {concept_list("Almost mastered", almost, "No almost-mastered concepts yet.")}
+    {concept_list("Mastered", mastered, "No mastered concepts yet.")}
+    """
+
+    return page("Voila! Progress", body)
 
 
 @app.get("/study", response_class=HTMLResponse)

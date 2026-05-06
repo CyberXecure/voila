@@ -1,0 +1,773 @@
+{
+  "version": "0.3",
+  "created_at": "2026-05-06T06:41:20.740830+00:00",
+  "updated_at": "2026-05-06T06:48:46.571230+00:00",
+  "concepts": {
+    "L003 — Lipsa de gândire": {
+      "concept_id": "L003 — Lipsa de gândire",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L004 — Pericolele exterioare": {
+      "concept_id": "L004 — Pericolele exterioare",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L005 — Ce ne va aduce Viitorul": {
+      "concept_id": "L005 — Ce ne va aduce Viitorul",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L007 — Supravieţuirea pe termen lung": {
+      "concept_id": "L007 — Supravieţuirea pe termen lung",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L009 — Ce te faci?": {
+      "concept_id": "L009 — Ce te faci?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L010 — Fii atent!": {
+      "concept_id": "L010 — Fii atent!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L011 — Fii activ!": {
+      "concept_id": "L011 — Fii activ!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L013 — Fii responsabil!": {
+      "concept_id": "L013 — Fii responsabil!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L014 — Fii eficient!": {
+      "concept_id": "L014 — Fii eficient!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L015 — Fii optimist!": {
+      "concept_id": "L015 — Fii optimist!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L016 — Inventează!": {
+      "concept_id": "L016 — Inventează!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L017 — Comunică!": {
+      "concept_id": "L017 — Comunică!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L018 — Respectă Natura!": {
+      "concept_id": "L018 — Respectă Natura!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L019 — Implică-te!": {
+      "concept_id": "L019 — Implică-te!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L020 — Prevederea este mama înţelepciunii": {
+      "concept_id": "L020 — Prevederea este mama înţelepciunii",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L021 — Prevedere, prevedere şi iar prevedere !": {
+      "concept_id": "L021 — Prevedere, prevedere şi iar prevedere !",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L022 — Bagajul sau rucsacul de salvare, pentru bejenie": {
+      "concept_id": "L022 — Bagajul sau rucsacul de salvare, pentru bejenie",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L023 — Totul e să fii calm!": {
+      "concept_id": "L023 — Totul e să fii calm!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L024 — N-ai încotro!": {
+      "concept_id": "L024 — N-ai încotro!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L025 — Când pierzi - nu pierde şi lecţia (respectivă)!": {
+      "concept_id": "L025 — Când pierzi - nu pierde şi lecţia (respectivă)!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L026 — Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!": {
+      "concept_id": "L026 — Foloseşte raţiunea ca să lupţi cu ea! Stăpâneşte-te!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L029 — Cum poţi avea succes când ceri ajutor?": {
+      "concept_id": "L029 — Cum poţi avea succes când ceri ajutor?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L030 — Dă şi vei primi!": {
+      "concept_id": "L030 — Dă şi vei primi!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L031 — Miriapodele": {
+      "concept_id": "L031 — Miriapodele",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L033 — Ce era de făcut?": {
+      "concept_id": "L033 — Ce era de făcut?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L034 — Unii mimează excelent că ar fi morţi!": {
+      "concept_id": "L034 — Unii mimează excelent că ar fi morţi!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L035 — marine diesel engines": {
+      "concept_id": "L035 — marine diesel engines",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L035 — Dacă te atacă - fugi (preferabil prin tufăriş)!": {
+      "concept_id": "L035 — Dacă te atacă - fugi (preferabil prin tufăriş)!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L036 — Dar să nu bei niciodată apă din mare!": {
+      "concept_id": "L036 — Dar să nu bei niciodată apă din mare!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L038 — Cum poţi scăpa într-o astfel de situaţie?": {
+      "concept_id": "L038 — Cum poţi scăpa într-o astfel de situaţie?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L039 — Mişcă-te mereu!": {
+      "concept_id": "L039 — Mişcă-te mereu!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L040 — Gândeşte şi improvizează!": {
+      "concept_id": "L040 — Gândeşte şi improvizează!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L041 — Defecţiuni obişnuite": {
+      "concept_id": "L041 — Defecţiuni obişnuite",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L042 — Echipamentele improvizate": {
+      "concept_id": "L042 — Echipamentele improvizate",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L043 — Cum se pot pune în practică aceste idei?": {
+      "concept_id": "L043 — Cum se pot pune în practică aceste idei?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L044 — Cum?": {
+      "concept_id": "L044 — Cum?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L045 — Foamea este cel mai bun bucătar": {
+      "concept_id": "L045 — Foamea este cel mai bun bucătar",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L046 — Plantele comestibile": {
+      "concept_id": "L046 — Plantele comestibile",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L047 — Ce peşte trebuie aruncat?": {
+      "concept_id": "L047 — Ce peşte trebuie aruncat?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L048 — Sfera de foc, Torentul de noroi": {
+      "concept_id": "L048 — Sfera de foc, Torentul de noroi",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L049 — Când începe cutremurul: fii calm şi acţionează imediat!": {
+      "concept_id": "L049 — Când începe cutremurul: fii calm şi acţionează imediat!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L050 — Ce poate fi mai îngrozitor decât războiul?": {
+      "concept_id": "L050 — Ce poate fi mai îngrozitor decât războiul?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L051 — Ce poţi face tu?": {
+      "concept_id": "L051 — Ce poţi face tu?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L052 — Ca să rezişti ai nevoie de un adăpost!": {
+      "concept_id": "L052 — Ca să rezişti ai nevoie de un adăpost!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L056 — Cine (trebuie salvat primul)?": {
+      "concept_id": "L056 — Cine (trebuie salvat primul)?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L057 — NU renunţa!": {
+      "concept_id": "L057 — NU renunţa!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L058 — Cum se recunosc aceste cazuri grave?": {
+      "concept_id": "L058 — Cum se recunosc aceste cazuri grave?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L059 — A intrat ceva în ochi: NU FRECA ochiul!": {
+      "concept_id": "L059 — A intrat ceva în ochi: NU FRECA ochiul!",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L060 — Degeraaturile": {
+      "concept_id": "L060 — Degeraaturile",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L061 — Cum poate fi evitată?": {
+      "concept_id": "L061 — Cum poate fi evitată?",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    },
+    "L063 — Wells)": {
+      "concept_id": "L063 — Wells)",
+      "mastery": 0.3,
+      "attempts": 0,
+      "correct": 0,
+      "incorrect": 0,
+      "last_seen": null,
+      "status": "Needs review",
+      "bkt": {
+        "prior": 0.3,
+        "learn": 0.18,
+        "guess": 0.2,
+        "slip": 0.1
+      }
+    }
+  },
+  "attempts": []
+}
