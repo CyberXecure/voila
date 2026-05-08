@@ -25,6 +25,51 @@ OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
 APP_TITLE = "Voila! Local"
 
 
+
+
+def crop_editor_is_running() -> bool:
+    import socket
+
+    try:
+        with socket.create_connection(("127.0.0.1", 8790), timeout=0.5):
+            return True
+    except OSError:
+        return False
+
+
+def ensure_crop_editor_running() -> None:
+    import subprocess
+    import sys
+    import time
+
+    if crop_editor_is_running():
+        return
+
+    subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "crop_editor_app:app",
+            "--app-dir",
+            str(PROJECT_ROOT / "services" / "api"),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8790",
+            "--log-level",
+            "info",
+        ],
+        cwd=str(PROJECT_ROOT),
+        creationflags=subprocess.CREATE_NEW_CONSOLE,
+    )
+
+    for _ in range(30):
+        if crop_editor_is_running():
+            return
+        time.sleep(0.5)
+
+
 app = FastAPI(title=APP_TITLE)
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -461,6 +506,7 @@ def page(title: str, body: str) -> HTMLResponse:
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
       <a class="primary" href="/">Back</a>
       <a id="fixedStudyLink" href="/" hidden>Study</a>
+      <a id="fixedReviewLink" href="/" hidden>Review</a>
       <a id="fixedProgressLink" href="/" hidden>Progress</a>
       <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ Top</button>
       <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ Bottom</button>
@@ -474,6 +520,7 @@ def page(title: str, body: str) -> HTMLResponse:
         const path = window.location.pathname;
 
         const studyLink = document.getElementById("fixedStudyLink");
+        const reviewLink = document.getElementById("fixedReviewLink");
         const progressLink = document.getElementById("fixedProgressLink");
         const resetButton = document.getElementById("fixedResetButton");
 
@@ -590,7 +637,7 @@ def page(title: str, body: str) -> HTMLResponse:
               return;
             }}
 
-            const pdfName = (title.innerText || "").replace(/\s+/g, " ").trim();
+            const pdfName = (title.innerText || "").replace(/\\s+/g, " ").trim();
 
             if (!pdfName.toLowerCase().endsWith(".pdf")) {{
               return;
@@ -814,7 +861,7 @@ def generate_for_pdf(pdf_path: Path) -> Path:
 
     run_step(
         "9. Export figures",
-        [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_hybrid.py"), str(pdf_path)],
+        [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_smart.py"), str(pdf_path)],
         log_lines,
         optional=True,
     )
@@ -823,6 +870,19 @@ def generate_for_pdf(pdf_path: Path) -> Path:
         "10. Export HTML course",
         [str(PROJECT_ROOT / "services" / "api" / "html_exporter.py"), str(course_cleaned)],
         log_lines,
+    )
+
+    run_step(
+        "10b. Scanned PDF fallback",
+        [
+            str(PROJECT_ROOT / "services" / "api" / "scanned_course_fallback.py"),
+            str(pdf_path),
+            str(output_dir),
+            "--zoom",
+            "1.45",
+        ],
+        log_lines,
+        optional=True,
     )
 
     course_html = output_dir / "course.cleaned.html"
@@ -906,12 +966,15 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if hybrid_manifest.exists():
             actions.append(
-                f'<a class="btn" href="http://127.0.0.1:8790/?pdf={quote(pdf.name)}">Edit crops</a>'
+                f'<a class="btn" href="/edit-crops?pdf={quote(pdf.name)}">Edit crops</a>'
             )
 
         if quiz_file.exists():
             actions.append(
                 f'<a class="btn" href="/study?pdf={quote(pdf.name)}">Study</a>'
+            )
+            actions.append(
+                f'<a class="btn" href="/review?pdf={quote(pdf.name)}">Review weak</a>'
             )
             actions.append(
                 f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">Progress</a>'
@@ -1080,6 +1143,234 @@ def delete_from_library(pdf_name: str = Form(...)) -> RedirectResponse:
 
     return RedirectResponse(
         url="/",
+        status_code=303,
+    )
+
+
+
+def choose_review_question_from_view(view: dict) -> dict | None:
+    questions = view.get("questions") or []
+    state = view.get("state") or {}
+    concepts = view.get("concepts") or []
+
+    if not questions:
+        return None
+
+    weak_concept_ids = {
+        str(item.get("concept_id"))
+        for item in concepts
+        if float(item.get("mastery", 0)) < 0.75
+    }
+
+    if not weak_concept_ids:
+        weak_concept_ids = {
+            str(item.get("concept_id"))
+            for item in concepts
+            if float(item.get("mastery", 0)) < 0.90
+        }
+
+    attempts = state.get("attempts") or []
+    answered_ids = {
+        str(item.get("question_id"))
+        for item in attempts
+        if item.get("question_id")
+    }
+
+    concept_by_id = {
+        str(item.get("concept_id")): item
+        for item in concepts
+    }
+
+    candidates = [
+        question for question in questions
+        if str(question.get("concept_id")) in weak_concept_ids
+    ]
+
+    if not candidates:
+        candidates = questions
+
+    unanswered = [
+        question for question in candidates
+        if str(question.get("question_id")) not in answered_ids
+    ]
+
+    pool = unanswered if unanswered else candidates
+
+    def score(question: dict) -> tuple[float, int]:
+        concept_id = str(question.get("concept_id"))
+        concept = concept_by_id.get(concept_id) or {}
+        mastery = float(concept.get("mastery", 0.30))
+        attempts_count = int(concept.get("attempts", 0))
+        return (mastery, attempts_count)
+
+    return sorted(pool, key=score)[0] if pool else None
+
+
+@app.get("/review", response_class=HTMLResponse)
+def review(pdf: str = Query(...)) -> HTMLResponse:
+    pdf_path = validate_pdf_name(pdf)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    try:
+        view = get_study_view(output_dir)
+    except Exception as exc:
+        body = f"""
+        <h1>Voila! Review</h1>
+        <div class="notice">
+          Cannot open Review Mode for <strong>{html.escape(pdf_path.name)}</strong>.
+        </div>
+        <p>Error: <code>{html.escape(str(exc))}</code></p>
+        """
+        return page("Voila! Review", body)
+
+    concepts = view.get("concepts") or []
+    weak = [item for item in concepts if float(item.get("mastery", 0)) < 0.40]
+    review_items = [item for item in concepts if 0.40 <= float(item.get("mastery", 0)) < 0.75]
+    almost = [item for item in concepts if 0.75 <= float(item.get("mastery", 0)) < 0.90]
+
+    current = choose_review_question_from_view(view)
+    last_attempt = view.get("last_attempt")
+
+    last_html = ""
+
+    if last_attempt:
+        result = "Correct" if last_attempt.get("correct") else "Incorrect"
+        before = round(float(last_attempt.get("mastery_before", 0)) * 100)
+        after = round(float(last_attempt.get("mastery_after", 0)) * 100)
+
+        last_html = f"""
+        <div class="notice">
+          Last review answer: <strong>{result}</strong>.
+          Mastery changed from <strong>{before}%</strong> to <strong>{after}%</strong>.
+        </div>
+        """
+
+    if current:
+        answer_html = ""
+
+        if current.get("answer"):
+            answer_html = f"""
+            <details>
+              <summary>Show expected answer / explanation</summary>
+              <p>{html.escape(str(current.get("answer")))}</p>
+            </details>
+            """
+
+        concept_id = html.escape(str(current.get("concept_id") or current.get("lesson_id") or ""))
+        question = html.escape(str(current.get("question") or ""))
+        answer_id = html.escape(str(current.get("question_id") or ""))
+
+        question_html = f"""
+        <article class="card">
+          <h2>Review question</h2>
+          <div class="meta">Focused concept: <strong>{concept_id}</strong></div>
+          <p style="font-size: 20px;"><strong>{question}</strong></p>
+          {answer_html}
+
+          <div class="actions">
+            <form method="post" action="/review-answer">
+              <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+              <input type="hidden" name="question_id" value="{answer_id}">
+              <input type="hidden" name="correct" value="true">
+              <button class="primary" type="submit">Correct</button>
+            </form>
+
+            <form method="post" action="/review-answer">
+              <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
+              <input type="hidden" name="question_id" value="{answer_id}">
+              <input type="hidden" name="correct" value="false">
+              <button type="submit">Incorrect</button>
+            </form>
+          </div>
+        </article>
+        """
+    else:
+        question_html = """
+        <article class="card">
+          <h2>No review questions available</h2>
+          <p>Generate a study quiz first.</p>
+        </article>
+        """
+
+    def mini_list(title: str, items: list, empty: str) -> str:
+        rows = []
+
+        for item in items[:8]:
+            concept_id = html.escape(str(item.get("concept_id") or ""))
+            mastery = int(item.get("mastery_percent") or 0)
+            attempts = int(item.get("attempts") or 0)
+
+            rows.append(
+                f"""
+                <article class="card">
+                  <h2>{concept_id}</h2>
+                  <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
+                  <div class="meta">Attempts: {attempts}</div>
+                </article>
+                """
+            )
+
+        if not rows:
+            rows.append(
+                f"""
+                <article class="card">
+                  <h2>{html.escape(title)}</h2>
+                  <p>{html.escape(empty)}</p>
+                </article>
+                """
+            )
+
+        return f"""
+        <h2 style="margin-top: 28px;">{html.escape(title)}</h2>
+        <div class="grid">
+          {''.join(rows)}
+        </div>
+        """
+
+    body = f"""
+    <h1>Voila! Review weak concepts</h1>
+
+    <div class="notice">
+      PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
+      Needs review: <strong>{len(weak)}</strong> ·
+      In progress: <strong>{len(review_items)}</strong> ·
+      Almost mastered: <strong>{len(almost)}</strong>
+    </div>
+
+    {last_html}
+
+    <div class="grid">
+      {question_html}
+    </div>
+
+    <div class="actions" style="margin-top: 24px;">
+      <a class="btn primary" href="/review?pdf={quote(pdf_path.name)}">Next review</a>
+      <a class="btn" href="/study?pdf={quote(pdf_path.name)}">Study</a>
+      <a class="btn" href="/progress?pdf={quote(pdf_path.name)}">Progress</a>
+      <a class="btn" href="/">Back to Voila!</a>
+    </div>
+
+    {mini_list("Needs review", weak, "No weak concepts yet.")}
+    {mini_list("In progress", review_items, "No concepts in progress yet.")}
+    {mini_list("Almost mastered", almost, "No almost-mastered concepts yet.")}
+    """
+
+    return page("Voila! Review", body)
+
+
+@app.post("/review-answer")
+def review_answer(
+    pdf_name: str = Form(...),
+    question_id: str = Form(...),
+    correct: bool = Form(...),
+) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    output_dir = OUTPUT_DIR / pdf_path.stem
+
+    record_answer(output_dir, question_id, correct)
+
+    return RedirectResponse(
+        url="/review?pdf=" + quote(pdf_path.name),
         status_code=303,
     )
 
@@ -1426,4 +1717,32 @@ def log(pdf: str = Query(...)) -> PlainTextResponse:
 
     return PlainTextResponse(log_path.read_text(encoding="utf-8"))
 
+
+
+
+
+
+
+
+@app.get("/edit-crops")
+def edit_crops(pdf: str = ""):
+    from fastapi.responses import HTMLResponse, RedirectResponse
+    from urllib.parse import quote
+
+    ensure_crop_editor_running()
+
+    if not crop_editor_is_running():
+        return HTMLResponse(
+            """
+            <h1>Crop Editor did not start</h1>
+            <p>Port 8790 is not responding. Start it manually:</p>
+            <pre>python -m uvicorn crop_editor_app:app --app-dir services/api --host 127.0.0.1 --port 8790</pre>
+            """,
+            status_code=503,
+        )
+
+    if pdf:
+        return RedirectResponse("http://127.0.0.1:8790/?pdf=" + quote(pdf))
+
+    return RedirectResponse("http://127.0.0.1:8790/")
 

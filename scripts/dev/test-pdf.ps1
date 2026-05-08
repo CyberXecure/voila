@@ -20,7 +20,7 @@ $RequiredScripts = @(
     ".\services\api\course_polisher.py",
     ".\services\api\course_cleaned_finalizer.py",
     ".\services\api\study_quiz_builder.py",
-    ".\services\api\figure_exporter_hybrid.py",
+    ".\services\api\figure_exporter_smart.py",
     ".\services\api\html_exporter.py"
 )
 
@@ -129,7 +129,7 @@ if (Test-Path $StudyConfigPath) {
 
 Write-Host ""
 Write-Host "=== 9. Export figures ==="
-& $Python .\services\api\figure_exporter_hybrid.py $pdf.FullName
+& $Python .\services\api\figure_exporter_smart.py $pdf.FullName
 
 Write-Host ""
 Write-Host "=== 10. Export HTML course ==="
@@ -167,5 +167,7 @@ Write-Host "  $outputDir\ocr_corrections.json"
 
 Write-Host ""
 Write-Host "Done."
+
+
 
 

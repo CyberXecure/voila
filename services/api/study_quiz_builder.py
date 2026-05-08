@@ -5,96 +5,56 @@ import json
 import re
 from pathlib import Path
 
-from content_filter import should_exclude_study_item
+try:
+    from content_filter import should_exclude_study_item
+except Exception:
+    def should_exclude_study_item(**kwargs) -> bool:
+        return False
 
 
 TECHNICAL_KEYWORDS = [
-    "is used to", "are used to", "is used for", "are used for",
-    "designed to", "intended to", "consists of", "comprises", "contains",
-    "provides", "prevents", "reduces", "increases", "decreases",
-    "must", "should", "required", "requires", "ensure", "checked",
-    "inspection", "maintenance", "operation", "operates", "because",
-    "therefore", "so that", "in order to", "when", "if", "during",
-    "pressure", "temperature", "valve", "pump", "fuel", "oil", "engine",
-    "cooling", "lubricating", "filter", "strainer", "separator",
-    "compressor", "turbine", "bearing", "piston", "cylinder",
-    "injection", "turbocharger", "scavenge", "exhaust", "vibration",
-    "diesel cycle", "indicator diagram", "constant pressure", "constant volume",
+    "se folosește", "se folosesc", "este utilizat", "sunt utilizate", "este destinat",
+    "permite", "asigură", "reduce", "mărește", "crește", "scade", "trebuie", "necesar",
+    "se recomandă", "se montează", "se alimentează", "funcționează", "comandă",
+    "tensiune", "curent", "putere", "flux", "iluminare", "rezistență", "motor",
+    "instalație", "protecție", "automatizare", "contact", "releu", "siguranță",
+    "is used", "are used", "designed", "must", "should", "requires", "provides",
+    "pressure", "temperature", "engine", "pump", "valve", "filter", "system",
 ]
 
-GENERIC_TITLES = {
-    "introduction",
-    "overview",
-    "general",
-    "summary",
-    "background",
-    "principles",
-}
+RO_TOPIC_RULES = [
+    ("sisteme de iluminat", ["sistem de iluminat", "sisteme de iluminat", "iluminat interior", "iluminat exterior"]),
+    ("mărimi luminotehnice", ["flux luminos", "iluminare", "intensitate luminoasă", "luminanță"]),
+    ("instalații electrice", ["instalații electrice", "instalația electrică", "alimentare cu energie"]),
+    ("protecții electrice", ["protecție", "siguranță", "descărcări electrice", "supracurent"]),
+    ("motoare electrice", ["motor electric", "motoare electrice", "rotor", "stator", "asincron", "sincron"]),
+    ("sisteme de comandă automată", ["comandă automată", "releu", "contactor", "automatizare"]),
+    ("măsurări electrice", ["măsurarea", "aparat de măsură", "voltmetru", "ampermetru", "wattmetru"]),
+    ("surse de lumină", ["lămpi", "lampă", "fluorescente", "incandescență", "vapori de sodiu"]),
+    ("corpuri de iluminat", ["corpuri de iluminat", "cil", "armătură de iluminat"]),
+]
+
+EN_TOPIC_RULES = [
+    ("engine cycles", ["cycle", "diesel cycle", "indicator diagram"]),
+    ("fuel injection", ["fuel injection", "injector", "atomized fuel"]),
+    ("cooling systems", ["cooling", "coolant"]),
+    ("lubricating oil systems", ["lubricating oil", "lube oil"]),
+    ("filters and strainers", ["filter", "strainer"]),
+    ("marine diesel engines", ["diesel engine", "propulsion", "bore", "stroke"]),
+]
+
 
 BAD_SENTENCE_PATTERNS = [
-    r"^figure\s+[0-9ivxlcdm]",
-    r"^fig\.\s+[0-9ivxlcdm]",
-    r"^table\s+[0-9ivxlcdm]",
+    r"^figure\s+",
+    r"^fig\.\s+",
+    r"^figura\s+",
+    r"^table\s+",
+    r"^tabel\s+",
     r"^\d+$",
-    r"^chapter\s+\d+$",
-    r"^part\s+\d+$",
-    r"^source pdf pages",
-    r"^word count",
-]
-
-TOPIC_RULES = [
-    ("engine cycles", [
-        "diesel cycle", "practical cycle", "indicator diagram",
-        "constant pressure", "constant volume", "adiabatic",
-        "heat rejected", "ideal efficiency", "pumping work",
-    ]),
-    ("marine diesel engines", [
-        "diesel engine", "reciprocating engine", "motor ship",
-        "merchant motor ship", "propulsion", "bore", "stroke",
-    ]),
-    ("fuel injection", [
-        "fuel injection", "injection", "injector", "atomis", "atomiz",
-        "blast injection",
-    ]),
-    ("two-stroke engines", [
-        "two-stroke", "2-stroke", "crosshead",
-    ]),
-    ("four-stroke engines", [
-        "four-stroke", "4-stroke", "trunk piston",
-    ]),
-    ("turbocharging", [
-        "turbocharger", "turbocharging", "exhaust gas turbine", "compressor",
-    ]),
-    ("exhaust valves", [
-        "exhaust valve", "exhaust valves",
-    ]),
-    ("scavenging", [
-        "scavenge", "scavenging", "air flow",
-    ]),
-    ("cylinder lubrication", [
-        "cylinder oil", "cylinder lubrication", "lubricator",
-    ]),
-    ("lubricating oil systems", [
-        "lubricating oil", "lube oil", "lubrication system",
-    ]),
-    ("cooling systems", [
-        "cooling water", "cooling system", "coolant",
-    ]),
-    ("vibration and balancing", [
-        "vibration", "moment compensator", "counterweight", "axial vibration",
-    ]),
-    ("bearings", [
-        "bearing", "bearings", "thrust bearing",
-    ]),
-    ("pistons and cylinders", [
-        "piston", "cylinder liner", "cylinder cover", "cylinder head",
-    ]),
-    ("starting air systems", [
-        "starting air", "air start", "starting valve",
-    ]),
-    ("governors and control", [
-        "governor", "control system", "speed control",
-    ]),
+    r"^chapter\s+\d+",
+    r"^capitolul\s+\d+",
+    r"^cuprins\b",
+    r"^bibliografie\b",
 ]
 
 
@@ -106,57 +66,39 @@ def normalize_key(value: str) -> str:
     return normalize_space(value).lower()
 
 
-def is_generic_title(title: str) -> bool:
-    value = normalize_key(title)
+def detect_language(text: str) -> str:
+    lower = normalize_key(text)
+    ro_markers = [
+        " și ", " în ", " este ", " sunt ", " pentru ", " care ", " instala",
+        "măsur", "funcție", "tensiune", "curent", "iluminat", "protecție",
+        "ă", "î", "ș", "ț", "â",
+    ]
 
-    if not value:
-        return True
+    score = sum(1 for marker in ro_markers if marker in lower)
 
-    if "pounder" in value and "marine diesel engines" in value:
-        return True
-
-    if "marine diesel engines and gas turbines" in value:
-        return True
-
-    if value == "practical cycles":
-        return False
-
-    return value in GENERIC_TITLES or value.startswith("introduction ")
-
-
-def clean_title(title: str) -> str:
-    value = normalize_space(title)
-
-    if value.upper() == value and len(value) > 4:
-        value = value.title()
-
-    return value
+    return "ro" if score >= 2 else "en"
 
 
 def split_sentences(text: str) -> list[str]:
-    compact = normalize_space(text)
+    text = normalize_space(text)
 
-    if not compact:
+    if not text:
         return []
 
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z0-9])", compact)
-    sentences = []
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZĂÂÎȘȚ0-9])", text)
+    out = []
 
     for part in parts:
         sentence = normalize_space(part)
 
-        if 45 <= len(sentence) <= 360:
-            sentences.append(sentence)
+        if 55 <= len(sentence) <= 420:
+            out.append(sentence)
 
-    return sentences
+    return out
 
 
 def extract_lessons(course_md: str) -> list[dict]:
-    pattern = re.compile(
-        r"^##\s+(L\d+)\s+—\s+(.+?)\s*$",
-        re.MULTILINE,
-    )
-
+    pattern = re.compile(r"^##\s+(L\d+)\s+—\s+(.+?)\s*$", re.MULTILINE)
     matches = list(pattern.finditer(course_md))
     lessons = []
 
@@ -173,9 +115,9 @@ def extract_lessons(course_md: str) -> list[dict]:
 
         if pages_match:
             pages = [
-                int(value.strip())
-                for value in pages_match.group(1).split(",")
-                if value.strip().isdigit()
+                int(item.strip())
+                for item in pages_match.group(1).split(",")
+                if item.strip().isdigit()
             ]
 
         text_match = re.search(
@@ -199,7 +141,7 @@ def extract_lessons(course_md: str) -> list[dict]:
 
 
 def sentence_is_bad(sentence: str) -> bool:
-    value = sentence.lower().strip()
+    value = normalize_key(sentence)
 
     for pattern in BAD_SENTENCE_PATTERNS:
         if re.search(pattern, value):
@@ -207,184 +149,94 @@ def sentence_is_bad(sentence: str) -> bool:
 
     bad_fragments = [
         "generated by voila",
-        "mode: source language",
-        "text status:",
-        "source:",
+        "source pdf pages",
+        "word count",
         "isbn",
-        "copyright",
+        "editura",
+        "coordonator",
+        "tehnoredactare",
         "all rights reserved",
-        "pounder’s marine diesel engines and gas turbines",
-        "pounder's marine diesel engines and gas turbines",
-        "pressure tdc volume",
-        "tdc volume bdc",
-        "volume bdc",
-        "pressure tdc",
     ]
 
     if any(fragment in value for fragment in bad_fragments):
         return True
 
-    words = re.findall(r"[A-Za-z]{3,}", sentence)
-
-    if len(words) <= 6 and any(marker in value for marker in ["tdc", "bdc", "volume", "pressure"]):
+    if len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", sentence)) < 30:
         return True
 
     return False
 
 
 def technical_score(sentence: str) -> int:
-    lower = sentence.lower()
+    lower = normalize_key(sentence)
     score = 0
 
     for keyword in TECHNICAL_KEYWORDS:
         if keyword in lower:
             score += 1
 
-    if re.search(r"\b\d+(?:\.\d+)?\s*(bar|kpa|mpa|mm|cm|m|kg|kw|mw|rpm|°c|deg|percent|%)\b", lower):
+    if re.search(r"\b\d+(?:[.,]\d+)?\s*(v|kv|a|ma|w|kw|lm|lx|cd|hz|°|%)\b", lower):
         score += 2
 
     if ";" in sentence:
         score += 1
 
+    if re.search(r"\b(fig\.|figura)\s*[ivxlcdm0-9]", lower):
+        score += 1
+
     return score
 
 
-def infer_concept_title(lesson_title: str, sentence: str) -> str:
-    title = normalize_space(lesson_title)
-    lower = normalize_key(sentence)
+def infer_concept_title(lesson_title: str, sentence: str, language: str) -> str:
+    lower = normalize_key(sentence + " " + lesson_title)
+    rules = RO_TOPIC_RULES if language == "ro" else EN_TOPIC_RULES
 
-    if "term" in lower and "used to describe" in lower and "reciprocating engine" in lower:
-        return "marine diesel engines"
-
-    if "four-stroke engine" in lower or "four-stroke cycle" in lower:
-        return "four-stroke engines"
-
-    if "two-stroke engine" in lower or "two-stroke cycle" in lower:
-        return "two-stroke engines"
-
-    if (
-        "diesel cycle" in lower
-        or "indicator diagram" in lower
-        or "theoretical cycle" in lower
-        or "actual events in the cylinder" in lower
-        or normalize_key(lesson_title) == "practical cycles"
-    ):
-        return "engine cycles"
-
-    if "ideal efficiency" in lower and "cycle" in lower:
-        return "engine cycles"
-
-    if "heat is rejected" in lower and "constant volume" in lower:
-        return "engine cycles"
-
-    for topic, keywords in TOPIC_RULES:
+    for topic, keywords in rules:
         if any(keyword in lower for keyword in keywords):
             return topic
 
-    if title and not is_generic_title(title):
-        return clean_title(title)
+    title = normalize_space(lesson_title)
 
-    return "technical fundamentals"
+    if title:
+        return title[:90]
+
+    return "noțiuni tehnice" if language == "ro" else "technical fundamentals"
 
 
-def make_question(sentence: str, concept_title: str) -> tuple[str, str]:
-    lower = sentence.lower()
-    subject = concept_title
+def question_from_sentence(sentence: str, concept: str, language: str) -> tuple[str, str]:
+    lower = normalize_key(sentence)
 
-    if "term" in lower and "used to describe" in lower and "reciprocating engine" in lower:
-        return (
-            "How does the source define marine diesel engines?",
-            "definition",
-        )
+    if language == "ro":
+        if re.search(r"\b(se numește|reprezintă|este definit|se definește)\b", lower):
+            return f"Cum definește sursa {concept}?", "definition"
 
-    if "ideal efficiency" in lower and "cycle" in lower:
-        return (
-            "What does the source state about the ideal efficiency of the engine cycle?",
-            "technical_fact",
-        )
+        if re.search(r"\b(se compune|este alcătuit|sunt alcătuite|conține|cuprinde)\b", lower):
+            return f"Din ce este alcătuit sau ce cuprinde {concept}?", "components"
 
-    if "heat is rejected" in lower and "constant volume" in lower:
-        return (
-            "How is heat rejected in the described engine cycle?",
-            "cycle_process",
-        )
+        if re.search(r"\b(se folosește|se folosesc|este utilizat|sunt utilizate|servește|rolul)\b", lower):
+            return f"Care este rolul sau scopul descris pentru {concept}?", "purpose"
 
-    consists_match = re.search(
-        r"^(.{8,90}?)\s+(?:consists|consist)\s+of\s+(.+)$",
-        sentence,
-        flags=re.IGNORECASE,
-    )
+        if re.search(r"\b(trebuie|este necesar|se recomandă|obligatoriu)\b", lower):
+            return f"Ce cerință sau recomandare menționează sursa pentru {concept}?", "requirement"
 
-    if consists_match:
-        detected_subject = normalize_space(consists_match.group(1))
-        return (
-            f"What does the source say {detected_subject} consists of?",
-            "components",
-        )
+        if re.search(r"\b(când|dacă|în cazul|la pornire|în timpul|pentru)\b", lower):
+            return f"În ce situație sau condiții descrie sursa {concept}?", "condition"
 
-    used_match = re.search(
-        r"^(.{8,100}?)\s+(?:is|are|can be|may be)?\s*used\s+(?:to|for)\s+(.+)$",
-        sentence,
-        flags=re.IGNORECASE,
-    )
+        if re.search(r"\b(deoarece|pentru că|astfel|ca urmare|determină|produce)\b", lower):
+            return f"Ce cauză, motiv sau efect descrie sursa pentru {concept}?", "cause_effect"
 
-    if used_match:
-        detected_subject = normalize_space(used_match.group(1))
-        detected_lower = detected_subject.lower()
+        return f"Ce precizare tehnică face sursa despre {concept}?", "technical_fact"
 
-        bad_subject_starts = (
-            "today ",
-            "the term",
-            "this ",
-            "these ",
-            "it ",
-            "in ",
-            "when ",
-            "where ",
-        )
+    if "used" in lower:
+        return f"What purpose does the source describe for {concept}?", "purpose"
 
-        if detected_lower.startswith(bad_subject_starts):
-            detected_subject = subject
-
-        return (
-            f"What is the purpose of {detected_subject} according to the source?",
-            "purpose",
-        )
-
-    if "designed to" in lower or "intended to" in lower:
-        return (
-            f"What function or purpose is described for {subject}?",
-            "purpose",
-        )
-
-    if "should" in lower or "must" in lower or "required" in lower or "requires" in lower:
-        return (
-            f"What requirement or recommended action does the source state for {subject}?",
-            "requirement",
-        )
-
-    if "prevent" in lower or "prevents" in lower or "avoid" in lower:
-        return (
-            "What problem is prevented or avoided according to the source?",
-            "prevention",
-        )
-
-    if "because" in lower or "therefore" in lower or "so that" in lower or "in order to" in lower:
-        return (
-            f"What cause, reason, or result does the source describe for {subject}?",
-            "cause_effect",
-        )
+    if "must" in lower or "should" in lower or "required" in lower:
+        return f"What requirement does the source state for {concept}?", "requirement"
 
     if "when" in lower or "if" in lower or "during" in lower:
-        return (
-            f"Under what condition or operating situation does the source describe {subject}?",
-            "condition",
-        )
+        return f"Under what condition does the source describe {concept}?", "condition"
 
-    return (
-        f"What technical point does the source state about {subject}?",
-        "technical_fact",
-    )
+    return f"What technical point does the source state about {concept}?", "technical_fact"
 
 
 def lesson_passes_page_filter(pages: list[int], min_page: int) -> bool:
@@ -400,21 +252,25 @@ def lesson_passes_page_filter(pages: list[int], min_page: int) -> bool:
 def build_questions(lessons: list[dict], max_per_lesson: int, max_total: int, min_page: int) -> list[dict]:
     questions = []
 
+    full_text = "\n".join(lesson.get("source_text") or "" for lesson in lessons)
+    course_language = detect_language(full_text)
+
     for lesson in lessons:
+        if len(questions) >= max_total:
+            break
+
         lesson_id = lesson["lesson_id"]
         title = lesson["title"]
-        source_text = lesson["source_text"]
         pages = lesson.get("source_pdf_pages", [])
+        source_text = lesson.get("source_text") or ""
 
         if not lesson_passes_page_filter(pages, min_page):
             continue
 
-        if should_exclude_study_item(
-            title=title,
-            source_text=source_text,
-            lesson_id=lesson_id,
-        ):
+        if should_exclude_study_item(title=title, source_text=source_text, lesson_id=lesson_id):
             continue
+
+        lesson_language = detect_language(source_text) if source_text else course_language
 
         candidates = []
 
@@ -436,52 +292,53 @@ def build_questions(lessons: list[dict], max_per_lesson: int, max_total: int, mi
             if score <= 0:
                 continue
 
-            concept_title = infer_concept_title(title, sentence)
+            concept = infer_concept_title(title, sentence, lesson_language)
 
             candidates.append(
                 {
                     "sentence": sentence,
                     "score": score,
-                    "concept_title": concept_title,
+                    "concept": concept,
+                    "language": lesson_language,
                 }
             )
 
         candidates.sort(key=lambda item: item["score"], reverse=True)
 
-        used_questions = set()
+        used = set()
         lesson_count = 0
 
         for candidate in candidates:
-            if lesson_count >= max_per_lesson:
-                break
-
-            if len(questions) >= max_total:
+            if lesson_count >= max_per_lesson or len(questions) >= max_total:
                 break
 
             answer = candidate["sentence"]
-            concept_title = candidate["concept_title"]
-            question_text, question_type = make_question(answer, concept_title)
-            question_key = question_text.lower()
+            concept = candidate["concept"]
+            language = candidate["language"]
+            question_text, qtype = question_from_sentence(answer, concept, language)
 
-            if question_key in used_questions:
+            key = normalize_key(question_text)
+
+            if key in used:
                 continue
 
-            used_questions.add(question_key)
-            question_id = f"SQ{len(questions) + 1:04d}"
+            used.add(key)
+            qid = f"SQ{len(questions) + 1:04d}"
 
             questions.append(
                 {
-                    "question_id": question_id,
+                    "question_id": qid,
                     "lesson_id": lesson_id,
-                    "concept_id": f"{lesson_id} — {concept_title}",
-                    "concept_title": concept_title,
+                    "concept_id": f"{lesson_id} — {concept}",
+                    "concept_title": concept,
                     "lesson_title": title,
-                    "question_type": question_type,
+                    "question_type": qtype,
+                    "language": language,
                     "question": question_text,
                     "answer": answer,
                     "source_pdf_pages": pages,
                     "source_sentence": answer,
-                    "generator": "study_quiz_builder_v0.3.5_source_only",
+                    "generator": "study_quiz_builder_v0.4.0_localized",
                 }
             )
 
@@ -491,10 +348,10 @@ def build_questions(lessons: list[dict], max_per_lesson: int, max_total: int, mi
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Voila! source-based study quiz builder")
-    parser.add_argument("output_dir", help="Voila output directory containing course.cleaned.md")
+    parser = argparse.ArgumentParser(description="Voila! localized source-based study quiz builder")
+    parser.add_argument("output_dir")
     parser.add_argument("--max-per-lesson", type=int, default=4)
-    parser.add_argument("--max-total", type=int, default=350)
+    parser.add_argument("--max-total", type=int, default=500)
     parser.add_argument("--min-page", type=int, default=1)
 
     args = parser.parse_args()
@@ -505,7 +362,7 @@ def main() -> None:
     if not course_path.exists():
         raise FileNotFoundError(f"course.cleaned.md not found: {course_path}")
 
-    course_md = course_path.read_text(encoding="utf-8")
+    course_md = course_path.read_text(encoding="utf-8", errors="ignore")
     lessons = extract_lessons(course_md)
 
     questions = build_questions(
@@ -516,27 +373,21 @@ def main() -> None:
     )
 
     quiz = {
-        "version": "0.3.5",
-        "mode": "source_only",
-        "generator": "study_quiz_builder_v0.3.5",
-        "min_page": args.min_page,
+        "version": "0.4.0",
+        "mode": "source_only_localized",
+        "generator": "study_quiz_builder_v0.4.0_localized",
         "question_count": len(questions),
         "questions": questions,
     }
 
-    output_path = output_dir / "quiz.study.json"
-    output_path.write_text(
-        json.dumps(quiz, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    out = output_dir / "quiz.study.json"
+    out.write_text(json.dumps(quiz, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print("Voila! study quiz generated successfully.")
+    print("Voila! localized study quiz generated successfully.")
     print(f"Lessons parsed: {len(lessons)}")
-    print(f"Min page: {args.min_page}")
     print(f"Questions generated: {len(questions)}")
-    print(f"- {output_path}")
+    print(f"- {out}")
 
 
 if __name__ == "__main__":
     main()
-

@@ -15,6 +15,72 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
 
 
+
+
+def load_ocr_text_by_page(output_dir: Path) -> dict[int, str]:
+    candidates = [
+        output_dir / "ocr_pages.cleaned.json",
+        output_dir / "ocr_pages.json",
+        output_dir / "pages.json",
+    ]
+
+    for path in candidates:
+        if not path.exists():
+            continue
+
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        if isinstance(data, dict):
+            pages = data.get("pages") or data.get("items") or []
+        elif isinstance(data, list):
+            pages = data
+        else:
+            pages = []
+
+        result = {}
+
+        for idx, page in enumerate(pages, start=1):
+            if not isinstance(page, dict):
+                continue
+
+            page_number = int(page.get("page_number") or page.get("pdf_page") or idx)
+            page_text = str(page.get("text") or page.get("content") or "").strip()
+
+            if page_text:
+                result[page_number] = page_text
+
+        if result:
+            return result
+
+    return {}
+
+
+def page_has_figure_caption(page_text: str) -> bool:
+    text = page_text or ""
+    lower = text.lower()
+
+    # Never treat table of contents / index pages as figure pages.
+    if "cuprins" in lower:
+        return False
+
+    if "bibliografie" in lower:
+        return False
+
+    if "index" in lower and len(text) > 500:
+        return False
+
+    # For scanned PDFs, accept only explicit figure captions.
+    patterns = [
+        r"(?im)^\s*(?:fig\.|figura)\s*[IVXLCDM0-9]+(?:[.\-]\d+)*",
+        r"(?im)\b(?:fig\.|figura)\s*[IVXLCDM0-9]+(?:[.\-]\d+)*",
+    ]
+
+    return any(re.search(pattern, text) for pattern in patterns)
+
+
 def safe_number(value: str) -> str:
     value = re.sub(r"[^0-9A-Za-z._-]+", "_", value)
     return value.strip("_") or "visual"
@@ -170,22 +236,23 @@ def detect_visual_blocks(image: Image.Image, max_per_page: int) -> list[tuple[in
 
 def extract_possible_caption(page_text: str, page_no: int, index: int) -> tuple[str, str]:
     patterns = [
-        r"(?m)^\s*(?:figura|figure|fig\.?)\s*([0-9]+(?:\.[0-9]+)+)\.?\s+(.{3,160})$",
-        r"(?m)^\s*([0-9]+(?:\.[0-9]+)+)\.\s+(.{3,160})$",
+        r"(?im)^\s*(?:fig\.|figura|figure)\s*([IVXLCDM0-9]+(?:[.\-][0-9]+)*)\.?\s+(.{3,180})$",
+        r"(?im)\b(?:fig\.|figura|figure)\s*([IVXLCDM0-9]+(?:[.\-][0-9]+)*)\.?\s+(.{3,180})",
     ]
 
-    for pattern in patterns:
-        matches = re.findall(pattern, page_text, flags=re.IGNORECASE)
+    matches = []
 
-        if matches:
-            number, caption = matches[min(index, len(matches) - 1)]
-            return number.strip(), caption.strip()
+    for pattern in patterns:
+        matches.extend(re.findall(pattern, page_text or ""))
+
+    if matches:
+        number, caption = matches[min(index, len(matches) - 1)]
+        caption = re.sub(r"\s+", " ", caption).strip(" .:-")
+        return number.strip(), caption[:180]
 
     number = f"p{page_no}.{index + 1}"
     caption = f"Visual figure candidate from PDF page {page_no}"
     return number, caption
-
-
 
 
 def crop_text_word_count(page: fitz.Page, rect_points: list[float]) -> int:
@@ -344,6 +411,7 @@ def main() -> None:
     crops_dir.mkdir(parents=True, exist_ok=True)
 
     doc = fitz.open(pdf_path)
+    ocr_text_by_page = load_ocr_text_by_page(out_dir)
     page_to = args.page_to if args.page_to > 0 else len(doc)
     page_to = min(page_to, len(doc))
     page_from = max(1, args.page_from)
@@ -355,7 +423,15 @@ def main() -> None:
             break
 
         page = doc[page_no - 1]
-        page_text = page.get_text("text") or ""
+        embedded_text = page.get_text("text") or ""
+        page_text = embedded_text.strip() or ocr_text_by_page.get(page_no, "")
+
+        # For scanned/image PDFs, do not extract random text blocks as figures.
+        # Require an OCR-visible figure caption on the page.
+        if ocr_text_by_page and not page_has_figure_caption(page_text):
+            print(f"Skip page without figure caption: {page_no}")
+            continue
+
         image = page_to_image(page, args.zoom)
 
         blocks = detect_visual_blocks(image, max_per_page=args.max_per_page)
