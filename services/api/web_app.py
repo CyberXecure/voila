@@ -466,8 +466,31 @@ def page(title: str, body: str) -> HTMLResponse:
       document.documentElement.setAttribute("data-theme", saved || (prefersDark ? "dark" : "light"));
     }})();
   </script>
+
+
+<style>
+  .primary-tool {{
+    background: #e0ad68 !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    font-weight: 900 !important;
+  }}
+
+  .tool-link {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 10px 14px;
+    margin: 4px;
+    text-decoration: none;
+  }}
+</style>
+
+
 </head>
 <body>
+<a href="/quick-tools" style="position:fixed;right:18px;top:18px;z-index:9999;background:#e0ad68;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">Quick Tools</a>
   <div class="wrap">
     <header>
       <div class="brand">
@@ -1745,4 +1768,2646 @@ def edit_crops(pdf: str = ""):
         return RedirectResponse("http://127.0.0.1:8790/?pdf=" + quote(pdf))
 
     return RedirectResponse("http://127.0.0.1:8790/")
+
+
+
+def _safe_pdf_name(value: str) -> str:
+    return Path(value).name
+
+
+def _output_dir_for_pdf_name(pdf_name: str) -> Path:
+    safe_name = _safe_pdf_name(pdf_name)
+    return PROJECT_ROOT / "data" / "output" / Path(safe_name).stem
+
+
+def _load_json_file(path: Path, default):
+    if not path.exists():
+        return default
+
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def _save_json_file(path: Path, payload) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _html_escape(value: str) -> str:
+    import html
+    return html.escape(str(value or ""), quote=True)
+
+
+def _is_suspicious_concept_title(title: str) -> bool:
+    title = str(title or "").strip()
+    lower = title.lower()
+
+    if not title:
+        return True
+
+    if len(title) < 4:
+        return True
+
+    letters = len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", title))
+    digits = len(re.findall(r"\d", title))
+
+    if digits > letters:
+        return True
+
+    if re.search(r"\b(jj|ixii|v0|01g|lll|iiii|xii!)\b", lower):
+        return True
+
+    if re.search(r"[^\w\săâîșțĂÂÎȘȚ.,:;()/-]", title):
+        return True
+
+    if len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]{3,}", title)) < 1:
+        return True
+
+    return False
+
+
+@app.get("/review-concepts")
+def review_concepts(pdf: str = ""):
+    from fastapi.responses import HTMLResponse
+    from urllib.parse import quote
+
+    pdf_name = _safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+
+    output_dir = _output_dir_for_pdf_name(pdf_name)
+    quiz_path = output_dir / "quiz.study.json"
+    overrides_path = output_dir / "study_concept_overrides.json"
+
+    quiz = _load_json_file(quiz_path, {"questions": []})
+    overrides = _load_json_file(overrides_path, {"overrides": {}}).get("overrides", {})
+
+    grouped = {}
+
+    for question in quiz.get("questions", []):
+        lesson_id = question.get("lesson_id") or ""
+        concept_title = question.get("concept_title") or question.get("lesson_title") or ""
+
+        if not lesson_id:
+            continue
+
+        if lesson_id not in grouped:
+            grouped[lesson_id] = {
+                "lesson_id": lesson_id,
+                "concept_title": concept_title,
+                "questions": [],
+                "pages": set(),
+            }
+
+        grouped[lesson_id]["questions"].append(question)
+
+        for page in question.get("source_pdf_pages") or []:
+            grouped[lesson_id]["pages"].add(page)
+
+    rows = []
+
+    for lesson_id in sorted(grouped.keys()):
+        item = grouped[lesson_id]
+        current = item["concept_title"]
+        override = overrides.get(lesson_id, {})
+        effective = override.get("concept_title") or current
+        suspicious = _is_suspicious_concept_title(effective)
+
+        badge = '<span class="badge bad">Suspect</span>' if suspicious else '<span class="badge ok">OK</span>'
+
+        pages = ", ".join(str(p) for p in sorted(item["pages"])) if item["pages"] else "-"
+        sample_question = ""
+        sample_answer = ""
+
+        if item["questions"]:
+            sample_question = item["questions"][0].get("question") or ""
+            sample_answer = item["questions"][0].get("answer") or ""
+
+        rows.append(f"""
+        <section class="concept-card {'suspicious' if suspicious else ''}">
+          <div class="concept-head">
+            <div>
+              <h2>{_html_escape(lesson_id)} — {_html_escape(effective)}</h2>
+              <p>{badge} · Questions: <b>{len(item['questions'])}</b> · Pages: {_html_escape(pages)}</p>
+            </div>
+          </div>
+
+          <form method="post" action="/review-concepts/save" class="concept-form">
+            <input type="hidden" name="pdf" value="{_html_escape(pdf_name)}">
+            <input type="hidden" name="lesson_id" value="{_html_escape(lesson_id)}">
+
+            <label>Correct concept title</label>
+            <input name="title" value="{_html_escape(effective)}">
+
+            <div class="actions">
+              <button type="submit">Save title override</button>
+              <a class="ghost" href="/study?pdf={_html_escape(pdf_name)}">Study</a>
+            </div>
+          </form>
+
+          <details>
+            <summary>Question sample</summary>
+            <p><b>Q:</b> {_html_escape(sample_question)}</p>
+            <p><b>A:</b> {_html_escape(sample_answer)}</p>
+          </details>
+        </section>
+        """)
+
+    content = "\n".join(rows) if rows else "<p>No study questions found. Generate Study first.</p>"
+
+    html_doc = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Review Study Concepts · Voila!</title>
+  <style>
+    :root {{
+      --bg: #101819;
+      --panel: #202d31;
+      --panel2: #243237;
+      --text: #f6ead7;
+      --muted: #c7ad94;
+      --line: #3b4b50;
+      --accent: #e0ad68;
+      --bad: #b45b46;
+      --ok: #5cae9f;
+    }}
+
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 32px;
+    }}
+
+    .wrap {{
+      max-width: 1400px;
+      margin: 0 auto;
+    }}
+
+    .top {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }}
+
+    h1 {{
+      font-size: clamp(32px, 5vw, 58px);
+      margin: 0;
+      line-height: 1.05;
+    }}
+
+    .top-actions {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }}
+
+    a, button {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: var(--panel2);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 16px;
+    }}
+
+    button {{
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }}
+
+    .ghost {{
+      background: transparent;
+    }}
+
+    .concept-card {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 24px;
+      margin: 18px 0;
+    }}
+
+    .concept-card.suspicious {{
+      border-color: rgba(180, 91, 70, 0.9);
+      box-shadow: 0 0 0 2px rgba(180, 91, 70, 0.14);
+    }}
+
+    .concept-card h2 {{
+      margin: 0 0 8px;
+      font-size: 28px;
+    }}
+
+    .concept-card p {{
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.5;
+    }}
+
+    .badge {{
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      color: white;
+    }}
+
+    .badge.bad {{ background: var(--bad); }}
+    .badge.ok {{ background: var(--ok); }}
+
+    .concept-form {{
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }}
+
+    label {{
+      color: var(--muted);
+      font-weight: 800;
+    }}
+
+    input {{
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #142022;
+      color: var(--text);
+      padding: 14px 16px;
+      font-size: 20px;
+      font-weight: 700;
+    }}
+
+    .actions {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }}
+
+    details {{
+      margin-top: 18px;
+      color: var(--muted);
+    }}
+
+    summary {{
+      cursor: pointer;
+      font-weight: 900;
+      color: var(--text);
+    }}
+
+    .floating-nav {{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: rgba(32, 45, 49, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+      z-index: 999;
+    }}
+
+    @media (max-width: 760px) {{
+      body {{ padding: 18px; }}
+      .top {{ display: block; }}
+      .top-actions {{ margin-top: 16px; }}
+      .concept-card {{ padding: 18px; }}
+      .concept-card h2 {{ font-size: 22px; }}
+      .floating-nav {{
+        width: calc(100% - 24px);
+        overflow-x: auto;
+        justify-content: flex-start;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Review Study Concepts</h1>
+        <p>PDF: <b>{_html_escape(pdf_name)}</b></p>
+      </div>
+      <div class="top-actions">
+        <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
+        <a href="/">Library</a>
+        <a href="/review-ocr-text?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">Open course</a>
+        <a href="/study?pdf={quote(pdf_name)}">Study</a>
+        <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
+      </div>
+    </div>
+
+    {content}
+  </div>
+
+  <nav class="floating-nav">
+    <a href="/">Back</a>
+    <a href="/study?pdf={_html_escape(pdf_name)}">Study</a>
+    <a href="#top" onclick="window.scrollTo({{top:0,behavior:'smooth'}}); return false;">↑ Top</a>
+    <a href="#bottom" onclick="window.scrollTo({{top:document.body.scrollHeight,behavior:'smooth'}}); return false;">↓ Bottom</a>
+  </nav>
+</body>
+</html>
+"""
+
+    return HTMLResponse(html_doc)
+
+
+
+@app.post("/review-concepts/save")
+def save_review_concept(
+    pdf: str = Form(...),
+    lesson_id: str = Form(...),
+    title: str = Form(...),
+):
+    from datetime import datetime, timezone
+    from fastapi.responses import HTMLResponse, RedirectResponse
+    from urllib.parse import quote
+    import traceback
+
+    try:
+        pdf_name = _safe_pdf_name(pdf)
+        output_dir = _output_dir_for_pdf_name(pdf_name)
+        overrides_path = output_dir / "study_concept_overrides.json"
+
+        payload = _load_json_file(
+            overrides_path,
+            {
+                "version": "1.0",
+                "overrides": {},
+            },
+        )
+
+        clean_title = str(title or "").strip()
+
+        if not clean_title:
+            return HTMLResponse(
+                "<h1>Empty title</h1><p>Concept title cannot be empty.</p>",
+                status_code=400,
+            )
+
+        payload.setdefault("overrides", {})[lesson_id] = {
+            "concept_title": clean_title,
+            "lesson_title": clean_title,
+            "source": "manual_ui",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        _save_json_file(overrides_path, payload)
+
+        try:
+            from ocr_corrections_engine import apply_title_overrides
+            apply_title_overrides(output_dir)
+        except Exception:
+            # Keep override saved even if rebuild/update fails.
+            pass
+
+        return RedirectResponse(
+            "/review-concepts?pdf=" + quote(pdf_name),
+            status_code=303,
+        )
+
+    except Exception:
+        error = traceback.format_exc()
+        return HTMLResponse(
+            f"""
+            <h1>Save title override failed</h1>
+            <p>The correction was not saved because the server raised an exception.</p>
+            <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{error}</pre>
+            <p><a href="/">Back to Voila</a></p>
+            """,
+            status_code=500,
+        )
+
+
+def _load_ocr_review_pages(output_dir: Path) -> list[dict]:
+    candidates = [
+        output_dir / "ocr_pages.json",
+        output_dir / "pages.json",
+    ]
+
+    for path in candidates:
+        if not path.exists():
+            continue
+
+        data = _load_json_file(path, {})
+
+        if isinstance(data, dict):
+            pages = data.get("pages") or data.get("items") or []
+        elif isinstance(data, list):
+            pages = data
+        else:
+            pages = []
+
+        usable = []
+
+        for idx, page in enumerate(pages, start=1):
+            if not isinstance(page, dict):
+                continue
+
+            page_number = int(page.get("page_number") or page.get("pdf_page") or idx)
+            page_text = str(page.get("text") or page.get("content") or "")
+
+            usable.append(
+                {
+                    "page_number": page_number,
+                    "text": page_text,
+                }
+            )
+
+        if usable:
+            return usable
+
+    return []
+
+
+def _write_ocr_review_pages(output_dir: Path, pages: list[dict]) -> None:
+    payload = {
+        "version": "voila_ocr_text_review_v1",
+        "text_source": "manual_reviewed_ocr",
+        "pages": pages,
+    }
+
+    for target_name in ["ocr_pages.json", "pages.json"]:
+        target = output_dir / target_name
+
+        if target.exists():
+            backup = output_dir / f"{target_name}.before_text_review.json"
+
+            if not backup.exists():
+                backup.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
+
+        _save_json_file(target, payload)
+
+    md_lines = [
+        f"# Reviewed OCR pages for {output_dir.name}",
+        "",
+        "Generated by Voila! OCR Text Review.",
+        "",
+    ]
+
+    for page in pages:
+        md_lines.extend(
+            [
+                f"## Page {page['page_number']}",
+                "",
+                str(page.get("text") or "").strip(),
+                "",
+            ]
+        )
+
+    for target_name in ["ocr_pages.md", "pages.md"]:
+        target = output_dir / target_name
+
+        if target.exists():
+            backup = output_dir / f"{target_name}.before_text_review.md"
+
+            if not backup.exists():
+                backup.write_text(target.read_text(encoding="utf-8", errors="ignore"), encoding="utf-8")
+
+        target.write_text("\n".join(md_lines), encoding="utf-8")
+
+
+def _ocr_page_image_url(output_dir: Path, page_number: int) -> str:
+    candidates = [
+        output_dir / "ocr" / "page_images" / f"page_{page_number:04d}.png",
+        output_dir / "scanned_pages" / f"page_{page_number:04d}.jpg",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            rel = candidate.relative_to(PROJECT_ROOT / "data" / "output")
+            return "/output/" + str(rel).replace("\\", "/")
+
+    return ""
+
+
+def _detect_suspicious_ocr_text(text: str) -> bool:
+    value = str(text or "")
+
+    if len(value.strip()) < 80:
+        return True
+
+    weird = len(re.findall(r"[�□■◆◇<>~`^|_]{1,}", value))
+    letters = len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", value))
+    digits = len(re.findall(r"\d", value))
+
+    if weird >= 5:
+        return True
+
+    if digits > letters and len(value) > 200:
+        return True
+
+    if re.search(r"\b(jj|ixii|v0|01g|lll|iiii|[Il1]{4,})\b", value.lower()):
+        return True
+
+    return False
+
+
+@app.get("/review-ocr-text")
+def review_ocr_text(pdf: str = "", page: int = 1):
+    from fastapi.responses import HTMLResponse
+    from urllib.parse import quote
+
+    pdf_name = _safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+
+    output_dir = _output_dir_for_pdf_name(pdf_name)
+    pages = _load_ocr_review_pages(output_dir)
+
+    if not pages:
+        return HTMLResponse("<h1>No OCR pages found</h1><p>Run OCR first.</p>", status_code=404)
+
+    page_numbers = [int(item["page_number"]) for item in pages]
+    min_page = min(page_numbers)
+    max_page = max(page_numbers)
+
+    if page < min_page:
+        page = min_page
+
+    if page > max_page:
+        page = max_page
+
+    current = next((item for item in pages if int(item["page_number"]) == page), pages[0])
+    current_text = current.get("text") or ""
+
+    suspicious_pages = [
+        int(item["page_number"])
+        for item in pages
+        if _detect_suspicious_ocr_text(item.get("text") or "")
+    ]
+
+    previous_page = max(min_page, page - 1)
+    next_page = min(max_page, page + 1)
+    image_url = _ocr_page_image_url(output_dir, page)
+
+    suspicious_nav = " ".join(
+        f'<a href="/review-ocr-text?pdf={quote(pdf_name)}&page={p}">{p}</a>'
+        for p in suspicious_pages[:80]
+    )
+
+    image_html = (
+        f"""
+        <div class="scan-shell">
+          <div class="scan-toolbar">
+            <button type="button" onclick="zoomScan(-0.15)">−</button>
+            <button type="button" onclick="resetScanZoom()">100%</button>
+            <button type="button" onclick="fitScanWidth()">Fit width</button>
+            <button type="button" onclick="zoomScan(0.15)">+</button>
+            <span class="zoom-pill" data-zoom-label>100%</span>
+            <span class="scan-tip">Tip: Ctrl + mouse wheel = zoom · click + drag = move page</span>
+          </div>
+
+          <div class="scan-viewport" id="scanViewport">
+            <img id="scanImage" class="scan-img" src="{_html_escape(image_url)}" alt="OCR source page {page}">
+          </div>
+</div>
+        """
+        if image_url
+        else '<div class="no-img">No rendered page image found for this page.</div>'
+    )
+
+    html_doc = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Review OCR Text · Voila!</title>
+  <style>
+    :root {{
+      --bg: #101819;
+      --panel: #202d31;
+      --panel2: #26363b;
+      --text: #f6ead7;
+      --muted: #c7ad94;
+      --line: #3b4b50;
+      --accent: #e0ad68;
+      --bad: #b45b46;
+    }}
+
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      padding: 24px;
+    }}
+
+    .wrap {{
+      max-width: 1700px;
+      margin: 0 auto;
+    }}
+
+    .top {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }}
+
+    h1 {{
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.05;
+    }}
+
+    a, button {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 16px;
+      background: var(--panel2);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+      font-size: 15px;
+    }}
+
+    button {{
+      background: var(--accent);
+      border-color: transparent;
+      color: white;
+    }}
+
+    .grid {{
+      display: grid;
+      grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1.05fr);
+      gap: 20px;
+      align-items: start;
+    }}
+
+    .panel {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+    }}
+
+    .scan-shell {{
+      position: relative;
+    }}
+
+    .scan-toolbar {{
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(32, 45, 49, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+    }}
+
+    .scan-toolbar button,
+    .scan-floating-zoom button {{
+      padding: 9px 13px;
+      min-width: 44px;
+      border-radius: 999px;
+      font-size: 15px;
+      line-height: 1;
+    }}
+
+    .zoom-pill {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #142022;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 900;
+      min-width: 68px;
+    }}
+
+    .scan-tip {{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
+      padding: 8px 10px;
+    }}
+
+    .scan-viewport {{
+      width: 100%;
+      height: 78vh;
+      overflow: auto;
+      background: #f2ead8;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      overscroll-behavior: contain;
+      cursor: grab;
+      touch-action: none;
+    }}
+
+    .scan-viewport.dragging {{
+      cursor: grabbing;
+    }}
+
+    .scan-img {{
+      display: block;
+      width: auto;
+      max-width: none;
+      height: auto;
+      max-height: none;
+      background: #f2ead8;
+      border: 0;
+      border-radius: 0;
+      transform-origin: top left;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }}
+    .scan-floating-zoom {{
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }}
+.no-img {{
+      padding: 40px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      color: var(--muted);
+    }}
+
+    textarea {{
+      width: 100%;
+      min-height: 68vh;
+      resize: vertical;
+      background: #121f22;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 18px;
+      line-height: 1.55;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }}
+
+    .ocr-suggestions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 10px;
+      background: #142022;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }}
+
+    .ocr-suggestions[hidden] {{
+      display: none;
+    }}
+
+    .ocr-suggestion {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: var(--panel2);
+      color: var(--text);
+      font-weight: 850;
+      cursor: pointer;
+    }}
+
+    .ocr-suggestion.primary {{
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }}
+
+    .small-tip {{
+      font-size: 14px;
+      margin-top: 8px;
+    }}
+
+    .actions {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }}
+
+    .meta {{
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }}
+
+    .suspects {{
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }}
+
+    .suspects a {{
+      padding: 7px 11px;
+      margin: 4px;
+      background: rgba(180,91,70,0.20);
+      border-color: rgba(180,91,70,0.55);
+    }}
+
+    .floating-nav {{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: rgba(32, 45, 49, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+      z-index: 999;
+    }}
+
+    @media (max-width: 980px) {{
+      body {{ padding: 14px; }}
+      .top {{ display: block; }}
+      .grid {{ grid-template-columns: 1fr; }}
+      textarea {{ min-height: 58vh; }}
+      .floating-nav {{
+        width: calc(100% - 24px);
+        overflow-x: auto;
+        justify-content: flex-start;
+      }}
+    }}
+  
+
+    /* VS Code style OCR autocomplete */
+    .ocr-suggestions {{
+      position: fixed !important;
+      z-index: 3000 !important;
+      display: block !important;
+      min-width: 280px;
+      max-width: min(520px, calc(100vw - 24px));
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 6px;
+      background: #1b2529;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.45);
+    }}
+
+    .ocr-suggestions[hidden] {{
+      display: none !important;
+    }}
+
+    .ocr-suggestion {{
+      display: block !important;
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }}
+
+    .ocr-suggestion:hover,
+    .ocr-suggestion.active,
+    .ocr-suggestion.primary {{
+      background: var(--accent);
+      color: white;
+    }}
+
+    .ocr-suggestion small {{
+      display: block;
+      color: rgba(255,255,255,0.70);
+      font-weight: 700;
+      margin-top: 2px;
+    }}
+
+  </style>
+</head>
+<body data-pdf-name="{_html_escape(pdf_name)}">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Review OCR Text</h1>
+        <div class="meta">PDF: <b>{_html_escape(pdf_name)}</b> · Page <b>{page}</b> / {max_page}</div>
+      </div>
+      <div class="actions">
+        <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
+        <a href="/">Library</a>
+        <a href="/review-concepts?pdf={quote(pdf_name)}">Review concepts</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">Open course</a>
+        <a href="/study?pdf={quote(pdf_name)}">Study</a>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={previous_page}">← Previous</a>
+      <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
+      <a href="/review-ocr-text/rebuild?pdf={quote(pdf_name)}">Rebuild course + study</a>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Source page</h2>
+        {image_html}
+      </section>
+
+      <section class="panel">
+        <h2>Editable OCR text</h2>
+        <form method="post" action="/review-ocr-text/save">
+          <input type="hidden" name="pdf" value="{_html_escape(pdf_name)}">
+          <input type="hidden" name="page" value="{page}">
+          <textarea id="ocrTextArea" name="text" autocomplete="off" spellcheck="false">{_html_escape(current_text)}</textarea>
+          <div id="ocrSuggestions" class="ocr-suggestions" hidden></div>
+          <p class="meta small-tip">Tip: sugestiile apar lângă cursor. ↑/↓ navighează · Enter/Tab acceptă · Esc închide · Ctrl+Space afișează sugestii.</p>
+          <div class="actions">
+            <button type="submit">Save page correction</button>
+            <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={page}">Reload</a>
+          </div>
+        </form>
+
+        <div class="suspects">
+          <h3>Suspicious pages</h3>
+          <p class="meta">Primele pagini unde OCR-ul pare suspect.</p>
+          {suspicious_nav if suspicious_nav else '<p class="meta">No suspicious pages detected.</p>'}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <nav class="floating-nav">
+    <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={previous_page}">← Prev</a>
+    <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
+    <a href="/review-concepts?pdf={quote(pdf_name)}">Concepts</a>
+    <a href="/study?pdf={quote(pdf_name)}">Study</a>
+  </nav>
+
+  <script>
+    let scanZoom = 1.0;
+
+    function getScanElements() {{
+      return {{
+        img: document.getElementById("scanImage"),
+        viewport: document.getElementById("scanViewport")
+      }};
+    }}
+
+    function updateZoomLabels() {{
+      const label = Math.round(scanZoom * 100) + "%";
+      document.querySelectorAll("[data-zoom-label]").forEach((el) => {{
+        el.textContent = label;
+      }});
+    }}
+
+    function applyScanZoom() {{
+      const {{ img }} = getScanElements();
+
+      if (!img) {{
+        return;
+      }}
+
+      const naturalWidth = img.naturalWidth || img.width || 1000;
+      img.style.width = Math.max(120, naturalWidth * scanZoom) + "px";
+      updateZoomLabels();
+    }}
+
+    function zoomScan(delta) {{
+      scanZoom = Math.min(4.0, Math.max(0.25, scanZoom + delta));
+      applyScanZoom();
+    }}
+
+    function resetScanZoom() {{
+      scanZoom = 1.0;
+      applyScanZoom();
+    }}
+
+    function fitScanWidth() {{
+      const {{ img, viewport }} = getScanElements();
+
+      if (!img || !viewport) {{
+        return;
+      }}
+
+      const naturalWidth = img.naturalWidth || img.width || 1000;
+      const availableWidth = Math.max(240, viewport.clientWidth - 24);
+
+      scanZoom = Math.min(4.0, Math.max(0.25, availableWidth / naturalWidth));
+      applyScanZoom();
+      viewport.scrollLeft = 0;
+    }}
+
+    window.addEventListener("load", () => {{
+      document.querySelectorAll(".scan-floating-zoom").forEach((el) => el.remove());
+      applyScanZoom();
+      enableScanPan();
+      enableOcrAutocomplete();
+    }});
+
+
+    function enableScanPan() {{
+      const viewport = document.getElementById("scanViewport");
+
+      if (!viewport || viewport.dataset.panEnabled === "1") {{
+        return;
+      }}
+
+      viewport.dataset.panEnabled = "1";
+
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let startScrollLeft = 0;
+      let startScrollTop = 0;
+
+      viewport.addEventListener("pointerdown", (event) => {{
+        isDragging = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        startScrollLeft = viewport.scrollLeft;
+        startScrollTop = viewport.scrollTop;
+        viewport.classList.add("dragging");
+        viewport.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      }});
+
+      viewport.addEventListener("pointermove", (event) => {{
+        if (!isDragging) {{
+          return;
+        }}
+
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+
+        viewport.scrollLeft = startScrollLeft - dx;
+        viewport.scrollTop = startScrollTop - dy;
+        event.preventDefault();
+      }});
+
+      function stopDragging(event) {{
+        if (!isDragging) {{
+          return;
+        }}
+
+        isDragging = false;
+        viewport.classList.remove("dragging");
+
+        try {{
+          viewport.releasePointerCapture(event.pointerId);
+        }} catch (_) {{}}
+      }}
+
+      viewport.addEventListener("pointerup", stopDragging);
+      viewport.addEventListener("pointercancel", stopDragging);
+      viewport.addEventListener("pointerleave", stopDragging);
+    }}
+
+    document.addEventListener("wheel", (event) => {{
+      const viewport = document.getElementById("scanViewport");
+
+      if (!viewport || !event.ctrlKey) {{
+        return;
+      }}
+
+      if (!viewport.contains(event.target)) {{
+        return;
+      }}
+
+      event.preventDefault();
+      zoomScan(event.deltaY < 0 ? 0.12 : -0.12);
+    }}, {{ passive: false }});
+
+    // OCR autocomplete start
+    function getCurrentOcrWord(textarea) {{
+      const cursor = textarea.selectionStart || 0;
+      const before = textarea.value.slice(0, cursor);
+      const match = before.match(/[A-Za-zĂÂÎȘȚăâîșț0-9-]+$/);
+
+      if (!match) {{
+        return null;
+      }}
+
+      const word = match[0];
+
+      return {{
+        word: word,
+        start: cursor - word.length,
+        end: cursor
+      }};
+    }}
+
+    function getTextareaCaretViewportPosition(textarea) {{
+      const position = textarea.selectionStart || 0;
+      const style = window.getComputedStyle(textarea);
+      const rect = textarea.getBoundingClientRect();
+
+      const mirror = document.createElement("div");
+      mirror.style.position = "absolute";
+      mirror.style.visibility = "hidden";
+      mirror.style.whiteSpace = "pre-wrap";
+      mirror.style.overflowWrap = "break-word";
+      mirror.style.wordWrap = "break-word";
+      mirror.style.top = "0";
+      mirror.style.left = "-9999px";
+      mirror.style.width = textarea.clientWidth + "px";
+      mirror.style.fontFamily = style.fontFamily;
+      mirror.style.fontSize = style.fontSize;
+      mirror.style.fontWeight = style.fontWeight;
+      mirror.style.letterSpacing = style.letterSpacing;
+      mirror.style.lineHeight = style.lineHeight;
+      mirror.style.paddingTop = style.paddingTop;
+      mirror.style.paddingRight = style.paddingRight;
+      mirror.style.paddingBottom = style.paddingBottom;
+      mirror.style.paddingLeft = style.paddingLeft;
+      mirror.style.borderTopWidth = style.borderTopWidth;
+      mirror.style.borderRightWidth = style.borderRightWidth;
+      mirror.style.borderBottomWidth = style.borderBottomWidth;
+      mirror.style.borderLeftWidth = style.borderLeftWidth;
+
+      const before = textarea.value.slice(0, position);
+      const after = textarea.value.slice(position);
+
+      mirror.textContent = before;
+
+      const marker = document.createElement("span");
+      marker.textContent = after.length ? after[0] : ".";
+      mirror.appendChild(marker);
+
+      document.body.appendChild(mirror);
+
+      const markerRect = marker.getBoundingClientRect();
+      const mirrorRect = mirror.getBoundingClientRect();
+
+      const lineHeight = parseFloat(style.lineHeight) || 24;
+
+      const left = rect.left + (markerRect.left - mirrorRect.left) - textarea.scrollLeft;
+      const top = rect.top + (markerRect.top - mirrorRect.top) - textarea.scrollTop + lineHeight + 4;
+
+      document.body.removeChild(mirror);
+
+      return {{
+        left: left,
+        top: top
+      }};
+    }}
+
+    let ocrSuggestionTimer = null;
+    let ocrLastSuggestions = [];
+    let ocrActiveSuggestionIndex = 0;
+
+    function getOcrSuggestionBox() {{
+      return document.getElementById("ocrSuggestions");
+    }}
+
+    function ocrSuggestionBoxVisible() {{
+      const box = getOcrSuggestionBox();
+      return !!box && !box.hidden && ocrLastSuggestions.length > 0;
+    }}
+
+    function hideOcrSuggestions() {{
+      const box = getOcrSuggestionBox();
+
+      if (!box) {{
+        return;
+      }}
+
+      box.hidden = true;
+      box.innerHTML = "";
+      ocrLastSuggestions = [];
+      ocrActiveSuggestionIndex = 0;
+    }}
+
+    function positionOcrSuggestions() {{
+      const textarea = document.getElementById("ocrTextArea");
+      const box = getOcrSuggestionBox();
+
+      if (!textarea || !box || box.hidden) {{
+        return;
+      }}
+
+      const pos = getTextareaCaretViewportPosition(textarea);
+
+      const boxWidth = Math.min(520, Math.max(280, box.offsetWidth || 320));
+      const boxHeight = Math.min(280, box.offsetHeight || 220);
+
+      let left = pos.left;
+      let top = pos.top;
+
+      if (left + boxWidth > window.innerWidth - 12) {{
+        left = window.innerWidth - boxWidth - 12;
+      }}
+
+      if (left < 12) {{
+        left = 12;
+      }}
+
+      if (top + boxHeight > window.innerHeight - 12) {{
+        top = pos.top - boxHeight - 30;
+      }}
+
+      if (top < 12) {{
+        top = 12;
+      }}
+
+      box.style.left = left + "px";
+      box.style.top = top + "px";
+    }}
+
+    function renderOcrSuggestions(suggestions) {{
+      const box = getOcrSuggestionBox();
+
+      if (!box) {{
+        return;
+      }}
+
+      ocrLastSuggestions = suggestions || [];
+      ocrActiveSuggestionIndex = 0;
+
+      if (!ocrLastSuggestions.length) {{
+        hideOcrSuggestions();
+        return;
+      }}
+
+      box.innerHTML = "";
+
+      ocrLastSuggestions.forEach(function(word, index) {{
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = index === ocrActiveSuggestionIndex ? "ocr-suggestion active" : "ocr-suggestion";
+        button.textContent = word;
+        button.dataset.index = String(index);
+        button.dataset.word = word;
+
+        button.addEventListener("mousedown", function(event) {{
+          event.preventDefault();
+        }});
+
+        button.addEventListener("mouseenter", function() {{
+          setActiveOcrSuggestion(index);
+        }});
+
+        button.addEventListener("click", function() {{
+          insertOcrSuggestion(word);
+        }});
+
+        box.appendChild(button);
+      }});
+
+      box.hidden = false;
+      positionOcrSuggestions();
+    }}
+
+    function setActiveOcrSuggestion(index) {{
+      if (!ocrLastSuggestions.length) {{
+        return;
+      }}
+
+      if (index < 0) {{
+        index = ocrLastSuggestions.length - 1;
+      }}
+
+      if (index >= ocrLastSuggestions.length) {{
+        index = 0;
+      }}
+
+      ocrActiveSuggestionIndex = index;
+
+      const box = getOcrSuggestionBox();
+
+      if (!box) {{
+        return;
+      }}
+
+      box.querySelectorAll(".ocr-suggestion").forEach(function(button, i) {{
+        button.classList.toggle("active", i === ocrActiveSuggestionIndex);
+
+        if (i === ocrActiveSuggestionIndex) {{
+          button.scrollIntoView({{ block: "nearest" }});
+        }}
+      }});
+    }}
+
+    function insertOcrSuggestion(value) {{
+      const textarea = document.getElementById("ocrTextArea");
+
+      if (!textarea) {{
+        return;
+      }}
+
+      const info = getCurrentOcrWord(textarea);
+
+      if (!info) {{
+        return;
+      }}
+
+      const before = textarea.value.slice(0, info.start);
+      const after = textarea.value.slice(info.end);
+
+      textarea.value = before + value + after;
+
+      const nextCursor = before.length + value.length;
+      textarea.focus();
+      textarea.setSelectionRange(nextCursor, nextCursor);
+
+      hideOcrSuggestions();
+
+      textarea.dispatchEvent(new Event("input", {{ bubbles: true }}));
+    }}
+
+    function refreshOcrSuggestions(force) {{
+      const textarea = document.getElementById("ocrTextArea");
+
+      if (!textarea) {{
+        return;
+      }}
+
+      const info = getCurrentOcrWord(textarea);
+
+      if (!info || (!force && info.word.length < 2)) {{
+        hideOcrSuggestions();
+        return;
+      }}
+
+      const pdfName = document.body.dataset.pdfName || "";
+      const query = info ? info.word : "";
+      const url = "/review-ocr-text/suggestions?pdf=" + encodeURIComponent(pdfName) + "&q=" + encodeURIComponent(query) + "&limit=12";
+
+      fetch(url)
+        .then(function(response) {{
+          return response.json();
+        }})
+        .then(function(data) {{
+          renderOcrSuggestions(data.suggestions || []);
+        }})
+        .catch(function() {{
+          hideOcrSuggestions();
+        }});
+    }}
+
+    function scheduleOcrSuggestions() {{
+      clearTimeout(ocrSuggestionTimer);
+      ocrSuggestionTimer = setTimeout(function() {{
+        refreshOcrSuggestions(false);
+      }}, 90);
+    }}
+
+    function enableOcrAutocomplete() {{
+      const textarea = document.getElementById("ocrTextArea");
+
+      if (!textarea || textarea.dataset.autocompleteEnabled === "1") {{
+        return;
+      }}
+
+      textarea.dataset.autocompleteEnabled = "1";
+
+      textarea.addEventListener("input", scheduleOcrSuggestions);
+      textarea.addEventListener("click", scheduleOcrSuggestions);
+      textarea.addEventListener("scroll", positionOcrSuggestions);
+
+      textarea.addEventListener("keydown", function(event) {{
+        if (event.ctrlKey && event.code === "Space") {{
+          event.preventDefault();
+          refreshOcrSuggestions(true);
+          return;
+        }}
+
+        if (!ocrSuggestionBoxVisible()) {{
+          return;
+        }}
+
+        if (event.key === "ArrowDown") {{
+          event.preventDefault();
+          setActiveOcrSuggestion(ocrActiveSuggestionIndex + 1);
+          return;
+        }}
+
+        if (event.key === "ArrowUp") {{
+          event.preventDefault();
+          setActiveOcrSuggestion(ocrActiveSuggestionIndex - 1);
+          return;
+        }}
+
+        if (event.key === "Tab" || event.key === "Enter") {{
+          event.preventDefault();
+          insertOcrSuggestion(ocrLastSuggestions[ocrActiveSuggestionIndex]);
+          return;
+        }}
+
+        if (event.key === "Escape") {{
+          event.preventDefault();
+          hideOcrSuggestions();
+          return;
+        }}
+      }});
+
+      window.addEventListener("resize", positionOcrSuggestions);
+      window.addEventListener("scroll", positionOcrSuggestions, true);
+    }}
+
+    document.addEventListener("DOMContentLoaded", function() {{
+      enableOcrAutocomplete();
+    }});
+    // OCR autocomplete end
+
+
+</script>
+
+</body>
+</html>
+"""
+
+    return HTMLResponse(html_doc)
+
+
+@app.post("/review-ocr-text/save")
+def save_ocr_text_page(
+    pdf: str = Form(...),
+    page: int = Form(...),
+    text: str = Form(...),
+):
+    from datetime import datetime, timezone
+    from fastapi.responses import HTMLResponse, RedirectResponse
+    from urllib.parse import quote
+    import traceback
+
+    try:
+        pdf_name = _safe_pdf_name(pdf)
+        output_dir = _output_dir_for_pdf_name(pdf_name)
+        pages = _load_ocr_review_pages(output_dir)
+
+        if not pages:
+            return HTMLResponse("<h1>No OCR pages found</h1>", status_code=404)
+
+        changed = False
+
+        for item in pages:
+            if int(item["page_number"]) == int(page):
+                item["text"] = str(text or "").strip()
+                changed = True
+                break
+
+        if not changed:
+            return HTMLResponse(f"<h1>Page not found: {page}</h1>", status_code=404)
+
+        overrides_path = output_dir / "ocr_page_text_overrides.json"
+        overrides = _load_json_file(
+            overrides_path,
+            {
+                "version": "1.0",
+                "pages": {},
+            },
+        )
+
+        overrides.setdefault("pages", {})[str(page)] = {
+            "text": str(text or "").strip(),
+            "source": "manual_ui",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        _save_json_file(overrides_path, overrides)
+        _write_ocr_review_pages(output_dir, pages)
+
+        return RedirectResponse(
+            f"/review-ocr-text?pdf={quote(pdf_name)}&page={int(page)}",
+            status_code=303,
+        )
+
+    except Exception:
+        error = traceback.format_exc()
+        return HTMLResponse(
+            f"""
+            <h1>Save OCR text failed</h1>
+            <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(error)}</pre>
+            <p><a href="/">Back</a></p>
+            """,
+            status_code=500,
+        )
+
+
+@app.get("/review-ocr-text/rebuild")
+def rebuild_after_ocr_text_review(pdf: str = ""):
+    from fastapi.responses import HTMLResponse
+    import subprocess
+    import sys
+    import traceback
+    from urllib.parse import quote
+
+    try:
+        pdf_name = _safe_pdf_name(pdf)
+        output_dir = _output_dir_for_pdf_name(pdf_name)
+        pdf_path = PROJECT_ROOT / "data" / "input" / pdf_name
+        course_html = output_dir / "course.cleaned.html"
+
+        steps = [
+            [
+                sys.executable,
+                str(PROJECT_ROOT / "services" / "api" / "ocr_course_builder.py"),
+                str(output_dir),
+                "--pdf-name",
+                pdf_name,
+                "--min-page",
+                "15",
+                "--pages-per-lesson",
+                "2",
+                "--max-lessons",
+                "260",
+            ],
+            [
+                sys.executable,
+                str(PROJECT_ROOT / "services" / "api" / "html_exporter.py"),
+                str(output_dir / "course.cleaned.md"),
+            ],
+            [
+                sys.executable,
+                str(PROJECT_ROOT / "services" / "api" / "course_nav_injector.py"),
+                str(course_html),
+                pdf_name,
+            ],
+            [
+                sys.executable,
+                str(PROJECT_ROOT / "services" / "api" / "study_quiz_builder.py"),
+                str(output_dir),
+                "--min-page",
+                "15",
+                "--max-per-lesson",
+                "3",
+                "--max-total",
+                "500",
+            ],
+            [
+                sys.executable,
+                str(PROJECT_ROOT / "services" / "api" / "ocr_corrections_engine.py"),
+                "apply-titles",
+                str(output_dir),
+            ],
+        ]
+
+        logs = []
+
+        for step in steps:
+            result = subprocess.run(
+                step,
+                cwd=str(PROJECT_ROOT),
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+
+            logs.append("$ " + " ".join(step))
+            logs.append(result.stdout)
+
+            if result.stderr:
+                logs.append("STDERR:")
+                logs.append(result.stderr)
+
+            if result.returncode != 0:
+                raise RuntimeError("\n".join(logs))
+
+        state = output_dir / "study_state.json"
+
+        if state.exists():
+            state.unlink()
+
+        log_text = "\n".join(logs)
+
+        return HTMLResponse(
+            f"""
+            <h1>Rebuild complete</h1>
+            <p>OCR text corrections were applied to course and study.</p>
+            <p>
+              <a href="/review-ocr-text?pdf={quote(pdf_name)}">Back to OCR Review</a>
+              · <a href="/review-concepts?pdf={quote(pdf_name)}">Review Concepts</a>
+              · <a href="/study?pdf={quote(pdf_name)}">Study</a>
+            </p>
+            <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(log_text)}</pre>
+            """
+        )
+
+    except Exception:
+        error = traceback.format_exc()
+        return HTMLResponse(
+            f"""
+            <h1>Rebuild failed</h1>
+            <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(error)}</pre>
+            """,
+            status_code=500,
+        )
+
+
+
+
+@app.get("/review-ocr-text/suggestions")
+def review_ocr_text_suggestions(pdf: str = "", q: str = "", limit: int = 12):
+    from fastapi.responses import JSONResponse
+    from collections import Counter
+    import re
+
+    pdf_name = _safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return JSONResponse({"suggestions": []})
+
+    output_dir = _output_dir_for_pdf_name(pdf_name)
+    pages = _load_ocr_review_pages(output_dir)
+
+    query = str(q or "").strip().lower()
+
+    if len(query) < 2:
+        return JSONResponse({"suggestions": []})
+
+    technical_words = [
+        "instalații", "electrice", "automatizare", "iluminat", "tensiune",
+        "curent", "putere", "energie", "circuit", "circuite", "protecție",
+        "alimentare", "distribuție", "comandă", "măsurare", "reglare",
+        "control", "siguranță", "conductoare", "conductor", "echipamente",
+        "tablouri", "aparate", "relee", "contactoare", "senzori",
+        "rezistență", "impedanță", "frecvență", "factor", "defazaj",
+        "luminos", "luminanță", "iluminare", "randament", "transformator",
+        "motor", "monofazat", "trifazat", "împământare", "legare",
+        "scurtcircuit", "suprasarcină", "declanșare", "automat",
+        "automată", "sisteme", "scheme", "tehnologice", "principiu",
+        "regulatoare", "traductoare", "ventilare", "climatizare",
+        "temperatură", "presiune", "umiditate", "debit", "mărimi",
+        "documentație", "obiective", "investiții", "publice", "tehnico",
+        "economică", "proiectare", "execuție", "verificare",
+    ]
+
+    counter = Counter()
+
+    for word in technical_words:
+        normalized = word.lower()
+
+        if normalized.startswith(query):
+            counter[word] += 10000
+
+    for page in pages:
+        page_text = str(page.get("text") or "")
+
+        for word in re.findall(r"[A-Za-zĂÂÎȘȚăâîșț0-9][A-Za-zĂÂÎȘȚăâîșț0-9\-]{2,}", page_text):
+            clean = word.strip(".,:;()[]{}!?").lower()
+
+            if len(clean) < 3:
+                continue
+
+            if clean.startswith(query):
+                counter[clean] += 1
+
+    suggestions = [
+        word
+        for word, _count in counter.most_common(max(1, min(limit, 30)))
+    ]
+
+    return JSONResponse({"suggestions": suggestions})
+
+
+
+
+def _nav_safe_pdf_name(value: str) -> str:
+    from pathlib import Path
+    return Path(str(value or "")).name
+
+
+def _nav_output_dir(pdf_name: str) -> Path:
+    from pathlib import Path
+    return PROJECT_ROOT / "data" / "output" / Path(pdf_name).stem
+
+
+def _nav_quote(value: str) -> str:
+    from urllib.parse import quote
+    return quote(str(value or ""))
+
+
+def _nav_escape(value: str) -> str:
+    import html
+    return html.escape(str(value or ""), quote=True)
+
+
+
+
+def _course_tools_button_html(pdf_name: str) -> str:
+    from urllib.parse import quote
+    safe = Path(str(pdf_name or "")).name
+    q = quote(safe)
+    return f'<a class="tool-link primary-tool" href="/course-tools?pdf={q}">Course Tools</a>'
+
+
+def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
+    q = _nav_quote(pdf_name)
+
+    links = [
+        ("Tools", f"/course-tools?pdf={q}", "tools"),
+        ("Course", f"/view-course?pdf={q}", "course"),
+        ("Study", f"/study?pdf={q}", "study"),
+        ("Review OCR Text", f"/review-ocr-text?pdf={q}&page=1", "ocr"),
+        ("Review Concepts", f"/review-concepts?pdf={q}", "concepts"),
+        ("Figures", f"/view-figures?pdf={q}", "figures"),
+        ("Edit crops", f"/edit-crops?pdf={q}", "crops"),
+        ("Progress", f"/progress?pdf={q}", "progress"),
+        ("Library", "/", "library"),
+    ]
+
+    items = []
+
+    for label, href, key in links:
+        cls = "active" if key == active else ""
+        items.append(f'<a class="{cls}" href="{href}">{label}</a>')
+
+    return """
+<nav class="voila-tools-bar">
+  """ + "\n  ".join(items) + """
+</nav>
+"""
+
+
+def _inject_voila_tools_bar(html_doc: str, pdf_name: str, active: str = "") -> str:
+    import re
+
+    if "voila-tools-bar" in html_doc:
+        return html_doc
+
+    css = """
+<style>
+  .voila-tools-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5000;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow-x: auto;
+    padding: 12px;
+    background: rgba(16, 24, 25, 0.96);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.28);
+  }
+
+  .voila-tools-bar a {
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.06);
+    color: #f6ead7;
+    text-decoration: none;
+    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 14px;
+    font-weight: 850;
+  }
+
+  .voila-tools-bar a.active {
+    background: #e0ad68;
+    color: white;
+    border-color: transparent;
+  }
+</style>
+"""
+
+    bar = _voila_tools_bar(pdf_name, active)
+
+    if "</head>" in html_doc:
+        html_doc = html_doc.replace("</head>", css + "\n</head>", 1)
+
+    html_doc = re.sub(
+        r"(<body[^>]*>)",
+        r"\1\n" + bar,
+        html_doc,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+    return html_doc
+
+
+@app.get("/course-tools")
+def course_tools(pdf: str = ""):
+    from fastapi.responses import HTMLResponse
+
+    pdf_name = _nav_safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+
+    output_dir = _nav_output_dir(pdf_name)
+    q = _nav_quote(pdf_name)
+
+    checks = {
+        "course": (output_dir / "course.cleaned.html").exists(),
+        "study": (output_dir / "quiz.study.json").exists(),
+        "figures": (output_dir / "figures_hybrid" / "figures_hybrid.html").exists(),
+        "ocr": (output_dir / "ocr_pages.json").exists() or (output_dir / "pages.json").exists(),
+        "concepts": (output_dir / "quiz.study.json").exists(),
+    }
+
+    def card(title: str, description: str, href: str, enabled: bool = True) -> str:
+        cls = "" if enabled else "disabled"
+        suffix = "" if enabled else "<span>Not generated yet</span>"
+        safe_href = href if enabled else "#"
+
+        return f"""
+        <a class="card {cls}" href="{safe_href}">
+          <h2>{_nav_escape(title)}</h2>
+          <p>{_nav_escape(description)}</p>
+          {suffix}
+        </a>
+        """
+
+    cards = [
+        card("Open course", "Read the generated course with navigation.", f"/view-course?pdf={q}", checks["course"]),
+        card("Study mode", "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
+        card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-text?pdf={q}&page=1", checks["ocr"]),
+        card("Review Study Concepts", "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
+        card("Figures", "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
+        card("Edit crops", "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
+        card("Progress", "View study progress.", f"/progress?pdf={q}", checks["study"]),
+        card("Library", "Return to the main course library.", "/", True),
+    ]
+
+    css = """
+<style>
+  :root {
+    --bg: #101819;
+    --panel: #202d31;
+    --panel2: #26363b;
+    --text: #f6ead7;
+    --muted: #c7ad94;
+    --line: #3b4b50;
+    --accent: #e0ad68;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    padding: 28px;
+  }
+
+  .wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: clamp(36px, 6vw, 72px);
+    line-height: 1.05;
+  }
+
+  .muted {
+    color: var(--muted);
+    font-size: 18px;
+    margin-bottom: 28px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    display: block;
+    min-height: 170px;
+    padding: 24px;
+    border-radius: 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    text-decoration: none;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 26px;
+  }
+
+  .card p {
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.45;
+  }
+
+  .card.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .card span {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+</style>
+"""
+
+    html_doc = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Course Tools · Voila!</title>
+  {css}
+</head>
+<body>
+  <div class="wrap">
+    <h1>Course Tools</h1>
+    <div class="muted">PDF: <b>{_nav_escape(pdf_name)}</b></div>
+    <div class="grid">
+      {''.join(cards)}
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+    return HTMLResponse(html_doc)
+
+
+@app.get("/view-course")
+def view_course(pdf: str = ""):
+    from fastapi.responses import HTMLResponse
+
+    pdf_name = _nav_safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+
+    output_dir = _nav_output_dir(pdf_name)
+    course_html = output_dir / "course.cleaned.html"
+
+    if not course_html.exists():
+        return HTMLResponse("<h1>Course HTML not found</h1>", status_code=404)
+
+    html_doc = course_html.read_text(encoding="utf-8", errors="ignore")
+    html_doc = _inject_voila_tools_bar(html_doc, pdf_name, "course")
+
+    return HTMLResponse(html_doc)
+
+
+@app.get("/view-figures")
+def view_figures(pdf: str = ""):
+    from fastapi.responses import HTMLResponse
+
+    pdf_name = _nav_safe_pdf_name(pdf)
+
+    if not pdf_name:
+        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+
+    output_dir = _nav_output_dir(pdf_name)
+    figures_html = output_dir / "figures_hybrid" / "figures_hybrid.html"
+
+    if not figures_html.exists():
+        return HTMLResponse("<h1>Figures HTML not found</h1>", status_code=404)
+
+    html_doc = figures_html.read_text(encoding="utf-8", errors="ignore")
+
+    base = "/output/" + _nav_quote(output_dir.name) + "/figures_hybrid/"
+    html_doc = html_doc.replace('src="crops/', f'src="{base}crops/')
+    html_doc = html_doc.replace("src='crops/", f"src='{base}crops/")
+
+    html_doc = _inject_voila_tools_bar(html_doc, pdf_name, "figures")
+
+    return HTMLResponse(html_doc)
+
+
+
+
+@app.get("/quick-tools")
+def quick_tools():
+    from fastapi.responses import HTMLResponse
+    from urllib.parse import quote
+
+    input_dir = PROJECT_ROOT / "data" / "input"
+    output_dir = PROJECT_ROOT / "data" / "output"
+
+    pdfs = sorted(input_dir.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+
+    cards = []
+
+    for pdf in pdfs:
+        out = output_dir / pdf.stem
+        q = quote(pdf.name)
+
+        exists = {
+            "course": (out / "course.cleaned.html").exists(),
+            "study": (out / "quiz.study.json").exists(),
+            "figures": (out / "figures_hybrid" / "figures_hybrid.html").exists(),
+            "ocr": (out / "ocr_pages.json").exists() or (out / "pages.json").exists(),
+        }
+
+        status = []
+        for key, ok in exists.items():
+            status.append(f"<span class='{key if ok else 'missing'}'>{key}: {'OK' if ok else '-'}</span>")
+
+        cards.append(f"""
+        <section class="card">
+          <h2>{_nav_escape(pdf.name)}</h2>
+          <p>{''.join(status)}</p>
+          <div class="actions">
+            <a class="primary" href="/course-tools?pdf={q}">Course Tools</a>
+            <a href="/view-course?pdf={q}">Course</a>
+            <a href="/study?pdf={q}">Study</a>
+            <a href="/review-ocr-text?pdf={q}&page=1">Review OCR</a>
+            <a href="/review-concepts?pdf={q}">Concepts</a>
+          </div>
+        </section>
+        """)
+
+    html_doc = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quick Tools · Voila!</title>
+  <style>
+    :root {{
+      --bg: #101819;
+      --panel: #202d31;
+      --text: #f6ead7;
+      --muted: #c7ad94;
+      --line: #3b4b50;
+      --accent: #e0ad68;
+    }}
+
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      padding: 28px;
+    }}
+
+    .wrap {{
+      max-width: 1300px;
+      margin: 0 auto;
+    }}
+
+    h1 {{
+      margin: 0 0 24px;
+      font-size: clamp(36px, 6vw, 72px);
+    }}
+
+    .top {{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }}
+
+    a {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: #26363b;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 850;
+      margin: 4px;
+    }}
+
+    a.primary {{
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }}
+
+    .card {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+      margin: 16px 0;
+    }}
+
+    .card h2 {{
+      margin: 0 0 10px;
+      font-size: 26px;
+    }}
+
+    .card p {{
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+
+    span {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }}
+
+    span.missing {{
+      opacity: 0.5;
+    }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Quick Tools</h1>
+      <a href="/">Library</a>
+    </div>
+    {''.join(cards) if cards else '<p>No PDFs found.</p>'}
+  </div>
+</body>
+</html>
+"""
+
+    return HTMLResponse(html_doc)
+
+
+
+# VOILA_OCR_CORRECTION_ROUTES_V1
+
+from fastapi import Request as _VoilaRequest
+from fastapi.responses import HTMLResponse as _VoilaHTMLResponse
+from fastapi.responses import RedirectResponse as _VoilaRedirectResponse
+from fastapi.responses import Response as _VoilaResponse
+
+
+def _voila_safe_pdf_name(pdf: str) -> str:
+    return Path(str(pdf or "")).name
+
+
+def _voila_ocr_out_dir(pdf: str) -> Path:
+    return PROJECT_ROOT / "data" / "output" / Path(_voila_safe_pdf_name(pdf)).stem
+
+
+def _voila_page_count_for_pdf(pdf: str) -> int:
+    import fitz
+
+    pdf_path = PROJECT_ROOT / "data" / "input" / _voila_safe_pdf_name(pdf)
+
+    if not pdf_path.exists():
+        return 1
+
+    doc = fitz.open(pdf_path)
+
+    try:
+        return max(1, len(doc))
+    finally:
+        doc.close()
+
+
+@app.get("/ocr-page-image")
+def voila_ocr_page_image(pdf: str = "", page: int = 1, zoom: float = 2.2):
+    import fitz
+
+    safe_pdf = _voila_safe_pdf_name(pdf)
+    pdf_path = PROJECT_ROOT / "data" / "input" / safe_pdf
+
+    if not pdf_path.exists():
+        return _VoilaResponse("PDF not found", status_code=404)
+
+    page_index = max(0, int(page) - 1)
+
+    doc = fitz.open(pdf_path)
+
+    try:
+        page_index = min(page_index, len(doc) - 1)
+        pix = doc.load_page(page_index).get_pixmap(
+            matrix=fitz.Matrix(float(zoom), float(zoom)),
+            colorspace=fitz.csRGB,
+            alpha=False,
+        )
+        png = pix.tobytes("png")
+    finally:
+        doc.close()
+
+    return _VoilaResponse(content=png, media_type="image/png")
+
+
+@app.get("/review-ocr-corrected")
+def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, applied: int = 0):
+    import html
+    from urllib.parse import quote
+    import ocr_page_corrections as oc
+
+    safe_pdf = _voila_safe_pdf_name(pdf)
+    out_dir = _voila_ocr_out_dir(safe_pdf)
+
+    page_count = _voila_page_count_for_pdf(safe_pdf)
+    page_number = max(1, min(int(page or 1), page_count))
+
+    original_text = oc.get_page_text(out_dir, page_number)
+    corrected_text = oc.get_corrected_text(out_dir, page_number)
+
+    corr_data = oc.load_corrections(out_dir)
+    item = corr_data.get("page_corrections", {}).get(str(page_number), {})
+    status = item.get("status") if isinstance(item, dict) else ""
+
+    q_pdf = quote(safe_pdf)
+
+    prev_page = max(1, page_number - 1)
+    next_page = min(page_count, page_number + 1)
+
+    saved_msg = ""
+    if int(saved or 0):
+        saved_msg = '<div class="notice ok">Saved correction.</div>'
+
+    applied_msg = ""
+    if int(applied or 0):
+        applied_msg = '<div class="notice ok">Applied corrected OCR to pages.json / ocr_pages.json.</div>'
+
+    css = """
+    :root {
+      --bg: #101819;
+      --panel: #202d31;
+      --panel2: #26363b;
+      --text: #f6ead7;
+      --muted: #c7ad94;
+      --line: #3b4b50;
+      --accent: #e0ad68;
+      --danger: #b85757;
+      --ok: #6fa878;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(16, 24, 25, 0.96);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .muted { color: var(--muted); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    a, button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 13px;
+      background: var(--panel2);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    button.primary, a.primary {
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: white;
+      border-color: transparent;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      padding: 16px;
+      height: calc(100vh - 76px);
+      overflow: hidden;
+    }
+
+    .pane {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .pane-title {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .scan-wrap {
+      width: 100%;
+      height: calc(100% - 48px);
+      overflow: auto;
+      cursor: grab;
+      background: #0b1112;
+      padding: 16px;
+    }
+
+    .scan-wrap:active { cursor: grabbing; }
+
+    .scan-wrap img {
+      max-width: none;
+      width: var(--scan-zoom, 100%);
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    form.editor {
+      height: calc(100% - 48px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      resize: none;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #111b1e;
+      color: var(--text);
+      padding: 14px;
+      font-family: Consolas, ui-monospace, monospace;
+      font-size: 16px;
+      line-height: 1.45;
+      outline: none;
+    }
+
+    .notice {
+      margin: 0 16px 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+    }
+
+    .notice.ok {
+      background: rgba(111,168,120,.18);
+      color: #bde7c3;
+      border: 1px solid rgba(111,168,120,.35);
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 0 2px 4px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .pane {
+        min-height: 70vh;
+      }
+    }
+    """
+
+    html_doc = f"""<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Correct OCR · Voila!</title>
+  <style>{css}</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Correct OCR Text</h1>
+      <div class="muted">{html.escape(safe_pdf)} · page {page_number} / {page_count} · status: {html.escape(str(status or "not reviewed"))}</div>
+    </div>
+
+    <div class="actions">
+      <a href="/course-tools?pdf={q_pdf}">Course Tools</a>
+      <a href="/review-ocr-corrected?pdf={q_pdf}&page={prev_page}">← Prev</a>
+      <a href="/review-ocr-corrected?pdf={q_pdf}&page={next_page}">Next →</a>
+      <a href="/review-ocr-text?pdf={q_pdf}&page={page_number}">Old OCR Review</a>
+    </div>
+  </header>
+
+  {saved_msg}
+  {applied_msg}
+
+  <main>
+    <section class="pane">
+      <div class="pane-title">
+        <span>Scanned page</span>
+        <span>Tip: Ctrl + mouse wheel = zoom doar pe imagine; click + drag = mută pagina</span>
+      </div>
+      <div class="scan-wrap" id="scanWrap">
+        <img src="/ocr-page-image?pdf={q_pdf}&page={page_number}&zoom=2.4" alt="page scan">
+      </div>
+    </section>
+
+    <section class="pane">
+      <div class="pane-title">
+        <span>Editable corrected OCR</span>
+        <span>{len(corrected_text)} chars</span>
+      </div>
+
+      <form class="editor" method="post" action="/save-ocr-correction">
+        <input type="hidden" name="pdf" value="{html.escape(safe_pdf)}">
+        <input type="hidden" name="page" value="{page_number}">
+
+        <div class="hint">
+          Corectează textul aici. Save păstrează corecția în <code>ocr_corrections.json</code>.
+        </div>
+
+        <textarea name="text" spellcheck="false">{html.escape(corrected_text)}</textarea>
+
+        <div class="actions">
+          <button class="primary" type="submit" name="status" value="reviewed">Save reviewed page</button>
+          <button type="submit" name="status" value="needs_review">Save as needs review</button>
+        </div>
+      </form>
+
+      <form method="post" action="/apply-corrected-ocr" style="padding:0 14px 14px;">
+        <input type="hidden" name="pdf" value="{html.escape(safe_pdf)}">
+        <button class="danger" type="submit">Apply corrected OCR to pages.json</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const box = document.getElementById('scanWrap');
+    const img = box.querySelector('img');
+
+    let isDown = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollLeft = 0;
+    let scrollTop = 0;
+    let scanZoom = 100;
+
+    function setScanZoom(nextZoom) {{
+      scanZoom = Math.max(45, Math.min(260, nextZoom));
+      img.style.setProperty('--scan-zoom', scanZoom + '%');
+    }}
+
+    // Ctrl + mouse wheel zooms ONLY the scanned image.
+    // It does not trigger browser zoom and does not resize the OCR editor pane.
+    box.addEventListener('wheel', (e) => {{
+      if (!e.ctrlKey) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const beforeX = box.scrollLeft + e.offsetX;
+      const beforeY = box.scrollTop + e.offsetY;
+      const oldZoom = scanZoom;
+
+      const direction = e.deltaY < 0 ? 12 : -12;
+      setScanZoom(scanZoom + direction);
+
+      const ratio = scanZoom / oldZoom;
+      box.scrollLeft = beforeX * ratio - e.offsetX;
+      box.scrollTop = beforeY * ratio - e.offsetY;
+    }}, {{ passive: false }});
+
+    box.addEventListener('mousedown', (e) => {{
+      isDown = true;
+      startX = e.pageX - box.offsetLeft;
+      startY = e.pageY - box.offsetTop;
+      scrollLeft = box.scrollLeft;
+      scrollTop = box.scrollTop;
+    }});
+
+    box.addEventListener('mouseleave', () => {{ isDown = false; }});
+    box.addEventListener('mouseup', () => {{ isDown = false; }});
+
+    box.addEventListener('mousemove', (e) => {{
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - box.offsetLeft;
+      const y = e.pageY - box.offsetTop;
+      box.scrollLeft = scrollLeft - (x - startX);
+      box.scrollTop = scrollTop - (y - startY);
+    }});
+  </script>
+</body>
+</html>
+"""
+
+    return _VoilaHTMLResponse(html_doc)
+
+
+@app.post("/save-ocr-correction")
+async def voila_save_ocr_correction(request: _VoilaRequest):
+    import ocr_page_corrections as oc
+    from urllib.parse import quote
+
+    form = await request.form()
+
+    pdf = _voila_safe_pdf_name(str(form.get("pdf") or ""))
+    page = int(form.get("page") or 1)
+    text = str(form.get("text") or "")
+    status = str(form.get("status") or "reviewed")
+
+    out_dir = _voila_ocr_out_dir(pdf)
+
+    oc.save_page_correction(
+        out_dir=out_dir,
+        page_number=page,
+        text=text,
+        status=status,
+    )
+
+    return _VoilaRedirectResponse(
+        url=f"/review-ocr-corrected?pdf={quote(pdf)}&page={page}&saved=1",
+        status_code=303,
+    )
+
+
+@app.post("/apply-corrected-ocr")
+async def voila_apply_corrected_ocr(request: _VoilaRequest):
+    import ocr_page_corrections as oc
+    from urllib.parse import quote
+
+    form = await request.form()
+
+    pdf = _voila_safe_pdf_name(str(form.get("pdf") or ""))
+    out_dir = _voila_ocr_out_dir(pdf)
+
+    oc.apply_page_corrections(out_dir, pdf_name=pdf)
+
+    return _VoilaRedirectResponse(
+        url=f"/review-ocr-corrected?pdf={quote(pdf)}&page=1&applied=1",
+        status_code=303,
+    )
 
