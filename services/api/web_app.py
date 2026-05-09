@@ -2111,7 +2111,7 @@ def review_concepts(pdf: str = ""):
       <div class="top-actions">
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
         <a href="/">Library</a>
-        <a href="/review-ocr-text?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
+        <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
         <a href="/view-course?pdf={quote(pdf_name)}">Open course</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
         <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
@@ -2365,7 +2365,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     image_url = _ocr_page_image_url(output_dir, page)
 
     suspicious_nav = " ".join(
-        f'<a href="/review-ocr-text?pdf={quote(pdf_name)}&page={p}">{p}</a>'
+        f'<a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={p}">{p}</a>'
         for p in suspicious_pages[:80]
     )
 
@@ -2736,9 +2736,8 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     </div>
 
     <div class="actions">
-      <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={previous_page}">← Previous</a>
-      <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
-      <a href="/review-ocr-text/rebuild?pdf={quote(pdf_name)}">Rebuild course + study</a>
+      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← Previous</a>
+      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
     </div>
 
     <div class="grid">
@@ -2757,7 +2756,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
           <p class="meta small-tip">Tip: sugestiile apar lângă cursor. ↑/↓ navighează · Enter/Tab acceptă · Esc închide · Ctrl+Space afișează sugestii.</p>
           <div class="actions">
             <button type="submit">Save page correction</button>
-            <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={page}">Reload</a>
+            <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={page}">Reload</a>
           </div>
         </form>
 
@@ -2771,8 +2770,8 @@ def review_ocr_text(pdf: str = "", page: int = 1):
   </div>
 
   <nav class="floating-nav">
-    <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={previous_page}">← Prev</a>
-    <a href="/review-ocr-text?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
+    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← Prev</a>
+    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
     <a href="/review-concepts?pdf={quote(pdf_name)}">Concepts</a>
     <a href="/study?pdf={quote(pdf_name)}">Study</a>
   </nav>
@@ -3302,7 +3301,7 @@ def save_ocr_text_page(
         _write_ocr_review_pages(output_dir, pages)
 
         return RedirectResponse(
-            f"/review-ocr-text?pdf={quote(pdf_name)}&page={int(page)}",
+            f"/review-ocr-corrected?pdf={quote(pdf_name)}&page={int(page)}",
             status_code=303,
         )
 
@@ -3410,7 +3409,7 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
             <h1>Rebuild complete</h1>
             <p>OCR text corrections were applied to course and study.</p>
             <p>
-              <a href="/review-ocr-text?pdf={quote(pdf_name)}">Back to OCR Review</a>
+              <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">Back to OCR Review</a>
               · <a href="/review-concepts?pdf={quote(pdf_name)}">Review Concepts</a>
               · <a href="/study?pdf={quote(pdf_name)}">Study</a>
             </p>
@@ -3533,7 +3532,7 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         ("Tools", f"/course-tools?pdf={q}", "tools"),
         ("Course", f"/view-course?pdf={q}", "course"),
         ("Study", f"/study?pdf={q}", "study"),
-        ("Review OCR Text", f"/review-ocr-text?pdf={q}&page=1", "ocr"),
+        ("Review OCR Text", f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
         ("Review Concepts", f"/review-concepts?pdf={q}", "concepts"),
         ("Figures", f"/view-figures?pdf={q}", "figures"),
         ("Edit crops", f"/edit-crops?pdf={q}", "crops"),
@@ -3649,7 +3648,7 @@ def course_tools(pdf: str = ""):
     cards = [
         card("Open course", "Read the generated course with navigation.", f"/view-course?pdf={q}", checks["course"]),
         card("Study mode", "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
-        card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-text?pdf={q}&page=1", checks["ocr"]),
+        card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
         card("Review Study Concepts", "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
         card("Figures", "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
         card("Edit crops", "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
@@ -3851,7 +3850,7 @@ def quick_tools():
             <a class="primary" href="/course-tools?pdf={q}">Course Tools</a>
             <a href="/view-course?pdf={q}">Course</a>
             <a href="/study?pdf={q}">Study</a>
-            <a href="/review-ocr-text?pdf={q}&page=1">Review OCR</a>
+            <a href="/review-ocr-corrected?pdf={q}&page=1">Review OCR</a>
             <a href="/review-concepts?pdf={q}">Concepts</a>
           </div>
         </section>
@@ -4043,6 +4042,13 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
 
     original_text = oc.get_page_text(out_dir, page_number)
     corrected_text = oc.get_corrected_text(out_dir, page_number)
+
+    if not str(corrected_text or "").strip():
+        try:
+            import ocr_best_text as obt
+            corrected_text = obt.get_best_page_text(out_dir, page_number)
+        except Exception:
+            pass
 
     corr_data = oc.load_corrections(out_dir)
     item = corr_data.get("page_corrections", {}).get(str(page_number), {})
@@ -4258,7 +4264,6 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
       <a href="/course-tools?pdf={q_pdf}">Course Tools</a>
       <a href="/review-ocr-corrected?pdf={q_pdf}&page={prev_page}">← Prev</a>
       <a href="/review-ocr-corrected?pdf={q_pdf}&page={next_page}">Next →</a>
-      <a href="/review-ocr-text?pdf={q_pdf}&page={page_number}">Old OCR Review</a>
     </div>
   </header>
 

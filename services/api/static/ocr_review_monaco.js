@@ -38,6 +38,37 @@
     return String((el && (el.textContent || el.value)) || "").trim().toLowerCase();
   }
 
+  function detectVoilaOcrLanguage(value) {
+    const text = String(value || "").toLowerCase();
+
+    const roChars = /[ăâîșşțţ]/i.test(text) ? 4 : 0;
+
+    const roWords = [
+      "pentru", "este", "sunt", "care", "prin", "în", "din", "funcție",
+      "tensiune", "curent", "lămpii", "instalații", "capitolul", "figura"
+    ];
+
+    const enWords = [
+      "the", "and", "with", "from", "figure", "chapter", "valve",
+      "engine", "fuel", "injection", "pressure", "temperature", "system"
+    ];
+
+    let roScore = roChars;
+    let enScore = 0;
+
+    roWords.forEach(function (word) {
+      if (text.includes(word)) roScore += 1;
+    });
+
+    enWords.forEach(function (word) {
+      if (text.includes(word)) enScore += 1;
+    });
+
+    if (enScore > roScore) return "en-US";
+    return "ro-RO";
+  }
+
+
   ready(async function () {
     const textarea = findOcrTextarea();
 
@@ -314,7 +345,8 @@
         const oldLabel = checkButton.textContent;
         checkButton.textContent = "Verific...";
 
-        setStatus("<strong>LanguageTool:</strong> verific textul...");
+        const detectedLanguage = detectVoilaOcrLanguage(textarea.value || "");
+        setStatus("<strong>LanguageTool:</strong> verific textul cu limba " + detectedLanguage + "...");
 
         try {
           const response = await fetch("/check-ocr-languagetool", {
@@ -322,7 +354,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               text: textarea.value || "",
-              language: "ro-RO"
+              language: detectedLanguage
             })
           });
 
