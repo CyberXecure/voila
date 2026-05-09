@@ -1,0 +1,51 @@
+
+/* Voila OCR Review Monaco - robust compact UI */
+
+#ocrText.voila-monaco-hidden {
+  display: none !important;
+}
+
+#voilaMonacoToolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0;
+}
+
+#voilaMonacoToolbar button {
+  padding: 7px 11px !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+  border-radius: 999px !important;
+  min-height: 0 !important;
+}
+
+#voilaMonacoToolbar .voila-primary {
+  background: var(--accent, #e0ad68) !important;
+  color: #101819 !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+}
+
+#voilaMonacoEditor {
+  width: 100%;
+  height: min(62vh, 640px);
+  min-height: 420px;
+  max-height: calc(100vh - 260px);
+  border: 1px solid var(--line, #3b4b50);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0c1416;
+}
+
+#voilaMonacoStatus {
+  font-size: 12px;
+  color: var(--muted, #c7ad94);
+  line-height: 1.25;
+  padding: 6px 0 0;
+}
+
+#voilaMonacoStatus strong {
+  color: var(--accent, #e0ad68);
+}

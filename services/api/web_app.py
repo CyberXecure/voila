@@ -4245,6 +4245,7 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
   <meta charset="utf-8">
   <title>Correct OCR · Voila!</title>
   <style>{css}</style>
+  <link rel="stylesheet" href="/voila-static/ocr_review_monaco.css?v=1778302140">
 </head>
 <body>
   <header>
@@ -4360,6 +4361,7 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
       box.scrollTop = scrollTop - (y - startY);
     }});
   </script>
+  <script src="/voila-static/ocr_review_monaco.js?v=1778302140"></script>
 </body>
 </html>
 """
@@ -4411,3 +4413,58 @@ async def voila_apply_corrected_ocr(request: _VoilaRequest):
         status_code=303,
     )
 
+
+
+@app.get("/voila-static/{filename}")
+def voila_static_file(filename: str):
+    from fastapi.responses import Response
+
+    safe_name = Path(str(filename or "")).name
+    static_path = PROJECT_ROOT / "services" / "api" / "static" / safe_name
+
+    if not static_path.exists() or not static_path.is_file():
+        return Response("Not found", status_code=404)
+
+    suffix = static_path.suffix.lower()
+
+    if suffix == ".js":
+        media_type = "text/javascript; charset=utf-8"
+    elif suffix == ".css":
+        media_type = "text/css; charset=utf-8"
+    else:
+        media_type = "text/plain; charset=utf-8"
+
+    return Response(
+        static_path.read_text(encoding="utf-8"),
+        media_type=media_type,
+    )
+
+
+
+
+
+@app.post("/check-ocr-languagetool")
+async def voila_check_ocr_languagetool(request: _VoilaRequest):
+    from fastapi.responses import JSONResponse
+    import ocr_languagetool as lt
+
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    try:
+        result = lt.check_text(
+            text=str(payload.get("text") or ""),
+            language=str(payload.get("language") or "ro-RO"),
+        )
+    except Exception as exc:
+        result = {
+            "ok": False,
+            "provider": "LanguageTool",
+            "matches": [],
+            "message": "Eroare internă la verificarea LanguageTool.",
+            "error": str(exc),
+        }
+
+    return JSONResponse(result)
