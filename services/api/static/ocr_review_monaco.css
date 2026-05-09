@@ -49,3 +49,181 @@
 #voilaMonacoStatus strong {
   color: var(--accent, #e0ad68);
 }
+
+
+#voilaDocumentLanguage {
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.1;
+  border-radius: 999px;
+  border: 1px solid var(--line, #3b4b50);
+  background: #111b1e;
+  color: var(--text, #f4efe7);
+}
+
+
+/* OCR_MONACO_TOP_ROW_VISIBILITY_V1 */
+
+/* Toolbar compact, ca să nu împingă/ascundă zona utilă */
+#voilaMonacoToolbar {
+  display: flex !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  margin: 6px 0 10px !important;
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+#voilaMonacoToolbar button,
+#voilaDocumentLanguage {
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  line-height: 1.05 !important;
+  min-height: 34px !important;
+}
+
+/* Editorul nu trebuie să taie widget-urile Monaco */
+#voilaMonacoEditor {
+  margin-top: 10px !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Monaco intern: lasă spațiu sus pentru primul rând + quick fix */
+#voilaMonacoEditor .monaco-editor,
+#voilaMonacoEditor .overflow-guard {
+  border-radius: 14px !important;
+}
+
+#voilaMonacoEditor .monaco-scrollable-element {
+  padding-top: 10px !important;
+}
+
+/* Widget-uri Monaco peste editor, nu sub header/buttons */
+#voilaMonacoEditor .suggest-widget,
+#voilaMonacoEditor .monaco-hover,
+#voilaMonacoEditor .context-view,
+#voilaMonacoEditor .quick-input-widget,
+#voilaMonacoEditor .overflowingContentWidgets {
+  z-index: 9999 !important;
+}
+
+/* Prima linie să nu stea lipită de marginea de sus */
+#voilaMonacoEditor .view-lines {
+  padding-top: 4px !important;
+}
+
+
+/* OCR_MONACO_WIDE_QUICK_FIX_V1 */
+
+/* Quick Fix / Code Action widget wider, so suggestions are readable */
+.monaco-editor .action-widget,
+.monaco-editor .context-view,
+.monaco-editor .monaco-menu,
+.context-view,
+.context-view .monaco-menu,
+.monaco-menu-container {
+  width: auto !important;
+  min-width: 420px !important;
+  max-width: min(760px, calc(100vw - 80px)) !important;
+}
+
+/* Do not ellipsis quick-fix labels too aggressively */
+.monaco-editor .action-widget .action-label,
+.monaco-editor .monaco-menu .action-label,
+.context-view .action-label,
+.monaco-menu-container .action-label {
+  max-width: none !important;
+  width: auto !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+/* Give the list itself enough room */
+.monaco-editor .action-widget .action-list,
+.monaco-editor .monaco-menu .actions-container,
+.context-view .actions-container,
+.monaco-menu-container .actions-container {
+  width: auto !important;
+  min-width: 420px !important;
+}
+
+/* If suggestion text is very long, allow a readable second line */
+.monaco-editor .action-widget .monaco-list-row,
+.monaco-editor .monaco-menu .monaco-list-row,
+.context-view .monaco-list-row,
+.monaco-menu-container .monaco-list-row {
+  height: auto !important;
+  min-height: 32px !important;
+}
+
+
+/* OCR_LT_PANEL_AND_COLUMNS_V1 */
+
+#voilaOcrColumns {
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.1;
+  border-radius: 999px;
+  border: 1px solid var(--line, #3b4b50);
+  background: #111b1e;
+  color: var(--text, #f4efe7);
+}
+
+#voilaLtPanel {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(224, 173, 104, 0.45);
+  border-radius: 14px;
+  background: rgba(12, 20, 22, 0.96);
+  color: var(--text, #f4efe7);
+  position: relative;
+  z-index: 30;
+}
+
+#voilaLtPanel .lt-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--accent, #e0ad68);
+  margin-bottom: 6px;
+}
+
+#voilaLtPanel .lt-message {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+#voilaLtPanel .lt-current {
+  font-size: 13px;
+  color: var(--muted, #c7ad94);
+  margin-bottom: 8px;
+}
+
+#voilaLtPanel code {
+  color: #fff4da;
+  background: rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+#voilaLtPanel .lt-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#voilaLtPanel .lt-replace {
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  border-radius: 999px !important;
+  background: var(--accent, #e0ad68) !important;
+  color: #101819 !important;
+  border-color: transparent !important;
+  text-shadow: none !important;
+  white-space: normal !important;
+  max-width: 100% !important;
+}

@@ -1,4 +1,8 @@
+from pathlib import Path
 
+path = Path("services/api/static/ocr_review_monaco.js")
+
+path.write_text(r'''
 (function () {
   window.VOILA_MONACO_JS_LOADED = true;
   console.log("Voila Monaco OCR JS loaded - multilingual");
@@ -187,30 +191,6 @@
 
     langSelect.value = selectedDocumentLanguage;
 
-    const ocrColumnsSelect = document.createElement("select");
-    ocrColumnsSelect.id = "voilaOcrColumns";
-    ocrColumnsSelect.title = "Mod OCR pentru pagina curentă";
-
-    [
-      ["0", "OCR normal"],
-      ["2", "OCR 2 coloane"],
-      ["3", "OCR 3 coloane"]
-    ].forEach(function (item) {
-      const option = document.createElement("option");
-      option.value = item[0];
-      option.textContent = item[1];
-      ocrColumnsSelect.appendChild(option);
-    });
-
-    ocrColumnsSelect.value = "3";
-
-    const runOcrPageButton = document.createElement("button");
-    runOcrPageButton.type = "button";
-    runOcrPageButton.id = "runOcrPageButton";
-    runOcrPageButton.className = "voila-primary";
-    runOcrPageButton.textContent = "Rulează OCR pagină";
-    runOcrPageButton.title = "Generează OCR pentru pagina curentă, dacă textul este gol sau incomplet.";
-
     const checkButton = document.createElement("button");
     checkButton.type = "button";
     checkButton.id = "checkOcrButton";
@@ -232,8 +212,6 @@
     nextButton.textContent = "problemă →";
 
     toolbar.appendChild(langSelect);
-    toolbar.appendChild(ocrColumnsSelect);
-    toolbar.appendChild(runOcrPageButton);
     toolbar.appendChild(checkButton);
     toolbar.appendChild(saveButton);
     toolbar.appendChild(prevButton);
@@ -246,14 +224,9 @@
     status.id = "voilaMonacoStatus";
     status.innerHTML = "<strong>Editor:</strong> se încarcă Monaco...";
 
-    const ltPanel = document.createElement("div");
-    ltPanel.id = "voilaLtPanel";
-    ltPanel.hidden = true;
-
     textarea.classList.add("voila-monaco-hidden");
     textarea.insertAdjacentElement("afterend", status);
     textarea.insertAdjacentElement("afterend", host);
-    textarea.insertAdjacentElement("afterend", ltPanel);
     textarea.insertAdjacentElement("afterend", toolbar);
 
     function setStatus(message) {
@@ -317,8 +290,7 @@
         suggestOnTriggerCharacters: false,
         tabSize: 2,
         padding: { top: 10, bottom: 10 },
-        lightbulb: { enabled: false },
-        fixedOverflowWidgets: true
+        lightbulb: { enabled: true }
       });
 
       window.voilaMonaco = editor;
@@ -399,7 +371,7 @@
 
             (match.replacements || []).slice(0, 5).forEach(function (replacement) {
               actions.push({
-                title: replacement + " — LanguageTool",
+                title: "LanguageTool: " + replacement,
                 kind: "quickfix",
                 edit: {
                   edits: [{
@@ -447,14 +419,12 @@
         monaco.editor.setModelMarkers(model, "languagetool", markers);
 
         if (!markers.length) {
-          ltPanel.hidden = true;
           setStatus("<strong>LanguageTool:</strong> 0 probleme evidente.");
         } else {
           setStatus(
             "<strong>LanguageTool:</strong> " + markers.length +
-            " sugestii. Folosește panoul de sugestii de sub toolbar."
+            " sugestii. Click pe subliniere sau Ctrl+. pentru quick fix."
           );
-          renderLtIssuePanel();
         }
       };
 
@@ -474,72 +444,10 @@
 
         setStatus(
           "<strong>LanguageTool:</strong> sugestia " +
-          (window.voilaLtIndex + 1) + " / " + matches.length
+          (window.voilaLtIndex + 1) + " / " + matches.length +
+          ". Ctrl+. pentru quick fix."
         );
-        renderLtIssuePanel();
       };
-
-
-      function escapeHtml(value) {
-        return String(value || "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;");
-      }
-
-      function renderLtIssuePanel() {
-        const matches = window.voilaLtMatches || [];
-
-        if (!matches.length) {
-          ltPanel.hidden = true;
-          return;
-        }
-
-        if (window.voilaLtIndex < 0) window.voilaLtIndex = 0;
-        if (window.voilaLtIndex >= matches.length) window.voilaLtIndex = matches.length - 1;
-
-        const match = matches[window.voilaLtIndex];
-        const replacements = match.replacements || [];
-        const range = rangeFromMatch(match);
-
-        const currentText = model.getValueInRange(range);
-
-        const buttons = replacements.slice(0, 8).map(function (replacement, index) {
-          return '<button type="button" class="lt-replace" data-index="' + index + '">' +
-            escapeHtml(replacement) +
-            '</button>';
-        }).join("");
-
-        ltPanel.hidden = false;
-        ltPanel.innerHTML =
-          '<div class="lt-head">' +
-            '<strong>LanguageTool</strong>' +
-            '<span>' + (window.voilaLtIndex + 1) + ' / ' + matches.length + '</span>' +
-          '</div>' +
-          '<div class="lt-message">' + escapeHtml(match.message || "Sugestie") + '</div>' +
-          '<div class="lt-current">Text: <code>' + escapeHtml(currentText) + '</code></div>' +
-          '<div class="lt-actions">' + buttons + '</div>';
-
-        Array.from(ltPanel.querySelectorAll(".lt-replace")).forEach(function (button) {
-          button.addEventListener("click", function () {
-            const replacement = replacements[Number(button.dataset.index || "0")] || "";
-
-            editor.executeEdits("LanguageTool", [{
-              range: range,
-              text: replacement,
-              forceMoveMarkers: true
-            }]);
-
-            syncToTextarea();
-
-            setStatus("<strong>LanguageTool:</strong> sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată.");
-
-            matches.splice(window.voilaLtIndex, 1);
-            window.voilaSetLanguageToolMarkers(matches);
-          });
-        });
-      }
 
       prevButton.addEventListener("click", function () {
         window.voilaGoToLanguageToolIssue(-1);
@@ -547,58 +455,6 @@
 
       nextButton.addEventListener("click", function () {
         window.voilaGoToLanguageToolIssue(1);
-      });
-
-      runOcrPageButton.addEventListener("click", async function () {
-        syncToTextarea();
-
-        const url = new URL(window.location.href);
-        const pdfName = url.searchParams.get("pdf") || getPdfName();
-        const pageNumber = Number(url.searchParams.get("page") || "1");
-
-        if (!pdfName || !pageNumber) {
-          setStatus("<strong>OCR:</strong> nu pot determina PDF-ul sau pagina.");
-          return;
-        }
-
-        runOcrPageButton.disabled = true;
-        const oldLabel = runOcrPageButton.textContent;
-        runOcrPageButton.textContent = "OCR...";
-
-        setStatus("<strong>OCR:</strong> generez text pentru pagina curentă...");
-
-        try {
-          const response = await fetch("/run-ocr-page", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              pdf: pdfName,
-              page: pageNumber,
-              psm: 6,
-              zoom: 3.0,
-              columns: Number(ocrColumnsSelect.value || "0")
-            })
-          });
-
-          const data = await response.json();
-
-          if (!data.ok) {
-            setStatus("<strong>OCR:</strong> " + (data.message || "eroare") + "<br><pre>" + String(data.stderr || data.stdout || "").slice(-900) + "</pre>");
-            return;
-          }
-
-          setStatus("<strong>OCR:</strong> gata. Reîncarc pagina...");
-          window.location.href = window.location.href.replace(/([?&])v=[^&]*/, "$1v=" + Date.now());
-
-          if (!window.location.href.includes("v=")) {
-            window.location.href += (window.location.href.includes("?") ? "&" : "?") + "v=" + Date.now();
-          }
-        } catch (err) {
-          setStatus("<strong>OCR:</strong> eroare: " + (err.message || String(err)));
-        } finally {
-          runOcrPageButton.disabled = false;
-          runOcrPageButton.textContent = oldLabel;
-        }
       });
 
       checkButton.addEventListener("click", async function () {
@@ -656,3 +512,6 @@
     });
   });
 })();
+''', encoding="utf-8")
+
+print("OK: multilingual Monaco OCR review JS written.")
