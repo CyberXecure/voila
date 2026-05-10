@@ -13,3 +13,6 @@ data/output/*
 
 .DS_Store
 Thumbs.db
+# Local Tesseract language data
+.tessdata/*.traineddata
+!.tessdata/.gitkeep
