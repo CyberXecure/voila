@@ -9,7 +9,10 @@
     en: "English",
     fr: "Français",
     de: "Deutsch",
-    ru: "Русский"
+    ru: "Русский",
+    it: "Italiano",
+    es: "Español",
+    pt: "Português"
   };
 
   const LT_LANG = {
@@ -17,7 +20,10 @@
     en: "en-US",
     fr: "fr",
     de: "de-DE",
-    ru: "ru-RU"
+    ru: "ru-RU",
+    it: "it",
+    es: "es",
+    pt: "pt"
   };
 
   function ready(fn) {
@@ -65,17 +71,23 @@
 
     if (/[а-яё]/i.test(text)) return "ru";
 
-    const scores = { ro: 0, en: 0, fr: 0, de: 0 };
+    const scores = { ro: 0, en: 0, fr: 0, de: 0, it: 0, es: 0, pt: 0 };
 
     if (/[ăâîșşțţ]/i.test(text)) scores.ro += 5;
     if (/[éèêëàâîïôùûçœ]/i.test(text)) scores.fr += 4;
     if (/[äöüß]/i.test(text)) scores.de += 4;
+    if (/[àèéìíîòóùú]/i.test(text)) scores.it += 3;
+    if (/[áéíóúñü¿¡]/i.test(text)) scores.es += 3;
+    if (/[ãõçáàâéêíóôú]/i.test(text)) scores.pt += 3;
 
     const markers = {
       ro: ["pentru", "este", "sunt", "care", "prin", "din", "funcție", "capitolul", "figura"],
       en: ["the", "and", "with", "from", "figure", "chapter", "system", "pressure", "temperature"],
       fr: ["pour", "avec", "dans", "figure", "chapitre", "pression", "température", "système"],
-      de: ["und", "mit", "der", "die", "das", "abbildung", "kapitel", "druck", "temperatur", "system"]
+      de: ["und", "mit", "der", "die", "das", "abbildung", "kapitel", "druck", "temperatur", "system"],
+      it: ["per", "con", "della", "delle", "figura", "capitolo", "pressione", "temperatura", "sistema"],
+      es: ["para", "con", "del", "de la", "figura", "capítulo", "presión", "temperatura", "sistema"],
+      pt: ["para", "com", "do", "da", "figura", "capítulo", "pressão", "temperatura", "sistema"]
     };
 
     Object.keys(markers).forEach(function (lang) {
@@ -108,7 +120,14 @@
       "de-de": "de",
       "deu": "de",
       "ru-ru": "ru",
-      "rus": "ru"
+      "rus": "ru",
+      "it-it": "it",
+      "ita": "it",
+      "es-es": "es",
+      "spa": "es",
+      "pt-pt": "pt",
+      "pt-br": "pt",
+      "por": "pt"
     };
 
     value = aliases[value] || value;
