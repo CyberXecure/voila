@@ -16,3 +16,5 @@ Thumbs.db
 # Local Tesseract language data
 .tessdata/*.traineddata
 !.tessdata/.gitkeep
+# Local generated/trash data
+data/trash/
