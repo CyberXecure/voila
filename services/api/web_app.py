@@ -90,6 +90,17 @@ def _ut(key: str, fallback: str) -> str:
     return str(_ui_texts().get(key) or fallback)
 
 
+def _build_study_question_display(question: dict, pdf_name: str) -> str:
+    try:
+        import study_questions
+        return study_questions.build_study_question(PROJECT_ROOT, pdf_name, question)
+    except Exception:
+        try:
+            return _study_question_display(str(question.get("question") or ""))
+        except Exception:
+            return str(question.get("question") or "")
+
+
 def _study_question_display(value: str) -> str:
     import re
 
@@ -1668,7 +1679,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
         <article class="card">
           <h2>{_ut("recommended_question", "Recommended question")}</h2>
           <div class="meta">{_ut("lesson_concept", "Lesson / concept")}: <strong>{html.escape(str(current.get("lesson_id")))}</strong></div>
-          <p style="font-size: 20px;"><strong>{html.escape(_study_question_display(str(current.get("question"))))}</strong></p>
+          <p style="font-size: 20px;"><strong>{html.escape(_build_study_question_display(current, pdf_path.name))}</strong></p>
           {answer_html}
 
           <div class="actions">
