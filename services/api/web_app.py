@@ -78,6 +78,64 @@ INPUT_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 
+def _ui_texts() -> dict:
+    try:
+        import i18n
+        return i18n.get_ui_language(PROJECT_ROOT).get("translations", {})
+    except Exception:
+        return {}
+
+
+def _ut(key: str, fallback: str) -> str:
+    return str(_ui_texts().get(key) or fallback)
+
+
+def _study_question_display(value: str) -> str:
+    import re
+
+    raw = str(value or "").strip()
+
+    patterns = [
+        r"^What technical point does the source state about\s+(.+?)\??$",
+        r"^Under what condition or operating situation does the source describe\s+(.+?)\??$",
+        r"^Name one key point supported by the source text in\s+['\"“”‘’](.+?)['\"“”‘’]\.?$",
+        r"^Name one key point supported by the source text in\s+(.+?)\.?$",
+        r"^What does the source state about\s+(.+?)\??$",
+        r"^What does the text say about\s+(.+?)\??$",
+        r"^What is stated about\s+(.+?)\??$",
+        r"^What is the source saying about\s+(.+?)\??$",
+    ]
+
+    for pattern in patterns:
+        match = re.match(pattern, raw, flags=re.IGNORECASE)
+
+        if not match:
+            continue
+
+        concept = match.group(1).strip()
+        concept = concept.rstrip(".?").strip()
+        concept = concept.strip("'\"“”‘’")
+
+        if concept:
+            return f"Ce idee importantă susține sursa despre „{concept}”?"
+
+    return raw
+
+
+def _study_status_label(value: str) -> str:
+    raw = str(value or "").strip()
+    key = raw.lower().replace(" ", "_").replace("-", "_")
+
+    mapping = {
+        "needs_review": _ut("needs_review", "Needs review"),
+        "in_progress": _ut("in_progress", "In progress"),
+        "almost_mastered": _ut("almost_mastered", "Almost mastered"),
+        "mastered": _ut("mastered", "Mastered"),
+    }
+
+    return mapping.get(key, raw)
+
+
 def page(title: str, body: str) -> HTMLResponse:
     doc = f"""<!doctype html>
 <html lang="en" data-theme="light">
@@ -528,12 +586,12 @@ def page(title: str, body: str) -> HTMLResponse:
 
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
       <a class="primary" href="/">Back</a>
-      <a id="fixedStudyLink" href="/" hidden>Study</a>
-      <a id="fixedReviewLink" href="/" hidden>Review</a>
-      <a id="fixedProgressLink" href="/" hidden>Progress</a>
-      <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ Top</button>
-      <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ Bottom</button>
-      <button id="fixedResetButton" class="danger" type="button" hidden>Reset</button>
+      <a id="fixedStudyLink" href="/" hidden>{_ut("study", "Study")}</a>
+      <a id="fixedReviewLink" href="/" hidden>{_ut("review", "Review")}</a>
+      <a id="fixedProgressLink" href="/" hidden>{_ut("progress", "Progress")}</a>
+      <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ {_ut("top", "Top")}</button>
+      <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ {_ut("bottom", "Bottom")}</button>
+      <button id="fixedResetButton" class="danger" type="button" hidden>{_ut("reset", "Reset")}</button>
     </nav>
 
     <script>
@@ -564,7 +622,7 @@ def page(title: str, body: str) -> HTMLResponse:
             resetButton.hidden = false;
 
             resetButton.addEventListener("click", function () {{
-              const ok = window.confirm("Reset study progress for this PDF?");
+              const ok = window.confirm("{_ut("reset_confirm", "Reset study progress for this PDF?")}");
 
               if (!ok) {{
                 return;
@@ -1257,14 +1315,14 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
     last_html = ""
 
     if last_attempt:
-        result = "Correct" if last_attempt.get("correct") else "Incorrect"
+        result = _ut("correct", "Correct") if last_attempt.get("correct") else _ut("incorrect", "Incorrect")
         before = round(float(last_attempt.get("mastery_before", 0)) * 100)
         after = round(float(last_attempt.get("mastery_after", 0)) * 100)
 
         last_html = f"""
         <div class="notice">
           Last review answer: <strong>{result}</strong>.
-          Mastery changed from <strong>{before}%</strong> to <strong>{after}%</strong>.
+          {_ut("mastery_changed", "Mastery changed from")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
         </div>
         """
 
@@ -1274,7 +1332,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         if current.get("answer"):
             answer_html = f"""
             <details>
-              <summary>Show expected answer / explanation</summary>
+              <summary>{_ut("show_expected_answer", "Show expected answer / explanation")}</summary>
               <p>{html.escape(str(current.get("answer")))}</p>
             </details>
             """
@@ -1295,14 +1353,14 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
               <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
               <input type="hidden" name="question_id" value="{answer_id}">
               <input type="hidden" name="correct" value="true">
-              <button class="primary" type="submit">Correct</button>
+              <button class="primary" type="submit">{_ut("correct", "Correct")}</button>
             </form>
 
             <form method="post" action="/review-answer">
               <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
               <input type="hidden" name="question_id" value="{answer_id}">
               <input type="hidden" name="correct" value="false">
-              <button type="submit">Incorrect</button>
+              <button type="submit">{_ut("incorrect", "Incorrect")}</button>
             </form>
           </div>
         </article>
@@ -1370,7 +1428,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
       <a class="btn primary" href="/review?pdf={quote(pdf_path.name)}">Next review</a>
       <a class="btn" href="/study?pdf={quote(pdf_path.name)}">Study</a>
       <a class="btn" href="/progress?pdf={quote(pdf_path.name)}">Progress</a>
-      <a class="btn" href="/">Back to Voila!</a>
+      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
     </div>
 
     {mini_list("Needs review", weak, "No weak concepts yet.")}
@@ -1419,7 +1477,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     total_questions = int(view.get("total_questions") or 0)
     answered_count = int(view.get("answered_count") or 0)
     overall_mastery = int(view.get("overall_mastery_percent") or 0)
-    overall_status = html.escape(str(view.get("overall_status") or "No status"))
+    overall_status = html.escape(_study_status_label(str(view.get("overall_status") or "No status")))
 
     weak = [item for item in concepts if float(item.get("mastery", 0)) < 0.40]
     review = [item for item in concepts if 0.40 <= float(item.get("mastery", 0)) < 0.75]
@@ -1440,7 +1498,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
             attempts = int(item.get("attempts") or 0)
             correct = int(item.get("correct") or 0)
             incorrect = int(item.get("incorrect") or 0)
-            status = html.escape(str(item.get("status") or ""))
+            status = html.escape(_study_status_label(str(item.get("status") or "")))
 
             rows.append(
                 f"""
@@ -1452,7 +1510,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
                     <div style="height: 100%; width: {mastery}%; background: var(--accent);"></div>
                   </div>
                   <div class="meta" style="margin-top: 10px;">
-                    Attempts: {attempts}<br>
+                    {_ut("attempts", "Attempts")}: {attempts}<br>
                     Correct: {correct}<br>
                     Incorrect: {incorrect}
                   </div>
@@ -1548,7 +1606,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="actions" style="margin-top: 24px;">
       <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">Continue Study</a>
-      <a class="btn" href="/">Back to Voila!</a>
+      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
     </div>
 
     {concept_list("Needs review", weak, "No weak concepts yet.")}
@@ -1584,14 +1642,14 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     last_html = ""
 
     if last_attempt:
-        result = "Correct" if last_attempt.get("correct") else "Incorrect"
+        result = _ut("correct", "Correct") if last_attempt.get("correct") else _ut("incorrect", "Incorrect")
         before = round(float(last_attempt.get("mastery_before", 0)) * 100)
         after = round(float(last_attempt.get("mastery_after", 0)) * 100)
 
         last_html = f"""
         <div class="notice">
-          Last answer: <strong>{result}</strong>.
-          Mastery changed from <strong>{before}%</strong> to <strong>{after}%</strong>.
+          {_ut("last_answer", "Last answer")}: <strong>{result}</strong>.
+          {_ut("mastery_changed", "Mastery changed from")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
         </div>
         """
 
@@ -1601,16 +1659,16 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
         if current.get("answer"):
             answer_html = f"""
             <details>
-              <summary>Show expected answer / explanation</summary>
+              <summary>{_ut("show_expected_answer", "Show expected answer / explanation")}</summary>
               <p>{html.escape(str(current.get("answer")))}</p>
             </details>
             """
 
         question_html = f"""
         <article class="card">
-          <h2>Recommended question</h2>
-          <div class="meta">Lesson / concept: <strong>{html.escape(str(current.get("lesson_id")))}</strong></div>
-          <p style="font-size: 20px;"><strong>{html.escape(str(current.get("question")))}</strong></p>
+          <h2>{_ut("recommended_question", "Recommended question")}</h2>
+          <div class="meta">{_ut("lesson_concept", "Lesson / concept")}: <strong>{html.escape(str(current.get("lesson_id")))}</strong></div>
+          <p style="font-size: 20px;"><strong>{html.escape(_study_question_display(str(current.get("question"))))}</strong></p>
           {answer_html}
 
           <div class="actions">
@@ -1618,14 +1676,14 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
               <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
               <input type="hidden" name="question_id" value="{html.escape(str(current.get("question_id")))}">
               <input type="hidden" name="correct" value="true">
-              <button class="primary" type="submit">Correct</button>
+              <button class="primary" type="submit">{_ut("correct", "Correct")}</button>
             </form>
 
             <form method="post" action="/study-answer">
               <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
               <input type="hidden" name="question_id" value="{html.escape(str(current.get("question_id")))}">
               <input type="hidden" name="correct" value="false">
-              <button type="submit">Incorrect</button>
+              <button type="submit">{_ut("incorrect", "Incorrect")}</button>
             </form>
           </div>
         </article>
@@ -1633,8 +1691,8 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     else:
         question_html = """
         <article class="card">
-          <h2>No questions available</h2>
-          <p>Generate course files first, then Study Mode will use quiz.json.</p>
+          <h2>{_ut("no_questions_available", "No questions available")}</h2>
+          <p>{_ut("generate_course_first", "Generate course files first, then Study Mode will use quiz.json.")}</p>
         </article>
         """
 
@@ -1643,7 +1701,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     for concept in concepts:
         mastery = int(concept.get("mastery_percent", 0))
         concept_id = html.escape(str(concept.get("concept_id", "")))
-        status = html.escape(str(concept.get("status", "")))
+        status = html.escape(_study_status_label(str(concept.get("status", ""))))
         attempts = int(concept.get("attempts", 0))
         correct_count = int(concept.get("correct", 0))
         incorrect_count = int(concept.get("incorrect", 0))
@@ -1655,9 +1713,9 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
               <div class="meta">Status: <strong>{status}</strong></div>
               <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
               <div class="meta">
-                Attempts: {attempts}<br>
-                Correct: {correct_count}<br>
-                Incorrect: {incorrect_count}
+                {_ut("attempts", "Attempts")}: {attempts}<br>
+                {_ut("correct", "Correct")}: {correct_count}<br>
+                {_ut("incorrect", "Incorrect")}: {incorrect_count}
               </div>
             </article>
             """
@@ -1666,18 +1724,18 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     reset_form = f"""
     <form method="post" action="/study-reset">
       <input type="hidden" name="pdf_name" value="{html.escape(pdf_path.name)}">
-      <button type="submit">Reset study progress</button>
+      <button type="submit">{_ut("reset_study_progress", "Reset study progress")}</button>
     </form>
     """
 
     body = f"""
-    <h1>Voila! Study Mode</h1>
+    <h1>Voila! {_ut("study", "Study")}</h1>
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
-      Questions: <strong>{view.get("total_questions")}</strong> ·
-      Answered: <strong>{view.get("answered_count")}</strong> ·
-      Overall mastery: <strong>{view.get("overall_mastery_percent")}%</strong> ·
-      Status: <strong>{html.escape(str(view.get("overall_status")))}</strong>
+      {_ut("questions", "Questions")}: <strong>{view.get("total_questions")}</strong> ·
+      {_ut("answered", "Answered")}: <strong>{view.get("answered_count")}</strong> ·
+      {_ut("overall_mastery", "Overall mastery")}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
+      {_ut("status", "Status")}: <strong>{html.escape(str(view.get("overall_status")))}</strong>
     </div>
 
     {last_html}
@@ -1686,13 +1744,13 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
       {question_html}
     </div>
 
-    <h2 style="margin-top: 28px;">Concept mastery</h2>
+    <h2 style="margin-top: 28px;">{_ut("concept_mastery", "Concept mastery")}</h2>
     <div class="grid">
       {''.join(concept_cards)}
     </div>
 
     <div class="actions" style="margin-top: 24px;">
-      <a class="btn" href="/">Back to Voila!</a>
+      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
       {reset_form}
     </div>
     """
@@ -4599,5 +4657,33 @@ async def voila_run_ocr_page(request: _VoilaRequest):
             "stderr": (result.stderr or "")[-4000:],
         },
         status_code=200 if ok else 500,
+    )
+
+
+
+@app.get("/ui-language")
+def voila_get_ui_language():
+    from fastapi.responses import JSONResponse
+    import i18n
+
+    return JSONResponse(
+        i18n.get_ui_language(PROJECT_ROOT)
+    )
+
+
+@app.post("/ui-language")
+async def voila_set_ui_language(request: _VoilaRequest):
+    from fastapi.responses import JSONResponse
+    import i18n
+
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    language = str(payload.get("language") or payload.get("ui_language") or "ro")
+
+    return JSONResponse(
+        i18n.set_ui_language(PROJECT_ROOT, language)
     )
 
