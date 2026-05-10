@@ -243,3 +243,51 @@ def get_languagetool_lang(project_root: Path | str, pdf_name: str, fallback_text
         lang = detect_language_from_text(fallback_text)
 
     return SUPPORTED_LANGUAGES.get(lang, SUPPORTED_LANGUAGES["en"])["languagetool_lang"]
+
+
+# VOILA_QUESTION_TEMPLATES_V1
+
+QUESTION_TEMPLATES = {
+    "ro": {
+        "technical_point": "Ce idee tehnică precizează sursa despre {concept}?",
+        "answer_prefix": "Sursa precizează că",
+    },
+    "en": {
+        "technical_point": "What technical point does the source state about {concept}?",
+        "answer_prefix": "The source states that",
+    },
+    "fr": {
+        "technical_point": "Quel point technique la source indique-t-elle à propos de {concept} ?",
+        "answer_prefix": "La source indique que",
+    },
+    "de": {
+        "technical_point": "Welchen technischen Punkt nennt die Quelle zu {concept}?",
+        "answer_prefix": "Die Quelle gibt an, dass",
+    },
+    "ru": {
+        "technical_point": "Какой технический аспект источник указывает относительно {concept}?",
+        "answer_prefix": "Источник указывает, что",
+    },
+    "it": {
+        "technical_point": "Quale punto tecnico indica la fonte su {concept}?",
+        "answer_prefix": "La fonte indica che",
+    },
+    "es": {
+        "technical_point": "¿Qué punto técnico indica la fuente sobre {concept}?",
+        "answer_prefix": "La fuente indica que",
+    },
+    "pt": {
+        "technical_point": "Que ponto técnico a fonte indica sobre {concept}?",
+        "answer_prefix": "A fonte indica que",
+    },
+}
+
+
+def get_question_template(project_root: Path | str, pdf_name: str, fallback_text: str = "") -> dict:
+    cfg = get_document_language(project_root, pdf_name)
+    lang = cfg.get("document_language") or "auto"
+
+    if lang == "auto":
+        lang = detect_language_from_text(fallback_text)
+
+    return QUESTION_TEMPLATES.get(lang, QUESTION_TEMPLATES["en"])

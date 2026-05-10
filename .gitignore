@@ -18,3 +18,5 @@ Thumbs.db
 !.tessdata/.gitkeep
 # Local generated/trash data
 data/trash/
+# Local app settings
+data/settings/

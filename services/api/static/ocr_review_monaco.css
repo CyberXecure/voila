@@ -227,3 +227,14 @@
   white-space: normal !important;
   max-width: 100% !important;
 }
+
+
+#voilaUiLanguage {
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.1;
+  border-radius: 999px;
+  border: 1px solid var(--line, #3b4b50);
+  background: #111b1e;
+  color: var(--text, #f4efe7);
+}

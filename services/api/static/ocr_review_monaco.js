@@ -26,6 +26,39 @@
     pt: "pt"
   };
 
+  const UI_LABELS = {
+    ro: "Română",
+    en: "English",
+    fr: "Français",
+    de: "Deutsch",
+    ru: "Русский",
+    it: "Italiano",
+    es: "Español",
+    pt: "Português"
+  };
+
+  let UI_TEXT = {
+    ui_language: "Limba interfeței",
+    document_language: "Limba documentului",
+    run_ocr_page: "Rulează OCR pagină",
+    check_text: "Verifică text",
+    save: "Salvează",
+    prev_issue: "← problemă",
+    next_issue: "problemă →",
+    ocr_normal: "OCR normal",
+    ocr_2_columns: "OCR 2 coloane",
+    ocr_3_columns: "OCR 3 coloane",
+    editor_loading: "Editor: se încarcă Monaco...",
+    editor_ready: "Editor: Monaco activ.",
+    lt_checking: "LanguageTool: verific textul...",
+    lt_no_issues: "LanguageTool: 0 probleme evidente.",
+    lt_apply_again: "LanguageTool: sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată."
+  };
+
+  function tr(key) {
+    return UI_TEXT[key] || key;
+  }
+
   function ready(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn);
@@ -173,6 +206,38 @@
     } catch (_) {}
   }
 
+  async function loadUiLanguage() {
+    try {
+      const response = await fetch("/ui-language");
+      const data = await response.json();
+
+      if (data && data.ok) {
+        UI_TEXT = data.translations || UI_TEXT;
+        return normalizeLanguage(data.ui_language || "ro");
+      }
+    } catch (_) {}
+
+    return "ro";
+  }
+
+  async function saveUiLanguage(language) {
+    try {
+      const response = await fetch("/ui-language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language: normalizeLanguage(language)
+        })
+      });
+
+      const data = await response.json();
+
+      if (data && data.ok) {
+        UI_TEXT = data.translations || UI_TEXT;
+      }
+    } catch (_) {}
+  }
+
   ready(async function () {
     const textarea = findOcrTextarea();
 
@@ -187,15 +252,29 @@
 
     const pdfName = getPdfName();
     let selectedDocumentLanguage = await loadDocumentLanguage(pdfName);
+    let selectedUiLanguage = await loadUiLanguage();
 
     const form = textarea.closest("form");
 
     const toolbar = document.createElement("div");
     toolbar.id = "voilaMonacoToolbar";
 
+    const uiLangSelect = document.createElement("select");
+    uiLangSelect.id = "voilaUiLanguage";
+    uiLangSelect.title = tr("ui_language");
+
+    Object.keys(UI_LABELS).forEach(function (lang) {
+      const option = document.createElement("option");
+      option.value = lang;
+      option.textContent = UI_LABELS[lang];
+      uiLangSelect.appendChild(option);
+    });
+
+    uiLangSelect.value = selectedUiLanguage;
+
     const langSelect = document.createElement("select");
     langSelect.id = "voilaDocumentLanguage";
-    langSelect.title = "Limba documentului PDF";
+    langSelect.title = tr("document_language");
 
     Object.keys(LANGUAGE_LABELS).forEach(function (lang) {
       const option = document.createElement("option");
@@ -211,9 +290,9 @@
     ocrColumnsSelect.title = "Mod OCR pentru pagina curentă";
 
     [
-      ["0", "OCR normal"],
-      ["2", "OCR 2 coloane"],
-      ["3", "OCR 3 coloane"]
+      ["0", tr("ocr_normal")],
+      ["2", tr("ocr_2_columns")],
+      ["3", tr("ocr_3_columns")]
     ].forEach(function (item) {
       const option = document.createElement("option");
       option.value = item[0];
@@ -227,29 +306,30 @@
     runOcrPageButton.type = "button";
     runOcrPageButton.id = "runOcrPageButton";
     runOcrPageButton.className = "voila-primary";
-    runOcrPageButton.textContent = "Rulează OCR pagină";
+    runOcrPageButton.textContent = tr("run_ocr_page");
     runOcrPageButton.title = "Generează OCR pentru pagina curentă, dacă textul este gol sau incomplet.";
 
     const checkButton = document.createElement("button");
     checkButton.type = "button";
     checkButton.id = "checkOcrButton";
-    checkButton.textContent = "Verifică text";
+    checkButton.textContent = tr("check_text");
     checkButton.title = "Verifică textul cu LanguageTool și marchează problemele în editor.";
 
     const saveButton = document.createElement("button");
     saveButton.type = "button";
     saveButton.className = "voila-primary";
-    saveButton.textContent = "Salvează";
+    saveButton.textContent = tr("save");
     saveButton.title = "Salvează corecția curentă.";
 
     const prevButton = document.createElement("button");
     prevButton.type = "button";
-    prevButton.textContent = "← problemă";
+    prevButton.textContent = tr("prev_issue");
 
     const nextButton = document.createElement("button");
     nextButton.type = "button";
-    nextButton.textContent = "problemă →";
+    nextButton.textContent = tr("next_issue");
 
+    toolbar.appendChild(uiLangSelect);
     toolbar.appendChild(langSelect);
     toolbar.appendChild(ocrColumnsSelect);
     toolbar.appendChild(runOcrPageButton);
@@ -263,7 +343,7 @@
 
     const status = document.createElement("div");
     status.id = "voilaMonacoStatus";
-    status.innerHTML = "<strong>Editor:</strong> se încarcă Monaco...";
+    status.innerHTML = "<strong>" + tr("editor_loading") + "</strong>";
 
     const ltPanel = document.createElement("div");
     ltPanel.id = "voilaLtPanel";
@@ -285,6 +365,17 @@
       toolbar.style.display = "none";
       setStatus(message || "<strong>Editor:</strong> Monaco nu a putut fi încărcat.");
     }
+
+    uiLangSelect.addEventListener("change", async function () {
+      selectedUiLanguage = normalizeLanguage(uiLangSelect.value);
+      await saveUiLanguage(selectedUiLanguage);
+
+      window.location.href = window.location.href.replace(/([?&])ui=[^&]*/, "$1ui=" + selectedUiLanguage);
+
+      if (!window.location.href.includes("ui=")) {
+        window.location.href += (window.location.href.includes("?") ? "&" : "?") + "ui=" + selectedUiLanguage;
+      }
+    });
 
     langSelect.addEventListener("change", async function () {
       selectedDocumentLanguage = normalizeLanguage(langSelect.value);
@@ -467,7 +558,7 @@
 
         if (!markers.length) {
           ltPanel.hidden = true;
-          setStatus("<strong>LanguageTool:</strong> 0 probleme evidente.");
+          setStatus("<strong>" + tr("lt_no_issues") + "</strong>");
         } else {
           setStatus(
             "<strong>LanguageTool:</strong> " + markers.length +
@@ -552,7 +643,7 @@
 
             syncToTextarea();
 
-            setStatus("<strong>LanguageTool:</strong> sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată.");
+            setStatus("<strong>" + tr("lt_apply_again") + "</strong>");
 
             matches.splice(window.voilaLtIndex, 1);
             window.voilaSetLanguageToolMarkers(matches);
@@ -630,7 +721,7 @@
         const oldLabel = checkButton.textContent;
         checkButton.textContent = "Verific...";
 
-        setStatus("<strong>LanguageTool:</strong> verific textul cu " + ltLanguage + "...");
+        setStatus("<strong>" + tr("lt_checking") + "</strong> " + ltLanguage + "...");
 
         try {
           const response = await fetch("/check-ocr-languagetool", {
