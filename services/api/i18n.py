@@ -1,0 +1,410 @@
+
+from __future__ import annotations
+
+from pathlib import Path
+import json
+
+
+SUPPORTED_UI_LANGUAGES = {
+    "ro": "Română",
+    "en": "English",
+    "fr": "Français",
+    "de": "Deutsch",
+    "ru": "Русский",
+    "it": "Italiano",
+    "es": "Español",
+    "pt": "Português",
+}
+
+
+DEFAULT_UI_LANGUAGE = "ro"
+
+
+TRANSLATIONS = {
+    "ro": {
+        "ui_language": "Limba interfeței",
+        "document_language": "Limba documentului",
+        "run_ocr_page": "Rulează OCR pagină",
+        "check_text": "Verifică text",
+        "save": "Salvează",
+        "prev_issue": "← problemă",
+        "next_issue": "problemă →",
+        "ocr_normal": "OCR normal",
+        "ocr_2_columns": "OCR 2 coloane",
+        "ocr_3_columns": "OCR 3 coloane",
+        "editor_loading": "Editor: se încarcă Monaco...",
+        "editor_ready": "Editor: Monaco activ.",
+        "lt_checking": "LanguageTool: verific textul...",
+        "lt_no_issues": "LanguageTool: 0 probleme evidente.",
+        "lt_apply_again": "LanguageTool: sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată.",
+    },
+    "en": {
+        "ui_language": "Interface language",
+        "document_language": "Document language",
+        "run_ocr_page": "Run page OCR",
+        "check_text": "Check text",
+        "save": "Save",
+        "prev_issue": "← issue",
+        "next_issue": "issue →",
+        "ocr_normal": "Normal OCR",
+        "ocr_2_columns": "OCR 2 columns",
+        "ocr_3_columns": "OCR 3 columns",
+        "editor_loading": "Editor: loading Monaco...",
+        "editor_ready": "Editor: Monaco active.",
+        "lt_checking": "LanguageTool: checking text...",
+        "lt_no_issues": "LanguageTool: no obvious issues.",
+        "lt_apply_again": "LanguageTool: suggestion applied. Run “Check text” again to refresh the list.",
+    },
+    "fr": {
+        "ui_language": "Langue de l’interface",
+        "document_language": "Langue du document",
+        "run_ocr_page": "OCR de la page",
+        "check_text": "Vérifier le texte",
+        "save": "Enregistrer",
+        "prev_issue": "← problème",
+        "next_issue": "problème →",
+        "ocr_normal": "OCR normal",
+        "ocr_2_columns": "OCR 2 colonnes",
+        "ocr_3_columns": "OCR 3 colonnes",
+        "editor_loading": "Éditeur : chargement de Monaco...",
+        "editor_ready": "Éditeur : Monaco actif.",
+        "lt_checking": "LanguageTool : vérification du texte...",
+        "lt_no_issues": "LanguageTool : aucun problème évident.",
+        "lt_apply_again": "LanguageTool : suggestion appliquée. Relancez la vérification pour actualiser la liste.",
+    },
+    "de": {
+        "ui_language": "Sprache der Oberfläche",
+        "document_language": "Dokumentsprache",
+        "run_ocr_page": "Seiten-OCR ausführen",
+        "check_text": "Text prüfen",
+        "save": "Speichern",
+        "prev_issue": "← Problem",
+        "next_issue": "Problem →",
+        "ocr_normal": "Normale OCR",
+        "ocr_2_columns": "OCR 2 Spalten",
+        "ocr_3_columns": "OCR 3 Spalten",
+        "editor_loading": "Editor: Monaco wird geladen...",
+        "editor_ready": "Editor: Monaco aktiv.",
+        "lt_checking": "LanguageTool: Text wird geprüft...",
+        "lt_no_issues": "LanguageTool: keine offensichtlichen Probleme.",
+        "lt_apply_again": "LanguageTool: Vorschlag angewendet. Führen Sie „Text prüfen“ erneut aus.",
+    },
+    "ru": {
+        "ui_language": "Язык интерфейса",
+        "document_language": "Язык документа",
+        "run_ocr_page": "OCR страницы",
+        "check_text": "Проверить текст",
+        "save": "Сохранить",
+        "prev_issue": "← ошибка",
+        "next_issue": "ошибка →",
+        "ocr_normal": "Обычный OCR",
+        "ocr_2_columns": "OCR 2 колонки",
+        "ocr_3_columns": "OCR 3 колонки",
+        "editor_loading": "Редактор: загрузка Monaco...",
+        "editor_ready": "Редактор: Monaco активен.",
+        "lt_checking": "LanguageTool: проверка текста...",
+        "lt_no_issues": "LanguageTool: явных проблем нет.",
+        "lt_apply_again": "LanguageTool: предложение применено. Запустите проверку снова.",
+    },
+    "it": {
+        "ui_language": "Lingua interfaccia",
+        "document_language": "Lingua documento",
+        "run_ocr_page": "Esegui OCR pagina",
+        "check_text": "Controlla testo",
+        "save": "Salva",
+        "prev_issue": "← problema",
+        "next_issue": "problema →",
+        "ocr_normal": "OCR normale",
+        "ocr_2_columns": "OCR 2 colonne",
+        "ocr_3_columns": "OCR 3 colonne",
+        "editor_loading": "Editor: caricamento Monaco...",
+        "editor_ready": "Editor: Monaco attivo.",
+        "lt_checking": "LanguageTool: controllo del testo...",
+        "lt_no_issues": "LanguageTool: nessun problema evidente.",
+        "lt_apply_again": "LanguageTool: suggerimento applicato. Riesegui il controllo per aggiornare la lista.",
+    },
+    "es": {
+        "ui_language": "Idioma de la interfaz",
+        "document_language": "Idioma del documento",
+        "run_ocr_page": "Ejecutar OCR página",
+        "check_text": "Revisar texto",
+        "save": "Guardar",
+        "prev_issue": "← problema",
+        "next_issue": "problema →",
+        "ocr_normal": "OCR normal",
+        "ocr_2_columns": "OCR 2 columnas",
+        "ocr_3_columns": "OCR 3 columnas",
+        "editor_loading": "Editor: cargando Monaco...",
+        "editor_ready": "Editor: Monaco activo.",
+        "lt_checking": "LanguageTool: revisando texto...",
+        "lt_no_issues": "LanguageTool: no hay problemas evidentes.",
+        "lt_apply_again": "LanguageTool: sugerencia aplicada. Ejecuta de nuevo la revisión para actualizar la lista.",
+    },
+    "pt": {
+        "ui_language": "Idioma da interface",
+        "document_language": "Idioma do documento",
+        "run_ocr_page": "Executar OCR da página",
+        "check_text": "Verificar texto",
+        "save": "Salvar",
+        "prev_issue": "← problema",
+        "next_issue": "problema →",
+        "ocr_normal": "OCR normal",
+        "ocr_2_columns": "OCR 2 colunas",
+        "ocr_3_columns": "OCR 3 colunas",
+        "editor_loading": "Editor: carregando Monaco...",
+        "editor_ready": "Editor: Monaco ativo.",
+        "lt_checking": "LanguageTool: verificando texto...",
+        "lt_no_issues": "LanguageTool: nenhum problema evidente.",
+        "lt_apply_again": "LanguageTool: sugestão aplicada. Execute a verificação novamente para atualizar a lista.",
+    },
+}
+
+
+def normalize_ui_language(value: str | None) -> str:
+    value = str(value or "").strip().lower()
+
+    aliases = {
+        "romanian": "ro",
+        "romana": "ro",
+        "română": "ro",
+        "ro-ro": "ro",
+        "english": "en",
+        "en-us": "en",
+        "en-gb": "en",
+        "french": "fr",
+        "français": "fr",
+        "german": "de",
+        "deutsch": "de",
+        "russian": "ru",
+        "русский": "ru",
+        "italian": "it",
+        "italiano": "it",
+        "spanish": "es",
+        "español": "es",
+        "portuguese": "pt",
+        "português": "pt",
+    }
+
+    value = aliases.get(value, value)
+
+    if value not in SUPPORTED_UI_LANGUAGES:
+        return DEFAULT_UI_LANGUAGE
+
+    return value
+
+
+def settings_path(project_root: Path | str) -> Path:
+    return Path(project_root) / "data" / "settings" / "ui_language.json"
+
+
+def get_ui_language(project_root: Path | str) -> dict:
+    path = settings_path(project_root)
+
+    language = DEFAULT_UI_LANGUAGE
+
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            language = normalize_ui_language(data.get("ui_language"))
+        except Exception:
+            language = DEFAULT_UI_LANGUAGE
+
+    return {
+        "ok": True,
+        "ui_language": language,
+        "label": SUPPORTED_UI_LANGUAGES[language],
+        "supported": SUPPORTED_UI_LANGUAGES,
+        "translations": TRANSLATIONS.get(language, TRANSLATIONS[DEFAULT_UI_LANGUAGE]),
+    }
+
+
+def set_ui_language(project_root: Path | str, language: str) -> dict:
+    language = normalize_ui_language(language)
+    path = settings_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    data = {
+        "ui_language": language,
+        "label": SUPPORTED_UI_LANGUAGES[language],
+    }
+
+    path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    return get_ui_language(project_root)
+
+
+def t(project_root: Path | str, key: str, language: str | None = None) -> str:
+    if language is None:
+        language = get_ui_language(project_root)["ui_language"]
+
+    language = normalize_ui_language(language)
+
+    return (
+        TRANSLATIONS.get(language, {}).get(key)
+        or TRANSLATIONS[DEFAULT_UI_LANGUAGE].get(key)
+        or str(key)
+    )
+
+
+# VOILA_STUDY_I18N_EXTENSIONS_V1
+TRANSLATIONS_EXT = {'ro': {'study': 'Studiu', 'progress': 'Progres', 'review': 'Recapitulare', 'reset': 'Resetare', 'back': 'Înapoi', 'top': 'Sus', 'bottom': 'Jos', 'recommended_question': 'Întrebare recomandată', 'lesson_concept': 'Lecție / concept', 'show_expected_answer': 'Arată răspunsul așteptat / explicația', 'correct': 'Corect', 'incorrect': 'Incorect', 'no_questions_available': 'Nu există întrebări disponibile', 'generate_course_first': 'Generează mai întâi cursul, apoi modul Studiu va folosi quiz.json.', 'concept_mastery': 'Stăpânirea conceptelor', 'last_answer': 'Ultimul răspuns', 'mastery_changed': 'Nivelul s-a schimbat de la', 'to': 'la', 'pdf': 'PDF', 'questions': 'Întrebări', 'answered': 'Răspunse', 'overall_mastery': 'Nivel general', 'status': 'Status', 'attempts': 'Încercări', 'reset_study_progress': 'Resetează progresul de studiu', 'reset_confirm': 'Resetezi progresul de studiu pentru acest PDF?', 'needs_review': 'Necesită recapitulare', 'in_progress': 'În progres', 'almost_mastered': 'Aproape stăpânit', 'mastered': 'Stăpânit', 'total_questions': 'Total întrebări', 'study_coverage': 'Acoperire studiu', 'concept_status': 'Status concepte'}, 'en': {'study': 'Study', 'progress': 'Progress', 'review': 'Review', 'reset': 'Reset', 'back': 'Back', 'top': 'Top', 'bottom': 'Bottom', 'recommended_question': 'Recommended question', 'lesson_concept': 'Lesson / concept', 'show_expected_answer': 'Show expected answer / explanation', 'correct': 'Correct', 'incorrect': 'Incorrect', 'no_questions_available': 'No questions available', 'generate_course_first': 'Generate course files first, then Study Mode will use quiz.json.', 'concept_mastery': 'Concept mastery', 'last_answer': 'Last answer', 'mastery_changed': 'Mastery changed from', 'to': 'to', 'pdf': 'PDF', 'questions': 'Questions', 'answered': 'Answered', 'overall_mastery': 'Overall mastery', 'status': 'Status', 'attempts': 'Attempts', 'reset_study_progress': 'Reset study progress', 'reset_confirm': 'Reset study progress for this PDF?', 'needs_review': 'Needs review', 'in_progress': 'In progress', 'almost_mastered': 'Almost mastered', 'mastered': 'Mastered', 'total_questions': 'Total questions', 'study_coverage': 'Study coverage', 'concept_status': 'Concept status'}, 'fr': {'study': 'Étude', 'progress': 'Progrès', 'review': 'Révision', 'reset': 'Réinitialiser', 'back': 'Retour', 'top': 'Haut', 'bottom': 'Bas', 'recommended_question': 'Question recommandée', 'lesson_concept': 'Leçon / concept', 'show_expected_answer': 'Afficher la réponse attendue / explication', 'correct': 'Correct', 'incorrect': 'Incorrect', 'no_questions_available': 'Aucune question disponible', 'generate_course_first': 'Générez d’abord le cours, puis le mode Étude utilisera quiz.json.', 'concept_mastery': 'Maîtrise des concepts', 'last_answer': 'Dernière réponse', 'mastery_changed': 'La maîtrise est passée de', 'to': 'à', 'pdf': 'PDF', 'questions': 'Questions', 'answered': 'Répondues', 'overall_mastery': 'Maîtrise globale', 'status': 'Statut', 'attempts': 'Tentatives', 'reset_study_progress': 'Réinitialiser la progression', 'reset_confirm': 'Réinitialiser la progression pour ce PDF ?', 'needs_review': 'À réviser', 'in_progress': 'En cours', 'almost_mastered': 'Presque maîtrisé', 'mastered': 'Maîtrisé', 'total_questions': 'Total des questions', 'study_coverage': 'Couverture d’étude', 'concept_status': 'Statut des concepts'}, 'de': {'study': 'Lernen', 'progress': 'Fortschritt', 'review': 'Wiederholen', 'reset': 'Zurücksetzen', 'back': 'Zurück', 'top': 'Oben', 'bottom': 'Unten', 'recommended_question': 'Empfohlene Frage', 'lesson_concept': 'Lektion / Konzept', 'show_expected_answer': 'Erwartete Antwort / Erklärung anzeigen', 'correct': 'Richtig', 'incorrect': 'Falsch', 'no_questions_available': 'Keine Fragen verfügbar', 'generate_course_first': 'Erstellen Sie zuerst den Kurs, dann nutzt der Lernmodus quiz.json.', 'concept_mastery': 'Konzeptbeherrschung', 'last_answer': 'Letzte Antwort', 'mastery_changed': 'Beherrschung geändert von', 'to': 'auf', 'pdf': 'PDF', 'questions': 'Fragen', 'answered': 'Beantwortet', 'overall_mastery': 'Gesamtbeherrschung', 'status': 'Status', 'attempts': 'Versuche', 'reset_study_progress': 'Lernfortschritt zurücksetzen', 'reset_confirm': 'Lernfortschritt für dieses PDF zurücksetzen?', 'needs_review': 'Wiederholung nötig', 'in_progress': 'In Arbeit', 'almost_mastered': 'Fast beherrscht', 'mastered': 'Beherrscht', 'total_questions': 'Fragen insgesamt', 'study_coverage': 'Lernabdeckung', 'concept_status': 'Konzeptstatus'}, 'ru': {'study': 'Обучение', 'progress': 'Прогресс', 'review': 'Повторение', 'reset': 'Сброс', 'back': 'Назад', 'top': 'Вверх', 'bottom': 'Вниз', 'recommended_question': 'Рекомендуемый вопрос', 'lesson_concept': 'Урок / понятие', 'show_expected_answer': 'Показать ожидаемый ответ / объяснение', 'correct': 'Верно', 'incorrect': 'Неверно', 'no_questions_available': 'Вопросы недоступны', 'generate_course_first': 'Сначала создайте курс, затем режим обучения будет использовать quiz.json.', 'concept_mastery': 'Усвоение понятий', 'last_answer': 'Последний ответ', 'mastery_changed': 'Уровень изменился с', 'to': 'до', 'pdf': 'PDF', 'questions': 'Вопросы', 'answered': 'Ответы', 'overall_mastery': 'Общий уровень', 'status': 'Статус', 'attempts': 'Попытки', 'reset_study_progress': 'Сбросить прогресс обучения', 'reset_confirm': 'Сбросить прогресс обучения для этого PDF?', 'needs_review': 'Нужно повторить', 'in_progress': 'В процессе', 'almost_mastered': 'Почти усвоено', 'mastered': 'Усвоено', 'total_questions': 'Всего вопросов', 'study_coverage': 'Охват обучения', 'concept_status': 'Статус понятий'}, 'it': {'study': 'Studio', 'progress': 'Progresso', 'review': 'Ripasso', 'reset': 'Reset', 'back': 'Indietro', 'top': 'Su', 'bottom': 'Giù', 'recommended_question': 'Domanda consigliata', 'lesson_concept': 'Lezione / concetto', 'show_expected_answer': 'Mostra risposta attesa / spiegazione', 'correct': 'Corretto', 'incorrect': 'Errato', 'no_questions_available': 'Nessuna domanda disponibile', 'generate_course_first': 'Genera prima il corso, poi la modalità Studio userà quiz.json.', 'concept_mastery': 'Padronanza dei concetti', 'last_answer': 'Ultima risposta', 'mastery_changed': 'Padronanza cambiata da', 'to': 'a', 'pdf': 'PDF', 'questions': 'Domande', 'answered': 'Risposte', 'overall_mastery': 'Padronanza generale', 'status': 'Stato', 'attempts': 'Tentativi', 'reset_study_progress': 'Reimposta progresso studio', 'reset_confirm': 'Reimpostare il progresso di studio per questo PDF?', 'needs_review': 'Da ripassare', 'in_progress': 'In corso', 'almost_mastered': 'Quasi acquisito', 'mastered': 'Acquisito', 'total_questions': 'Domande totali', 'study_coverage': 'Copertura studio', 'concept_status': 'Stato concetti'}, 'es': {'study': 'Estudio', 'progress': 'Progreso', 'review': 'Repaso', 'reset': 'Restablecer', 'back': 'Atrás', 'top': 'Arriba', 'bottom': 'Abajo', 'recommended_question': 'Pregunta recomendada', 'lesson_concept': 'Lección / concepto', 'show_expected_answer': 'Mostrar respuesta esperada / explicación', 'correct': 'Correcto', 'incorrect': 'Incorrecto', 'no_questions_available': 'No hay preguntas disponibles', 'generate_course_first': 'Genera primero el curso, luego el modo Estudio usará quiz.json.', 'concept_mastery': 'Dominio de conceptos', 'last_answer': 'Última respuesta', 'mastery_changed': 'El dominio cambió de', 'to': 'a', 'pdf': 'PDF', 'questions': 'Preguntas', 'answered': 'Respondidas', 'overall_mastery': 'Dominio general', 'status': 'Estado', 'attempts': 'Intentos', 'reset_study_progress': 'Restablecer progreso de estudio', 'reset_confirm': '¿Restablecer el progreso de estudio para este PDF?', 'needs_review': 'Necesita repaso', 'in_progress': 'En progreso', 'almost_mastered': 'Casi dominado', 'mastered': 'Dominado', 'total_questions': 'Preguntas totales', 'study_coverage': 'Cobertura de estudio', 'concept_status': 'Estado de conceptos'}, 'pt': {'study': 'Estudo', 'progress': 'Progresso', 'review': 'Revisão', 'reset': 'Reiniciar', 'back': 'Voltar', 'top': 'Topo', 'bottom': 'Fim', 'recommended_question': 'Pergunta recomendada', 'lesson_concept': 'Lição / conceito', 'show_expected_answer': 'Mostrar resposta esperada / explicação', 'correct': 'Correto', 'incorrect': 'Incorreto', 'no_questions_available': 'Nenhuma pergunta disponível', 'generate_course_first': 'Gere primeiro o curso, depois o modo Estudo usará quiz.json.', 'concept_mastery': 'Domínio dos conceitos', 'last_answer': 'Última resposta', 'mastery_changed': 'Domínio alterado de', 'to': 'para', 'pdf': 'PDF', 'questions': 'Perguntas', 'answered': 'Respondidas', 'overall_mastery': 'Domínio geral', 'status': 'Status', 'attempts': 'Tentativas', 'reset_study_progress': 'Reiniciar progresso de estudo', 'reset_confirm': 'Reiniciar o progresso de estudo para este PDF?', 'needs_review': 'Precisa revisar', 'in_progress': 'Em progresso', 'almost_mastered': 'Quase dominado', 'mastered': 'Dominado', 'total_questions': 'Total de perguntas', 'study_coverage': 'Cobertura de estudo', 'concept_status': 'Status dos conceitos'}}
+for _lang, _values in TRANSLATIONS_EXT.items():
+    TRANSLATIONS.setdefault(_lang, {})
+    TRANSLATIONS[_lang].update(_values)
+
+
+# VOILA_LESSONS_I18N_EXTENSIONS_V1
+
+LESSONS_TRANSLATIONS_EXT = {
+    "ro": {
+        "lessons": "Lecții",
+        "lesson": "Lecție",
+        "open_lesson": "Deschide lecția",
+        "study_lesson": "Studiază lecția",
+        "read_lesson": "Citește lecția",
+        "general_study": "Studiu general",
+        "open_course": "Deschide cursul",
+        "library": "Bibliotecă",
+        "lessons_found": "Lecții găsite",
+        "no_lessons": "Nu există lecții disponibile",
+        "generate_course_first_short": "Generează mai întâi cursul / quiz-ul pentru acest PDF.",
+        "lesson_not_found": "Lecție negăsită",
+        "back_to_lessons": "Înapoi la lecții",
+        "no_source_text_for_lesson": "Nu există text sursă disponibil pentru această lecție.",
+        "no_questions_for_lesson": "Nu există întrebări pentru lecția selectată.",
+        "pages": "Pagini",
+    },
+    "en": {
+        "lessons": "Lessons",
+        "lesson": "Lesson",
+        "open_lesson": "Open lesson",
+        "study_lesson": "Study lesson",
+        "read_lesson": "Read lesson",
+        "general_study": "General study",
+        "open_course": "Open course",
+        "library": "Library",
+        "lessons_found": "Lessons found",
+        "no_lessons": "No lessons available",
+        "generate_course_first_short": "Generate the course / quiz for this PDF first.",
+        "lesson_not_found": "Lesson not found",
+        "back_to_lessons": "Back to lessons",
+        "no_source_text_for_lesson": "No source text is available for this lesson.",
+        "no_questions_for_lesson": "No questions are available for the selected lesson.",
+        "pages": "Pages",
+    },
+    "fr": {
+        "lessons": "Leçons",
+        "lesson": "Leçon",
+        "open_lesson": "Ouvrir la leçon",
+        "study_lesson": "Étudier la leçon",
+        "read_lesson": "Lire la leçon",
+        "general_study": "Étude générale",
+        "open_course": "Ouvrir le cours",
+        "library": "Bibliothèque",
+        "lessons_found": "Leçons trouvées",
+        "no_lessons": "Aucune leçon disponible",
+        "generate_course_first_short": "Générez d’abord le cours / quiz pour ce PDF.",
+        "lesson_not_found": "Leçon introuvable",
+        "back_to_lessons": "Retour aux leçons",
+        "no_source_text_for_lesson": "Aucun texte source disponible pour cette leçon.",
+        "no_questions_for_lesson": "Aucune question disponible pour la leçon sélectionnée.",
+        "pages": "Pages",
+    },
+    "de": {
+        "lessons": "Lektionen",
+        "lesson": "Lektion",
+        "open_lesson": "Lektion öffnen",
+        "study_lesson": "Lektion lernen",
+        "read_lesson": "Lektion lesen",
+        "general_study": "Allgemeines Lernen",
+        "open_course": "Kurs öffnen",
+        "library": "Bibliothek",
+        "lessons_found": "Gefundene Lektionen",
+        "no_lessons": "Keine Lektionen verfügbar",
+        "generate_course_first_short": "Erstellen Sie zuerst den Kurs / das Quiz für dieses PDF.",
+        "lesson_not_found": "Lektion nicht gefunden",
+        "back_to_lessons": "Zurück zu Lektionen",
+        "no_source_text_for_lesson": "Für diese Lektion ist kein Quelltext verfügbar.",
+        "no_questions_for_lesson": "Für die ausgewählte Lektion sind keine Fragen verfügbar.",
+        "pages": "Seiten",
+    },
+    "ru": {
+        "lessons": "Уроки",
+        "lesson": "Урок",
+        "open_lesson": "Открыть урок",
+        "study_lesson": "Изучать урок",
+        "read_lesson": "Читать урок",
+        "general_study": "Общее обучение",
+        "open_course": "Открыть курс",
+        "library": "Библиотека",
+        "lessons_found": "Найдено уроков",
+        "no_lessons": "Уроки недоступны",
+        "generate_course_first_short": "Сначала создайте курс / тест для этого PDF.",
+        "lesson_not_found": "Урок не найден",
+        "back_to_lessons": "Назад к урокам",
+        "no_source_text_for_lesson": "Для этого урока нет исходного текста.",
+        "no_questions_for_lesson": "Для выбранного урока нет вопросов.",
+        "pages": "Страницы",
+    },
+    "it": {
+        "lessons": "Lezioni",
+        "lesson": "Lezione",
+        "open_lesson": "Apri lezione",
+        "study_lesson": "Studia lezione",
+        "read_lesson": "Leggi lezione",
+        "general_study": "Studio generale",
+        "open_course": "Apri corso",
+        "library": "Libreria",
+        "lessons_found": "Lezioni trovate",
+        "no_lessons": "Nessuna lezione disponibile",
+        "generate_course_first_short": "Genera prima il corso / quiz per questo PDF.",
+        "lesson_not_found": "Lezione non trovata",
+        "back_to_lessons": "Torna alle lezioni",
+        "no_source_text_for_lesson": "Nessun testo sorgente disponibile per questa lezione.",
+        "no_questions_for_lesson": "Nessuna domanda disponibile per la lezione selezionata.",
+        "pages": "Pagine",
+    },
+    "es": {
+        "lessons": "Lecciones",
+        "lesson": "Lección",
+        "open_lesson": "Abrir lección",
+        "study_lesson": "Estudiar lección",
+        "read_lesson": "Leer lección",
+        "general_study": "Estudio general",
+        "open_course": "Abrir curso",
+        "library": "Biblioteca",
+        "lessons_found": "Lecciones encontradas",
+        "no_lessons": "No hay lecciones disponibles",
+        "generate_course_first_short": "Genera primero el curso / quiz para este PDF.",
+        "lesson_not_found": "Lección no encontrada",
+        "back_to_lessons": "Volver a lecciones",
+        "no_source_text_for_lesson": "No hay texto fuente disponible para esta lección.",
+        "no_questions_for_lesson": "No hay preguntas disponibles para la lección seleccionada.",
+        "pages": "Páginas",
+    },
+    "pt": {
+        "lessons": "Lições",
+        "lesson": "Lição",
+        "open_lesson": "Abrir lição",
+        "study_lesson": "Estudar lição",
+        "read_lesson": "Ler lição",
+        "general_study": "Estudo geral",
+        "open_course": "Abrir curso",
+        "library": "Biblioteca",
+        "lessons_found": "Lições encontradas",
+        "no_lessons": "Nenhuma lição disponível",
+        "generate_course_first_short": "Gere primeiro o curso / quiz para este PDF.",
+        "lesson_not_found": "Lição não encontrada",
+        "back_to_lessons": "Voltar às lições",
+        "no_source_text_for_lesson": "Nenhum texto fonte disponível para esta lição.",
+        "no_questions_for_lesson": "Nenhuma pergunta disponível para a lição selecionada.",
+        "pages": "Páginas",
+    },
+}
+
+for _lang, _values in LESSONS_TRANSLATIONS_EXT.items():
+    TRANSLATIONS.setdefault(_lang, {})
+    TRANSLATIONS[_lang].update(_values)

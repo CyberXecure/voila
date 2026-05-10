@@ -86,6 +86,19 @@ def load_study_questions(output_dir: Path | str) -> list[dict]:
         return []
 
 
+
+
+def _natural_key(value: str):
+    import re
+
+    parts = re.split(r"(\d+)", str(value or "").lower())
+
+    return [
+        int(part) if part.isdigit() else part
+        for part in parts
+    ]
+
+
 def build_lessons(output_dir: Path | str) -> list[dict]:
     output_dir = Path(output_dir)
     questions = load_study_questions(output_dir)
@@ -132,6 +145,13 @@ def build_lessons(output_dir: Path | str) -> list[dict]:
                 "preview": source_text[:420].replace("\n", " ").strip(),
             }
         )
+
+    lessons.sort(
+        key=lambda item: (
+            _natural_key(item.get("lesson_id") or ""),
+            _natural_key(item.get("title") or ""),
+        )
+    )
 
     return lessons
 

@@ -1043,7 +1043,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if course_html.exists():
             actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">Open course</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">{_ut("open_course", "Open course")}</a>'
             )
 
         if hybrid_figures_html.exists():
@@ -2179,9 +2179,9 @@ def review_concepts(pdf: str = ""):
       </div>
       <div class="top-actions">
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
-        <a href="/">Library</a>
+        <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
-        <a href="/view-course?pdf={quote(pdf_name)}">Open course</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("open_course", "Open course")}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
         <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
       </div>
@@ -2797,9 +2797,9 @@ def review_ocr_text(pdf: str = "", page: int = 1):
       </div>
       <div class="actions">
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
-        <a href="/">Library</a>
+        <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-concepts?pdf={quote(pdf_name)}">Review concepts</a>
-        <a href="/view-course?pdf={quote(pdf_name)}">Open course</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("open_course", "Open course")}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
       </div>
     </div>
@@ -4027,7 +4027,7 @@ def quick_tools():
   <div class="wrap">
     <div class="top">
       <h1>Quick Tools</h1>
-      <a href="/">Library</a>
+      <a href="/">{_ut("library", "Library")}</a>
     </div>
     {''.join(cards) if cards else '<p>No PDFs found.</p>'}
   </div>
@@ -4727,36 +4727,36 @@ def voila_lessons(pdf: str = Query(...)) -> HTMLResponse:
 
         rows.append(f"""
         <article class="card">
-          <div class="meta">#{index} · ID: <code>{html.escape(lesson_id)}</code> · {_ut("questions", "Questions")}: <strong>{questions_count}</strong> · Pages: <strong>{html.escape(pages)}</strong></div>
+          <div class="meta">#{index} · ID: <code>{html.escape(lesson_id)}</code> · {_ut("questions", "Questions")}: <strong>{questions_count}</strong> · {_ut("pages", "Pages")}: <strong>{html.escape(pages)}</strong></div>
           <h2>{html.escape(title)}</h2>
           <p>{html.escape(preview)}</p>
           <div class="actions">
-            <a class="btn primary" href="/lesson?pdf={q_pdf}&lesson_id={quote(lesson_id)}">Deschide lecția</a>
-            <a class="btn" href="/study-lesson?pdf={q_pdf}&lesson_id={quote(lesson_id)}">Studiază lecția</a>
+            <a class="btn primary" href="/lesson?pdf={q_pdf}&lesson_id={quote(lesson_id)}">{_ut("open_lesson", "Open lesson")}</a>
+            <a class="btn" href="/study-lesson?pdf={q_pdf}&lesson_id={quote(lesson_id)}">{_ut("study_lesson", "Study lesson")}</a>
           </div>
         </article>
         """)
 
     content = "\n".join(rows) if rows else """
     <article class="card">
-      <h2>Nu există lecții disponibile</h2>
-      <p>Generează mai întâi cursul / quiz-ul pentru acest PDF.</p>
+      <h2>{_ut("no_lessons", "No lessons available")}</h2>
+      <p>{_ut("generate_course_first_short", "Generate the course / quiz for this PDF first.")}</p>
     </article>
     """
 
     body = f"""
-    <h1>Lecții</h1>
+    <h1>{_ut("lessons", "Lessons")}</h1>
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
-      Lecții găsite: <strong>{len(lessons)}</strong>
+      {_ut("lessons_found", "Lessons found")}: <strong>{len(lessons)}</strong>
     </div>
 
     <div class="actions">
       <a class="btn" href="/course-tools?pdf={q_pdf}">Course Tools</a>
-      <a class="btn" href="/view-course?pdf={q_pdf}">Open course</a>
+      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("open_course", "Open course")}</a>
       <a class="btn" href="/study?pdf={q_pdf}">{_ut("study", "Study")}</a>
-      <a class="btn" href="/">Library</a>
+      <a class="btn" href="/">{_ut("library", "Library")}</a>
     </div>
 
     <div class="grid">
@@ -4783,9 +4783,9 @@ def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResp
 
     if not lesson:
         body = f"""
-        <h1>Lecție negăsită</h1>
+        <h1>{_ut("lesson_not_found", "Lesson not found")}</h1>
         <p>Nu am găsit lecția <code>{html.escape(str(lesson_id))}</code>.</p>
-        <p><a class="btn" href="/lessons?pdf={q_pdf}">Înapoi la lecții</a></p>
+        <p><a class="btn" href="/lessons?pdf={q_pdf}">{_ut("back_to_lessons", "Back to lessons")}</a></p>
         """
         return page("Voila! Lesson", body)
 
@@ -4800,7 +4800,7 @@ def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResp
         for chunk in chunks[:12]:
             lesson_body += f"<p>{html.escape(chunk)}</p>\n"
     else:
-        lesson_body = "<p>Nu există text sursă disponibil pentru această lecție.</p>"
+        lesson_body = f"""<p>{_ut("no_source_text_for_lesson", "No source text is available for this lesson.")}</p>"""
 
     body = f"""
     <h1>{html.escape(title)}</h1>
@@ -4808,14 +4808,14 @@ def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResp
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
       Lesson ID: <code>{html.escape(str(lesson_id))}</code><br>
-      Pages: <strong>{html.escape(pages)}</strong><br>
+      {_ut("pages", "Pages")}: <strong>{html.escape(pages)}</strong><br>
       {_ut("questions", "Questions")}: <strong>{int(lesson.get("questions_count") or 0)}</strong>
     </div>
 
     <div class="actions">
-      <a class="btn" href="/lessons?pdf={q_pdf}">← Lecții</a>
-      <a class="btn primary" href="/study-lesson?pdf={q_pdf}&lesson_id={q_lesson}">Studiază lecția</a>
-      <a class="btn" href="/view-course?pdf={q_pdf}">Open course</a>
+      <a class="btn" href="/lessons?pdf={q_pdf}">← {_ut("lessons", "Lessons")}</a>
+      <a class="btn primary" href="/study-lesson?pdf={q_pdf}&lesson_id={q_lesson}">{_ut("study_lesson", "Study lesson")}</a>
+      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("open_course", "Open course")}</a>
     </div>
 
     <article class="card">
@@ -4885,7 +4885,7 @@ def voila_study_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HT
         question_html = f"""
         <article class="card">
           <h2>{_ut("no_questions_available", "No questions available")}</h2>
-          <p>Nu există întrebări pentru lecția selectată.</p>
+          <p>{_ut("no_questions_for_lesson", "No questions are available for the selected lesson.")}</p>
         </article>
         """
 
@@ -4899,9 +4899,9 @@ def voila_study_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HT
     </div>
 
     <div class="actions">
-      <a class="btn" href="/lesson?pdf={q_pdf}&lesson_id={q_lesson}">Citește lecția</a>
-      <a class="btn" href="/lessons?pdf={q_pdf}">← Lecții</a>
-      <a class="btn" href="/study?pdf={q_pdf}">Study general</a>
+      <a class="btn" href="/lesson?pdf={q_pdf}&lesson_id={q_lesson}">{_ut("read_lesson", "Read lesson")}</a>
+      <a class="btn" href="/lessons?pdf={q_pdf}">← {_ut("lessons", "Lessons")}</a>
+      <a class="btn" href="/study?pdf={q_pdf}">{_ut("general_study", "General study")}</a>
     </div>
 
     {question_html}
