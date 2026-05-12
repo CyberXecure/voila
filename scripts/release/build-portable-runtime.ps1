@@ -287,6 +287,7 @@ if (-not (Test-Path $PthPath)) {
 @(
     "python$PyMajorMinorCompact.zip",
     ".",
+    "..\services\api",
     "Lib\site-packages",
     "import site"
 ) | Set-Content -Path $PthPath -Encoding ASCII
@@ -406,4 +407,5 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
 
