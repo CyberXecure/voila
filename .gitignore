@@ -20,3 +20,5 @@ Thumbs.db
 data/trash/
 # Local app settings
 data/settings/
+
+.release-cache/

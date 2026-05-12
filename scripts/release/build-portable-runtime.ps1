@@ -14,10 +14,10 @@ function Invoke-RobocopyChecked {
     param(
         [string]$Source,
         [string]$Destination,
-        [string[]]$Args
+        [string[]]$RoboArgs
     )
 
-    robocopy $Source $Destination @Args | Out-Host
+    & robocopy $Source $Destination @RoboArgs | Out-Host
 
     if ($LASTEXITCODE -gt 7) {
         throw "Robocopy a eșuat cu exit code $LASTEXITCODE"
@@ -234,7 +234,7 @@ New-Item -ItemType Directory -Force $AppDir | Out-Null
 Write-Host ""
 Write-Host "=== Copiez proiectul în staging ==="
 
-Invoke-RobocopyChecked -Source $ProjectRoot -Destination $AppDir -Args @(
+Invoke-RobocopyChecked -Source $ProjectRoot -Destination $AppDir -RoboArgs @(
     "/E",
     "/XD",
     ".git",
@@ -406,3 +406,4 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
