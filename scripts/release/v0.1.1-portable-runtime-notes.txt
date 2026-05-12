@@ -1,0 +1,39 @@
+Voila v0.1.1-portable-runtime
+
+Release artifact:
+D:\dev\releases\voila-v0.1.1-portable-runtime.zip
+
+Release info:
+D:\dev\releases\voila-v0.1.1-portable-runtime_RELEASE-INFO.txt
+
+Test log:
+D:\dev\releases\voila-v0.1.1-portable-runtime_TEST-LOG.txt
+
+Size:
+565,397,436 bytes
+
+SHA256:
+A3BBD327230E5C1D83EFB90C4F78B79D6478C2A1FA8C5CFDCC8CEEA0B1D922D8
+
+Validated:
+- ZIP extracted successfully
+- CHECK-SYSTEM.bat ran
+- START-VOILA.bat ran
+- app\.venv existed / was created
+- Python dependencies validated
+- Voila started on http://127.0.0.1:8787
+- LanguageTool available on http://127.0.0.1:8081
+- STOP-VOILA.bat stopped services
+- Ports 8787 and 8081 were clear after shutdown
+
+Known warnings:
+- GET /favicon.ico returns 404. Non-blocking.
+- tesseract.exe is not bundled in this release.
+- Python, Java and PowerShell 7 are still required on the host system.
+
+Notes:
+- v0.1.1 adds wheelhouse-based offline Python dependency installation.
+- app\requirements.txt is copied from services\api\requirements.txt.
+- app\.venv is not included in ZIP and is created on first run.
+- build-portable-runtime.ps1 was not committed in this release because the final successful build was executed directly from PowerShell.
+- A reproducible build script should be added in v0.1.2 before moving to standalone runtime.
