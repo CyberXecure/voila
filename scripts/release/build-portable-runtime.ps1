@@ -168,7 +168,7 @@ function Write-RuntimeLaunchers {
         '$ErrorActionPreference = "SilentlyContinue"',
         'Write-Host "Oprire Voila pe portul $Port..."',
         '',
-        '$pids = Get-NetTCPConnection -LocalPort $Port -State Listen | Select-Object -ExpandProperty OwningProcess -Unique',
+        '$pids = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique',
         'foreach ($pidValue in $pids) {',
         '    if ($pidValue) {',
         '        Write-Host "Stop PID $pidValue"',
@@ -177,7 +177,7 @@ function Write-RuntimeLaunchers {
         '}',
         '',
         'Start-Sleep -Milliseconds 500',
-        '$stillOpen = Get-NetTCPConnection -LocalPort $Port -State Listen',
+        '$stillOpen = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue',
         'if ($stillOpen) { Write-Host "Portul $Port încă pare ocupat." } else { Write-Host "OK: portul $Port este liber." }'
     )
 
