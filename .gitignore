@@ -22,3 +22,8 @@ data/trash/
 data/settings/
 
 .release-cache/
+# Local Voila data / audit / runtime cache
+data/
+audit/
+.tessdata/
+.release-cache/
