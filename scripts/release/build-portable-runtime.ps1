@@ -1,7 +1,10 @@
 param(
     [string]$VersionTag = "voila-v0.1.2-standalone-runtime",
     [string]$ReleaseRoot = "D:\dev\releases",
-    [switch]$RefreshWheelhouse
+    [switch]$RefreshWheelhouse,
+    [string]$TesseractRoot = "C:\Program Files\Tesseract-OCR",
+    [string]$TessdataSource = "",
+    [string[]]$TessLanguages = @("eng", "osd", "ron", "rus")
 )
 
 $ErrorActionPreference = "Stop"
@@ -383,6 +386,93 @@ Write-Host "=== Creez ZIP ==="
 
 
 Write-Host ""
+
+Write-Host ""
+Write-Host "=== Pregătesc Tesseract runtime OCR ==="
+
+if (-not $TesseractRoot) {
+    throw "TesseractRoot este gol."
+}
+
+$TesseractRoot = [System.IO.Path]::GetFullPath($TesseractRoot)
+$TesseractExe = Join-Path $TesseractRoot "tesseract.exe"
+$InstalledTessdataDir = Join-Path $TesseractRoot "tessdata"
+
+if (-not (Test-Path $TesseractExe)) {
+    throw "Nu găsesc tesseract.exe: $TesseractExe"
+}
+
+$RuntimeTesseractDir = Join-Path $AppDir "runtime\tesseract"
+$RuntimeTessdataDir = Join-Path $RuntimeTesseractDir "tessdata"
+
+New-Item -ItemType Directory -Force $RuntimeTesseractDir, $RuntimeTessdataDir | Out-Null
+
+Write-Host "Copiez fișiere Tesseract din: $TesseractRoot"
+
+Get-ChildItem $TesseractRoot -File -Force |
+    Where-Object {
+        $_.Name -match '\.(exe|dll)$'
+    } |
+    Copy-Item -Destination $RuntimeTesseractDir -Force
+
+$TessdataCandidates = @()
+
+if ($TessdataSource) {
+    if ([System.IO.Path]::IsPathRooted($TessdataSource)) {
+        $ResolvedTessdataSource = [System.IO.Path]::GetFullPath($TessdataSource)
+    }
+    else {
+        $ResolvedTessdataSource = [System.IO.Path]::GetFullPath((Join-Path $ProjectRoot $TessdataSource))
+    }
+
+    $TessdataCandidates += $ResolvedTessdataSource
+}
+
+$TessdataCandidates += (Join-Path $ProjectRoot ".tessdata")
+$TessdataCandidates += $InstalledTessdataDir
+
+$TessdataCandidates = $TessdataCandidates |
+    Where-Object { $_ -and (Test-Path $_) } |
+    Select-Object -Unique
+
+Write-Host "Surse tessdata:"
+$TessdataCandidates | ForEach-Object { Write-Host " - $_" }
+
+foreach ($lang in $TessLanguages) {
+    $fileName = "$lang.traineddata"
+    $sourceFile = $null
+
+    foreach ($candidateDir in $TessdataCandidates) {
+        $candidateFile = Join-Path $candidateDir $fileName
+        if (Test-Path $candidateFile) {
+            $sourceFile = $candidateFile
+            break
+        }
+    }
+
+    if (-not $sourceFile) {
+        throw "Lipsește $fileName. Surse verificate: $($TessdataCandidates -join '; ')"
+    }
+
+    Write-Host "Copiez OCR lang $lang din $sourceFile"
+    Copy-Item $sourceFile -Destination (Join-Path $RuntimeTessdataDir $fileName) -Force
+}
+
+$env:TESSDATA_PREFIX = $RuntimeTesseractDir
+
+Write-Host "=== Verific Tesseract runtime copiat ==="
+& (Join-Path $RuntimeTesseractDir "tesseract.exe") --version | Select-Object -First 1 | Out-Host
+& (Join-Path $RuntimeTesseractDir "tesseract.exe") --list-langs | Out-Host
+
+$expectedLangFiles = foreach ($lang in $TessLanguages) {
+    Join-Path $RuntimeTessdataDir "$lang.traineddata"
+}
+
+foreach ($expectedLangFile in $expectedLangFiles) {
+    if (-not (Test-Path $expectedLangFile)) {
+        throw "Lipsește în runtime: $expectedLangFile"
+    }
+}
 Write-Host "=== Cleanup final înainte de ZIP ==="
 
 $FinalRemoveDirs = @(
@@ -495,6 +585,8 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
+
 
 
 
