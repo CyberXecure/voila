@@ -257,6 +257,38 @@ Invoke-RobocopyChecked -Source $ProjectRoot -Destination $AppDir -RoboArgs @(
     ".env"
 )
 
+Write-Host ""
+Write-Host "=== Curăț foldere locale care nu intră în runtime ==="
+
+$LocalOnlyDirs = @(
+    (Join-Path $AppDir "data"),
+    (Join-Path $AppDir "audit"),
+    (Join-Path $AppDir ".tessdata"),
+    (Join-Path $AppDir ".release-cache")
+)
+
+foreach ($dir in $LocalOnlyDirs) {
+    if (Test-Path $dir) {
+        Write-Host "Remove local-only dir: $dir"
+        Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Write-Host ""
+Write-Host "=== Recreez directoare runtime goale ==="
+
+$RuntimeDataDirs = @(
+    (Join-Path $AppDir "data"),
+    (Join-Path $AppDir "data\input"),
+    (Join-Path $AppDir "data\output"),
+    (Join-Path $AppDir "data\trash"),
+    (Join-Path $AppDir "logs"),
+    (Join-Path $AppDir "runtime")
+)
+
+foreach ($dir in $RuntimeDataDirs) {
+    New-Item -ItemType Directory -Force $dir | Out-Null
+}
 $PythonVersion = $BuildPython.Version
 $PythonZipName = "python-$PythonVersion-embed-amd64.zip"
 $PythonZipPath = Join-Path $PythonCache $PythonZipName
@@ -407,6 +439,7 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
 
 
 
