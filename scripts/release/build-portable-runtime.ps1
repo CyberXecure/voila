@@ -381,6 +381,62 @@ Remove-Item $InfoPath -Force -ErrorAction SilentlyContinue
 Write-Host ""
 Write-Host "=== Creez ZIP ==="
 
+
+Write-Host ""
+Write-Host "=== Cleanup final înainte de ZIP ==="
+
+$FinalRemoveDirs = @(
+    (Join-Path $AppDir ".tessdata"),
+    (Join-Path $AppDir "audit"),
+    (Join-Path $AppDir ".release-cache")
+)
+
+foreach ($dir in $FinalRemoveDirs) {
+    if (Test-Path $dir) {
+        Write-Host "Remove before ZIP: $dir"
+        Remove-Item $dir -Recurse -Force -ErrorAction Stop
+    }
+}
+
+$DataDir = Join-Path $AppDir "data"
+if (Test-Path $DataDir) {
+    Write-Host "Reset data dir before ZIP: $DataDir"
+    Remove-Item $DataDir -Recurse -Force -ErrorAction Stop
+}
+
+$RuntimeDataDirs = @(
+    (Join-Path $AppDir "data"),
+    (Join-Path $AppDir "data\input"),
+    (Join-Path $AppDir "data\output"),
+    (Join-Path $AppDir "data\trash"),
+    (Join-Path $AppDir "logs"),
+    (Join-Path $AppDir "runtime")
+)
+
+foreach ($dir in $RuntimeDataDirs) {
+    New-Item -ItemType Directory -Force $dir | Out-Null
+}
+
+$ForbiddenPaths = @(
+    (Join-Path $AppDir ".tessdata"),
+    (Join-Path $AppDir "audit"),
+    (Join-Path $AppDir ".release-cache")
+)
+
+foreach ($forbidden in $ForbiddenPaths) {
+    if (Test-Path $forbidden) {
+        throw "Forbidden path still exists before ZIP: $forbidden"
+    }
+}
+
+$PopulatedDataFiles = @(Get-ChildItem (Join-Path $AppDir "data") -Recurse -File -Force -ErrorAction SilentlyContinue)
+if ($PopulatedDataFiles.Count -gt 0) {
+    Write-Host "Data files found before ZIP:"
+    $PopulatedDataFiles | Select-Object FullName, Length | Format-Table -AutoSize
+    throw "Data directory must be empty before ZIP."
+}
+
+Write-Host "OK: staging curat înainte de ZIP."
 Compress-Archive -Path (Join-Path $StageDir "*") -DestinationPath $ZipPath -Force
 
 $Sha256 = (Get-FileHash $ZipPath -Algorithm SHA256).Hash
@@ -439,6 +495,7 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
 
 
 
