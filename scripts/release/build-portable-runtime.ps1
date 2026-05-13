@@ -4,7 +4,10 @@ param(
     [switch]$RefreshWheelhouse,
     [string]$TesseractRoot = "C:\Program Files\Tesseract-OCR",
     [string]$TessdataSource = "",
-    [string[]]$TessLanguages = @("eng", "osd", "ron", "rus")
+    [string[]]$TessLanguages = @("eng", "osd", "ron", "rus"),
+    [string]$JavaRoot = "C:\Program Files\Eclipse Adoptium\jre-21.0.11.10-hotspot",
+    [string]$LanguageToolRoot = "D:\dev\tools\LanguageTool",
+    [int]$LanguageToolPort = 8081
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,10 +113,57 @@ function Write-RuntimeLaunchers {
         '$Url = "http://127.0.0.1:$Port"',
         '$HealthUrl = "$Url/health"',
         '',
+        '$LtPort = 8081',
+        '$LtUrl = "http://127.0.0.1:$LtPort/v2/check"',
+        '$LocalLanguageToolDir = Join-Path $AppRoot "runtime\languagetool"',
+        '$LocalLanguageToolJar = Join-Path $LocalLanguageToolDir "languagetool-server.jar"',
+        '$LocalLanguageToolConfig = Join-Path $LocalLanguageToolDir "server.properties"',
+        '$LocalJavaExe = Join-Path $AppRoot "runtime\java\bin\java.exe"',
+        '$LtOutLog = Join-Path $LogsDir "languagetool.out.log"',
+        '$LtErrLog = Join-Path $LogsDir "languagetool.err.log"',
+        '$env:VOILA_LANGUAGETOOL_URL = $LtUrl',
+        '',
         'Write-Host "=== Voila standalone runtime ==="',
         'Write-Host "AppRoot: $AppRoot"',
         'Write-Host "Python:  $PythonExe"',
         'Write-Host "URL:     $Url"',
+        'Write-Host "LT URL:  $LtUrl"',
+        '',
+        'if ((Test-Path $LocalJavaExe) -and (Test-Path $LocalLanguageToolJar)) {',
+        '    $ltExisting = Get-NetTCPConnection -LocalPort $LtPort -State Listen -ErrorAction SilentlyContinue',
+        '    if ($ltExisting) {',
+        '        Write-Host "LanguageTool pare deja pornit pe $LtUrl"',
+        '    }',
+        '    else {',
+        '        Write-Host "Pornesc LanguageTool local pe $LtUrl"',
+        '        $ltProc = Start-Process -FilePath $LocalJavaExe -ArgumentList @("-cp", "languagetool-server.jar", "org.languagetool.server.HTTPServer", "--config", "server.properties", "--port", "$LtPort", "--allow-origin") -WorkingDirectory $LocalLanguageToolDir -RedirectStandardOutput $LtOutLog -RedirectStandardError $LtErrLog -WindowStyle Minimized -PassThru',
+        '        $ltOk = $false',
+        '        for ($j = 1; $j -le 60; $j++) {',
+        '            Start-Sleep -Milliseconds 500',
+        '            try {',
+        '                curl.exe -fsS -X POST -d "language=en-US" -d "text=This are a test." $LtUrl | Out-Null',
+        '                $ltOk = $true',
+        '                break',
+        '            }',
+        '            catch {',
+        '                if ($ltProc.HasExited) {',
+        '                    Write-Host "LanguageTool s-a oprit neașteptat."',
+        '                    if (Test-Path $LtErrLog) { Get-Content $LtErrLog -Tail 80 | Out-Host }',
+        '                    break',
+        '                }',
+        '            }',
+        '        }',
+        '        if ($ltOk) {',
+        '            Write-Host "OK: LanguageTool local răspunde."',
+        '        }',
+        '        else {',
+        '            Write-Host "WARN: LanguageTool nu a răspuns încă. Voila pornește, dar Verifică text poate afișa eroare."',
+        '        }',
+        '    }',
+        '}',
+        'else {',
+        '    Write-Host "WARN: Java/LanguageTool runtime lipsește. Verifică text poate necesita server extern."',
+        '}',
         '',
         '$existing = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue',
         'if ($existing) {',
@@ -176,6 +226,15 @@ function Write-RuntimeLaunchers {
         '    if ($pidValue) {',
         '        Write-Host "Stop PID $pidValue"',
         '        Stop-Process -Id $pidValue -Force',
+        '    }',
+        '}',
+        '',
+        '',
+        '$ltPids = Get-NetTCPConnection -LocalPort $LanguageToolPort -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique',
+        'foreach ($ltPid in $ltPids) {',
+        '    if ($ltPid) {',
+        '        Write-Host "Stop LanguageTool PID $ltPid"',
+        '        Stop-Process -Id $ltPid -Force',
         '    }',
         '}',
         '',
@@ -473,6 +532,75 @@ foreach ($expectedLangFile in $expectedLangFiles) {
         throw "Lipsește în runtime: $expectedLangFile"
     }
 }
+
+Write-Host ""
+Write-Host "=== Pregătesc Java + LanguageTool runtime ==="
+
+if (-not $JavaRoot) {
+    throw "JavaRoot este gol."
+}
+
+if (-not $LanguageToolRoot) {
+    throw "LanguageToolRoot este gol."
+}
+
+$JavaRoot = [System.IO.Path]::GetFullPath($JavaRoot)
+$LanguageToolRoot = [System.IO.Path]::GetFullPath($LanguageToolRoot)
+
+$JavaExe = Join-Path $JavaRoot "bin\java.exe"
+$LanguageToolJar = Join-Path $LanguageToolRoot "languagetool-server.jar"
+
+if (-not (Test-Path $JavaExe)) {
+    throw "Nu găsesc Java runtime: $JavaExe"
+}
+
+if (-not (Test-Path $LanguageToolJar)) {
+    throw "Nu găsesc LanguageTool jar: $LanguageToolJar"
+}
+
+$RuntimeJavaDir = Join-Path $AppDir "runtime\java"
+$RuntimeLanguageToolDir = Join-Path $AppDir "runtime\languagetool"
+
+Remove-Item $RuntimeJavaDir -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $RuntimeLanguageToolDir -Recurse -Force -ErrorAction SilentlyContinue
+
+New-Item -ItemType Directory -Force $RuntimeJavaDir, $RuntimeLanguageToolDir | Out-Null
+
+Write-Host "Copiez Java din: $JavaRoot"
+robocopy $JavaRoot $RuntimeJavaDir /E /XD "legal" /XF "*.pdb" "*.map" "*.log" | Out-Host
+if ($LASTEXITCODE -gt 7) {
+    throw "Robocopy Java a eșuat cu exit code $LASTEXITCODE"
+}
+$global:LASTEXITCODE = 0
+
+Write-Host "Copiez LanguageTool din: $LanguageToolRoot"
+robocopy $LanguageToolRoot $RuntimeLanguageToolDir /E /XD "ngrams" "cache" "logs" ".git" /XF "*.log" "*.tmp" | Out-Host
+if ($LASTEXITCODE -gt 7) {
+    throw "Robocopy LanguageTool a eșuat cu exit code $LASTEXITCODE"
+}
+$global:LASTEXITCODE = 0
+
+$RuntimeJavaExe = Join-Path $RuntimeJavaDir "bin\java.exe"
+$RuntimeLtJar = Join-Path $RuntimeLanguageToolDir "languagetool-server.jar"
+$RuntimeLtConfig = Join-Path $RuntimeLanguageToolDir "server.properties"
+
+if (-not (Test-Path $RuntimeJavaExe)) {
+    throw "Java runtime lipsă după copiere: $RuntimeJavaExe"
+}
+
+if (-not (Test-Path $RuntimeLtJar)) {
+    throw "LanguageTool jar lipsă după copiere: $RuntimeLtJar"
+}
+
+if (-not (Test-Path $RuntimeLtConfig)) {
+    New-Item -ItemType File -Force -Path $RuntimeLtConfig | Out-Null
+}
+
+Write-Host "=== Verific Java runtime copiat ==="
+& $RuntimeJavaExe -version 2>&1 | Select-Object -First 3 | Out-Host
+
+Write-Host "=== Verific LanguageTool runtime copiat ==="
+Get-Item $RuntimeLtJar | Select-Object FullName, Length | Format-Table -AutoSize
 Write-Host "=== Cleanup final înainte de ZIP ==="
 
 $FinalRemoveDirs = @(
@@ -585,6 +713,8 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
+
 
 
 
