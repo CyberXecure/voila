@@ -291,3 +291,11 @@ Possible scope:
 - prepare paid download page
 - decide whether to add .github/FUNDING.yml
 - improve README positioning
+
+---
+
+## Related commercial planning documents
+
+- [Offer tiers](OFFER-TIERS.md)
+- [Paid download copy](PAID-DOWNLOAD-COPY.md)
+- [Business inquiry draft](BUSINESS-INQUIRY.md)
