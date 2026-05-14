@@ -1,0 +1,33 @@
+Voila! v0.2.0 Public Beta - Test Log
+
+Date:
+2026-05-14 11:07:03
+
+Base validated release:
+v0.1.9-final-release-polish
+
+Base ZIP:
+D:\dev\releases\voila-v0.1.9-final-release-polish.zip
+
+Public beta ZIP:
+D:\dev\releases\voila-v0.2.0-public-beta\voila-v0.2.0-public-beta.zip
+
+Validation summary:
+- Standalone ZIP package available
+- Runtime dependencies included
+- Python embedded included
+- Tesseract OCR included
+- Java runtime included
+- LanguageTool included
+- Desktop / Start Menu shortcut helpers included
+- User documentation included
+- SHA256 checksum generated
+
+Smoke test script:
+scripts/release/test-standalone-runtime.ps1
+
+Public beta decision:
+This public beta uses the validated v0.1.9 final package as a stable baseline and publishes it under v0.2.0-public-beta for GitHub distribution.
+
+Result:
+READY FOR PUBLIC BETA RELEASE
