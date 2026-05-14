@@ -27,3 +27,47 @@ data/
 audit/
 .tessdata/
 .release-cache/
+
+# --- Voila local/generated data ---
+data/trash/
+data/tmp/
+data/cache/
+data/exports/
+data/uploads/
+*.log
+*.bak
+
+# --- Voila security/sensitive files ---
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+
+# Local build/release artifacts
+dist/
+build/
+release/
+releases/
+*.zip
+*.7z
+*.tar
+*.tar.gz
+
+# Runtime/cache folders
+runtime-cache/
+ocr-cache/
+tesseract-cache/
+languagetool-cache/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
