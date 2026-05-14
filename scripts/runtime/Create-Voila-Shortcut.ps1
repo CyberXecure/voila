@@ -6,17 +6,16 @@ param(
 $ErrorActionPreference = "Stop"
 
 $AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$TargetCmd = Join-Path $AppRoot "Run-Voila.cmd"
-$TargetPs1 = Join-Path $AppRoot "Run-Voila.ps1"
+$RunScript = Join-Path $AppRoot "Run-Voila.ps1"
 
-if (Test-Path $TargetCmd) {
-    $TargetPath = $TargetCmd
+if (-not (Test-Path $RunScript)) {
+    throw "Nu găsesc Run-Voila.ps1 în: $AppRoot"
 }
-elseif (Test-Path $TargetPs1) {
-    $TargetPath = "powershell.exe"
-}
-else {
-    throw "Nu găsesc Run-Voila.cmd sau Run-Voila.ps1 în: $AppRoot"
+
+$PowerShellExe = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
+
+if (-not (Test-Path $PowerShellExe)) {
+    $PowerShellExe = "powershell.exe"
 }
 
 $IconCandidates = @(
@@ -25,6 +24,7 @@ $IconCandidates = @(
 )
 
 $IconPath = $null
+
 foreach ($candidate in $IconCandidates) {
     if (Test-Path $candidate) {
         $IconPath = $candidate
@@ -43,26 +43,26 @@ function New-VoilaShortcut {
     $Shell = New-Object -ComObject WScript.Shell
     $Shortcut = $Shell.CreateShortcut($ShortcutPath)
 
-    if ($TargetPath -eq "powershell.exe") {
-        $Shortcut.TargetPath = "powershell.exe"
-        $Shortcut.Arguments = "-ExecutionPolicy Bypass -File `"$TargetPs1`""
-    }
-    else {
-        $Shortcut.TargetPath = $TargetPath
-        $Shortcut.Arguments = ""
-    }
-
+    $Shortcut.TargetPath = $PowerShellExe
+    $Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$RunScript`""
     $Shortcut.WorkingDirectory = $AppRoot
-    $Shortcut.Description = "Voila! local standalone runtime"
+    $Shortcut.Description = "Voila! standalone runtime"
 
     if ($IconPath) {
         $Shortcut.IconLocation = $IconPath
     }
 
+    $Shortcut.WindowStyle = 1
     $Shortcut.Save()
 
     Write-Host "Shortcut creat:"
     Write-Host $ShortcutPath
+    Write-Host "Target:"
+    Write-Host $Shortcut.TargetPath
+    Write-Host "Arguments:"
+    Write-Host $Shortcut.Arguments
+    Write-Host "Icon:"
+    Write-Host $Shortcut.IconLocation
 }
 
 $Created = @()
