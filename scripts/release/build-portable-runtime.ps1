@@ -422,6 +422,27 @@ Write-Host ""
 Write-Host "=== Scriu scripturile de runtime ==="
 Write-RuntimeLaunchers -AppDir $AppDir
 
+Write-Host "=== Copiez scripturile de shortcut în runtime root ==="
+
+$RuntimeShortcutScripts = @(
+    "Create-Voila-Shortcut.ps1",
+    "Remove-Voila-Shortcut.ps1",
+    "Create-Voila-Shortcut.cmd",
+    "Remove-Voila-Shortcut.cmd"
+)
+
+foreach ($shortcutScript in $RuntimeShortcutScripts) {
+    $sourceShortcutScript = Join-Path $ProjectRoot "scripts\runtime\$shortcutScript"
+    $destShortcutScript = Join-Path $AppDir $shortcutScript
+
+    if (-not (Test-Path $sourceShortcutScript)) {
+        throw "Lipsește script shortcut: $sourceShortcutScript"
+    }
+
+    Copy-Item $sourceShortcutScript $destShortcutScript -Force
+}
+
+
 Write-Host "=== Suprascriu Stop-Voila.ps1 cu varianta v0.1.4 robustă ==="
 
 $StopScriptPath = Join-Path $AppDir "Stop-Voila.ps1"
@@ -723,6 +744,7 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
 
 
 
