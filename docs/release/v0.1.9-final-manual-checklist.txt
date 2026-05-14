@@ -1,0 +1,49 @@
+VOILA v0.1.9 FINAL RELEASE POLISH - MANUAL TEST CHECKLIST
+
+Objective:
+Validate the final standalone ZIP exactly like a normal user would use it.
+
+Test package:
+D:\dev\releases\voila-v0.1.9-final-release-polish.zip
+
+Clean test folder:
+D:\dev\release-tests\v019-user-flow\Voila
+
+Preconditions:
+[ ] Python is not required from PATH
+[ ] Tesseract is not required from PATH
+[ ] Java is not required from PATH
+[ ] Previous Voila process stopped
+[ ] Previous LanguageTool process stopped
+[ ] Desktop shortcut removed before test
+[ ] Start Menu shortcut removed before test
+
+User flow:
+[ ] Extract ZIP into clean folder
+[ ] Open app folder
+[ ] Read START-AICI.txt
+[ ] Read QUICKSTART.txt
+[ ] Run Create-Voila-Shortcut.cmd
+[ ] Desktop shortcut appears
+[ ] Start Menu shortcut appears
+[ ] Shortcut shows Voila icon
+[ ] Double-click Desktop shortcut
+[ ] Voila starts
+[ ] Browser opens or manual URL works
+[ ] http://127.0.0.1:8765/health returns {"status":"ok"}
+
+Runtime checks:
+[ ] LanguageTool responds locally
+[ ] Tesseract languages available: eng, osd, ron, rus
+[ ] Stop-Voila.ps1 stops Voila
+[ ] Stop-Voila.ps1 stops LanguageTool
+[ ] Ports 8765 and 8081 are freed
+
+Cleanup:
+[ ] Remove-Voila-Shortcut.cmd removes Desktop shortcut
+[ ] Remove-Voila-Shortcut.cmd removes Start Menu shortcut
+[ ] Extracted folder can be deleted after stopping app
+
+Final decision:
+[ ] PASS - package is ready for release
+[ ] FAIL - package needs another hotfix
