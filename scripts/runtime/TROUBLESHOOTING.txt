@@ -1,0 +1,96 @@
+VOILA! - TROUBLESHOOTING
+
+1. Shortcut-ul nu pornește aplicația
+
+Rulează direct din folderul app:
+
+powershell.exe -ExecutionPolicy Bypass -File .\Run-Voila.ps1
+
+Dacă pornește direct, recreează shortcut-ul:
+
+Remove-Voila-Shortcut.cmd
+Create-Voila-Shortcut.cmd
+
+2. Browserul nu se deschide
+
+Deschide manual:
+
+http://127.0.0.1:8765
+
+3. Verificare rapidă health
+
+În PowerShell:
+
+curl.exe -fsS http://127.0.0.1:8765/health
+
+Răspuns corect:
+
+{"status":"ok"}
+
+4. Portul 8765 este ocupat
+
+Rulează:
+
+.\Stop-Voila.ps1
+
+sau:
+
+powershell.exe -ExecutionPolicy Bypass -File .\Stop-Voila.ps1 -Port 8765 -LanguageToolPort 8081
+
+Apoi pornește din nou Voila.
+
+5. LanguageTool nu răspunde
+
+Voila pornește LanguageTool local pe:
+
+http://127.0.0.1:8081/v2/check
+
+Oprește tot:
+
+.\Stop-Voila.ps1
+
+Apoi repornește Voila.
+
+6. Windows SmartScreen / antivirus
+
+Pentru că aplicația este un pachet local ZIP și nu un installer semnat, Windows poate afișa avertismente.
+
+Recomandări:
+- extrage ZIP-ul într-un folder local simplu
+- rulează scripturile doar din pachetul primit de la sursa de încredere
+- dacă Windows blochează scripturile, rulează din PowerShell:
+  powershell.exe -ExecutionPolicy Bypass -File .\Run-Voila.ps1
+
+7. Aplicația se deschide și se închide imediat
+
+Rulează direct din PowerShell, ca să vezi eroarea:
+
+cd C:\Voila\app
+powershell.exe -ExecutionPolicy Bypass -File .\Run-Voila.ps1
+
+Adaptează calea dacă ai extras în alt folder.
+
+8. Cum șterg shortcut-urile
+
+Rulează:
+
+Remove-Voila-Shortcut.cmd
+
+9. Cum pornesc fără shortcut
+
+Din folderul app:
+
+Run-Voila.cmd
+
+sau:
+
+powershell.exe -ExecutionPolicy Bypass -File .\Run-Voila.ps1
+
+10. Ce pot șterge
+
+Poți șterge folderul extras dacă aplicația este oprită.
+
+Înainte de ștergere, rulează:
+
+Stop-Voila.ps1
+Remove-Voila-Shortcut.cmd

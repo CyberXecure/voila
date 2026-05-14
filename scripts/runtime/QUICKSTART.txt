@@ -1,0 +1,73 @@
+VOILA! - QUICKSTART
+
+1. Extrage arhiva ZIP
+
+Recomandat:
+C:\Voila
+D:\Apps\Voila
+
+Evită foldere foarte lungi sau speciale, de exemplu:
+- Desktop\folder cu multe subfoldere
+- OneDrive sincronizat
+- foldere cu permisiuni restrictive
+
+2. Intră în folderul app
+
+După extragere, structura trebuie să arate aproximativ așa:
+
+app\
+  Run-Voila.ps1
+  Run-Voila.cmd
+  Stop-Voila.ps1
+  Create-Voila-Shortcut.cmd
+  Remove-Voila-Shortcut.cmd
+  runtime\
+  services\
+  python\
+
+3. Creează shortcut
+
+Rulează cu dublu-click:
+
+Create-Voila-Shortcut.cmd
+
+Acesta creează:
+- shortcut pe Desktop
+- shortcut în Start Menu
+
+4. Pornește Voila
+
+Dublu-click pe shortcut-ul Voila!.
+
+Aplicația pornește local și folosește implicit:
+http://127.0.0.1:8765
+
+5. Verifică dacă rulează
+
+Deschide în browser:
+
+http://127.0.0.1:8765/health
+
+Răspunsul corect este:
+
+{"status":"ok"}
+
+6. Oprește Voila
+
+Rulează din folderul app:
+
+Stop-Voila.ps1
+
+sau din PowerShell:
+
+powershell.exe -ExecutionPolicy Bypass -File .\Stop-Voila.ps1
+
+7. Ce rulează local
+
+Voila pornește local:
+- API Voila
+- Tesseract OCR
+- Java runtime
+- LanguageTool local
+
+Nu este necesar să ai Python, Java sau Tesseract instalate în PATH.

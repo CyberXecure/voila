@@ -1,0 +1,38 @@
+VOILA! - START AICI
+
+Voila! este o aplicație locală pentru transformarea manualelor PDF în conținut de studiu.
+
+Ce include acest pachet:
+- Python runtime inclus
+- Tesseract OCR inclus
+- Java runtime inclus
+- LanguageTool inclus
+- aplicația Voila rulează local pe calculatorul tău
+
+Pași recomandați:
+
+1. Extrage ZIP-ul într-un folder simplu, de exemplu:
+   C:\Voila
+   sau
+   D:\Apps\Voila
+
+2. Intră în folderul app.
+
+3. Rulează:
+   Create-Voila-Shortcut.cmd
+
+4. Pe Desktop va apărea shortcut-ul:
+   Voila!
+
+5. Pornește aplicația cu dublu-click pe shortcut.
+
+6. Dacă browserul nu se deschide automat, intră manual la:
+   http://127.0.0.1:8765
+
+Pentru oprire:
+- închide fereastra aplicației, sau
+- rulează Stop-Voila.ps1 din folderul app.
+
+Pentru detalii:
+- QUICKSTART.txt
+- TROUBLESHOOTING.txt

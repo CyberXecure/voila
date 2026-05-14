@@ -428,7 +428,11 @@ $RuntimeShortcutScripts = @(
     "Create-Voila-Shortcut.ps1",
     "Remove-Voila-Shortcut.ps1",
     "Create-Voila-Shortcut.cmd",
-    "Remove-Voila-Shortcut.cmd"
+    "Remove-Voila-Shortcut.cmd",
+    "START-AICI.txt",
+    "QUICKSTART.txt",
+    "TROUBLESHOOTING.txt",
+    "README-VOILA.txt"
 )
 
 foreach ($shortcutScript in $RuntimeShortcutScripts) {
@@ -744,6 +748,7 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
+
 
 
 
