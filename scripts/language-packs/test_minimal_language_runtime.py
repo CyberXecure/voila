@@ -6,6 +6,7 @@ Scope:
 - standard library only
 - no application runtime import
 - no UI integration
+- verifies core-first loading with sample fallback
 """
 
 from __future__ import annotations
@@ -24,7 +25,9 @@ if str(RUNTIME_DIR) not in sys.path:
 from minimal_language_runtime import (  # noqa: E402
     MinimalLanguageRuntime,
     create_minimal_language_runtime,
+    default_core_language_pack_dir,
     default_language_pack_dir,
+    default_sample_language_pack_dir,
     load_pack,
     load_pack_safely,
     replace_placeholders,
@@ -36,12 +39,28 @@ class MinimalLanguageRuntimeTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.runtime = create_minimal_language_runtime()
 
-    def test_default_language_pack_dir_exists(self) -> None:
+    def test_default_language_pack_dirs_exist(self) -> None:
+        self.assertTrue(default_core_language_pack_dir().exists())
+        self.assertTrue(default_sample_language_pack_dir().exists())
         self.assertTrue(default_language_pack_dir().exists())
 
     def test_languages_include_ro_and_en(self) -> None:
         self.assertIn("ro", self.runtime.languages())
         self.assertIn("en", self.runtime.languages())
+
+    def test_core_languages_include_ro_and_en(self) -> None:
+        self.assertIn("ro", self.runtime.core_languages())
+        self.assertIn("en", self.runtime.core_languages())
+
+    def test_sample_languages_include_ro_and_en(self) -> None:
+        self.assertIn("ro", self.runtime.sample_languages())
+        self.assertIn("en", self.runtime.sample_languages())
+
+    def test_core_is_preferred_for_existing_key(self) -> None:
+        self.assertEqual(
+            self.runtime.lookup_source("button.save", language="ro"),
+            ("core", "ro"),
+        )
 
     def test_ro_lookup(self) -> None:
         self.assertEqual(
@@ -55,7 +74,11 @@ class MinimalLanguageRuntimeTests(unittest.TestCase):
             "Save",
         )
 
-    def test_unsupported_language_falls_back_to_en(self) -> None:
+    def test_unsupported_language_falls_back_to_en_core(self) -> None:
+        self.assertEqual(
+            self.runtime.lookup_source("button.save", language="fr"),
+            ("core", "en"),
+        )
         self.assertEqual(
             self.runtime.t("button.save", language="fr"),
             "Save",
@@ -102,12 +125,83 @@ class MinimalLanguageRuntimeTests(unittest.TestCase):
             self.runtime.lookup("missing.key", language="ro"),
         )
 
-    def test_empty_directory_is_safe(self) -> None:
+    def test_empty_directories_are_safe(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            runtime = MinimalLanguageRuntime.from_directory(Path(temp_dir))
+            runtime = MinimalLanguageRuntime.from_core_and_samples(
+                core_dir=Path(temp_dir) / "missing-core",
+                samples_dir=Path(temp_dir) / "missing-samples",
+            )
 
         self.assertEqual(runtime.languages(), [])
         self.assertEqual(runtime.t("button.save", language="en", default="Save"), "Save")
+
+    def test_sample_fallback_when_core_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            samples_dir = temp_path / "samples"
+            samples_dir.mkdir()
+
+            pack_path = samples_dir / "en.language-pack.sample.json"
+            pack_path.write_text(
+                json.dumps(
+                    {
+                        "manifest": {"language_code": "en"},
+                        "ui": {"button.save": "Sample Save"},
+                        "messages": {},
+                        "feedback": {},
+                        "glossary": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            runtime = MinimalLanguageRuntime.from_core_and_samples(
+                core_dir=temp_path / "core",
+                samples_dir=samples_dir,
+            )
+
+        self.assertEqual(runtime.lookup_source("button.save", language="en"), ("sample", "en"))
+        self.assertEqual(runtime.t("button.save", language="en"), "Sample Save")
+
+    def test_core_overrides_sample_when_both_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            core_dir = temp_path / "core"
+            samples_dir = temp_path / "samples"
+            core_dir.mkdir()
+            samples_dir.mkdir()
+
+            sample_pack = {
+                "manifest": {"language_code": "en"},
+                "ui": {"button.save": "Sample Save"},
+                "messages": {},
+                "feedback": {},
+                "glossary": {},
+            }
+            core_pack = {
+                "manifest": {"language_code": "en"},
+                "ui": {"button.save": "Core Save"},
+                "messages": {},
+                "feedback": {},
+                "glossary": {},
+            }
+
+            (samples_dir / "en.language-pack.sample.json").write_text(
+                json.dumps(sample_pack),
+                encoding="utf-8",
+            )
+            (core_dir / "en.language-pack.json").write_text(
+                json.dumps(core_pack),
+                encoding="utf-8",
+            )
+
+            runtime = MinimalLanguageRuntime.from_core_and_samples(
+                core_dir=core_dir,
+                samples_dir=samples_dir,
+            )
+
+        self.assertEqual(runtime.lookup_source("button.save", language="en"), ("core", "en"))
+        self.assertEqual(runtime.t("button.save", language="en"), "Core Save")
 
     def test_invalid_json_pack_is_ignored(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -128,13 +222,14 @@ class MinimalLanguageRuntimeTests(unittest.TestCase):
             self.assertIsNone(load_pack_safely(invalid_pack))
 
     def test_load_pack_reads_manifest_language_code(self) -> None:
-        sample = default_language_pack_dir() / "en.language-pack.sample.json"
+        sample = default_core_language_pack_dir() / "en.language-pack.json"
         pack = load_pack(sample)
 
         self.assertEqual(pack.language_code, "en")
+        self.assertEqual(pack.source, "core")
         self.assertIn("button.save", pack.translations)
 
-    def test_custom_pack_directory(self) -> None:
+    def test_custom_pack_directory_legacy_loader(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             pack_path = temp_path / "xx.language-pack.sample.json"

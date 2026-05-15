@@ -5,6 +5,8 @@ Minimal Voila! language pack runtime helper.
 Scope:
 - standard library only
 - local JSON language packs only
+- prefers core packs when available
+- falls back to sample packs
 - safe fallback behavior
 - no UI integration
 """
@@ -27,34 +29,44 @@ PLACEHOLDER_PATTERN = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 class MinimalLanguagePack:
     language_code: str
     translations: dict[str, str]
+    source: str = "unknown"
 
 
 class MinimalLanguageRuntime:
     def __init__(
         self,
-        packs: dict[str, MinimalLanguagePack] | None = None,
+        core_packs: dict[str, MinimalLanguagePack] | None = None,
+        sample_packs: dict[str, MinimalLanguagePack] | None = None,
         fallback_languages: tuple[str, ...] = DEFAULT_FALLBACK_LANGUAGES,
     ) -> None:
-        self.packs = packs or {}
+        self.core_packs = core_packs or {}
+        self.sample_packs = sample_packs or {}
         self.fallback_languages = fallback_languages
 
     @classmethod
     def from_directory(cls, directory: Path) -> "MinimalLanguageRuntime":
-        packs: dict[str, MinimalLanguagePack] = {}
+        """Legacy-compatible loader for a single language-pack directory."""
+        return cls(core_packs=load_packs_from_directory(directory))
 
-        if not directory.exists():
-            return cls(packs=packs)
-
-        for path in sorted(directory.glob("*.language-pack.sample.json")):
-            pack = load_pack_safely(path)
-
-            if pack is not None:
-                packs[pack.language_code] = pack
-
-        return cls(packs=packs)
+    @classmethod
+    def from_core_and_samples(
+        cls,
+        core_dir: Path,
+        samples_dir: Path,
+    ) -> "MinimalLanguageRuntime":
+        return cls(
+            core_packs=load_packs_from_directory(core_dir),
+            sample_packs=load_packs_from_directory(samples_dir),
+        )
 
     def languages(self) -> list[str]:
-        return sorted(self.packs.keys())
+        return sorted(set(self.core_packs.keys()) | set(self.sample_packs.keys()))
+
+    def core_languages(self) -> list[str]:
+        return sorted(self.core_packs.keys())
+
+    def sample_languages(self) -> list[str]:
+        return sorted(self.sample_packs.keys())
 
     def t(
         self,
@@ -71,8 +83,8 @@ class MinimalLanguageRuntime:
         return replace_placeholders(text, values)
 
     def lookup(self, key: str, language: str | None = None) -> str | None:
-        for candidate in self._fallback_chain(language):
-            pack = self.packs.get(candidate)
+        for source, language_code in self._fallback_chain(language):
+            pack = self._pack_for_source(source, language_code)
 
             if pack is None:
                 continue
@@ -84,34 +96,96 @@ class MinimalLanguageRuntime:
 
         return None
 
-    def _fallback_chain(self, language: str | None) -> list[str]:
-        result: list[str] = []
+    def lookup_source(self, key: str, language: str | None = None) -> tuple[str, str] | None:
+        for source, language_code in self._fallback_chain(language):
+            pack = self._pack_for_source(source, language_code)
+
+            if pack is None:
+                continue
+
+            if key in pack.translations:
+                return source, language_code
+
+        return None
+
+    def _fallback_chain(self, language: str | None) -> list[tuple[str, str]]:
+        languages: list[str] = []
 
         if language:
-            result.append(language)
+            languages.append(language)
 
-        result.extend(self.fallback_languages)
+        languages.extend(self.fallback_languages)
 
-        unique: list[str] = []
-        for item in result:
-            if item not in unique:
-                unique.append(item)
+        unique_languages: list[str] = []
+        for item in languages:
+            if item not in unique_languages:
+                unique_languages.append(item)
 
-        return unique
+        chain: list[tuple[str, str]] = []
+
+        for item in unique_languages:
+            chain.append(("core", item))
+
+        for item in unique_languages:
+            chain.append(("sample", item))
+
+        return chain
+
+    def _pack_for_source(self, source: str, language_code: str) -> MinimalLanguagePack | None:
+        if source == "core":
+            return self.core_packs.get(language_code)
+
+        if source == "sample":
+            return self.sample_packs.get(language_code)
+
+        return None
 
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def default_language_pack_dir() -> Path:
+def default_core_language_pack_dir() -> Path:
+    return repo_root() / "language-packs" / "core"
+
+
+def default_sample_language_pack_dir() -> Path:
     return repo_root() / "language-packs" / "samples"
+
+
+def default_language_pack_dir() -> Path:
+    """Legacy-compatible default directory used by older tests."""
+    return default_sample_language_pack_dir()
 
 
 def create_minimal_language_runtime(
     directory: Path | None = None,
 ) -> MinimalLanguageRuntime:
-    return MinimalLanguageRuntime.from_directory(directory or default_language_pack_dir())
+    if directory is not None:
+        return MinimalLanguageRuntime.from_directory(directory)
+
+    return MinimalLanguageRuntime.from_core_and_samples(
+        core_dir=default_core_language_pack_dir(),
+        samples_dir=default_sample_language_pack_dir(),
+    )
+
+
+def load_packs_from_directory(directory: Path) -> dict[str, MinimalLanguagePack]:
+    packs: dict[str, MinimalLanguagePack] = {}
+
+    if not directory.exists():
+        return packs
+
+    patterns = ("*.language-pack.json", "*.language-pack.sample.json")
+
+    for pattern in patterns:
+        for path in sorted(directory.glob(pattern)):
+            pack = load_pack_safely(path)
+
+            if pack is not None:
+                packs[pack.language_code] = pack
+
+    return packs
 
 
 def load_pack_safely(path: Path) -> MinimalLanguagePack | None:
@@ -137,12 +211,23 @@ def load_pack(path: Path) -> MinimalLanguagePack:
     if not isinstance(language_code, str) or not language_code:
         raise ValueError(f"{path}: manifest.language_code must be a non-empty string")
 
-    translations = flatten_translations(data)
-
     return MinimalLanguagePack(
         language_code=language_code,
-        translations=translations,
+        translations=flatten_translations(data),
+        source=classify_pack_source(path),
     )
+
+
+def classify_pack_source(path: Path) -> str:
+    parts = set(path.parts)
+
+    if "core" in parts:
+        return "core"
+
+    if "samples" in parts:
+        return "sample"
+
+    return "unknown"
 
 
 def flatten_translations(data: dict[str, Any]) -> dict[str, str]:
