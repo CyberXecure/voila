@@ -1,0 +1,49 @@
+{
+  "manifest": {
+    "language_code": "ro",
+    "language_name": "Romanian",
+    "native_name": "Română",
+    "version": "ro-v0.2.7-public-beta",
+    "status": "draft",
+    "fallback": "en",
+    "last_updated": "2026-05-15",
+    "author": "Voila contributors",
+    "notes": "Small Romanian sample language pack for schema demonstration only."
+  },
+  "ui": {
+    "app.title": "Voila!",
+    "app.subtitle": "Transformă documentele în lecții ușor de învățat.",
+    "button.start": "Începe",
+    "button.cancel": "Anulează",
+    "button.save": "Salvează",
+    "button.export": "Exportă",
+    "nav.home": "Acasă",
+    "nav.settings": "Setări",
+    "status.ready": "Gata",
+    "status.processing": "Se procesează..."
+  },
+  "messages": {
+    "message.saved": "Modificările au fost salvate.",
+    "message.export_complete": "Exportul a fost finalizat.",
+    "message.file_loaded": "Fișierul a fost încărcat.",
+    "warning.unsaved_changes": "Ai modificări nesalvate.",
+    "error.file_not_supported": "Acest tip de fișier nu este acceptat.",
+    "lesson.progress": "Lecția {current} din {total}"
+  },
+  "feedback": {
+    "feedback.correct": "Corect!",
+    "feedback.try_again": "Încearcă din nou.",
+    "feedback.good_progress": "Progresezi bine.",
+    "feedback.grammar_hint": "Verifică forma gramaticală înainte de a răspunde.",
+    "feedback.review_needed": "Merită să revizuiești această parte."
+  },
+  "glossary": {
+    "term.pdf": "PDF",
+    "term.lesson": "lecție",
+    "term.exercise": "exercițiu",
+    "term.translation": "traducere",
+    "term.grammar": "gramatică",
+    "term.vocabulary": "vocabular",
+    "term.feedback": "feedback"
+  }
+}

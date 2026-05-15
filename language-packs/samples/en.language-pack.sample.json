@@ -1,0 +1,49 @@
+{
+  "manifest": {
+    "language_code": "en",
+    "language_name": "English",
+    "native_name": "English",
+    "version": "en-v0.2.7-public-beta",
+    "status": "draft",
+    "fallback": "ro",
+    "last_updated": "2026-05-15",
+    "author": "Voila contributors",
+    "notes": "Small English sample language pack for schema demonstration only."
+  },
+  "ui": {
+    "app.title": "Voila!",
+    "app.subtitle": "Turn documents into easy-to-learn lessons.",
+    "button.start": "Start",
+    "button.cancel": "Cancel",
+    "button.save": "Save",
+    "button.export": "Export",
+    "nav.home": "Home",
+    "nav.settings": "Settings",
+    "status.ready": "Ready",
+    "status.processing": "Processing..."
+  },
+  "messages": {
+    "message.saved": "Changes have been saved.",
+    "message.export_complete": "Export is complete.",
+    "message.file_loaded": "The file has been loaded.",
+    "warning.unsaved_changes": "You have unsaved changes.",
+    "error.file_not_supported": "This file type is not supported.",
+    "lesson.progress": "Lesson {current} of {total}"
+  },
+  "feedback": {
+    "feedback.correct": "Correct!",
+    "feedback.try_again": "Try again.",
+    "feedback.good_progress": "You are making good progress.",
+    "feedback.grammar_hint": "Check the grammar form before answering.",
+    "feedback.review_needed": "This part is worth reviewing."
+  },
+  "glossary": {
+    "term.pdf": "PDF",
+    "term.lesson": "lesson",
+    "term.exercise": "exercise",
+    "term.translation": "translation",
+    "term.grammar": "grammar",
+    "term.vocabulary": "vocabulary",
+    "term.feedback": "feedback"
+  }
+}
