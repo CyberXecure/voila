@@ -197,10 +197,47 @@ def validate_placeholder_consistency(
                 )
 
 
+def validate_language_pack_group(
+    group_name: str,
+    directory: Path,
+    pattern: str,
+    required: bool,
+    errors: list[str],
+) -> dict[str, dict[str, str]]:
+    translations_by_language: dict[str, dict[str, str]] = {}
+
+    if not directory.exists():
+        if required:
+            errors.append(f"Missing {group_name} directory: {directory}")
+        return translations_by_language
+
+    pack_paths = sorted(directory.glob(pattern))
+
+    if not pack_paths:
+        if required:
+            errors.append(f"No {group_name} language packs found in: {directory}")
+        return translations_by_language
+
+    for pack_path in pack_paths:
+        try:
+            language_code, flattened, pack_errors = validate_language_pack(pack_path)
+            errors.extend(pack_errors)
+
+            if language_code:
+                translations_by_language[language_code] = flattened
+        except ValueError as exc:
+            errors.append(str(exc))
+
+    validate_placeholder_consistency(translations_by_language, errors)
+
+    return translations_by_language
+
+
 def main() -> int:
     root = repo_root()
     schema_path = root / "language-packs" / "schema" / "language-pack.schema.json"
     samples_dir = root / "language-packs" / "samples"
+    core_dir = root / "language-packs" / "core"
 
     errors: list[str] = []
 
@@ -212,27 +249,21 @@ def main() -> int:
         except ValueError as exc:
             errors.append(str(exc))
 
-    if not samples_dir.exists():
-        errors.append(f"Missing samples directory: {samples_dir}")
-    else:
-        sample_paths = sorted(samples_dir.glob("*.language-pack.sample.json"))
+    validate_language_pack_group(
+        group_name="sample",
+        directory=samples_dir,
+        pattern="*.language-pack.sample.json",
+        required=True,
+        errors=errors,
+    )
 
-        if not sample_paths:
-            errors.append(f"No sample language packs found in: {samples_dir}")
-
-        translations_by_language: dict[str, dict[str, str]] = {}
-
-        for sample_path in sample_paths:
-            try:
-                language_code, flattened, pack_errors = validate_language_pack(sample_path)
-                errors.extend(pack_errors)
-
-                if language_code:
-                    translations_by_language[language_code] = flattened
-            except ValueError as exc:
-                errors.append(str(exc))
-
-        validate_placeholder_consistency(translations_by_language, errors)
+    validate_language_pack_group(
+        group_name="core",
+        directory=core_dir,
+        pattern="*.language-pack.json",
+        required=False,
+        errors=errors,
+    )
 
     if errors:
         print("Language pack validation failed.")
