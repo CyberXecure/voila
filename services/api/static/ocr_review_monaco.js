@@ -55,8 +55,38 @@
     lt_apply_again: "LanguageTool: sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată."
   };
 
-  function tr(key) {
-    return UI_TEXT[key] || key;
+  function applyLanguagePackUiAliases(translations) {
+    translations = translations || {};
+
+    const aliases = {
+      "ui.language": "ui_language",
+      "document.language": "document_language",
+      "button.run_ocr_page": "run_ocr_page",
+      "button.check_text": "check_text",
+      "button.save": "save",
+      "button.prev_issue": "prev_issue",
+      "button.next_issue": "next_issue",
+      "status.editor_loading": "editor_loading",
+      "status.editor_ready": "editor_ready",
+      "status.lt_checking": "lt_checking",
+      "status.lt_no_issues": "lt_no_issues",
+      "message.lt_apply_again": "lt_apply_again"
+    };
+
+    Object.keys(aliases).forEach(function (newKey) {
+      const oldKey = aliases[newKey];
+      if (!translations[newKey] && translations[oldKey]) {
+        translations[newKey] = translations[oldKey];
+      }
+    });
+
+    return translations;
+  }
+
+  UI_TEXT = applyLanguagePackUiAliases(UI_TEXT);
+
+  function tr(key, fallbackKey) {
+    return UI_TEXT[key] || (fallbackKey ? UI_TEXT[fallbackKey] : "") || key;
   }
 
   function ready(fn) {
@@ -212,7 +242,7 @@
       const data = await response.json();
 
       if (data && data.ok) {
-        UI_TEXT = data.translations || UI_TEXT;
+        UI_TEXT = applyLanguagePackUiAliases(data.translations || UI_TEXT);
         return normalizeLanguage(data.ui_language || "ro");
       }
     } catch (_) {}
@@ -233,7 +263,7 @@
       const data = await response.json();
 
       if (data && data.ok) {
-        UI_TEXT = data.translations || UI_TEXT;
+        UI_TEXT = applyLanguagePackUiAliases(data.translations || UI_TEXT);
       }
     } catch (_) {}
   }
@@ -261,7 +291,7 @@
 
     const uiLangSelect = document.createElement("select");
     uiLangSelect.id = "voilaUiLanguage";
-    uiLangSelect.title = tr("ui_language");
+    uiLangSelect.title = tr("ui.language", "ui_language");
 
     Object.keys(UI_LABELS).forEach(function (lang) {
       const option = document.createElement("option");
@@ -274,7 +304,7 @@
 
     const langSelect = document.createElement("select");
     langSelect.id = "voilaDocumentLanguage";
-    langSelect.title = tr("document_language");
+    langSelect.title = tr("document.language", "document_language");
 
     Object.keys(LANGUAGE_LABELS).forEach(function (lang) {
       const option = document.createElement("option");
@@ -306,28 +336,28 @@
     runOcrPageButton.type = "button";
     runOcrPageButton.id = "runOcrPageButton";
     runOcrPageButton.className = "voila-primary";
-    runOcrPageButton.textContent = tr("run_ocr_page");
+    runOcrPageButton.textContent = tr("button.run_ocr_page", "run_ocr_page");
     runOcrPageButton.title = "Generează OCR pentru pagina curentă, dacă textul este gol sau incomplet.";
 
     const checkButton = document.createElement("button");
     checkButton.type = "button";
     checkButton.id = "checkOcrButton";
-    checkButton.textContent = tr("check_text");
+    checkButton.textContent = tr("button.check_text", "check_text");
     checkButton.title = "Verifică textul cu LanguageTool și marchează problemele în editor.";
 
     const saveButton = document.createElement("button");
     saveButton.type = "button";
     saveButton.className = "voila-primary";
-    saveButton.textContent = tr("save");
+    saveButton.textContent = tr("button.save", "save");
     saveButton.title = "Salvează corecția curentă.";
 
     const prevButton = document.createElement("button");
     prevButton.type = "button";
-    prevButton.textContent = tr("prev_issue");
+    prevButton.textContent = tr("button.prev_issue", "prev_issue");
 
     const nextButton = document.createElement("button");
     nextButton.type = "button";
-    nextButton.textContent = tr("next_issue");
+    nextButton.textContent = tr("button.next_issue", "next_issue");
 
     toolbar.appendChild(uiLangSelect);
     toolbar.appendChild(langSelect);
