@@ -408,3 +408,29 @@ LESSONS_TRANSLATIONS_EXT = {
 for _lang, _values in LESSONS_TRANSLATIONS_EXT.items():
     TRANSLATIONS.setdefault(_lang, {})
     TRANSLATIONS[_lang].update(_values)
+
+# VOILA_LANGUAGE_PACK_UI_ALIASES_V1
+LANGUAGE_PACK_UI_ALIASES = {
+    "ui.language": "ui_language",
+    "document.language": "document_language",
+    "button.run_ocr_page": "run_ocr_page",
+    "button.check_text": "check_text",
+    "button.save": "save",
+    "button.prev_issue": "prev_issue",
+    "button.next_issue": "next_issue",
+    "status.editor_loading": "editor_loading",
+    "status.editor_ready": "editor_ready",
+    "status.lt_checking": "lt_checking",
+    "status.lt_no_issues": "lt_no_issues",
+    "message.lt_apply_again": "lt_apply_again",
+}
+
+
+def apply_language_pack_ui_aliases() -> None:
+    for _language, _values in TRANSLATIONS.items():
+        for _new_key, _old_key in LANGUAGE_PACK_UI_ALIASES.items():
+            if _old_key in _values and _new_key not in _values:
+                _values[_new_key] = _values[_old_key]
+
+
+apply_language_pack_ui_aliases()
