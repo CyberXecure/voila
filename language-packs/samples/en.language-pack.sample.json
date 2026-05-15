@@ -3,12 +3,12 @@
     "language_code": "en",
     "language_name": "English",
     "native_name": "English",
-    "version": "en-v0.2.7-public-beta",
-    "status": "draft",
+    "version": "en-v0.2.10-public-beta",
+    "status": "review",
     "fallback": "ro",
     "last_updated": "2026-05-15",
     "author": "Voila contributors",
-    "notes": "Small English sample language pack for schema demonstration only."
+    "notes": "Expanded English sample language pack for schema and validator demonstration only."
   },
   "ui": {
     "app.title": "Voila!",
@@ -17,17 +17,42 @@
     "button.cancel": "Cancel",
     "button.save": "Save",
     "button.export": "Export",
+    "button.import": "Import",
+    "button.open": "Open",
+    "button.close": "Close",
+    "button.retry": "Retry",
+    "button.back": "Back",
+    "button.next": "Next",
+    "button.previous": "Previous",
     "nav.home": "Home",
     "nav.settings": "Settings",
+    "nav.documents": "Documents",
+    "nav.lessons": "Lessons",
+    "nav.export": "Export",
     "status.ready": "Ready",
-    "status.processing": "Processing..."
+    "status.processing": "Processing...",
+    "status.loading": "Loading...",
+    "status.completed": "Completed",
+    "status.failed": "Failed"
   },
   "messages": {
     "message.saved": "Changes have been saved.",
     "message.export_complete": "Export is complete.",
     "message.file_loaded": "The file has been loaded.",
+    "message.import_complete": "Import is complete.",
+    "message.processing_started": "Processing has started.",
+    "message.processing_complete": "Processing is complete.",
+    "message.items_processed": "Processed {count} items.",
+    "message.exported_lessons": "Exported {count} lessons.",
     "warning.unsaved_changes": "You have unsaved changes.",
+    "warning.large_file": "The file is large and may take longer to process.",
+    "warning.incomplete_content": "The content appears to be incomplete.",
     "error.file_not_supported": "This file type is not supported.",
+    "error.file_too_large": "The file is too large.",
+    "error.processing_failed": "Processing failed.",
+    "error.export_failed": "Export failed.",
+    "error.invalid_language_pack": "The language pack is not valid.",
+    "error.field_required": "{field} is required.",
     "lesson.progress": "Lesson {current} of {total}"
   },
   "feedback": {
@@ -35,7 +60,12 @@
     "feedback.try_again": "Try again.",
     "feedback.good_progress": "You are making good progress.",
     "feedback.grammar_hint": "Check the grammar form before answering.",
-    "feedback.review_needed": "This part is worth reviewing."
+    "feedback.review_needed": "This part is worth reviewing.",
+    "feedback.almost_correct": "Almost correct.",
+    "feedback.check_spelling": "Check the spelling.",
+    "feedback.check_word_order": "Check the word order.",
+    "feedback.vocabulary_hint": "Think about the right vocabulary.",
+    "feedback.keep_practicing": "Keep practicing."
   },
   "glossary": {
     "term.pdf": "PDF",
@@ -44,6 +74,15 @@
     "term.translation": "translation",
     "term.grammar": "grammar",
     "term.vocabulary": "vocabulary",
-    "term.feedback": "feedback"
+    "term.feedback": "feedback",
+    "term.document": "document",
+    "term.page": "page",
+    "term.paragraph": "paragraph",
+    "term.question": "question",
+    "term.answer": "answer",
+    "term.progress": "progress",
+    "term.language_pack": "language pack",
+    "term.placeholder": "placeholder",
+    "term.schema": "schema"
   }
 }
