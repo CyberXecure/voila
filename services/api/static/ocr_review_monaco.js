@@ -70,7 +70,10 @@
       "status.editor_ready": "editor_ready",
       "status.lt_checking": "lt_checking",
       "status.lt_no_issues": "lt_no_issues",
-      "message.lt_apply_again": "lt_apply_again"
+      "message.lt_apply_again": "lt_apply_again",
+      "tooltip.run_ocr_page": "run_ocr_page_title",
+      "tooltip.check_text": "check_text_title",
+      "tooltip.save": "save_title"
     };
 
     Object.keys(aliases).forEach(function (newKey) {
@@ -337,19 +340,19 @@
     runOcrPageButton.id = "runOcrPageButton";
     runOcrPageButton.className = "voila-primary";
     runOcrPageButton.textContent = tr("button.run_ocr_page", "run_ocr_page");
-    runOcrPageButton.title = "Generează OCR pentru pagina curentă, dacă textul este gol sau incomplet.";
+    runOcrPageButton.title = tr("tooltip.run_ocr_page", "run_ocr_page_title");
 
     const checkButton = document.createElement("button");
     checkButton.type = "button";
     checkButton.id = "checkOcrButton";
     checkButton.textContent = tr("button.check_text", "check_text");
-    checkButton.title = "Verifică textul cu LanguageTool și marchează problemele în editor.";
+    checkButton.title = tr("tooltip.check_text", "check_text_title");
 
     const saveButton = document.createElement("button");
     saveButton.type = "button";
     saveButton.className = "voila-primary";
     saveButton.textContent = tr("button.save", "save");
-    saveButton.title = "Salvează corecția curentă.";
+    saveButton.title = tr("tooltip.save", "save_title");
 
     const prevButton = document.createElement("button");
     prevButton.type = "button";

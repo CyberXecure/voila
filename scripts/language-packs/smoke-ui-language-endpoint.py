@@ -33,6 +33,9 @@ ALIAS_TO_LEGACY = {
     "status.lt_checking": "lt_checking",
     "status.lt_no_issues": "lt_no_issues",
     "message.lt_apply_again": "lt_apply_again",
+    "tooltip.run_ocr_page": "run_ocr_page_title",
+    "tooltip.check_text": "check_text_title",
+    "tooltip.save": "save_title",
 }
 
 
