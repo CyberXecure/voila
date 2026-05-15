@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/CyberXecure/voila/language-packs/schema/language-pack.schema.json",
+  "title": "Voila Language Pack",
+  "description": "Initial schema for Voila language packs. This schema is documentation-oriented and intended for future validation tooling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest",
+    "ui",
+    "messages",
+    "feedback",
+    "glossary"
+  ],
+  "properties": {
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language_code",
+        "language_name",
+        "native_name",
+        "version",
+        "status",
+        "fallback",
+        "last_updated"
+      ],
+      "properties": {
+        "language_code": {
+          "type": "string",
+          "enum": [
+            "ro",
+            "en",
+            "fr",
+            "de",
+            "ru",
+            "it",
+            "es",
+            "pt"
+          ]
+        },
+        "language_name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "native_name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[a-z]{2}-v[0-9]+\\.[0-9]+\\.[0-9]+(-[A-Za-z0-9.-]+)?$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "planned",
+            "review",
+            "ready",
+            "deprecated"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "enum": [
+            "en",
+            "ro"
+          ]
+        },
+        "last_updated": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "author": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "ui": {
+      "$ref": "#/$defs/translationMap"
+    },
+    "messages": {
+      "$ref": "#/$defs/translationMap"
+    },
+    "feedback": {
+      "$ref": "#/$defs/translationMap"
+    },
+    "glossary": {
+      "$ref": "#/$defs/translationMap"
+    }
+  },
+  "$defs": {
+    "translationMap": {
+      "type": "object",
+      "description": "Flat map of translation keys to translated string values.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+      }
+    }
+  }
+}
