@@ -48,7 +48,10 @@ $requiredFiles = @(
     "runtime\java\bin\java.exe",
     "runtime\languagetool\languagetool-server.jar",
     "Run-Voila.ps1",
-    "Stop-Voila.ps1"
+    "Stop-Voila.ps1",
+    "language-packs\core\ro.language-pack.json",
+    "language-packs\core\en.language-pack.json",
+    "language-packs\schema\language-pack.schema.json"
 )
 
 Write-Host "=== VERIFIC FIȘIERE CHEIE ==="
@@ -59,6 +62,18 @@ foreach ($relative in $requiredFiles) {
     }
     Get-Item $full | Select-Object FullName, Length
 }
+
+Write-Host "=== VERIFIC LANGUAGE PACKS ÎN ZIP EXTRAS ==="
+$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$LanguagePackInspectScript = Join-Path $ProjectRoot "scripts\release\inspect-language-pack-packaging.ps1"
+if (-not (Test-Path $LanguagePackInspectScript)) {
+    throw "Script inspectare language packs lipsă: $LanguagePackInspectScript"
+}
+& powershell -ExecutionPolicy Bypass -File $LanguagePackInspectScript -ProjectRoot $ProjectRoot -PackagedAppRoot $AppRoot
+if ($LASTEXITCODE -ne 0) {
+    throw "Inspectarea language-pack ZIP extras a eșuat."
+}
+
 
 $oldPath = $env:Path
 
