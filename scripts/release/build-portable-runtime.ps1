@@ -689,6 +689,17 @@ if ($PopulatedDataFiles.Count -gt 0) {
     throw "Data directory must be empty before ZIP."
 }
 
+
+Write-Host "=== Verific language packs în staging ==="
+$LanguagePackInspectScript = Join-Path $ProjectRoot "scripts\release\inspect-language-pack-packaging.ps1"
+if (-not (Test-Path $LanguagePackInspectScript)) {
+    throw "Script inspectare language packs lipsă: $LanguagePackInspectScript"
+}
+& powershell -ExecutionPolicy Bypass -File $LanguagePackInspectScript -ProjectRoot $ProjectRoot -PackagedAppRoot $AppDir
+if ($LASTEXITCODE -ne 0) {
+    throw "Inspectarea language-pack staging a eșuat."
+}
+
 Write-Host "OK: staging curat înainte de ZIP."
 Compress-Archive -Path (Join-Path $StageDir "*") -DestinationPath $ZipPath -Force
 
@@ -748,19 +759,3 @@ Write-Host "ZIP:     $ZipPath"
 Write-Host "INFO:    $InfoPath"
 Write-Host "SIZE MB: $ZipSizeMb"
 Write-Host "SHA256:  $Sha256"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
