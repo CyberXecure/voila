@@ -632,7 +632,8 @@ if (-not (Test-Path $RuntimeLtConfig)) {
 }
 
 Write-Host "=== Verific Java runtime copiat ==="
-& $RuntimeJavaExe -version 2>&1 | Select-Object -First 3 | Out-Host
+$JavaVersionOutput = & cmd /c "`"$RuntimeJavaExe`" -version 2>&1"
+$JavaVersionOutput | Select-Object -First 3 | Out-Host
 
 Write-Host "=== Verific LanguageTool runtime copiat ==="
 Get-Item $RuntimeLtJar | Select-Object FullName, Length | Format-Table -AutoSize
