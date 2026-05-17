@@ -1,0 +1,34 @@
+Voila! Language Pack RC Manual Test Dry Run Log
+Milestone: v0.2.42-public-beta-language-pack-rc-manual-test-dry-run
+Status: PASS with notes
+
+RC artifact:
+ZIP:    D:\dev\releases\voila-v0240-lp-rc1-20260517-0914.zip
+SHA256: 33DC31243F45AD499A889A12F4140779499EFCC0C6218C5BB011920CF36679BC
+
+Manual test root:
+D:\dev\manual-tests\voila-v0240-lp-rc1-20260517-0914-manual
+
+Transcript:
+D:\dev\manual-tests\voila-v0240-lp-rc1-20260517-0914-manual\MANUAL-DRY-RUN-TRANSCRIPT-PORT8765.txt
+
+Results:
+[x] SHA256 matched
+[x] ZIP extracted
+[x] required files present
+[x] Run-Voila.ps1 started app
+[x] /health OK on port 8765
+[x] LanguageTool OK on port 8081
+[x] Tesseract languages present: eng, osd, ron, rus
+[x] browser/app opened
+[x] PDF/OCR review manual flow marked PASS
+[x] Stop-Voila.ps1 stopped services
+
+Notes:
+- First attempt checked wrong app port 8780.
+- Correct standalone runtime port is 8765.
+- Final TCP check saw temporary FinWait2/TimeWait entries on 8765.
+- UI language is mixed English/Romanian and should be planned as follow-up.
+
+Decision:
+PASS with notes.
