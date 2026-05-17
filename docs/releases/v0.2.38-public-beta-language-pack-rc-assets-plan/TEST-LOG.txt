@@ -1,0 +1,41 @@
+Voila! Language Pack RC Test Log
+Milestone: v0.2.38-public-beta-language-pack-rc-assets-plan
+Status: template only; not published
+
+Validated local baseline:
+ZIP:    D:\dev\releases\voila-v0236-lpbuild-20260516-1844.zip
+SHA256: D63C223CC233438D29176F43E9BA166F5659B04FA2CD11904E72E4A28092CAD3
+
+Automated checks:
+[ ] smoke-language-pack-build-output.ps1 -ZipPath <FINAL_ZIP>
+[ ] smoke-language-pack-standalone-package.ps1 -ZipPath <FINAL_ZIP>
+[ ] test-standalone-runtime.ps1 -VersionTag <VERSION_TAG> -ReleaseRoot <RELEASE_ROOT>
+[ ] inspect-language-pack-packaging.ps1
+[ ] validate-language-packs.py
+[ ] test_language_pack_runtime.py
+[ ] test_minimal_language_runtime.py
+[ ] smoke-ui-language-endpoint.py
+[ ] smoke-core-runtime-helper.py
+[ ] smoke-language-pack-files.py
+[ ] python -m py_compile services/api/i18n.py
+[ ] PowerShell parse check
+
+Manual checks:
+[ ] ZIP extracts successfully
+[ ] Run-Voila.ps1 starts the app
+[ ] /health returns ok
+[ ] LanguageTool responds
+[ ] Tesseract lists expected OCR languages
+[ ] small PDF upload works
+[ ] OCR review page opens
+[ ] app stops cleanly
+[ ] Voila port is released
+[ ] LanguageTool port is released
+
+Result:
+[ ] PASS
+[ ] FAIL
+
+Notes:
+- This is a template only.
+- No RC asset is published in v0.2.38.

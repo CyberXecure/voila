@@ -1,0 +1,16 @@
+Voila! Language Pack RC SHA256 Template
+
+Milestone: v0.2.38-public-beta-language-pack-rc-assets-plan
+Status: template only; not published
+
+Validated local dry-run baseline:
+D63C223CC233438D29176F43E9BA166F5659B04FA2CD11904E72E4A28092CAD3  D:\dev\releases\voila-v0236-lpbuild-20260516-1844.zip
+
+Future RC format:
+<SHA256_HASH>  <RC_ZIP_FILENAME>
+
+Important:
+- generate SHA256 only after final ZIP creation
+- do not reuse this baseline hash for a different ZIP
+- verify hash before publishing any future RC asset
+- no public asset is published in v0.2.38
