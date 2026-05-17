@@ -1,0 +1,17 @@
+Voila! Language Pack RC SHA256
+
+Milestone: v0.2.40-public-beta-language-pack-rc-build-dry-run
+Status: local RC dry run only; not published
+
+33DC31243F45AD499A889A12F4140779499EFCC0C6218C5BB011920CF36679BC  D:\dev\releases\voila-v0240-lp-rc1-20260517-0914.zip
+
+BuildTag: voila-v0240-lp-rc1-20260517-0914
+ZIP:      D:\dev\releases\voila-v0240-lp-rc1-20260517-0914.zip
+INFO:     D:\dev\releases\voila-v0240-lp-rc1-20260517-0914_RELEASE-INFO.txt
+LOG:      D:\dev\releases\voila-v0240-lp-rc1-20260517-0914_BUILD-LOG.txt
+
+Important:
+- SHA256 was generated after final ZIP creation.
+- This local RC ZIP is not published in v0.2.40.
+- Do not reuse this hash for a different ZIP.
+- Verify hash again before any future public release upload.

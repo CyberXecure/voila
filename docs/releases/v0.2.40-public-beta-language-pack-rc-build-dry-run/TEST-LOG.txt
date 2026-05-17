@@ -1,0 +1,39 @@
+Voila! Language Pack RC Test Log
+Milestone: v0.2.40-public-beta-language-pack-rc-build-dry-run
+Status: completed local RC dry run; not published
+
+RC artifact:
+BuildTag: voila-v0240-lp-rc1-20260517-0914
+ZIP:      D:\dev\releases\voila-v0240-lp-rc1-20260517-0914.zip
+INFO:     D:\dev\releases\voila-v0240-lp-rc1-20260517-0914_RELEASE-INFO.txt
+LOG:      D:\dev\releases\voila-v0240-lp-rc1-20260517-0914_BUILD-LOG.txt
+SHA256:   33DC31243F45AD499A889A12F4140779499EFCC0C6218C5BB011920CF36679BC
+
+Automated checks:
+[x] inspect-language-pack-packaging.ps1 before build
+[x] validate-language-packs.py before build
+[x] python -m py_compile services/api/i18n.py before build
+[x] build-portable-runtime.ps1 completed
+[x] smoke-language-pack-build-output.ps1 -ZipPath RC ZIP
+[x] smoke-language-pack-standalone-package.ps1 -ZipPath RC ZIP
+[x] test-standalone-runtime.ps1 -VersionTag voila-v0240-lp-rc1-20260517-0914 -ReleaseRoot D:\dev\releases
+[x] language-pack files verified inside extracted ZIP
+[x] runtime files verified inside extracted ZIP
+
+Runtime checks:
+[x] ZIP extracts successfully
+[x] Run-Voila.ps1 starts the app
+[x] /health returns ok
+[x] LanguageTool responds
+[x] Tesseract lists expected OCR languages: eng, osd, ron, rus
+[x] app stops cleanly
+[x] Voila port is released
+[x] LanguageTool port is released
+
+Result:
+[x] PASS
+[ ] FAIL
+
+Notes:
+- This is a local RC dry run only.
+- No RC asset is published in v0.2.40.
