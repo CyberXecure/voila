@@ -53,7 +53,20 @@
     "error.export_failed": "Export failed.",
     "error.invalid_language_pack": "The language pack is not valid.",
     "error.field_required": "{field} is required.",
-    "lesson.progress": "Lesson {current} of {total}"
+    "lesson.progress": "Lesson {current} of {total}",
+    "ui.upload_pdf": "Upload PDF",
+    "ui.choose_file": "Choose File",
+    "ui.generated": "Generated",
+    "ui.source_mode": "Source Mode",
+    "ui.generate_course": "Generate course",
+    "ui.open_course": "Open course",
+    "ui.figures": "Figures",
+    "ui.edit_crops": "Edit crops",
+    "ui.study": "Study",
+    "ui.review_weak": "Review weak",
+    "ui.progress": "Progress",
+    "ui.logs": "Logs",
+    "ui.delete_from_library": "Delete from library"
   },
   "feedback": {
     "feedback.correct": "Correct!",

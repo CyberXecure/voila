@@ -53,7 +53,20 @@
     "error.export_failed": "Exportul a eșuat.",
     "error.invalid_language_pack": "Pachetul de limbă nu este valid.",
     "error.field_required": "{field} este obligatoriu.",
-    "lesson.progress": "Lecția {current} din {total}"
+    "lesson.progress": "Lecția {current} din {total}",
+    "ui.upload_pdf": "Încarcă PDF",
+    "ui.choose_file": "Alege fișier",
+    "ui.generated": "Generat",
+    "ui.source_mode": "Mod sursă",
+    "ui.generate_course": "Generează curs",
+    "ui.open_course": "Deschide cursul",
+    "ui.figures": "Figuri",
+    "ui.edit_crops": "Editează decupaje",
+    "ui.study": "Studiază",
+    "ui.review_weak": "Repetă punctele slabe",
+    "ui.progress": "Progres",
+    "ui.logs": "Jurnale",
+    "ui.delete_from_library": "Șterge din bibliotecă"
   },
   "feedback": {
     "feedback.correct": "Corect!",
