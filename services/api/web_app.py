@@ -1004,13 +1004,13 @@ def health() -> dict:
 def home(generated: str | None = Query(default=None), uploaded: str | None = Query(default=None)) -> HTMLResponse:
     cards = []
 
-    upload_box = """
+    upload_box = f"""
         <div class="upload-box">
-          <h2>Upload PDF</h2>
+          <h2>{_ut("ui.upload_pdf", "Upload PDF")}</h2>
           <div class="meta">Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.</div>
           <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
             <input type="file" name="file" accept="application/pdf" required>
-            <button class="primary" type="submit">Upload PDF</button>
+            <button class="primary" type="submit">{_ut("ui.upload_pdf", "Upload PDF")}</button>
           </form>
         </div>
         """
@@ -1036,14 +1036,14 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
             f"""
             <form method="post" action="/generate">
               <input type="hidden" name="pdf_name" value="{html.escape(pdf.name)}">
-              <button class="primary" type="submit">Generate course</button>
+              <button class="primary" type="submit">{_ut("ui.generate_course", "Generate course")}</button>
             </form>
             """
         ]
 
         if course_html.exists():
             actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">{_ut("open_course", "Open course")}</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>'
             )
 
         if hybrid_figures_html.exists():
@@ -2181,7 +2181,7 @@ def review_concepts(pdf: str = ""):
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
         <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
-        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("open_course", "Open course")}</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
         <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
       </div>
@@ -2799,7 +2799,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
         <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-concepts?pdf={quote(pdf_name)}">Review concepts</a>
-        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("open_course", "Open course")}</a>
+        <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
       </div>
     </div>
@@ -4754,7 +4754,7 @@ def voila_lessons(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="actions">
       <a class="btn" href="/course-tools?pdf={q_pdf}">Course Tools</a>
-      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("open_course", "Open course")}</a>
+      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
       <a class="btn" href="/study?pdf={q_pdf}">{_ut("study", "Study")}</a>
       <a class="btn" href="/">{_ut("library", "Library")}</a>
     </div>
@@ -4815,7 +4815,7 @@ def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResp
     <div class="actions">
       <a class="btn" href="/lessons?pdf={q_pdf}">← {_ut("lessons", "Lessons")}</a>
       <a class="btn primary" href="/study-lesson?pdf={q_pdf}&lesson_id={q_lesson}">{_ut("study_lesson", "Study lesson")}</a>
-      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("open_course", "Open course")}</a>
+      <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
     </div>
 
     <article class="card">
