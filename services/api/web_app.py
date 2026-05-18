@@ -1027,7 +1027,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         size_mb = pdf.stat().st_size / (1024 * 1024)
 
         status = (
-            '<span class="status">Course generated</span>'
+            f'<span class="status">{_ut("ui.generated", "Generated")}</span>'
             if course_html.exists()
             else '<span class="status missing">Not generated yet</span>'
         )
@@ -1058,7 +1058,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if hybrid_manifest.exists():
             actions.append(
-                f'<a class="btn" href="/edit-crops?pdf={quote(pdf.name)}">Edit crops</a>'
+                f'<a class="btn" href="/edit-crops?pdf={quote(pdf.name)}">{_ut("ui.edit_crops", "Edit crops")}</a>'
             )
 
         if quiz_file.exists():
@@ -1066,10 +1066,10 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
                 f'<a class="btn" href="/study?pdf={quote(pdf.name)}">{_ut("ui.study", _ut("study", "Study"))}</a>'
             )
             actions.append(
-                f'<a class="btn" href="/review?pdf={quote(pdf.name)}">Review weak</a>'
+                f'<a class="btn" href="/review?pdf={quote(pdf.name)}">{_ut("ui.review_weak", "Review weak")}</a>'
             )
             actions.append(
-                f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">Progress</a>'
+                f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">{_ut("ui.progress", _ut("progress", "Progress"))}</a>'
             )
 
         if log_file.exists():
@@ -1107,14 +1107,14 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         if generated:
             notice += f"""
             <div class="notice">
-              Generated: <strong>{html.escape(generated)}</strong>
+              {_ut("ui.generated", "Generated")}: <strong>{html.escape(generated)}</strong>
             </div>
             """
 
         body = upload_box + f"""
         {notice}
         <div class="notice">
-          Source Mode: no translation, local processing, original PDF text preserved.
+          {_ut("ui.source_mode", "Source Mode")}: no translation, local processing, original PDF text preserved.
         </div>
         <div class="grid">
           {''.join(cards)}
@@ -3605,7 +3605,7 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         ("Review OCR Text", f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
         ("Review Concepts", f"/review-concepts?pdf={q}", "concepts"),
         (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
-        ("Edit crops", f"/edit-crops?pdf={q}", "crops"),
+        (_ut("ui.edit_crops", "Edit crops"), f"/edit-crops?pdf={q}", "crops"),
         (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
         ("Library", "/", "library"),
     ]
@@ -3722,7 +3722,7 @@ def course_tools(pdf: str = ""):
         card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
         card("Review Study Concepts", "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
         card(_ut("ui.figures", "Figures"), "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
-        card("Edit crops", "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
+        card(_ut("ui.edit_crops", "Edit crops"), "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
         card(_ut("ui.progress", _ut("progress", "Progress")), "View study progress.", f"/progress?pdf={q}", checks["study"]),
         card("Library", "Return to the main course library.", "/", True),
     ]
