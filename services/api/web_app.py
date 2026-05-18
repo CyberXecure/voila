@@ -597,9 +597,9 @@ def page(title: str, body: str) -> HTMLResponse:
 
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
       <a class="primary" href="/">Back</a>
-      <a id="fixedStudyLink" href="/" hidden>{_ut("study", "Study")}</a>
+      <a id="fixedStudyLink" href="/" hidden>{_ut("ui.study", _ut("study", "Study"))}</a>
       <a id="fixedReviewLink" href="/" hidden>{_ut("review", "Review")}</a>
-      <a id="fixedProgressLink" href="/" hidden>{_ut("progress", "Progress")}</a>
+      <a id="fixedProgressLink" href="/" hidden>{_ut("ui.progress", _ut("progress", "Progress"))}</a>
       <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ {_ut("top", "Top")}</button>
       <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ {_ut("bottom", "Bottom")}</button>
       <button id="fixedResetButton" class="danger" type="button" hidden>{_ut("reset", "Reset")}</button>
@@ -751,7 +751,7 @@ def page(title: str, body: str) -> HTMLResponse:
             const button = document.createElement("button");
             button.className = "btn danger";
             button.type = "submit";
-            button.textContent = "Delete from library";
+            button.textContent = "{_ut("ui.delete_from_library", "Delete from library")}";
 
             form.appendChild(input);
             form.appendChild(button);
@@ -1048,12 +1048,12 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if hybrid_figures_html.exists():
             actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">Figures</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">{_ut("ui.figures", "Figures")}</a>'
             )
 
         elif figures_html.exists():
             actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "figures", "figures.html")}">Figures</a>'
+                f'<a class="btn" href="{output_url(pdf.stem, "figures", "figures.html")}">{_ut("ui.figures", "Figures")}</a>'
             )
 
         if hybrid_manifest.exists():
@@ -1063,7 +1063,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if quiz_file.exists():
             actions.append(
-                f'<a class="btn" href="/study?pdf={quote(pdf.name)}">Study</a>'
+                f'<a class="btn" href="/study?pdf={quote(pdf.name)}">{_ut("ui.study", _ut("study", "Study"))}</a>'
             )
             actions.append(
                 f'<a class="btn" href="/review?pdf={quote(pdf.name)}">Review weak</a>'
@@ -3601,12 +3601,12 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         ("Tools", f"/course-tools?pdf={q}", "tools"),
         ("Course", f"/view-course?pdf={q}", "course"),
         ("Lessons", f"/lessons?pdf={q}", "lessons"),
-        ("Study", f"/study?pdf={q}", "study"),
+        (_ut("ui.study", _ut("study", "Study")), f"/study?pdf={q}", "study"),
         ("Review OCR Text", f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
         ("Review Concepts", f"/review-concepts?pdf={q}", "concepts"),
-        ("Figures", f"/view-figures?pdf={q}", "figures"),
+        (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
         ("Edit crops", f"/edit-crops?pdf={q}", "crops"),
-        ("Progress", f"/progress?pdf={q}", "progress"),
+        (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
         ("Library", "/", "library"),
     ]
 
@@ -3721,9 +3721,9 @@ def course_tools(pdf: str = ""):
         card("Study mode", "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
         card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
         card("Review Study Concepts", "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
-        card("Figures", "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
+        card(_ut("ui.figures", "Figures"), "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
         card("Edit crops", "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
-        card("Progress", "View study progress.", f"/progress?pdf={q}", checks["study"]),
+        card(_ut("ui.progress", _ut("progress", "Progress")), "View study progress.", f"/progress?pdf={q}", checks["study"]),
         card("Library", "Return to the main course library.", "/", True),
     ]
 
