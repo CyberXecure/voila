@@ -114,7 +114,19 @@
     "status.rebuild_complete": "Reconstruire completă",
     "status.rebuild_failed": "Reconstruire eșuată",
     "status.save_title_override_failed": "Salvarea titlului modificat a eșuat",
-    "status.save_ocr_text_failed": "Salvarea textului OCR a eșuat"
+    "status.save_ocr_text_failed": "Salvarea textului OCR a eșuat",
+    "error.missing_pdf_name": "Nume PDF lipsă",
+    "error.no_ocr_pages_found": "Nu au fost găsite pagini OCR",
+    "error.course_html_not_found": "HTML-ul cursului nu a fost găsit",
+    "error.figures_html_not_found": "HTML-ul figurilor nu a fost găsit",
+    "error.page_not_found": "Pagina nu a fost găsită",
+    "error.pdf_not_found": "PDF-ul nu a fost găsit",
+    "error.not_found": "Nu a fost găsit",
+    "error.only_pdf_files_supported": "Sunt acceptate doar fișiere PDF",
+    "error.save_title_override_failed": "Salvarea titlului modificat a eșuat",
+    "error.save_ocr_text_failed": "Salvarea textului OCR a eșuat",
+    "message.run_ocr_first": "Rulează OCR mai întâi",
+    "message.no_log_file_found_yet": "Nu a fost găsit încă niciun fișier jurnal"
   },
   "feedback": {
     "feedback.correct": "Corect!",
