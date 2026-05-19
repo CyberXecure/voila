@@ -559,14 +559,14 @@ def page(title: str, body: str) -> HTMLResponse:
 
 </head>
 <body>
-<a href="/quick-tools" style="position:fixed;right:18px;top:18px;z-index:9999;background:#e0ad68;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">Quick Tools</a>
+<a href="/quick-tools" style="position:fixed;right:18px;top:18px;z-index:9999;background:#e0ad68;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">{_ut("ui.quick_tools", "Quick Tools")}</a>
   <div class="wrap">
     <header>
       <div class="brand">
         <h1>Voila!</h1>
         <p>Your local PDF learning studio</p>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
+      <button class="theme-toggle" id="themeToggle" type="button">{_ut("ui.toggle_theme", "Toggle theme")}</button>
     </header>
 
     <section class="panel">
@@ -1074,7 +1074,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         if log_file.exists():
             actions.append(
-                f'<a class="btn" href="/log?pdf={quote(pdf.name)}">Logs</a>'
+                f'<a class="btn" href="/log?pdf={quote(pdf.name)}">{_ut("ui.logs", "Logs")}</a>'
             )
         cards.append(
             f"""
@@ -1638,7 +1638,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
         view = get_study_view(output_dir)
     except Exception as exc:
         body = f"""
-        <h1>Study Mode</h1>
+        <h1>{_ut("ui.study_mode", "Study Mode")}</h1>
         <div class="notice">
           Cannot open Study Mode for <strong>{html.escape(pdf_path.name)}</strong>.
         </div>
@@ -1975,7 +1975,7 @@ def review_concepts(pdf: str = ""):
             <input name="title" value="{_html_escape(effective)}">
 
             <div class="actions">
-              <button type="submit">Save title override</button>
+              <button type="submit">{_ut("ui.save_title_override", "Save title override")}</button>
               <a class="ghost" href="/study?pdf={_html_escape(pdf_name)}">Study</a>
             </div>
           </form>
@@ -1995,7 +1995,7 @@ def review_concepts(pdf: str = ""):
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Review Study Concepts · Voila!</title>
+  <title>{_ut("ui.review_study_concepts", "Review Study Concepts")} · Voila!</title>
   <style>
     :root {{
       --bg: #101819;
@@ -2174,13 +2174,13 @@ def review_concepts(pdf: str = ""):
   <div class="wrap">
     <div class="top">
       <div>
-        <h1>Review Study Concepts</h1>
+        <h1>{_ut("ui.review_study_concepts", "Review Study Concepts")}</h1>
         <p>PDF: <b>{_html_escape(pdf_name)}</b></p>
       </div>
       <div class="top-actions">
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
         <a href="/">{_ut("library", "Library")}</a>
-        <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">Review OCR Text</a>
+        <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">{_ut("ui.review_ocr_text", "Review OCR Text")}</a>
         <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
         <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
@@ -2444,7 +2444,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
           <div class="scan-toolbar">
             <button type="button" onclick="zoomScan(-0.15)">−</button>
             <button type="button" onclick="resetScanZoom()">100%</button>
-            <button type="button" onclick="fitScanWidth()">Fit width</button>
+            <button type="button" onclick="fitScanWidth()">{_ut("ui.fit_width", "Fit width")}</button>
             <button type="button" onclick="zoomScan(0.15)">+</button>
             <span class="zoom-pill" data-zoom-label>100%</span>
             <span class="scan-tip">Tip: Ctrl + mouse wheel = zoom · click + drag = move page</span>
@@ -2464,7 +2464,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Review OCR Text · Voila!</title>
+  <title>{_ut("ui.review_ocr_text", "Review OCR Text")} · Voila!</title>
   <style>
     :root {{
       --bg: #101819;
@@ -2792,13 +2792,13 @@ def review_ocr_text(pdf: str = "", page: int = 1):
   <div class="wrap">
     <div class="top">
       <div>
-        <h1>Review OCR Text</h1>
+        <h1>{_ut("ui.review_ocr_text", "Review OCR Text")}</h1>
         <div class="meta">PDF: <b>{_html_escape(pdf_name)}</b> · Page <b>{page}</b> / {max_page}</div>
       </div>
       <div class="actions">
         <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
         <a href="/">{_ut("library", "Library")}</a>
-        <a href="/review-concepts?pdf={quote(pdf_name)}">Review concepts</a>
+        <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.review_concepts", "Review concepts")}</a>
         <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
         <a href="/study?pdf={quote(pdf_name)}">Study</a>
       </div>
@@ -3479,7 +3479,7 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
             <p>OCR text corrections were applied to course and study.</p>
             <p>
               <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">Back to OCR Review</a>
-              · <a href="/review-concepts?pdf={quote(pdf_name)}">Review Concepts</a>
+              · <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.review_concepts", "Review Concepts")}</a>
               · <a href="/study?pdf={quote(pdf_name)}">Study</a>
             </p>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(log_text)}</pre>
@@ -3591,7 +3591,7 @@ def _course_tools_button_html(pdf_name: str) -> str:
     from urllib.parse import quote
     safe = Path(str(pdf_name or "")).name
     q = quote(safe)
-    return f'<a class="tool-link primary-tool" href="/course-tools?pdf={q}">Course Tools</a>'
+    return f'<a class="tool-link primary-tool" href="/course-tools?pdf={q}">{_ut("ui.course_tools", "Course Tools")}</a>'
 
 
 def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
@@ -3602,8 +3602,8 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         ("Course", f"/view-course?pdf={q}", "course"),
         ("Lessons", f"/lessons?pdf={q}", "lessons"),
         (_ut("ui.study", _ut("study", "Study")), f"/study?pdf={q}", "study"),
-        ("Review OCR Text", f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
-        ("Review Concepts", f"/review-concepts?pdf={q}", "concepts"),
+        (_ut("ui.review_ocr_text", "Review OCR Text"), f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
+        (_ut("ui.review_concepts", "Review Concepts"), f"/review-concepts?pdf={q}", "concepts"),
         (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
         (_ut("ui.edit_crops", "Edit crops"), f"/edit-crops?pdf={q}", "crops"),
         (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
@@ -3718,13 +3718,13 @@ def course_tools(pdf: str = ""):
     cards = [
         card("Open course", "Read the generated course with navigation.", f"/view-course?pdf={q}", checks["course"]),
         card("Lessons", "Choose a lesson, read it, then study only that lesson.", f"/lessons?pdf={q}", checks["study"]),
-        card("Study mode", "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
-        card("Review OCR Text", "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
-        card("Review Study Concepts", "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
+        card(_ut("ui.study_mode", "Study mode"), "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
+        card(_ut("ui.review_ocr_text", "Review OCR Text"), "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
+        card(_ut("ui.review_study_concepts", "Review Study Concepts"), "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
         card(_ut("ui.figures", "Figures"), "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
         card(_ut("ui.edit_crops", "Edit crops"), "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
         card(_ut("ui.progress", _ut("progress", "Progress")), "View study progress.", f"/progress?pdf={q}", checks["study"]),
-        card("Library", "Return to the main course library.", "/", True),
+        card(_ut("ui.library", _ut("library", "Library")), "Return to the main course library.", "/", True),
     ]
 
     css = """
@@ -3819,12 +3819,12 @@ def course_tools(pdf: str = ""):
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Course Tools · Voila!</title>
+  <title>{_ut("ui.course_tools", "Course Tools")} · Voila!</title>
   {css}
 </head>
 <body>
   <div class="wrap">
-    <h1>Course Tools</h1>
+    <h1>{_ut("ui.course_tools", "Course Tools")}</h1>
     <div class="muted">PDF: <b>{_nav_escape(pdf_name)}</b></div>
     <div class="grid">
       {''.join(cards)}
@@ -3918,7 +3918,7 @@ def quick_tools():
           <h2>{_nav_escape(pdf.name)}</h2>
           <p>{''.join(status)}</p>
           <div class="actions">
-            <a class="primary" href="/course-tools?pdf={q}">Course Tools</a>
+            <a class="primary" href="/course-tools?pdf={q}">{_ut("ui.course_tools", "Course Tools")}</a>
             <a href="/view-course?pdf={q}">Course</a>
             <a href="/study?pdf={q}">Study</a>
             <a href="/review-ocr-corrected?pdf={q}&page=1">Review OCR</a>
@@ -3932,7 +3932,7 @@ def quick_tools():
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Quick Tools · Voila!</title>
+  <title>{_ut("ui.quick_tools", "Quick Tools")} · Voila!</title>
   <style>
     :root {{
       --bg: #101819;
@@ -4026,7 +4026,7 @@ def quick_tools():
 <body>
   <div class="wrap">
     <div class="top">
-      <h1>Quick Tools</h1>
+      <h1>{_ut("ui.quick_tools", "Quick Tools")}</h1>
       <a href="/">{_ut("library", "Library")}</a>
     </div>
     {''.join(cards) if cards else '<p>No PDFs found.</p>'}
@@ -4327,12 +4327,12 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
 <body>
   <header>
     <div>
-      <h1>Correct OCR Text</h1>
+      <h1>{_ut("ui.correct_ocr_text", "Correct OCR Text")}</h1>
       <div class="muted">{html.escape(safe_pdf)} · page {page_number} / {page_count} · status: {html.escape(str(status or "not reviewed"))}</div>
     </div>
 
     <div class="actions">
-      <a href="/course-tools?pdf={q_pdf}">Course Tools</a>
+      <a href="/course-tools?pdf={q_pdf}">{_ut("ui.course_tools", "Course Tools")}</a>
       <a href="/review-ocr-corrected?pdf={q_pdf}&page={prev_page}">← Prev</a>
       <a href="/review-ocr-corrected?pdf={q_pdf}&page={next_page}">Next →</a>
     </div>
@@ -4753,7 +4753,7 @@ def voila_lessons(pdf: str = Query(...)) -> HTMLResponse:
     </div>
 
     <div class="actions">
-      <a class="btn" href="/course-tools?pdf={q_pdf}">Course Tools</a>
+      <a class="btn" href="/course-tools?pdf={q_pdf}">{_ut("ui.course_tools", "Course Tools")}</a>
       <a class="btn" href="/view-course?pdf={q_pdf}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
       <a class="btn" href="/study?pdf={q_pdf}">{_ut("study", "Study")}</a>
       <a class="btn" href="/">{_ut("library", "Library")}</a>
