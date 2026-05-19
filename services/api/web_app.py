@@ -1029,7 +1029,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         status = (
             f'<span class="status">{_ut("ui.generated", "Generated")}</span>'
             if course_html.exists()
-            else '<span class="status missing">Not generated yet</span>'
+            else f'<span class="status missing">{_ut("status.not_generated_yet", "Not generated yet")}</span>'
         )
 
         actions = [
@@ -1100,7 +1100,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         if uploaded:
             notice += f"""
             <div class="notice">
-              Uploaded: <strong>{html.escape(uploaded)}</strong>
+              {_ut("status.uploaded", "Uploaded")}: <strong>{html.escape(uploaded)}</strong>
             </div>
             """
 
@@ -1114,7 +1114,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         body = upload_box + f"""
         {notice}
         <div class="notice">
-          {_ut("ui.source_mode", "Source Mode")}: no translation, local processing, original PDF text preserved.
+          {_ut("ui.source_mode", "Source Mode")}: {_ut("message.source_mode_description", "No translation, local processing, original PDF text preserved.")}
         </div>
         <div class="grid">
           {''.join(cards)}
@@ -1355,7 +1355,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         question_html = f"""
         <article class="card">
           <h2>Review question</h2>
-          <div class="meta">Focused concept: <strong>{concept_id}</strong></div>
+          <div class="meta">{_ut("status.focused_concept", "Focused concept")}: <strong>{concept_id}</strong></div>
           <p style="font-size: 20px;"><strong>{question}</strong></p>
           {answer_html}
 
@@ -1397,7 +1397,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
                 <article class="card">
                   <h2>{concept_id}</h2>
                   <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
-                  <div class="meta">Attempts: {attempts}</div>
+                  <div class="meta">{_ut("status.attempts", "Attempts")}: {attempts}</div>
                 </article>
                 """
             )
@@ -1515,13 +1515,13 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
                 f"""
                 <article class="card">
                   <h2>{concept_id}</h2>
-                  <div class="meta">Status: <strong>{status}</strong></div>
+                  <div class="meta">{_ut("status.status", "Status")}: <strong>{status}</strong></div>
                   <p style="font-size: 30px; margin: 8px 0;"><strong>{mastery}%</strong></p>
                   <div style="height: 12px; background: var(--paper-soft); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
                     <div style="height: 100%; width: {mastery}%; background: var(--accent);"></div>
                   </div>
                   <div class="meta" style="margin-top: 10px;">
-                    {_ut("attempts", "Attempts")}: {attempts}<br>
+                    {_ut("status.attempts", _ut("attempts", "Attempts"))}: {attempts}<br>
                     Correct: {correct}<br>
                     Incorrect: {incorrect}
                   </div>
@@ -1577,8 +1577,8 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
-      Overall mastery: <strong>{overall_mastery}%</strong> ·
-      Status: <strong>{overall_status}</strong><br>
+      {_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}: <strong>{overall_mastery}%</strong> ·
+      {_ut("status.status", "Status")}: <strong>{overall_status}</strong><br>
       Questions answered: <strong>{answered_count}</strong> / <strong>{total_questions}</strong>
       ({answered_percent}%)
     </div>
@@ -1587,7 +1587,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="grid">
       <article class="card">
-        <h2>Overall mastery</h2>
+        <h2>{_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}</h2>
         <p style="font-size: 34px; margin: 8px 0;"><strong>{overall_mastery}%</strong></p>
         <div style="height: 14px; background: var(--paper-soft); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
           <div style="height: 100%; width: {overall_mastery}%; background: var(--accent);"></div>
@@ -1596,7 +1596,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
       </article>
 
       <article class="card">
-        <h2>Study coverage</h2>
+        <h2>{_ut("status.study_coverage", _ut("study_coverage", "Study coverage"))}</h2>
         <p style="font-size: 34px; margin: 8px 0;"><strong>{answered_percent}%</strong></p>
         <div class="meta">
           Answered: {answered_count}<br>
@@ -1605,7 +1605,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
       </article>
 
       <article class="card">
-        <h2>Concept status</h2>
+        <h2>{_ut("status.concept_status", "Concept status")}</h2>
         <div class="meta">
           Needs review: <strong>{len(weak)}</strong><br>
           In progress: <strong>{len(review)}</strong><br>
@@ -1721,10 +1721,10 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
             f"""
             <article class="card">
               <h2>{concept_id}</h2>
-              <div class="meta">Status: <strong>{status}</strong></div>
+              <div class="meta">{_ut("status.status", "Status")}: <strong>{status}</strong></div>
               <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
               <div class="meta">
-                {_ut("attempts", "Attempts")}: {attempts}<br>
+                {_ut("status.attempts", _ut("attempts", "Attempts"))}: {attempts}<br>
                 {_ut("correct", "Correct")}: {correct_count}<br>
                 {_ut("incorrect", "Incorrect")}: {incorrect_count}
               </div>
@@ -1745,8 +1745,8 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
       {_ut("questions", "Questions")}: <strong>{view.get("total_questions")}</strong> ·
       {_ut("answered", "Answered")}: <strong>{view.get("answered_count")}</strong> ·
-      {_ut("overall_mastery", "Overall mastery")}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
-      {_ut("status", "Status")}: <strong>{html.escape(str(view.get("overall_status")))}</strong>
+      {_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
+      {_ut("status.status", _ut("status", "Status"))}: <strong>{html.escape(str(view.get("overall_status")))}</strong>
     </div>
 
     {last_html}
@@ -2832,7 +2832,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
         <div class="suspects">
           <h3>Suspicious pages</h3>
           <p class="meta">Primele pagini unde OCR-ul pare suspect.</p>
-          {suspicious_nav if suspicious_nav else '<p class="meta">No suspicious pages detected.</p>'}
+          {suspicious_nav if suspicious_nav else '<p class="meta">' + _ut("status.no_suspicious_pages_detected", "No suspicious pages detected.") + '</p>'}
         </div>
       </section>
     </div>
@@ -3704,7 +3704,7 @@ def course_tools(pdf: str = ""):
 
     def card(title: str, description: str, href: str, enabled: bool = True) -> str:
         cls = "" if enabled else "disabled"
-        suffix = "" if enabled else "<span>Not generated yet</span>"
+        suffix = "" if enabled else f'<span>{_ut("status.not_generated_yet", "Not generated yet")}</span>'
         safe_href = href if enabled else "#"
 
         return f"""
@@ -3716,15 +3716,15 @@ def course_tools(pdf: str = ""):
         """
 
     cards = [
-        card("Open course", "Read the generated course with navigation.", f"/view-course?pdf={q}", checks["course"]),
-        card("Lessons", "Choose a lesson, read it, then study only that lesson.", f"/lessons?pdf={q}", checks["study"]),
-        card(_ut("ui.study_mode", "Study mode"), "Practice questions generated from the course.", f"/study?pdf={q}", checks["study"]),
-        card(_ut("ui.review_ocr_text", "Review OCR Text"), "Correct OCR text page by page.", f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
-        card(_ut("ui.review_study_concepts", "Review Study Concepts"), "Correct lesson and concept titles.", f"/review-concepts?pdf={q}", checks["concepts"]),
-        card(_ut("ui.figures", "Figures"), "View extracted figures.", f"/view-figures?pdf={q}", checks["figures"]),
-        card(_ut("ui.edit_crops", "Edit crops"), "Manually edit figure crops.", f"/edit-crops?pdf={q}", checks["figures"]),
-        card(_ut("ui.progress", _ut("progress", "Progress")), "View study progress.", f"/progress?pdf={q}", checks["study"]),
-        card(_ut("ui.library", _ut("library", "Library")), "Return to the main course library.", "/", True),
+        card("Open course", _ut("message.open_course_description", "Read the generated course with navigation."), f"/view-course?pdf={q}", checks["course"]),
+        card("Lessons", _ut("message.lessons_description", "Choose a lesson, read it, then study only that lesson."), f"/lessons?pdf={q}", checks["study"]),
+        card(_ut("ui.study_mode", "Study mode"), _ut("message.study_mode_description", "Practice questions generated from the course."), f"/study?pdf={q}", checks["study"]),
+        card(_ut("ui.review_ocr_text", "Review OCR Text"), _ut("message.review_ocr_text_description", "Correct OCR text page by page."), f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
+        card(_ut("ui.review_study_concepts", "Review Study Concepts"), _ut("message.review_concepts_description", "Correct lesson and concept titles."), f"/review-concepts?pdf={q}", checks["concepts"]),
+        card(_ut("ui.figures", "Figures"), _ut("message.figures_description", "View extracted figures."), f"/view-figures?pdf={q}", checks["figures"]),
+        card(_ut("ui.edit_crops", "Edit crops"), _ut("message.edit_crops_description", "Manually edit figure crops."), f"/edit-crops?pdf={q}", checks["figures"]),
+        card(_ut("ui.progress", _ut("progress", "Progress")), _ut("message.progress_description", "View study progress."), f"/progress?pdf={q}", checks["study"]),
+        card(_ut("ui.library", _ut("library", "Library")), _ut("message.return_to_library_description", "Return to the main course library."), "/", True),
     ]
 
     css = """
