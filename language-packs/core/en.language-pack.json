@@ -114,7 +114,19 @@
     "status.rebuild_complete": "Rebuild complete",
     "status.rebuild_failed": "Rebuild failed",
     "status.save_title_override_failed": "Save title override failed",
-    "status.save_ocr_text_failed": "Save OCR text failed"
+    "status.save_ocr_text_failed": "Save OCR text failed",
+    "error.missing_pdf_name": "Missing PDF name",
+    "error.no_ocr_pages_found": "No OCR pages found",
+    "error.course_html_not_found": "Course HTML not found",
+    "error.figures_html_not_found": "Figures HTML not found",
+    "error.page_not_found": "Page not found",
+    "error.pdf_not_found": "PDF not found",
+    "error.not_found": "Not found",
+    "error.only_pdf_files_supported": "Only PDF files are supported",
+    "error.save_title_override_failed": "Save title override failed",
+    "error.save_ocr_text_failed": "Save OCR text failed",
+    "message.run_ocr_first": "Run OCR first",
+    "message.no_log_file_found_yet": "No log file found yet"
   },
   "feedback": {
     "feedback.correct": "Correct!",
