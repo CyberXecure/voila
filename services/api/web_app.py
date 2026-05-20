@@ -3349,7 +3349,7 @@ def save_ocr_text_page(
                 break
 
         if not changed:
-            return HTMLResponse(f"<h1>{_ut('error.page_not_found', 'Page not found')}: {page}</h1>", status_code=404)
+            return HTMLResponse(f"<h1>{_ut('error.page_not_found', 'Page not found')}: {_html_escape(str(page))}</h1>", status_code=404)
 
         overrides_path = output_dir / "ocr_page_text_overrides.json"
         overrides = _load_json_file(

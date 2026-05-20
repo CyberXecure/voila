@@ -24,8 +24,8 @@ for forbidden in [
     if forbidden in text:
         raise SystemExit(f"Hardcoded final deferred error/status output still present: {forbidden}")
 
-if ": {page}</h1>" not in text:
-    raise SystemExit("Expected dynamic page value to remain present in page-not-found output")
+if "_html_escape(str(page))" not in text:
+    raise SystemExit("Expected escaped dynamic page value to remain present in page-not-found output")
 
 if "HTTPException(status_code=400" not in text:
     raise SystemExit("Expected HTTPException status_code=400 to remain present")
