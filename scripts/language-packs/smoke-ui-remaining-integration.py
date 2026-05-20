@@ -52,7 +52,6 @@ for forbidden in [
 
 # Ensure intentionally deferred text remains untouched in this batch.
 for deferred in [
-    '<h1>Save title override failed</h1>',
     'Generate course files first, then Study Mode will use quiz.json.',
     'logs = []',
 ]:
