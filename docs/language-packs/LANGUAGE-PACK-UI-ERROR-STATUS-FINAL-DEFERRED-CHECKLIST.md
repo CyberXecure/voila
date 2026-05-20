@@ -1,0 +1,67 @@
+# Voila! UI Error / Status Final Deferred Plan Checklist
+
+Milestone: v0.2.80-public-beta-language-pack-ui-error-status-final-deferred-plan
+Status: planning checklist
+Scope: documentation only; no UI code changes, no language-pack JSON changes, no runtime changes, no schema changes, no GitHub release upload, no tag, no public ZIP publish
+
+## Baseline reviewed
+
+- [x] v0.2.72 error/status core keys implemented
+- [x] v0.2.75 first UI error/status integration completed
+- [x] v0.2.78 deferred workflow/status integration completed
+- [x] v0.2.79 deferred integration docs and smoke maintenance completed
+- [x] final deferred route-output candidates scanned
+
+## Final deferred keys reviewed
+
+- [x] error.only_pdf_files_supported
+- [x] error.page_not_found
+- [x] message.no_log_file_found_yet
+
+## Recommended next implementation batch
+
+- [x] error.only_pdf_files_supported
+- [x] error.page_not_found
+- [x] message.no_log_file_found_yet
+
+## Safety rules planned
+
+- [x] patch exact visible route output only
+- [x] preserve fallback text
+- [x] preserve HTTP status codes
+- [x] preserve dynamic page value
+- [x] preserve exception behavior
+- [x] preserve upload validation behavior
+- [x] preserve log route behavior
+- [x] avoid generated content
+- [x] avoid OCR output content
+- [x] avoid debug/developer text
+- [x] avoid broad UI rewrite
+- [x] add focused smoke helper in future implementation
+
+## Deferred
+
+- [ ] implementation
+- [ ] full UI localization
+- [ ] language selector
+- [ ] browser-locale detection
+- [ ] persisted language preference
+- [ ] adaptive UI switching
+
+## Safety
+
+- [x] no UI code change in this milestone
+- [x] no language-pack JSON change in this milestone
+- [x] no runtime behavior change in this milestone
+- [x] no schema change in this milestone
+- [x] no GitHub release upload
+- [x] no Git tag
+- [x] no public ZIP publish
+- [x] v0.2.0-public-beta assets unchanged
+- [x] no LICENSE change
+
+## Decision
+
+This milestone plans the final deferred error/status integration path only.
+
+Implementation should happen in a later milestone.
