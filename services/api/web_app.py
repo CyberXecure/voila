@@ -2261,7 +2261,7 @@ def save_review_concept(
         error = traceback.format_exc()
         return HTMLResponse(
             f"""
-            <h1>Save title override failed</h1>
+            <h1>{_ut("error.save_title_override_failed", "Save title override failed")}</h1>
             <p>The correction was not saved because the server raised an exception.</p>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{error}</pre>
             <p><a href="/">Back to Voila</a></p>
@@ -3378,7 +3378,7 @@ def save_ocr_text_page(
         error = traceback.format_exc()
         return HTMLResponse(
             f"""
-            <h1>Save OCR text failed</h1>
+            <h1>{_ut("error.save_ocr_text_failed", "Save OCR text failed")}</h1>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(error)}</pre>
             <p><a href="/">Back</a></p>
             """,
@@ -3475,7 +3475,7 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
 
         return HTMLResponse(
             f"""
-            <h1>Rebuild complete</h1>
+            <h1>{_ut("status.rebuild_complete", "Rebuild complete")}</h1>
             <p>OCR text corrections were applied to course and study.</p>
             <p>
               <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">Back to OCR Review</a>
@@ -3490,7 +3490,7 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
         error = traceback.format_exc()
         return HTMLResponse(
             f"""
-            <h1>Rebuild failed</h1>
+            <h1>{_ut("status.rebuild_failed", "Rebuild failed")}</h1>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(error)}</pre>
             """,
             status_code=500,

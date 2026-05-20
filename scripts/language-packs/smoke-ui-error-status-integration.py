@@ -34,10 +34,6 @@ for forbidden in [
 
 # These keys are intentionally deferred from the first integration batch.
 for deferred_key in [
-    "status.rebuild_complete",
-    "status.rebuild_failed",
-    "error.save_title_override_failed",
-    "error.save_ocr_text_failed",
     "error.only_pdf_files_supported",
     "error.page_not_found",
     "message.no_log_file_found_yet",
