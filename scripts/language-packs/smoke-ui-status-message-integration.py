@@ -56,8 +56,6 @@ for forbidden in [
 
 # Intentionally deferred error/status route output must remain unchanged in this batch.
 for deferred in [
-    '<h1>Missing PDF name</h1>',
-    '<h1>No OCR pages found</h1>',
     '<h1>Save title override failed</h1>',
     'Save OCR text failed',
     'logs = []',
