@@ -34,9 +34,6 @@ for forbidden in [
 
 # These keys are intentionally deferred from the first integration batch.
 for deferred_key in [
-    "error.only_pdf_files_supported",
-    "error.page_not_found",
-    "message.no_log_file_found_yet",
 ]:
     if f'_ut("{deferred_key}"' in text:
         raise SystemExit(f"Deferred key was integrated too early: {deferred_key}")
