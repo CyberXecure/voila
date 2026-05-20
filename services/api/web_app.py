@@ -1908,7 +1908,7 @@ def review_concepts(pdf: str = ""):
     pdf_name = _safe_pdf_name(pdf)
 
     if not pdf_name:
-        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+        return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
     output_dir = _output_dir_for_pdf_name(pdf_name)
     quiz_path = output_dir / "quiz.study.json"
@@ -2402,13 +2402,13 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     pdf_name = _safe_pdf_name(pdf)
 
     if not pdf_name:
-        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+        return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
     output_dir = _output_dir_for_pdf_name(pdf_name)
     pages = _load_ocr_review_pages(output_dir)
 
     if not pages:
-        return HTMLResponse("<h1>No OCR pages found</h1><p>Run OCR first.</p>", status_code=404)
+        return HTMLResponse("<h1>" + _ut("error.no_ocr_pages_found", "No OCR pages found") + "</h1><p>" + _ut("message.run_ocr_first", "Run OCR first") + ".</p>", status_code=404)
 
     page_numbers = [int(item["page_number"]) for item in pages]
     min_page = min(page_numbers)
@@ -3338,7 +3338,7 @@ def save_ocr_text_page(
         pages = _load_ocr_review_pages(output_dir)
 
         if not pages:
-            return HTMLResponse("<h1>No OCR pages found</h1>", status_code=404)
+            return HTMLResponse("<h1>" + _ut("error.no_ocr_pages_found", "No OCR pages found") + "</h1>", status_code=404)
 
         changed = False
 
@@ -3689,7 +3689,7 @@ def course_tools(pdf: str = ""):
     pdf_name = _nav_safe_pdf_name(pdf)
 
     if not pdf_name:
-        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+        return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
     output_dir = _nav_output_dir(pdf_name)
     q = _nav_quote(pdf_name)
@@ -3844,13 +3844,13 @@ def view_course(pdf: str = ""):
     pdf_name = _nav_safe_pdf_name(pdf)
 
     if not pdf_name:
-        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+        return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
     output_dir = _nav_output_dir(pdf_name)
     course_html = output_dir / "course.cleaned.html"
 
     if not course_html.exists():
-        return HTMLResponse("<h1>Course HTML not found</h1>", status_code=404)
+        return HTMLResponse("<h1>" + _ut("error.course_html_not_found", "Course HTML not found") + "</h1>", status_code=404)
 
     html_doc = course_html.read_text(encoding="utf-8", errors="ignore")
     html_doc = _inject_voila_tools_bar(html_doc, pdf_name, "course")
@@ -3865,13 +3865,13 @@ def view_figures(pdf: str = ""):
     pdf_name = _nav_safe_pdf_name(pdf)
 
     if not pdf_name:
-        return HTMLResponse("<h1>Missing PDF name</h1>", status_code=400)
+        return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
     output_dir = _nav_output_dir(pdf_name)
     figures_html = output_dir / "figures_hybrid" / "figures_hybrid.html"
 
     if not figures_html.exists():
-        return HTMLResponse("<h1>Figures HTML not found</h1>", status_code=404)
+        return HTMLResponse("<h1>" + _ut("error.figures_html_not_found", "Figures HTML not found") + "</h1>", status_code=404)
 
     html_doc = figures_html.read_text(encoding="utf-8", errors="ignore")
 
@@ -4079,7 +4079,7 @@ def voila_ocr_page_image(pdf: str = "", page: int = 1, zoom: float = 2.2):
     pdf_path = PROJECT_ROOT / "data" / "input" / safe_pdf
 
     if not pdf_path.exists():
-        return _VoilaResponse("PDF not found", status_code=404)
+        return _VoilaResponse(_ut("error.pdf_not_found", "PDF not found"), status_code=404)
 
     page_index = max(0, int(page) - 1)
 
@@ -4499,7 +4499,7 @@ def voila_static_file(filename: str):
     static_path = PROJECT_ROOT / "services" / "api" / "static" / safe_name
 
     if not static_path.exists() or not static_path.is_file():
-        return Response("Not found", status_code=404)
+        return Response(_ut("error.not_found", "Not found"), status_code=404)
 
     suffix = static_path.suffix.lower()
 
