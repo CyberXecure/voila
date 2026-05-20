@@ -28,17 +28,11 @@ for forbidden in [
 
 # These remain intentionally deferred after v0.2.78.
 for still_deferred_key in [
-    "error.only_pdf_files_supported",
-    "error.page_not_found",
-    "message.no_log_file_found_yet",
 ]:
     if f'_ut("{still_deferred_key}"' in text:
         raise SystemExit(f"Still-deferred key was integrated too early: {still_deferred_key}")
 
 for still_expected_literal in [
-    "Only PDF files are supported.",
-    "Page not found:",
-    "No log file found yet.",
 ]:
     if still_expected_literal not in text:
         raise SystemExit(f"Expected still-deferred literal missing: {still_expected_literal}")

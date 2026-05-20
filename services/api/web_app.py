@@ -809,7 +809,7 @@ def safe_upload_name(filename: str) -> str:
     suffix = Path(name).suffix.lower()
 
     if suffix != ".pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+        raise HTTPException(status_code=400, detail=_ut("error.only_pdf_files_supported", "Only PDF files are supported."))
 
     stem = Path(name).stem
     stem = re.sub(r"[^A-Za-z0-9._ -]+", "_", stem).strip(" ._")
@@ -1805,7 +1805,7 @@ def log(pdf: str = Query(...)) -> PlainTextResponse:
     log_path = OUTPUT_DIR / pdf_path.stem / "last_run.log"
 
     if not log_path.exists():
-        return PlainTextResponse("No log file found yet.", status_code=404)
+        return PlainTextResponse(_ut("message.no_log_file_found_yet", "No log file found yet."), status_code=404)
 
     return PlainTextResponse(log_path.read_text(encoding="utf-8"))
 
@@ -3349,7 +3349,7 @@ def save_ocr_text_page(
                 break
 
         if not changed:
-            return HTMLResponse(f"<h1>Page not found: {page}</h1>", status_code=404)
+            return HTMLResponse(f"<h1>{_ut('error.page_not_found', 'Page not found')}: {_html_escape(str(page))}</h1>", status_code=404)
 
         overrides_path = output_dir / "ocr_page_text_overrides.json"
         overrides = _load_json_file(
