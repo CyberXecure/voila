@@ -155,7 +155,20 @@
     "ui.link.concepts": "Concepte",
     "ui.link.course": "Curs",
     "ui.link.review_ocr": "Revizuire OCR",
-    "ui.label.correct_concept_title": "Corectează titlul conceptului"
+    "ui.label.correct_concept_title": "Corectează titlul conceptului",
+    "ui.link.previous": "Anterior",
+    "ui.link.prev": "Ant.",
+    "ui.link.next": "Următor",
+    "ui.link.back_to_ocr_review": "Înapoi la revizuirea OCR",
+    "ui.message.local_pdf_learning_studio": "Studioul tău local de învățare din PDF",
+    "ui.message.generate_study_quiz_first": "Generează mai întâi un quiz de studiu.",
+    "ui.message.crop_editor_port_not_responding": "Portul 8790 nu răspunde. Pornește-l manual:",
+    "ui.message.no_study_questions_found": "Nu au fost găsite întrebări de studiu. Generează mai întâi Study.",
+    "ui.message.concept_title_cannot_be_empty": "Titlul conceptului nu poate fi gol.",
+    "ui.message.correction_not_saved_exception": "Corecția nu a fost salvată deoarece serverul a generat o excepție.",
+    "ui.message.ocr_corrections_applied": "Corecțiile textului OCR au fost aplicate cursului și studiului.",
+    "ui.message.no_pdfs_found": "Nu au fost găsite PDF-uri.",
+    "ui.title.correct_ocr": "Corectare OCR · Voila!"
   },
   "feedback": {
     "feedback.correct": "Corect!",
