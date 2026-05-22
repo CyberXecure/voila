@@ -155,7 +155,20 @@
     "ui.link.concepts": "Concepts",
     "ui.link.course": "Course",
     "ui.link.review_ocr": "Review OCR",
-    "ui.label.correct_concept_title": "Correct concept title"
+    "ui.label.correct_concept_title": "Correct concept title",
+    "ui.link.previous": "Previous",
+    "ui.link.prev": "Prev",
+    "ui.link.next": "Next",
+    "ui.link.back_to_ocr_review": "Back to OCR Review",
+    "ui.message.local_pdf_learning_studio": "Your local PDF learning studio",
+    "ui.message.generate_study_quiz_first": "Generate a study quiz first.",
+    "ui.message.crop_editor_port_not_responding": "Port 8790 is not responding. Start it manually:",
+    "ui.message.no_study_questions_found": "No study questions found. Generate Study first.",
+    "ui.message.concept_title_cannot_be_empty": "Concept title cannot be empty.",
+    "ui.message.correction_not_saved_exception": "The correction was not saved because the server raised an exception.",
+    "ui.message.ocr_corrections_applied": "OCR text corrections were applied to course and study.",
+    "ui.message.no_pdfs_found": "No PDFs found.",
+    "ui.title.correct_ocr": "Correct OCR · Voila!"
   },
   "feedback": {
     "feedback.correct": "Correct!",
