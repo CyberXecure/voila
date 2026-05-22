@@ -563,7 +563,7 @@ def page(title: str, body: str) -> HTMLResponse:
   <div class="wrap">
     <header>
       <div class="brand">
-        <h1>Voila!</h1>
+        <h1>{_ut("ui.heading.home", "Voila!")}</h1>
         <p>Your local PDF learning studio</p>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button">{_ut("ui.toggle_theme", "Toggle theme")}</button>
@@ -596,7 +596,7 @@ def page(title: str, body: str) -> HTMLResponse:
   </script>
 
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
-      <a class="primary" href="/">Back</a>
+      <a class="primary" href="/">{_ut("ui.link.back", "Back")}</a>
       <a id="fixedStudyLink" href="/" hidden>{_ut("ui.study", _ut("study", "Study"))}</a>
       <a id="fixedReviewLink" href="/" hidden>{_ut("review", "Review")}</a>
       <a id="fixedProgressLink" href="/" hidden>{_ut("ui.progress", _ut("progress", "Progress"))}</a>
@@ -1307,7 +1307,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         view = get_study_view(output_dir)
     except Exception as exc:
         body = f"""
-        <h1>Voila! Review</h1>
+        <h1>{_ut("ui.heading.review", "Voila! Review")}</h1>
         <div class="notice">
           Cannot open Review Mode for <strong>{html.escape(pdf_path.name)}</strong>.
         </div>
@@ -1354,7 +1354,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
 
         question_html = f"""
         <article class="card">
-          <h2>Review question</h2>
+          <h2>{_ut("ui.heading.review_question", "Review question")}</h2>
           <div class="meta">{_ut("status.focused_concept", "Focused concept")}: <strong>{concept_id}</strong></div>
           <p style="font-size: 20px;"><strong>{question}</strong></p>
           {answer_html}
@@ -1379,7 +1379,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
     else:
         question_html = """
         <article class="card">
-          <h2>No review questions available</h2>
+          <h2>{_ut("ui.heading.no_review_questions", "No review questions available")}</h2>
           <p>Generate a study quiz first.</p>
         </article>
         """
@@ -1420,7 +1420,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         """
 
     body = f"""
-    <h1>Voila! Review weak concepts</h1>
+    <h1>{_ut("ui.heading.review_weak_concepts", "Voila! Review weak concepts")}</h1>
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
@@ -1436,9 +1436,9 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
     </div>
 
     <div class="actions" style="margin-top: 24px;">
-      <a class="btn primary" href="/review?pdf={quote(pdf_path.name)}">Next review</a>
-      <a class="btn" href="/study?pdf={quote(pdf_path.name)}">Study</a>
-      <a class="btn" href="/progress?pdf={quote(pdf_path.name)}">Progress</a>
+      <a class="btn primary" href="/review?pdf={quote(pdf_path.name)}">{_ut("ui.link.next_review", "Next review")}</a>
+      <a class="btn" href="/study?pdf={quote(pdf_path.name)}">{_ut("ui.link.study", "Study")}</a>
+      <a class="btn" href="/progress?pdf={quote(pdf_path.name)}">{_ut("ui.link.progress", "Progress")}</a>
       <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
     </div>
 
@@ -1476,7 +1476,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
         view = get_study_view(output_dir)
     except Exception as exc:
         body = f"""
-        <h1>Voila! Progress</h1>
+        <h1>{_ut("ui.heading.progress", "Voila! Progress")}</h1>
         <div class="notice">
           Cannot open Progress Dashboard for <strong>{html.escape(pdf_path.name)}</strong>.
         </div>
@@ -1573,7 +1573,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
         """
 
     body = f"""
-    <h1>Voila! Progress Dashboard</h1>
+    <h1>{_ut("ui.heading.progress_dashboard", "Voila! Progress Dashboard")}</h1>
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
@@ -1616,7 +1616,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     </div>
 
     <div class="actions" style="margin-top: 24px;">
-      <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">Continue Study</a>
+      <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">{_ut("ui.link.continue_study", "Continue Study")}</a>
       <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
     </div>
 
@@ -1826,7 +1826,7 @@ def edit_crops(pdf: str = ""):
     if not crop_editor_is_running():
         return HTMLResponse(
             """
-            <h1>Crop Editor did not start</h1>
+            <h1>{_ut("ui.heading.crop_editor_not_started", "Crop Editor did not start")}</h1>
             <p>Port 8790 is not responding. Start it manually:</p>
             <pre>python -m uvicorn crop_editor_app:app --app-dir services/api --host 127.0.0.1 --port 8790</pre>
             """,
@@ -1971,7 +1971,7 @@ def review_concepts(pdf: str = ""):
             <input type="hidden" name="pdf" value="{_html_escape(pdf_name)}">
             <input type="hidden" name="lesson_id" value="{_html_escape(lesson_id)}">
 
-            <label>Correct concept title</label>
+            <label>{_ut("ui.label.correct_concept_title", "Correct concept title")}</label>
             <input name="title" value="{_html_escape(effective)}">
 
             <div class="actions">
@@ -2178,12 +2178,12 @@ def review_concepts(pdf: str = ""):
         <p>PDF: <b>{_html_escape(pdf_name)}</b></p>
       </div>
       <div class="top-actions">
-        <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
+        <a href="/course-tools?pdf={quote(pdf_name)}">{_ut("ui.link.course_tools", "Course tools")}</a>
         <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page=1">{_ut("ui.review_ocr_text", "Review OCR Text")}</a>
         <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
-        <a href="/study?pdf={quote(pdf_name)}">Study</a>
-        <a href="/progress?pdf={_html_escape(pdf_name)}">Progress</a>
+        <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
+        <a href="/progress?pdf={_html_escape(pdf_name)}">{_ut("ui.link.progress", "Progress")}</a>
       </div>
     </div>
 
@@ -2191,10 +2191,10 @@ def review_concepts(pdf: str = ""):
   </div>
 
   <nav class="floating-nav">
-    <a href="/">Back</a>
-    <a href="/study?pdf={_html_escape(pdf_name)}">Study</a>
-    <a href="#top" onclick="window.scrollTo({{top:0,behavior:'smooth'}}); return false;">↑ Top</a>
-    <a href="#bottom" onclick="window.scrollTo({{top:document.body.scrollHeight,behavior:'smooth'}}); return false;">↓ Bottom</a>
+    <a href="/">{_ut("ui.link.back", "Back")}</a>
+    <a href="/study?pdf={_html_escape(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
+    <a href="#top" onclick="window.scrollTo({{top:0,behavior:'smooth'}}); return false;">↑ {_ut("ui.link.top", "Top")}</a>
+    <a href="#bottom" onclick="window.scrollTo({{top:document.body.scrollHeight,behavior:'smooth'}}); return false;">↓ {_ut("ui.link.bottom", "Bottom")}</a>
   </nav>
 </body>
 </html>
@@ -2264,7 +2264,7 @@ def save_review_concept(
             <h1>{_ut("error.save_title_override_failed", "Save title override failed")}</h1>
             <p>The correction was not saved because the server raised an exception.</p>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{error}</pre>
-            <p><a href="/">Back to Voila</a></p>
+            <p><a href="/">{_ut("ui.link.back_to_voila", "Back to Voila")}</a></p>
             """,
             status_code=500,
         )
@@ -2796,11 +2796,11 @@ def review_ocr_text(pdf: str = "", page: int = 1):
         <div class="meta">PDF: <b>{_html_escape(pdf_name)}</b> · Page <b>{page}</b> / {max_page}</div>
       </div>
       <div class="actions">
-        <a href="/course-tools?pdf={quote(pdf_name)}">Course tools</a>
+        <a href="/course-tools?pdf={quote(pdf_name)}">{_ut("ui.link.course_tools", "Course tools")}</a>
         <a href="/">{_ut("library", "Library")}</a>
         <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.review_concepts", "Review concepts")}</a>
         <a href="/view-course?pdf={quote(pdf_name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
-        <a href="/study?pdf={quote(pdf_name)}">Study</a>
+        <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
       </div>
     </div>
 
@@ -2811,12 +2811,12 @@ def review_ocr_text(pdf: str = "", page: int = 1):
 
     <div class="grid">
       <section class="panel">
-        <h2>Source page</h2>
+        <h2>{_ut("ui.heading.source_page", "Source page")}</h2>
         {image_html}
       </section>
 
       <section class="panel">
-        <h2>Editable OCR text</h2>
+        <h2>{_ut("ui.heading.editable_ocr_text", "Editable OCR text")}</h2>
         <form method="post" action="/review-ocr-text/save">
           <input type="hidden" name="pdf" value="{_html_escape(pdf_name)}">
           <input type="hidden" name="page" value="{page}">
@@ -2824,13 +2824,13 @@ def review_ocr_text(pdf: str = "", page: int = 1):
           <div id="ocrSuggestions" class="ocr-suggestions" hidden></div>
           <p class="meta small-tip">Tip: sugestiile apar lângă cursor. ↑/↓ navighează · Enter/Tab acceptă · Esc închide · Ctrl+Space afișează sugestii.</p>
           <div class="actions">
-            <button type="submit">Save page correction</button>
-            <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={page}">Reload</a>
+            <button type="submit">{_ut("ui.button.save_page_correction", "Save page correction")}</button>
+            <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={page}">{_ut("ui.link.reload", "Reload")}</a>
           </div>
         </form>
 
         <div class="suspects">
-          <h3>Suspicious pages</h3>
+          <h3>{_ut("ui.heading.suspicious_pages", "Suspicious pages")}</h3>
           <p class="meta">Primele pagini unde OCR-ul pare suspect.</p>
           {suspicious_nav if suspicious_nav else '<p class="meta">' + _ut("status.no_suspicious_pages_detected", "No suspicious pages detected.") + '</p>'}
         </div>
@@ -2841,8 +2841,8 @@ def review_ocr_text(pdf: str = "", page: int = 1):
   <nav class="floating-nav">
     <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← Prev</a>
     <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
-    <a href="/review-concepts?pdf={quote(pdf_name)}">Concepts</a>
-    <a href="/study?pdf={quote(pdf_name)}">Study</a>
+    <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.link.concepts", "Concepts")}</a>
+    <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
   </nav>
 
   <script>
@@ -3380,7 +3380,7 @@ def save_ocr_text_page(
             f"""
             <h1>{_ut("error.save_ocr_text_failed", "Save OCR text failed")}</h1>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(error)}</pre>
-            <p><a href="/">Back</a></p>
+            <p><a href="/">{_ut("ui.link.back", "Back")}</a></p>
             """,
             status_code=500,
         )
@@ -3480,7 +3480,7 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
             <p>
               <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">Back to OCR Review</a>
               · <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.review_concepts", "Review Concepts")}</a>
-              · <a href="/study?pdf={quote(pdf_name)}">Study</a>
+              · <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
             </p>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{_html_escape(log_text)}</pre>
             """
@@ -3919,9 +3919,9 @@ def quick_tools():
           <p>{''.join(status)}</p>
           <div class="actions">
             <a class="primary" href="/course-tools?pdf={q}">{_ut("ui.course_tools", "Course Tools")}</a>
-            <a href="/view-course?pdf={q}">Course</a>
+            <a href="/view-course?pdf={q}">{_ut("ui.link.course", "Course")}</a>
             <a href="/study?pdf={q}">Study</a>
-            <a href="/review-ocr-corrected?pdf={q}&page=1">Review OCR</a>
+            <a href="/review-ocr-corrected?pdf={q}&page=1">{_ut("ui.link.review_ocr", "Review OCR")}</a>
             <a href="/review-concepts?pdf={q}">Concepts</a>
           </div>
         </section>
@@ -4369,14 +4369,14 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
         <textarea name="text" spellcheck="false">{html.escape(corrected_text)}</textarea>
 
         <div class="actions">
-          <button class="primary" type="submit" name="status" value="reviewed">Save reviewed page</button>
-          <button type="submit" name="status" value="needs_review">Save as needs review</button>
+          <button class="primary" type="submit" name="status" value="reviewed">{_ut("ui.button.save_reviewed_page", "Save reviewed page")}</button>
+          <button type="submit" name="status" value="needs_review">{_ut("ui.button.save_as_needs_review", "Save as needs review")}</button>
         </div>
       </form>
 
       <form method="post" action="/apply-corrected-ocr" style="padding:0 14px 14px;">
         <input type="hidden" name="pdf" value="{html.escape(safe_pdf)}">
-        <button class="danger" type="submit">Apply corrected OCR to pages.json</button>
+        <button class="danger" type="submit">{_ut("ui.button.apply_corrected_ocr", "Apply corrected OCR to pages.json")}</button>
       </form>
     </section>
   </main>
