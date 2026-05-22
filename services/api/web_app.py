@@ -564,7 +564,7 @@ def page(title: str, body: str) -> HTMLResponse:
     <header>
       <div class="brand">
         <h1>{_ut("ui.heading.home", "Voila!")}</h1>
-        <p>Your local PDF learning studio</p>
+        <p>{_ut("ui.message.local_pdf_learning_studio", "Your local PDF learning studio")}</p>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button">{_ut("ui.toggle_theme", "Toggle theme")}</button>
     </header>
@@ -1380,7 +1380,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         question_html = """
         <article class="card">
           <h2>{_ut("ui.heading.no_review_questions", "No review questions available")}</h2>
-          <p>Generate a study quiz first.</p>
+          <p>{_ut("ui.message.generate_study_quiz_first", "Generate a study quiz first.")}</p>
         </article>
         """
 
@@ -1827,7 +1827,7 @@ def edit_crops(pdf: str = ""):
         return HTMLResponse(
             """
             <h1>{_ut("ui.heading.crop_editor_not_started", "Crop Editor did not start")}</h1>
-            <p>Port 8790 is not responding. Start it manually:</p>
+            <p>{_ut("ui.message.crop_editor_port_not_responding", "Port 8790 is not responding. Start it manually:")}</p>
             <pre>python -m uvicorn crop_editor_app:app --app-dir services/api --host 127.0.0.1 --port 8790</pre>
             """,
             status_code=503,
@@ -1976,7 +1976,7 @@ def review_concepts(pdf: str = ""):
 
             <div class="actions">
               <button type="submit">{_ut("ui.save_title_override", "Save title override")}</button>
-              <a class="ghost" href="/study?pdf={_html_escape(pdf_name)}">Study</a>
+              <a class="ghost" href="/study?pdf={_html_escape(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
             </div>
           </form>
 
@@ -1988,7 +1988,7 @@ def review_concepts(pdf: str = ""):
         </section>
         """)
 
-    content = "\n".join(rows) if rows else "<p>No study questions found. Generate Study first.</p>"
+    content = "\n".join(rows) if rows else "<p>" + _ut("ui.message.no_study_questions_found", "No study questions found. Generate Study first.") + "</p>"
 
     html_doc = f"""
 <!doctype html>
@@ -2232,7 +2232,7 @@ def save_review_concept(
 
         if not clean_title:
             return HTMLResponse(
-                "<h1>Empty title</h1><p>Concept title cannot be empty.</p>",
+                "<h1>Empty title</h1><p>" + _ut("ui.message.concept_title_cannot_be_empty", "Concept title cannot be empty.") + "</p>",
                 status_code=400,
             )
 
@@ -2262,7 +2262,7 @@ def save_review_concept(
         return HTMLResponse(
             f"""
             <h1>{_ut("error.save_title_override_failed", "Save title override failed")}</h1>
-            <p>The correction was not saved because the server raised an exception.</p>
+            <p>{_ut("ui.message.correction_not_saved_exception", "The correction was not saved because the server raised an exception.")}</p>
             <pre style="white-space: pre-wrap; background:#111; color:#f6ead7; padding:16px; border-radius:12px;">{error}</pre>
             <p><a href="/">{_ut("ui.link.back_to_voila", "Back to Voila")}</a></p>
             """,
@@ -2805,8 +2805,8 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     </div>
 
     <div class="actions">
-      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← Previous</a>
-      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
+      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← {_ut("ui.link.previous", "Previous")}</a>
+      <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">{_ut("ui.link.next", "Next")} →</a>
     </div>
 
     <div class="grid">
@@ -2839,8 +2839,8 @@ def review_ocr_text(pdf: str = "", page: int = 1):
   </div>
 
   <nav class="floating-nav">
-    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← Prev</a>
-    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">Next →</a>
+    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={previous_page}">← {_ut("ui.link.prev", "Prev")}</a>
+    <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={next_page}">{_ut("ui.link.next", "Next")} →</a>
     <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.link.concepts", "Concepts")}</a>
     <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
   </nav>
@@ -3476,9 +3476,9 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
         return HTMLResponse(
             f"""
             <h1>{_ut("status.rebuild_complete", "Rebuild complete")}</h1>
-            <p>OCR text corrections were applied to course and study.</p>
+            <p>{_ut("ui.message.ocr_corrections_applied", "OCR text corrections were applied to course and study.")}</p>
             <p>
-              <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">Back to OCR Review</a>
+              <a href="/review-ocr-corrected?pdf={quote(pdf_name)}">{_ut("ui.link.back_to_ocr_review", "Back to OCR Review")}</a>
               · <a href="/review-concepts?pdf={quote(pdf_name)}">{_ut("ui.review_concepts", "Review Concepts")}</a>
               · <a href="/study?pdf={quote(pdf_name)}">{_ut("ui.link.study", "Study")}</a>
             </p>
@@ -3920,9 +3920,9 @@ def quick_tools():
           <div class="actions">
             <a class="primary" href="/course-tools?pdf={q}">{_ut("ui.course_tools", "Course Tools")}</a>
             <a href="/view-course?pdf={q}">{_ut("ui.link.course", "Course")}</a>
-            <a href="/study?pdf={q}">Study</a>
+            <a href="/study?pdf={q}">{_ut("ui.link.study", "Study")}</a>
             <a href="/review-ocr-corrected?pdf={q}&page=1">{_ut("ui.link.review_ocr", "Review OCR")}</a>
-            <a href="/review-concepts?pdf={q}">Concepts</a>
+            <a href="/review-concepts?pdf={q}">{_ut("ui.link.concepts", "Concepts")}</a>
           </div>
         </section>
         """)
@@ -4029,7 +4029,7 @@ def quick_tools():
       <h1>{_ut("ui.quick_tools", "Quick Tools")}</h1>
       <a href="/">{_ut("library", "Library")}</a>
     </div>
-    {''.join(cards) if cards else '<p>No PDFs found.</p>'}
+    {''.join(cards) if cards else '<p>' + _ut("ui.message.no_pdfs_found", "No PDFs found.") + '</p>'}
   </div>
 </body>
 </html>
@@ -4320,7 +4320,7 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Correct OCR · Voila!</title>
+  <title>{_ut("ui.title.correct_ocr", "Correct OCR · Voila!")}</title>
   <style>{css}</style>
   <link rel="stylesheet" href="/voila-static/ocr_review_monaco.css?v=1778302140">
 </head>
@@ -4333,8 +4333,8 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
 
     <div class="actions">
       <a href="/course-tools?pdf={q_pdf}">{_ut("ui.course_tools", "Course Tools")}</a>
-      <a href="/review-ocr-corrected?pdf={q_pdf}&page={prev_page}">← Prev</a>
-      <a href="/review-ocr-corrected?pdf={q_pdf}&page={next_page}">Next →</a>
+      <a href="/review-ocr-corrected?pdf={q_pdf}&page={prev_page}">← {_ut("ui.link.prev", "Prev")}</a>
+      <a href="/review-ocr-corrected?pdf={q_pdf}&page={next_page}">{_ut("ui.link.next", "Next")} →</a>
     </div>
   </header>
 
