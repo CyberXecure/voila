@@ -1,115 +1,201 @@
 # Voila! Language Pack Release Candidate Plan
 
-Milestone: v0.2.37-public-beta-language-pack-release-candidate-plan
-Status: release candidate planning
-Scope: documentation only; no GitHub release upload, no tag, no public asset publish, no runtime changes, no UI changes
+Milestone: v0.3.0-public-beta-language-pack-release-candidate-plan
+Status: planning
+Scope: documentation only; no UI code changes, no language-pack JSON changes, no runtime changes, no schema changes, no GitHub release upload, no tag, no public ZIP publish, no LICENSE change
 
 ## Goal
 
-This milestone documents the safe path from the validated local v0.2.36 ZIP dry run to a future release candidate.
+This milestone creates an explicit release-candidate plan for a future public beta release that includes the language-pack workstream.
 
-Validated local dry-run ZIP:
+This milestone does not publish a release.
 
-`	ext
-ZIP:    D:\dev\releases\voila-v0236-lpbuild-20260516-1844.zip
-SHA256: D63C223CC233438D29176F43E9BA166F5659B04FA2CD11904E72E4A28092CAD3
-`",
-",
+## Why this plan exists
 
+The language-pack workstream now has:
 
-The v0.2.36 dry-run build proved that:
+```text
+schema documentation
+sample packs
+core English and Romanian packs
+runtime helper coverage
+validator coverage
+UI error/status localization
+full UI localization
+release-readiness inventory
+release-readiness checklist and runbook
+```
 
-- a real standalone ZIP can be built locally
-- required language-pack files are included in the ZIP
-- build-output language-pack smoke passes
-- standalone package language-pack smoke passes
-- full standalone runtime smoke passes
-- LanguageTool runtime responds
-- Tesseract runtime includes expected OCR languages
-- the generated ZIP remains a local dry-run artifact only
+The next safe step is to define what a release candidate would contain before creating tags, ZIPs, checksums, or GitHub release assets.
 
-## Release candidate objective
+## Proposed release identity
 
-A release candidate should be a controlled artifact prepared for final manual review before any public release upload.
+Proposed release line:
 
-The RC should not be published automatically.
+```text
+v0.3.0-public-beta-language-pack-release-candidate
+```
 
-## Proposed future RC artifact naming
+Proposed release nature:
 
-Recommended naming:
+```text
+public beta / prerelease
+language-pack readiness release candidate
+documentation + validation centered
+no licensing change unless explicitly approved
+```
 
-`	ext
-voila-v0.2.37-public-beta-language-pack-rc1.zip
-voila-v0.2.37-public-beta-language-pack-rc1_SHA256.txt
-voila-v0.2.37-public-beta-language-pack-rc1_RELEASE-NOTES.md
-voila-v0.2.37-public-beta-language-pack-rc1_TEST-LOG.txt
-voila-v0.2.37-public-beta-language-pack-rc1_FINAL-CHECKLIST.md
-`",
-",
+## Candidate release goals
 
+A future RC should prove that:
 
-Before creating a future RC:
+```text
+language packs are discoverable
+core packs validate
+sample packs remain consistent
+runtime fallback behavior is tested
+UI localization coverage is documented
+security constraints are documented and checked
+packaging inspection includes language-pack artifacts
+release notes clearly describe supported/deferred scope
+```
 
-- main must be clean
-- no PRs should be open
-- all language-pack packaging checks must pass
-- a fresh standalone ZIP must be built intentionally
-- the ZIP must be validated by smoke-language-pack-build-output.ps1
-- the ZIP must be validated by smoke-language-pack-standalone-package.ps1
-- the ZIP must pass test-standalone-runtime.ps1
-- SHA256 must be generated after final ZIP creation
-- release notes must clearly mark the artifact as RC
+## Candidate release assets to define later
 
-## What must not happen in this milestone
+A future release milestone must define final names for:
 
-This milestone must not:
+```text
+public ZIP
+SHA256 checksum
+release notes
+final checklist or test log
+GitHub release title
+GitHub release body
+```
 
-- upload ZIP assets to GitHub Releases
-- create a Git tag
-- replace the v0.2.0-public-beta release assets
-- publish the RC publicly
+Do not publish these assets in this planning milestone.
+
+## Candidate release contents
+
+Potential release contents should include:
+
+```text
+language-packs/core/en.language-pack.json
+language-packs/core/ro.language-pack.json
+language-packs/schema/language-pack.schema.json
+language-packs/samples/en.language-pack.sample.json
+language-packs/samples/ro.language-pack.sample.json
+language-packs/runtime/minimal_language_runtime.py
+docs/language-packs/
+scripts/language-packs/
+scripts/release/inspect-language-pack-packaging.ps1
+services/api/i18n.py
+services/api/web_app.py
+```
+
+The final package contents must be confirmed in a dedicated package-plan milestone before publishing.
+
+## Must not include unless explicitly approved
+
+```text
+LICENSE addition or change
+paid supporter package assets
+private/commercial files
+stale release-candidate ZIPs
+old checksum files
+local virtual environments
+node_modules
+__pycache__
+.git
+developer-only backups
+```
+
+## Required validation baseline
+
+A future RC must pass:
+
+```powershell
+pwsh -ExecutionPolicy Bypass -File .\scripts\release\inspect-language-pack-packaging.ps1
+
+python .\scripts\language-packs\validate-language-packs.py
+python .\scripts\language-packs\test_language_pack_runtime.py
+python .\scripts\language-packs\test_minimal_language_runtime.py
+python .\scripts\language-packs\test_ui_core_keys.py
+python .\scripts\language-packs\test_ui_remaining_core_keys.py
+python .\scripts\language-packs\test_ui_error_status_core_keys.py
+python .\scripts\language-packs\test_ui_full_localization_core_keys.py
+python .\scripts\language-packs\test_ui_full_localization_next_batch_core_keys.py
+
+python .\scripts\language-packs\smoke-ui-language-endpoint.py
+python .\scripts\language-packs\smoke-core-runtime-helper.py
+python .\scripts\language-packs\smoke-language-pack-files.py
+python .\scripts\language-packs\smoke-ui-core-keys.py
+python .\scripts\language-packs\smoke-ui-full-localization-first-batch.py
+python .\scripts\language-packs\smoke-ui-full-localization-next-batch.py
+python .\scripts\language-packs\smoke-ui-error-status-final-deferred-integration.py
+
+python -m py_compile .\services\api\i18n.py
+python -m py_compile .\services\api\web_app.py
+```
+
+## Security requirements
+
+A future RC must confirm:
+
+```text
+v0.2.81 _html_escape(str(page)) reflected-XSS fix remains present
+dynamic values inserted into HTML are escaped
+generated course/OCR/user-authored content is not blindly localized
+route behavior is preserved
+HTTP status codes are preserved
+fallback English text remains available
+```
+
+## Release blockers
+
+Do not proceed to release publishing if any of these are true:
+
+```text
+validation fails
+smoke test fails
+CodeQL/security checks fail
+working tree is dirty
+open PRs exist
+release notes are missing
+ZIP contents are undefined
+checksum is missing
+LICENSE/commercial-positioning decision is unclear
+```
+
+## Recommended next milestones
+
+Recommended path:
+
+```text
+v0.3.0-public-beta-language-pack-release-candidate-checklist
+v0.3.0-public-beta-language-pack-release-candidate-package-plan
+v0.3.0-public-beta-language-pack-release-candidate-notes
+v0.3.0-public-beta-language-pack-release-candidate-build
+```
+
+Only the final build/publish milestone should be allowed to create a tag, ZIP, checksum, and GitHub release assets.
+
+## Non-goals
+
+This milestone does not:
+
+- modify UI code
+- add language-pack JSON keys
+- modify schema
 - modify runtime behavior
-- modify UI behavior
-- add or modify LICENSE files
+- create a Git tag
+- upload GitHub release assets
+- publish a ZIP
+- generate a final checksum asset
+- add or change LICENSE files
 
-## Manual review before public release
+## Decision
 
-Before converting an RC into a public release candidate or beta asset, perform manual validation:
+v0.3.0-public-beta-language-pack-release-candidate-plan is documentation only.
 
-- extract ZIP on a clean folder
-- run Voila from Run-Voila.ps1
-- confirm browser opens correctly
-- upload a small PDF
-- run OCR review flow
-- confirm Romanian and English language-pack-backed labels behave as expected
-- confirm LanguageTool starts locally
-- confirm Tesseract OCR works for expected languages
-- stop Voila and verify ports are released
-
-## Promotion decision
-
-A release candidate can be promoted only if:
-
-- automated checks pass
-- manual review passes
-- SHA256 matches the documented hash
-- release notes are complete
-- final checklist is complete
-- no unrelated runtime/UI changes are included
-
-## Recommended next milestone
-
-v0.2.38-public-beta-language-pack-rc-assets-plan
-
-Suggested next work:
-
-- prepare RC release notes
-- prepare RC final checklist
-- prepare RC test log template
-- keep generated ZIP local until final approval
-
-## Decision for this milestone
-
-v0.2.37 is documentation only.
-
-Do not publish or tag anything in this milestone.
+It authorizes planning for an RC path, not publishing.

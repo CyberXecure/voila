@@ -1,77 +1,56 @@
-# Voila! Language Pack Release Candidate Checklist
+# Voila! Language Pack Release Candidate Plan Checklist
 
-Milestone: v0.2.37-public-beta-language-pack-release-candidate-plan
-Status: release candidate checklist
-Scope: documentation only; no GitHub release upload, no tag, no public asset publish, no runtime changes, no UI changes
+Milestone: v0.3.0-public-beta-language-pack-release-candidate-plan
+Status: planning checklist
+Scope: documentation only; no UI code changes, no language-pack JSON changes, no runtime changes, no schema changes, no GitHub release upload, no tag, no public ZIP publish, no LICENSE change
 
-## Pre-RC repository checks
+## Baseline reviewed
 
-- main is clean
-- no open PRs
-- no uncommitted files
-- latest language-pack dry-run documentation exists
-- build script parses successfully
-- release smoke scripts parse successfully
+- [x] release-readiness docs exist
+- [x] release-readiness checklist exists
+- [x] release-readiness runbook exists
+- [x] release-readiness inventory exists
+- [x] UI error/status rollup exists
+- [x] full UI localization rollup exists
+- [x] core language packs exist
+- [x] schema exists
+- [x] sample packs exist
+- [x] validator exists
+- [x] runtime helper tests exist
+- [x] v0.2.81 XSS fix confirmed
 
-## Pre-RC automated checks
+## RC plan documented
 
-- smoke-language-pack-build-output.ps1 passes against target ZIP
-- smoke-language-pack-standalone-package.ps1 passes against target ZIP
-- inspect-language-pack-packaging.ps1 passes
-- validate-language-packs.py passes
-- test_language_pack_runtime.py passes
-- test_minimal_language_runtime.py passes
-- smoke-ui-language-endpoint.py passes
-- smoke-core-runtime-helper.py passes
-- smoke-language-pack-files.py passes
-- python -m py_compile services/api/i18n.py passes
+- [x] proposed release identity
+- [x] proposed release nature
+- [x] release goals
+- [x] candidate release assets to define later
+- [x] candidate release contents
+- [x] exclusions
+- [x] validation baseline
+- [x] security requirements
+- [x] release blockers
+- [x] next RC milestones
 
-## Required ZIP files
+## Publishing remains deferred
 
-- language-packs/core/ro.language-pack.json
-- language-packs/core/en.language-pack.json
-- language-packs/schema/language-pack.schema.json
-- python/python.exe
-- runtime/tesseract/tesseract.exe
-- runtime/java/bin/java.exe
-- runtime/languagetool/languagetool-server.jar
-- Run-Voila.ps1
-- Stop-Voila.ps1
+- [x] no GitHub release upload
+- [x] no Git tag
+- [x] no public ZIP publish
+- [x] no final checksum asset
+- [x] no release notes asset
+- [x] no LICENSE change
 
-## Manual RC checks
+## Safety
 
-- ZIP extracts successfully
-- Run-Voila.ps1 starts the app
-- /health returns ok
-- LanguageTool responds
-- Tesseract lists expected OCR languages
-- small PDF upload works
-- OCR review page opens
-- app stops cleanly
-- Voila port is released
-- LanguageTool port is released
-
-## RC artifact files
-
-- RC ZIP
-- SHA256 file
-- RELEASE-NOTES.md
-- TEST-LOG.txt
-- FINAL-CHECKLIST.md
-
-## Do not proceed if
-
-- the ZIP is old or accidentally selected
-- SHA256 was generated before final ZIP creation
-- smoke test fails
-- manual test fails
-- language-pack files are missing
-- runtime files are missing
-- working tree becomes dirty unexpectedly
-- release assets would overwrite v0.2.0-public-beta
+- [x] no UI code change in this milestone
+- [x] no language-pack JSON change in this milestone
+- [x] no runtime behavior change in this milestone
+- [x] no schema change in this milestone
+- [x] existing v0.2.0-public-beta assets unchanged
 
 ## Decision
 
-This checklist is preparation only.
+This milestone creates a release-candidate plan only.
 
-No RC asset is published in v0.2.37.
+It does not authorize publishing.
