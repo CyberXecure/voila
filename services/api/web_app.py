@@ -1203,6 +1203,12 @@ async def upload_pdf(file: UploadFile = File(...)):
                 break
             handle.write(chunk)
 
+    try:
+        enforce_limited_tester_demo_pdf_limit(destination)
+    except HTTPException as exc:
+        destination.unlink(missing_ok=True)
+        return limited_tester_demo_limit_response(str(exc.detail))
+
     return RedirectResponse(
         url="/?uploaded=" + quote(destination.name),
         status_code=303,
