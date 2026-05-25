@@ -20,6 +20,8 @@ from study_engine import get_study_view, record_answer, reset_study_state
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_DIR = PROJECT_ROOT / "data" / "input"
+VOILA_LIMITED_TESTER_DEMO = True
+VOILA_TESTER_DEMO_MAX_PAGES = 5
 OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
 
 APP_TITLE = "Voila! Local"
@@ -803,6 +805,51 @@ def validate_pdf_name(pdf_name: str) -> Path:
     return pdf_path
 
 
+def limited_tester_demo_page_count(pdf_path: Path) -> int:
+    import fitz
+
+    doc = fitz.open(pdf_path)
+    try:
+        return int(doc.page_count)
+    finally:
+        doc.close()
+
+
+def limited_tester_demo_message(page_count: int | None = None) -> str:
+    base = (
+        f"Voila! Limited Tester Demo is limited to "
+        f"{VOILA_TESTER_DEMO_MAX_PAGES} pages per PDF. "
+        "Please use a small non-confidential sample document."
+    )
+    if page_count is not None:
+        return f"{base} This PDF has {page_count} pages."
+    return base
+
+
+def limited_tester_demo_limit_response(detail: str) -> HTMLResponse:
+    return HTMLResponse(
+        f"""
+        <h1>Voila! Limited Tester Demo</h1>
+        <p>{html.escape(detail)}</p>
+        <p>Do not use confidential, personal, legal, medical, financial, safety-critical or sensitive documents.</p>
+        <p><a href="/">Back to Voila</a></p>
+        """,
+        status_code=400,
+    )
+
+
+def enforce_limited_tester_demo_pdf_limit(pdf_path: Path) -> None:
+    if not VOILA_LIMITED_TESTER_DEMO:
+        return
+
+    page_count = limited_tester_demo_page_count(pdf_path)
+
+    if page_count > VOILA_TESTER_DEMO_MAX_PAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=limited_tester_demo_message(page_count),
+        )
+
 
 def safe_upload_name(filename: str) -> str:
     name = Path(filename or "").name
@@ -1008,6 +1055,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         <div class="upload-box">
           <h2>{_ut("ui.upload_pdf", "Upload PDF")}</h2>
           <div class="meta">Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.</div>
+          <div class="meta"><strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.</div>
           <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
             <input type="file" name="file" accept="application/pdf" required>
             <button class="primary" type="submit">{_ut("ui.upload_pdf", "Upload PDF")}</button>
@@ -1125,8 +1173,12 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
 
 @app.post("/generate")
-def generate(pdf_name: str = Form(...)) -> RedirectResponse:
+def generate(pdf_name: str = Form(...)):
     pdf_path = validate_pdf_name(pdf_name)
+    try:
+        enforce_limited_tester_demo_pdf_limit(pdf_path)
+    except HTTPException as exc:
+        return limited_tester_demo_limit_response(str(exc.detail))
     generate_for_pdf(pdf_path)
 
     return RedirectResponse(
@@ -1136,7 +1188,7 @@ def generate(pdf_name: str = Form(...)) -> RedirectResponse:
 
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)) -> RedirectResponse:
+async def upload_pdf(file: UploadFile = File(...)):
     filename = safe_upload_name(file.filename or "document.pdf")
     destination = INPUT_DIR / filename
 
@@ -4929,4 +4981,5 @@ def voila_study_lesson_answer(
         f"/study-lesson?pdf={quote(pdf_path.name)}&lesson_id={quote(str(lesson_id))}",
         status_code=303,
     )
+
 
