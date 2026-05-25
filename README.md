@@ -1,48 +1,79 @@
 # Voila!
 
-Voila! transforms your PDF library into a personal learning system.
+Voila! is a public beta PDF-to-course and OCR learning-content generator.
 
-## v0.1
+It helps turn PDF documents into structured learning materials such as course outlines, cleaned course text, glossary entries, quizzes, flashcards, and OCR review outputs.
 
-Current local prototype:
+## Current public status
 
-- extract selectable text from PDF files
-- keep source page references
-- generate pages.json
-- generate pages.md
-- generate ocr_report.json
-- generate course_outline.json
-- generate course_outline.md
+Latest public beta release:
 
-## Source Mode
+- v0.2.0-public-beta
 
-For now, Voila! works only in source mode:
+Latest language-pack release candidate:
 
-- no translation
-- no AI generation
-- no rewriting
-- original document language only
+- v0.3.0-public-beta-language-pack-rc1
 
-## Test
+RC1 tag:
 
-Put one PDF file in:
+- v0.3.0-public-beta-language-pack-rc1
 
-data/input
+RC1 ZIP SHA256:
 
-Then run:
+- B6F72EE880DDAC953E478AA757B8DB6B43BA9C99C06EB689EB0920245C551E1E
 
-.\scripts\dev\test-pdf.ps1
+## What RC1 includes
 
-<!-- VOILA-LICENSING-STATUS:START -->
-## Public beta / licensing status
+Language Pack RC1 includes:
 
-Voila! is currently published as a public beta for evaluation and feedback.
+- language-pack schema
+- core English and Romanian packs
+- sample packs
+- runtime helper
+- validator
+- UI localization documentation
+- release-readiness documentation
+- release-candidate documentation
+- ZIP asset
+- SHA256 checksum
+- release notes
+- final checklist
+- test log
 
-The final licensing and commercial model are still under review. Until a license is explicitly published in this repository, please do not assume MIT, Apache, GPL, or another open-source/commercial license.
+## Supported language-pack status
 
-The current public release is intended for testing, feedback, and early validation. Commercial usage, redistribution, paid support, and long-term licensing terms will be clarified in a future milestone.
+Included in RC1:
 
-For the current monetization direction, see [MONETIZATION.md](docs/business/MONETIZATION.md).  
-For support information, see [SUPPORT.md](SUPPORT.md).
-<!-- VOILA-LICENSING-STATUS:END -->
+- English
+- Romanian
 
+Planned for future expansion, based on tester feedback and real user demand:
+
+- German
+- Spanish
+- Italian
+- Portuguese
+
+These additional languages are not forced into RC1.
+
+## Licensing status
+
+No LICENSE file has been added yet.
+
+The project is publicly visible, but the commercial and licensing model is still under evaluation. Please do not assume open-source reuse rights until a license is explicitly published.
+
+## Feedback wanted
+
+Voila! is currently looking for practical feedback from early users:
+
+- Is the PDF-to-course workflow useful?
+- Is the README clear?
+- Are the generated learning materials useful?
+- Which language packs matter most?
+- Would a paid supporter package make sense?
+
+See:
+
+- docs/public/VOILA-FEEDBACK-STRATEGY.md
+- docs/public/VOILA-SUPPORTER-PACKAGE.md
+- docs/public/VOILA-LANGUAGE-EXPANSION-PLAN.md
