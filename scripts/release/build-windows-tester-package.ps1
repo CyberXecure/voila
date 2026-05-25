@@ -1,5 +1,5 @@
 param(
-  [string]$Version = "v0.3.1-public-beta-windows-tester-package",
+  [string]$Version = "v0.3.2-public-beta-limited-tester-demo",
   [string]$ReleaseRoot = "D:\dev\releases"
 )
 
@@ -209,7 +209,7 @@ Write-TextFile `
     "4. Wait for the browser to open.",
     "5. If the browser does not open, go to:",
     "   http://127.0.0.1:8787",
-    "6. Test with a small PDF first.",
+    "6. Test with a small non-confidential PDF first (maximum 5 pages per PDF).",
     "7. Review generated outputs:",
     "   - course outline",
     "   - normalized outline",
@@ -223,7 +223,8 @@ Write-TextFile `
     "",
     "Important limitations:",
     "",
-    "- This is a public beta tester package.",
+    "- This is a public beta limited tester demo.",
+    "- This demo is limited to 5 pages per PDF.",
     "- Generated content must be reviewed by a human.",
     "- Do not test with confidential, legal, medical, financial, safety-critical or personal documents.",
     "- Output quality depends on PDF quality and structure.",
