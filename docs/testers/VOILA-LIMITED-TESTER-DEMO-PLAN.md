@@ -205,3 +205,158 @@ Excluded:
 v0.3.2-public-beta-limited-tester-demo
 
 That future milestone should implement the 5-page limit, rebuild the tester ZIP, validate local start/stop behavior and only then prepare a very small private LinkedIn tester round.
+
+## PDF variety testing update
+
+The limited tester demo should not be tested with only one ideal PDF.
+
+For better product feedback, selected testers should be encouraged to test several small, non-confidential PDF samples.
+
+Technical limit:
+
+- maximum 5 pages per PDF
+
+Recommended tester limit:
+
+- 3 to 5 PDFs per tester
+- approximately 15 to 25 pages total per tester
+
+This PDF-count limit is a communication guideline, not a technical enforcement requirement for the first demo.
+
+## Recommended PDF sample types
+
+Ask testers to use varied PDF types when possible:
+
+1. Clean text PDF
+
+Examples:
+
+- short course material
+- simple guide
+- article
+- structured document with headings
+
+Goal:
+
+- test basic extraction and course/quiz generation
+
+2. PDF with images or diagrams
+
+Examples:
+
+- technical manual
+- instructions with screenshots
+- diagrams
+- illustrated process guide
+
+Goal:
+
+- check whether Voila remains useful when visual material is present
+- check whether surrounding text is extracted well
+- identify where diagram handling is weak
+
+3. Scanned or OCR-heavy PDF
+
+Examples:
+
+- scanned document
+- photographed page converted to PDF
+- low-volume OCR sample
+
+Goal:
+
+- test OCR review behavior
+- identify OCR correction needs
+
+4. PDF with tables, lists or procedures
+
+Examples:
+
+- SOP
+- checklist
+- internal procedure
+- operating instructions
+- structured training material
+
+Goal:
+
+- test procedural learning/training value
+- check whether quiz/flashcards remain useful
+
+5. Mixed-layout PDF
+
+Examples:
+
+- text + images + tables
+- headings + screenshots
+- multi-section documentation
+
+Goal:
+
+- identify realistic weaknesses before public distribution
+
+## What not to promise
+
+Do not promise perfect handling of:
+
+- complex diagrams
+- technical drawings
+- dense tables
+- forms
+- signatures
+- complex multi-column layouts
+- image-only documents
+- safety-critical interpretation
+
+The demo should be positioned honestly:
+
+The goal is not perfect conversion. The goal is to understand where Voila is useful, where it fails, and which outputs are worth improving.
+
+## Recommended tester instruction
+
+For this limited demo, please test up to 3-5 small PDFs, each with a maximum of 5 pages.
+
+Useful samples:
+
+- one clean text PDF
+- one PDF with images or diagrams
+- one scanned/OCR PDF
+- optionally, one manual, procedure, onboarding or training document
+- optionally, one mixed-layout document
+
+Please do not use confidential, personal, legal, medical, financial, safety-critical or sensitive documents.
+
+## Additional feedback questions
+
+Ask testers:
+
+1. What type of PDF did you test?
+   - clean text
+   - scanned/OCR
+   - images/diagrams
+   - tables/lists
+   - manual/procedure
+   - training/onboarding
+   - mixed layout
+
+2. Which PDF type worked best?
+
+3. Which PDF type failed or was confusing?
+
+4. Did Voila handle images/diagrams acceptably?
+
+5. Did the generated content remain useful even when images/diagrams were not fully understood?
+
+6. Did tables, lists or procedures produce useful learning/training output?
+
+7. Would this help with real manuals, procedures or onboarding documents if improved?
+
+## Implementation impact
+
+The future implementation milestone should still enforce only one simple technical limit first:
+
+- maximum 5 pages per PDF
+
+Do not add account-based limits, total-document counters or usage tracking yet.
+
+The recommended 3-5 PDF limit should remain a tester instruction for now.
