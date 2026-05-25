@@ -115,3 +115,36 @@ Before merge:
 - [ ] no release asset changed
 - [ ] no runtime code changed
 - [ ] working tree clean after commit
+
+## PDF variety testing checklist update
+
+Recommended tester PDF set:
+
+- [ ] clean text PDF
+- [ ] PDF with images or diagrams
+- [ ] scanned/OCR PDF
+- [ ] PDF with tables, lists or procedures
+- [ ] mixed-layout PDF, if available
+
+Tester guidance:
+
+- [ ] recommend 3-5 PDFs per tester
+- [ ] keep maximum 5 pages per PDF
+- [ ] keep total recommended pages around 15-25 per tester
+- [ ] do not technically enforce total PDF count yet
+- [ ] do not require accounts, usage tracking or cloud logic
+- [ ] do not promise perfect diagram/table handling
+
+Feedback additions:
+
+- [ ] ask what PDF type was tested
+- [ ] ask which PDF type worked best
+- [ ] ask which PDF type failed
+- [ ] ask whether image/diagram handling was acceptable
+- [ ] ask whether output remained useful despite imperfect visual understanding
+- [ ] ask whether manuals/procedures/training documents feel like a strong use case
+
+Implementation reminder:
+
+- [ ] future implementation should enforce max 5 pages per PDF
+- [ ] 3-5 PDFs per tester remains a communication limit only
