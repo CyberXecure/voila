@@ -180,17 +180,8 @@ Write-TextFile `
     "@echo off",
     "setlocal",
     "cd /d ""%~dp0""",
-    "",
-    "echo.",
-    "echo Starting Voila! tester package...",
-    "echo.",
-    "powershell -NoProfile -ExecutionPolicy Bypass -File "".\\scripts\\dev\\start-voila.ps1""",
-    "",
-    "echo.",
-    "echo If the browser did not open automatically, open:",
-    "echo http://127.0.0.1:8787",
-    "echo.",
-    "pause"
+    "start ""Voila Starter"" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "".\\scripts\\dev\\start-voila.ps1""",
+    "exit /b 0"
   )
 
 Write-TextFile `
@@ -200,16 +191,8 @@ Write-TextFile `
     "@echo off",
     "setlocal",
     "cd /d ""%~dp0""",
-    "",
-    "echo.",
-    "echo Stopping Voila! tester package...",
-    "echo.",
-    "powershell -NoProfile -ExecutionPolicy Bypass -File "".\\scripts\\dev\\stop-voila.ps1""",
-    "",
-    "echo.",
-    "echo Voila stop command completed.",
-    "echo.",
-    "pause"
+    "start ""Voila Stopper"" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "".\\scripts\\dev\\stop-voila.ps1""",
+    "exit /b 0"
   )
 
 Write-TextFile `
@@ -222,7 +205,7 @@ Write-TextFile `
     "",
     "1. Right-click the ZIP and choose Extract All.",
     "2. Open the extracted folder.",
-    "3. Double-click START-VOILA.bat.",
+    "3. Double-click START-VOILA.bat. It starts Voila in the background.",
     "4. Wait for the browser to open.",
     "5. If the browser does not open, go to:",
     "   http://127.0.0.1:8787",
@@ -235,8 +218,8 @@ Write-TextFile `
     "   - quiz",
     "   - flashcards",
     "   - OCR review",
-    "8. When finished, double-click STOP-VOILA.bat.",
-    "9. Send feedback using docs/testers/VOILA-TESTER-FEEDBACK-QUESTIONS.md.",
+    "8. When finished, double-click STOP-VOILA.bat. It stops Voila in the background.",
+    "9. If something fails, use START-VOILA-DEBUG.bat or STOP-VOILA-DEBUG.bat to see troubleshooting output.`n10. Send feedback using docs/testers/VOILA-TESTER-FEEDBACK-QUESTIONS.md.",
     "",
     "Important limitations:",
     "",
@@ -246,6 +229,42 @@ Write-TextFile `
     "- Output quality depends on PDF quality and structure.",
     "- Scanned PDFs, complex tables, forms and image-heavy files may need manual review.",
     "- No LICENSE file is included because the licensing/commercial model is still under evaluation."
+  )
+
+
+Write-TextFile `
+  -Path (Join-Path $packageDir "START-VOILA-DEBUG.bat") `
+  -Encoding "ASCII" `
+  -Lines @(
+    "@echo off",
+    "setlocal",
+    "cd /d ""%~dp0""",
+    "echo.",
+    "echo Starting Voila! tester package in DEBUG mode...",
+    "echo.",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File "".\\scripts\\dev\\start-voila.ps1""",
+    "echo.",
+    "echo If the browser did not open automatically, open:",
+    "echo http://127.0.0.1:8787",
+    "echo.",
+    "pause"
+  )
+
+Write-TextFile `
+  -Path (Join-Path $packageDir "STOP-VOILA-DEBUG.bat") `
+  -Encoding "ASCII" `
+  -Lines @(
+    "@echo off",
+    "setlocal",
+    "cd /d ""%~dp0""",
+    "echo.",
+    "echo Stopping Voila! tester package in DEBUG mode...",
+    "echo.",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File "".\\scripts\\dev\\stop-voila.ps1""",
+    "echo.",
+    "echo Voila stop command completed.",
+    "echo.",
+    "pause"
   )
 
 Write-Step "Create release notes/checklist/test log"
@@ -393,4 +412,5 @@ Write-Host $zipPath
 Write-Host ""
 Write-Host "SHA256:"
 Write-Host $sha
+
 
