@@ -1760,8 +1760,8 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     else:
         question_html = """
         <article class="card">
-          <h2>{_ut("no_questions_available", "No questions available")}</h2>
-          <p>{_ut("generate_course_first", "Generate course files first, then Study Mode will use quiz.json.")}</p>
+          <h2>No questions available</h2>
+          <p>Generate course files first, then Study Mode will use quiz.json.</p>
         </article>
         """
 
@@ -4942,7 +4942,7 @@ def voila_study_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HT
     else:
         question_html = f"""
         <article class="card">
-          <h2>{_ut("no_questions_available", "No questions available")}</h2>
+          <h2>No questions available</h2>
           <p>{_ut("no_questions_for_lesson", "No questions are available for the selected lesson.")}</p>
         </article>
         """
@@ -4987,5 +4987,6 @@ def voila_study_lesson_answer(
         f"/study-lesson?pdf={quote(pdf_path.name)}&lesson_id={quote(str(lesson_id))}",
         status_code=303,
     )
+
 
 
