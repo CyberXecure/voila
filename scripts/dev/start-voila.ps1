@@ -1,3 +1,7 @@
+param(
+    [switch]$Silent
+)
+
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -104,13 +108,29 @@ cd '$LanguageToolDir'
 java -cp languagetool-server.jar org.languagetool.server.HTTPServer --config server.properties --port $LtPort --allow-origin
 "@
 
-    Start-Process pwsh -ArgumentList @(
-        "-NoExit",
-        "-Command",
-        $ltCommand
-    )
-
-    Write-Host "Aștept LanguageTool..."
+    if ($Silent) {
+        Start-Process `
+            -FilePath "java" `
+            -WorkingDirectory $LanguageToolDir `
+            -ArgumentList @(
+                "-cp",
+                "languagetool-server.jar",
+                "org.languagetool.server.HTTPServer",
+                "--config",
+                "server.properties",
+                "--port",
+                "$LtPort",
+                "--allow-origin"
+            ) `
+            -WindowStyle Hidden
+    } else {
+        Start-Process pwsh -ArgumentList @(
+            "-NoExit",
+            "-Command",
+            $ltCommand
+        )
+    }
+Write-Host "Aștept LanguageTool..."
 
     $ok = $false
     for ($i = 0; $i -lt 40; $i++) {
@@ -141,13 +161,32 @@ cd '$ProjectRoot'
 & '$Python' -m uvicorn web_app:app --app-dir '.\services\api' --host $VoilaHost --port $VoilaPort --log-level info
 "@
 
-    Start-Process pwsh -ArgumentList @(
-        "-NoExit",
-        "-Command",
-        $voilaCommand
-    )
-
-    Write-Host "Aștept Voila..."
+    if ($Silent) {
+        Start-Process `
+            -FilePath $Python `
+            -WorkingDirectory $ProjectRoot `
+            -ArgumentList @(
+                "-m",
+                "uvicorn",
+                "web_app:app",
+                "--app-dir",
+                ".\services\api",
+                "--host",
+                "$VoilaHost",
+                "--port",
+                "$VoilaPort",
+                "--log-level",
+                "info"
+            ) `
+            -WindowStyle Hidden
+    } else {
+        Start-Process pwsh -ArgumentList @(
+            "-NoExit",
+            "-Command",
+            $voilaCommand
+        )
+    }
+Write-Host "Aștept Voila..."
 
     $ready = Wait-HttpOk -Url "http://$VoilaHost`:$VoilaPort/" -TimeoutSeconds 30
 
@@ -167,4 +206,9 @@ Start-Process $Url
 
 Write-Host ""
 Write-Host "DONE."
-Write-Host "Ține deschise ferestrele PowerShell pentru LanguageTool și Voila."
+if ($Silent) {
+    Write-Host "Silent mode: LanguageTool and Voila were started in hidden background windows."
+} else {
+    Write-Host "Ține deschise ferestrele PowerShell pentru LanguageTool și Voila."
+}
+

@@ -205,7 +205,7 @@ Write-TextFile `
     "",
     "1. Right-click the ZIP and choose Extract All.",
     "2. Open the extracted folder.",
-    "3. Double-click START-VOILA.bat. It starts Voila in the background.",
+    "3. Double-click START-VOILA.vbs for silent background start. If that does not work, use START-VOILA.bat.",
     "4. Wait for the browser to open.",
     "5. If the browser does not open, go to:",
     "   http://127.0.0.1:8787",
@@ -218,7 +218,7 @@ Write-TextFile `
     "   - quiz",
     "   - flashcards",
     "   - OCR review",
-    "8. When finished, double-click STOP-VOILA.bat. It stops Voila in the background.",
+    "8. When finished, double-click STOP-VOILA.vbs for silent background stop. If that does not work, use STOP-VOILA.bat.",
     "9. If something fails, use START-VOILA-DEBUG.bat or STOP-VOILA-DEBUG.bat to see troubleshooting output.`n10. Send feedback using docs/testers/VOILA-TESTER-FEEDBACK-QUESTIONS.md.",
     "",
     "Important limitations:",
@@ -266,6 +266,29 @@ Write-TextFile `
     "echo Voila stop command completed.",
     "echo.",
     "pause"
+  )
+
+
+Write-TextFile `
+  -Path (Join-Path $packageDir "START-VOILA.vbs") `
+  -Encoding "ASCII" `
+  -Lines @(
+    'Set shell = CreateObject("WScript.Shell")',
+    'Set fso = CreateObject("Scripting.FileSystemObject")',
+    'base = fso.GetParentFolderName(WScript.ScriptFullName)',
+    'cmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File " & Chr(34) & base & "\scripts\dev\start-voila.ps1" & Chr(34) & " -Silent"',
+    'shell.Run cmd, 0, False'
+  )
+
+Write-TextFile `
+  -Path (Join-Path $packageDir "STOP-VOILA.vbs") `
+  -Encoding "ASCII" `
+  -Lines @(
+    'Set shell = CreateObject("WScript.Shell")',
+    'Set fso = CreateObject("Scripting.FileSystemObject")',
+    'base = fso.GetParentFolderName(WScript.ScriptFullName)',
+    'cmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File " & Chr(34) & base & "\scripts\dev\stop-voila.ps1" & Chr(34)',
+    'shell.Run cmd, 0, False'
   )
 
 Write-Step "Create release notes/checklist/test log"
@@ -413,5 +436,7 @@ Write-Host $zipPath
 Write-Host ""
 Write-Host "SHA256:"
 Write-Host $sha
+
+
 
 
