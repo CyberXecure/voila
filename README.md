@@ -1,79 +1,268 @@
 # Voila!
 
-Voila! is a public beta PDF-to-course and OCR learning-content generator.
+**Your local PDF learning studio.**
 
-It helps turn PDF documents into structured learning materials such as course outlines, cleaned course text, glossary entries, quizzes, flashcards, and OCR review outputs.
+Voila! turns PDF documents into structured, study-ready courses with lessons, extracted figures, OCR review tools, study questions, and progress tracking.
 
-## Current public status
+Voila is currently in **public beta**.
 
-Latest public beta release:
+![Voila Upload PDF](docs/public/screenshots/voila-01-upload-pdf.png)
 
-- v0.2.0-public-beta
+---
 
-Latest language-pack release candidate:
+## What is Voila?
 
-- v0.3.0-public-beta-language-pack-rc1
+Voila helps you turn static PDF files into a more practical learning workflow.
 
-RC1 tag:
+Instead of reading a long PDF page by page, Voila helps you:
 
-- v0.3.0-public-beta-language-pack-rc1
+- upload a PDF locally
+- generate a structured course
+- open generated lessons
+- inspect extracted figures
+- review and adjust OCR crops
+- study recommended questions
+- track concept progress
+- use course tools from one place
 
-RC1 ZIP SHA256:
+Voila is designed for people who study from PDFs: students, technical readers, trainers, engineers, researchers, documentation-heavy professionals, and self-learners.
 
-- B6F72EE880DDAC953E478AA757B8DB6B43BA9C99C06EB689EB0920245C551E1E
+---
 
-## What RC1 includes
+## Public beta status
 
-Language Pack RC1 includes:
+Voila v0.3.x is a **public beta**.
 
-- language-pack schema
-- core English and Romanian packs
-- sample packs
-- runtime helper
-- validator
-- UI localization documentation
-- release-readiness documentation
-- release-candidate documentation
-- ZIP asset
-- SHA256 checksum
-- release notes
-- final checklist
-- test log
+Current focus:
 
-## Supported language-pack status
+- validate the Windows tester package
+- collect feedback from early users
+- improve PDF-to-course quality
+- improve OCR and figure workflows
+- improve study and progress tools
+- polish documentation and public showcase materials
 
-Included in RC1:
+Beta note: generated learning content should be reviewed by the user, especially for technical, professional, or academic documents.
 
-- English
-- Romanian
+---
 
-Planned for future expansion, based on tester feedback and real user demand:
+## Screenshots
 
-- German
-- Spanish
-- Italian
-- Portuguese
+### 1. Upload PDF
 
-These additional languages are not forced into RC1.
+Start by selecting a PDF from your computer. The tester demo is designed for small, non-confidential sample documents.
 
-## Licensing status
+![Upload PDF](docs/public/screenshots/voila-01-upload-pdf.png)
 
-No LICENSE file has been added yet.
+### 2. Generated course library
 
-The project is publicly visible, but the commercial and licensing model is still under evaluation. Please do not assume open-source reuse rights until a license is explicitly published.
+After upload and generation, Voila shows the PDF in the local library with course actions such as Generate course, Open course, Figures, Edit crops, Study, Progress, and Logs.
 
-## Feedback wanted
+![Generated course library](docs/public/screenshots/voila-02-generated-library.png)
 
-Voila! is currently looking for practical feedback from early users:
+### 3. Lessons
 
-- Is the PDF-to-course workflow useful?
-- Is the README clear?
-- Are the generated learning materials useful?
-- Which language packs matter most?
-- Would a paid supporter package make sense?
+Generated courses are split into lessons, making the PDF easier to review and study.
+
+![Lessons](docs/public/screenshots/voila-03-lessons.png)
+
+### 4. Figures
+
+Voila extracts and displays figures separately, which is useful for diagrams, charts, illustrations, and technical content.
+
+![Figures gallery](docs/public/screenshots/voila-04-figures-gallery.png)
+
+### 5. Edit crops
+
+The crop editor helps review and adjust figure/OCR regions when a document needs cleanup.
+
+![Edit crops](docs/public/screenshots/voila-05-edit-crops.png)
+
+### 6. Study mode
+
+Study mode recommends questions generated from the course content and lets users mark answers as correct or incorrect.
+
+![Study mode](docs/public/screenshots/voila-06-study-mode.png)
+
+### 7. Progress dashboard
+
+The progress dashboard shows overall mastery, study coverage, concept status, and recommended next focus.
+
+![Progress dashboard](docs/public/screenshots/voila-07-progress-dashboard.png)
+
+### 8. Course tools
+
+Course Tools provides a central place for opening the generated course, lessons, study mode, OCR review, figures, crop editing, and progress.
+
+![Course tools](docs/public/screenshots/voila-08-course-tools.png)
+
+---
+
+## Features
+
+### PDF to course generation
+
+Voila transforms a PDF into structured learning material, including lessons and study artifacts.
+
+### Local-first workflow
+
+The app runs locally on the user's Windows machine during beta testing. No cloud account is required for the local tester workflow.
+
+### OCR-assisted review
+
+Voila includes OCR-related tools for PDFs where text extraction is incomplete, scanned, or imperfect.
+
+### Lessons
+
+Generated lessons make the document easier to read, navigate, and study.
+
+### Figure extraction
+
+Figures are surfaced separately so users can inspect diagrams and visual information without hunting through the original PDF.
+
+### Crop editing
+
+Users can review and adjust crop areas to improve figure extraction and OCR-related workflows.
+
+### Study mode
+
+Voila generates recommended questions from the course content and supports simple review actions.
+
+### Progress tracking
+
+Progress tools help users see what they have studied and which concepts need more review.
+
+---
+
+## Quick start
+
+1. Download the latest Voila public beta package from GitHub Releases.
+2. Extract the ZIP archive.
+3. Run the included start script.
+4. Open the local Voila interface in your browser.
+5. Upload a small PDF.
+6. Generate a course.
+7. Review Lessons, Figures, Study, Progress, and Course Tools.
+8. Send feedback.
+
+For limited tester demo builds, use small, non-confidential sample PDFs.
+
+---
+
+## Architecture overview
+
+Voila uses a local-first architecture for the public beta tester workflow.
+
+```text
+PDF document
+   ↓
+Local upload
+   ↓
+Text extraction + OCR support
+   ↓
+Course generation
+   ↓
+Lessons + figures + study questions + progress
+   ↓
+Local study workflow
+```
+
+Main components:
+
+- local FastAPI service
+- local browser-based UI
+- PDF extraction workflow
+- OCR tooling
+- LanguageTool integration
+- generated course artifacts stored locally
+
+The goal is to keep early testing simple: download, extract, start, upload PDF, generate course, study.
+
+---
+
+## Roadmap
+
+### v0.3.x public beta polish
+
+- improve README and showcase materials
+- improve screenshot-based documentation
+- collect structured tester feedback
+- simplify tester onboarding
+- improve troubleshooting notes
+
+### Learning workflow
+
+- improve generated lesson quality
+- improve study questions
+- improve flashcards and review flows
+- improve progress and concept mastery signals
+
+### OCR and figures
+
+- improve figure extraction
+- improve crop editing workflow
+- improve OCR review workflow
+- improve document diagnostics
+
+### Packaging
+
+- simplify Windows tester package
+- improve start/stop scripts
+- improve local smoke checks
+- improve release checklist
+
+### Monetization and distribution
+
+- evaluate supporter package
+- evaluate professional package
+- keep licensing and commercial decisions flexible during beta
+
+---
+
+## Feedback
+
+Voila is looking for practical feedback from early testers.
+
+Useful feedback:
+
+- Was Voila easy to start?
+- Was PDF upload clear?
+- Did course generation work?
+- Were the lessons useful?
+- Were the figures useful?
+- Was study mode helpful?
+- Was progress tracking understandable?
+- What was confusing?
+- What should be improved first?
+- Would you use Voila again with another PDF?
 
 See:
 
-- docs/public/VOILA-FEEDBACK-STRATEGY.md
-- docs/public/VOILA-SUPPORTER-PACKAGE.md
-- docs/public/VOILA-LANGUAGE-EXPANSION-PLAN.md
+- `docs/public/FEEDBACK-COLLECTION-PLAN.md`
+
+---
+
+## Public showcase docs
+
+Additional public presentation material:
+
+- `docs/public/LANDING-PAGE-CONTENT.md`
+- `docs/public/SCREENSHOT-SHOWCASE-GUIDE.md`
+- `docs/public/FEEDBACK-COLLECTION-PLAN.md`
+- `docs/public/screenshots/README.md`
+
+---
+
+## Repository
+
+GitHub repository:
+
+```text
+CyberXecure/voila
+```
+
+---
+
+## Disclaimer
+
+Voila is beta software. Generated content may contain extraction, OCR, formatting, or interpretation errors. Always review generated course material before using it for professional, academic, or technical decisions.
