@@ -130,3 +130,47 @@ supporter/pro release channels
 download page on official website
 private tester portal
 ```
+
+## Public download wording policy
+
+Public communication should avoid ambiguous download wording.
+
+Do not use:
+
+```text
+Download the latest release.
+```
+
+Use:
+
+```text
+Download the public beta runtime package identified in the release notes.
+```
+
+Reason:
+
+```text
+The latest release may be a tester demo build, language-pack release candidate, documentation-only update, or another package that is not intended as the general public runtime package.
+```
+
+Recommended release labels:
+
+```text
+Public Beta Runtime Package
+Tester Demo Build
+Language Pack Release Candidate
+Documentation-only Update
+Internal Build
+Supporter Build
+Pro Build
+```
+
+Each release should clearly state:
+
+```text
+who it is for
+whether it includes a runtime package
+whether it has page-count limits
+whether it is suitable for public beta testing
+whether it is documentation-only
+```
