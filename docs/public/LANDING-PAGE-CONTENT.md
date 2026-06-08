@@ -260,3 +260,31 @@ Voila is a local PDF learning studio for turning documents into structured cours
 ## Longer marketing copy
 
 Voila helps learners, trainers, and technical readers transform PDF documents into structured learning experiences. Upload a PDF, generate lessons, inspect extracted figures, review OCR-related content, study recommended questions, and track your progress — all through a local-first Windows beta workflow.
+
+## Download CTA wording
+
+Use precise download wording for public pages.
+
+Recommended CTA label:
+
+```text
+Download public beta runtime package
+```
+
+Recommended helper text:
+
+```text
+Use the public beta runtime package identified in the release notes. Some tester/demo builds or release-candidate materials may include limits or may not be intended as the public runtime package.
+```
+
+Avoid:
+
+```text
+Download latest release
+```
+
+Reason:
+
+```text
+The latest GitHub release may be a documentation update, language-pack release candidate, tester demo build, or limited build rather than the recommended public runtime package.
+```

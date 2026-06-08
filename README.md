@@ -134,9 +134,54 @@ Progress tools help users see what they have studied and which concepts need mor
 
 ---
 
+## Download guidance
+
+Voila releases may have different purposes.
+
+Use the release notes to identify the correct package before downloading.
+
+Recommended wording:
+
+```text
+Download the public beta runtime package identified in the release notes.
+```
+
+Avoid saying only:
+
+```text
+Download the latest release.
+```
+
+Reason:
+
+```text
+Some later releases may be tester demo builds, language-pack release candidates, documentation-only updates, or packages with page-count limits.
+```
+
+Release type examples:
+
+```text
+Public Beta Runtime Package:
+- intended for public evaluation and feedback
+- includes the runtime package for users/testers
+
+Tester Demo Build:
+- may include strict page-count limits
+- intended for selected testers
+- not necessarily the same as the public runtime package
+
+Language Pack Release Candidate:
+- may focus on language-pack assets or validation
+- may not be the recommended runtime package for general users
+
+Docs-only Update:
+- updates README, screenshots, terms, or planning docs
+- does not change the runtime package
+```
+
 ## Quick start
 
-1. Download the public beta runtime package from GitHub Releases. Use the release explicitly identified as the public beta runtime package; later tester/demo builds or release-candidate materials may include limits or non-runtime changes.
+1. Download the public beta runtime package identified in the release notes. Do not assume the latest GitHub release is always the public runtime package; tester/demo builds or release-candidate materials may include limits or non-runtime changes.
 2. Extract the ZIP archive.
 3. Run the included start script.
 4. Open the local Voila interface in your browser.
