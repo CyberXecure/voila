@@ -136,7 +136,7 @@ Progress tools help users see what they have studied and which concepts need mor
 
 ## Quick start
 
-1. Download the latest Voila public beta package from GitHub Releases.
+1. Download the public beta runtime package from GitHub Releases. Use the release explicitly identified as the public beta runtime package; later tester/demo builds or release-candidate materials may include limits or non-runtime changes.
 2. Extract the ZIP archive.
 3. Run the included start script.
 4. Open the local Voila interface in your browser.
@@ -252,6 +252,31 @@ Additional public presentation material:
 - `docs/public/screenshots/README.md`
 
 ---
+
+## License and beta terms
+
+Voila is currently shared as public beta software.
+
+Public GitHub visibility does not mean that Voila is open-source licensed.
+
+Unless a separate written license agreement says otherwise:
+
+- all rights are reserved
+- commercial redistribution is not allowed
+- resale is not allowed
+- repackaging under another brand is not allowed
+- modified commercial derivative products are not allowed
+- paid hosting or software-as-a-service redistribution is not allowed
+
+The public beta package is intended for evaluation, testing, feedback, and personal/internal learning workflows.
+
+Some later tester/demo builds may include additional limits, such as page-count limits, demo restrictions, or release-candidate-only materials.
+
+See:
+
+- `LICENSE.txt`
+- `BETA-TERMS.md`
+- `docs/legal/THIRD-PARTY-NOTICES.md`
 
 ## Repository
 

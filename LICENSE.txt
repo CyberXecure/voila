@@ -1,0 +1,43 @@
+# Voila License Notice
+
+Copyright © CyberXecure. All rights reserved.
+
+Voila is currently shared as public beta software.
+
+Unless a separate written license agreement says otherwise, the Voila source code, documentation, release packages, branding, screenshots, and generated public presentation materials are not licensed for:
+
+- commercial redistribution
+- resale
+- sublicensing
+- paid hosting
+- derivative commercial products
+- repackaging under another brand
+- removing copyright or attribution notices
+
+Public access to this repository does not mean that Voila is open-source licensed.
+
+The repository may be visible on GitHub for transparency, public beta review, development history, and tester access. Additional rights are granted only through an explicit license or written agreement.
+
+## Beta use
+
+The public beta package may be used for evaluation, testing, feedback, and personal/internal learning workflows.
+
+Do not redistribute Voila as your own product.
+
+Do not sell Voila or a modified version of Voila.
+
+Do not use Voila branding, screenshots, or release packages in a way that implies endorsement, partnership, or ownership unless you have written permission.
+
+## Third-party components
+
+Voila may include or depend on third-party components, runtimes, tools, or libraries. Those components remain under their respective licenses.
+
+See:
+
+```text
+docs/legal/THIRD-PARTY-NOTICES.md
+```
+
+## No warranty
+
+Voila is provided as beta software, without warranty. Generated content may contain OCR, extraction, formatting, or interpretation errors. Users are responsible for reviewing generated material before relying on it.
