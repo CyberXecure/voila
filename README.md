@@ -298,6 +298,41 @@ Additional public presentation material:
 
 ---
 
+## Package legal files
+
+Voila Windows packages should include an offline `legal/` folder with the package terms and third-party notices.
+
+Expected package structure:
+
+```text
+legal/
+  EULA.txt
+  LICENSE.txt
+  BETA-TERMS.md
+  THIRD-PARTY-NOTICES.md
+```
+
+For future package staging, Voila includes a release helper script:
+
+```powershell
+.\scripts\release\copy-package-legal-files.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta
+```
+
+The helper copies repository legal sources into package-ready filenames and validates the required outputs.
+
+Default mapping:
+
+```text
+docs/legal/VOILA-BETA-EULA-DRAFT.md -> legal/EULA.txt
+LICENSE.txt -> legal/LICENSE.txt
+BETA-TERMS.md -> legal/BETA-TERMS.md
+docs/legal/THIRD-PARTY-NOTICES.md -> legal/THIRD-PARTY-NOTICES.md
+```
+
+This script is for package preparation only. It does not rebuild Voila, create a release, upload assets, change runtime behavior, or provide final legal approval.
+
 ## License and beta terms
 
 Voila is currently shared as public beta software.
