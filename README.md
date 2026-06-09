@@ -298,6 +298,54 @@ Additional public presentation material:
 
 ---
 
+## Package staging validation
+
+Before a future Voila Windows package is zipped, installed, or published, the package staging folder should be validated.
+
+Recommended release/package helper sequence:
+
+```powershell
+.\scripts\release\copy-package-legal-files.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta
+
+.\scripts\release\validate-package-staging.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta
+```
+
+The validation helper checks the package staging folder for:
+
+```text
+legal/EULA.txt
+legal/LICENSE.txt
+legal/BETA-TERMS.md
+legal/THIRD-PARTY-NOTICES.md
+README-WINDOWS.txt or README-TESTERS.txt
+RELEASE-NOTES.txt
+START-VOILA.bat
+STOP-VOILA.bat
+forbidden private/secrets files
+```
+
+Useful validation modes:
+
+```powershell
+# Treat warnings as failures
+.\scripts\release\validate-package-staging.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta `
+  -Strict
+
+# Validate only the legal/ folder and legal file content indicators
+.\scripts\release\validate-package-staging.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta `
+  -ValidateLegalOnly
+```
+
+The validation script does not build a package, create a release, upload assets, or provide final legal approval. It is a release/package readiness check before ZIP or installer creation.
+
 ## Package legal files
 
 Voila Windows packages should include an offline `legal/` folder with the package terms and third-party notices.
