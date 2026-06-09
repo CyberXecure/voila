@@ -341,8 +341,8 @@ foreach ($result in $Results) {
   Write-Host $line
 }
 
-$failCount = ($Results | Where-Object { $_.Status -eq "FAIL" }).Count
-$warnCount = ($Results | Where-Object { $_.Status -eq "WARN" }).Count
+$failCount = @($Results | Where-Object { $_.Status -eq "FAIL" }).Count
+$warnCount = @($Results | Where-Object { $_.Status -eq "WARN" }).Count
 
 Write-Host ""
 
