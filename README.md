@@ -298,6 +298,49 @@ Additional public presentation material:
 
 ---
 
+## Windows package staging dry-run
+
+Voila has a validated Windows package staging dry-run flow for future controlled packages.
+
+The dry-run confirmed that a package staging folder can include:
+
+```text
+README-WINDOWS.txt
+RELEASE-NOTES.txt
+START-VOILA.bat
+STOP-VOILA.bat
+legal/EULA.txt
+legal/LICENSE.txt
+legal/BETA-TERMS.md
+legal/THIRD-PARTY-NOTICES.md
+```
+
+The validated helper sequence is:
+
+```powershell
+.\scripts\release\copy-package-legal-files.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta
+
+.\scripts\release\validate-package-staging.ps1 `
+  -PackageRoot <package-staging-folder> `
+  -ReleaseType PublicBeta `
+  -Strict
+```
+
+Dry-run result:
+
+```text
+legal file copy: PASS
+package staging validation: PASS
+Strict validation: PASS
+ValidateLegalOnly validation: PASS
+required staging files present: PASS
+no ZIP / EXE / MSI created during dry-run: PASS
+```
+
+This dry-run does not create a public release, ZIP, installer, payment flow, or final legal approval. It only validates the future package staging process before a package candidate is created.
+
 ## Package staging validation
 
 Before a future Voila Windows package is zipped, installed, or published, the package staging folder should be validated.
