@@ -298,6 +298,52 @@ Additional public presentation material:
 
 ---
 
+## Windows ZIP candidate build helper
+
+Voila includes a release helper for preparing controlled Windows ZIP package candidates:
+
+```text
+scripts/release/build-windows-zip-candidate.ps1
+```
+
+The helper can prepare a package staging folder from an explicit runtime source, copy legal files, validate package staging with `-Strict`, and write a build summary.
+
+Safe DryRun usage:
+
+```powershell
+.\scripts\release\build-windows-zip-candidate.ps1 `
+  -RuntimeSource <runtime-source-folder> `
+  -OutputRoot .\.release-cache\voila-windows-package-candidate `
+  -Version "v0.3.x" `
+  -ReleaseType PublicBeta `
+  -DryRun
+```
+
+The DryRun flow has been validated. It confirms:
+
+```text
+runtime source copied to staging
+package legal files copied
+package staging validation -Strict passes
+BUILD-SUMMARY.txt created
+no ZIP created
+no SHA256 created
+no EXE/MSI created
+```
+
+Full local candidate build, when ready:
+
+```powershell
+.\scripts\release\build-windows-zip-candidate.ps1 `
+  -RuntimeSource <runtime-source-folder> `
+  -OutputRoot .\.release-cache\voila-windows-package-candidate `
+  -Version "v0.3.x" `
+  -ReleaseType PublicBeta `
+  -Force
+```
+
+This helper does not publish a GitHub release, upload assets, create an installer, sign binaries, implement payment/licensing, or provide final legal approval.
+
 ## Windows package staging dry-run
 
 Voila has a validated Windows package staging dry-run flow for future controlled packages.
