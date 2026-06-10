@@ -64,7 +64,9 @@ function Assert-SafePackageRoot {
 function Write-TextFile {
   param(
     [Parameter(Mandatory = $true)][string] $Path,
-    [Parameter(Mandatory = $true)][string[]] $Lines
+    [Parameter(Mandatory = $true)]
+    [AllowEmptyString()]
+    [string[]] $Lines
   )
 
   if ((Test-Path $Path) -and (-not $Force)) {
