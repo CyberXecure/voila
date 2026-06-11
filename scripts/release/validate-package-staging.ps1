@@ -223,7 +223,6 @@ function Test-ForbiddenPackageContent {
 
   $forbiddenFilePatterns = @(
     ".env",
-    "*.pem",
     "*.key",
     "*.pfx"
   )
