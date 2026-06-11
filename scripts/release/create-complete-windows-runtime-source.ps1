@@ -367,7 +367,7 @@ Write-TextFile -Path (Join-Path $packageRoot "README-WINDOWS.txt") -Lines @(
   "Local URL:",
   "http://127.0.0.1:8787",
   "",
-  "Legal files are copied during ZIP package build."
+  "Legal files are copied during ZIP package build. See legal/ folder, EULA, LICENSE, BETA-TERMS, and THIRD-PARTY-NOTICES."
 )
 
 Write-TextFile -Path (Join-Path $packageRoot "RELEASE-NOTES.txt") -Lines @(
