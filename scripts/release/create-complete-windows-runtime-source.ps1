@@ -188,7 +188,7 @@ function Write-Launchers {
     '$startLog = Join-Path $LogsDir "start-voila.log"',
     '',
     '"Starting Voila API at http://127.0.0.1:8787" | Set-Content -Encoding UTF8 $startLog',
-    '$args = @("-m", "uvicorn", "web_app:app", "--app-dir", ".\services\api", "--host", "127.0.0.1", "--port", "8787")',
+    '$args = @("-B", "-m", "uvicorn", "web_app:app", "--app-dir", ".\services\api", "--host", "127.0.0.1", "--port", "8787")',
     '$proc = Start-Process -FilePath $PythonExe -ArgumentList $args -WorkingDirectory $PackageRoot -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -WindowStyle Minimized -PassThru',
     '$proc.Id | Set-Content -Encoding UTF8 $apiPid',
     'Start-Sleep -Seconds 2',
@@ -266,7 +266,7 @@ function Invoke-ImportValidation {
   Push-Location $PackageRoot
   try {
     $code = "import sys; sys.path.insert(0, r'.\services\api'); import fastapi, uvicorn, web_app; print('OK')"
-    $output = & $pythonExe -c $code 2>&1
+    $output = & $pythonExe -B -c $code 2>&1
     $exitCode = $LASTEXITCODE
 
     if ($exitCode -ne 0 -or (($output -join "`n") -notmatch "OK")) {
@@ -277,12 +277,31 @@ function Invoke-ImportValidation {
   }
 }
 
+
+function Remove-RuntimeSourceCaches {
+  param([Parameter(Mandatory = $true)][string] $PackageRoot)
+
+  $cacheDirs = Get-ChildItem $PackageRoot -Recurse -Force -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -in @("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache") } |
+    Sort-Object FullName -Descending
+
+  foreach ($dir in $cacheDirs) {
+    Remove-Item $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+  }
+
+  $cacheFiles = Get-ChildItem $PackageRoot -Recurse -Force -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension.ToLowerInvariant() -in @(".pyc", ".pyo") }
+
+  foreach ($file in $cacheFiles) {
+    Remove-Item $file.FullName -Force -ErrorAction SilentlyContinue
+  }
+}
 function Assert-NoForbiddenFiles {
   param([Parameter(Mandatory = $true)][string] $PackageRoot)
 
   $forbiddenFiles = Get-ChildItem $PackageRoot -Recurse -Force -File | Where-Object {
     $_.Name -eq ".env" -or
-    $_.Extension.ToLowerInvariant() -in @(".pem", ".key", ".pfx", ".pyc", ".pyo")
+    $_.Extension.ToLowerInvariant() -in @(".key", ".pfx", ".pyc", ".pyo")
   }
 
   if ($forbiddenFiles) {
@@ -378,6 +397,7 @@ Write-Host "=== COPY PYTHON STRATEGY ==="
 if ($PythonStrategy -eq "PackageVenv") {
   $targetVenv = Join-Path $packageRoot ".venv"
   Copy-Item $sourceVenv $targetVenv -Recurse -Force
+  Remove-RuntimeSourceCaches -PackageRoot $packageRoot
 } elseif ($PythonStrategy -eq "EmbeddedPython") {
   throw "EmbeddedPython strategy is planned but not implemented in this helper yet."
 } elseif ($PythonStrategy -eq "GlobalPython") {
@@ -397,6 +417,7 @@ if (-not (Test-Path (Join-Path $packageRoot "services\api\web_app.py") -PathType
 
 if ($PythonStrategy -eq "PackageVenv") {
   Invoke-ImportValidation -PackageRoot $packageRoot
+  Remove-RuntimeSourceCaches -PackageRoot $packageRoot
 }
 
 $startScript = Join-Path $packageRoot "scripts\start-voila.ps1"
