@@ -1,510 +1,100 @@
-# Voila!
+# Voila
 
-**Your local PDF learning studio.**
+Voila is an experimental Windows PDF-to-learning / PDF-to-training tool.
 
-Voila! turns PDF documents into structured, study-ready courses with lessons, extracted figures, OCR review tools, study questions, and progress tracking.
+It is designed to help turn dense PDF documents into structured learning and training material, especially for use cases such as manuals, SOPs, onboarding documents, course notes, technical documentation, and internal training materials.
 
-Voila is currently in **public beta**.
+## Current status
 
-![Voila Upload PDF](docs/public/screenshots/voila-01-upload-pdf.png)
+Voila is currently in a controlled tester access phase.
 
----
+This is not a polished commercial product yet.  
+This is not a full public launch.  
+There is no public download link in this repository.
 
-## What is Voila?
+The current goal is to collect practical feedback from a small number of selected testers before deciding the next release and product direction.
 
-Voila helps you turn static PDF files into a more practical learning workflow.
+Tester access page:
 
-Instead of reading a long PDF page by page, Voila helps you:
+https://cxtrading.ro/voila/
 
-- upload a PDF locally
-- generate a structured course
-- open generated lessons
-- inspect extracted figures
-- review and adjust OCR crops
-- study recommended questions
-- track concept progress
-- use course tools from one place
+## What Voila can generate
 
-Voila is designed for people who study from PDFs: students, technical readers, trainers, engineers, researchers, documentation-heavy professionals, and self-learners.
+Voila currently focuses on converting small PDF samples into structured outputs such as:
 
----
+- course-style content
+- document outlines
+- glossary items
+- quizzes
+- flashcards
+- OCR review output
+- extracted figures
+- study progress tracking
 
-## Public beta status
+## Intended use cases
 
-Voila v0.3.x is a **public beta**.
+Voila is intended for people who work with PDF-based knowledge and training material, including:
 
-Current focus:
+- manuals
+- SOPs and procedures
+- onboarding documents
+- training materials
+- course content
+- technical documentation
+- knowledge management workflows
 
-- validate the Windows tester package
-- collect feedback from early users
-- improve PDF-to-course quality
-- improve OCR and figure workflows
-- improve study and progress tools
-- polish documentation and public showcase materials
+## Tester demo boundaries
 
-Beta note: generated learning content should be reviewed by the user, especially for technical, professional, or academic documents.
+The current controlled tester demo is intentionally limited.
 
----
+Please use only small, non-confidential PDF samples.
 
-## Screenshots
+Current tester boundaries:
 
-### 1. Upload PDF
+- Windows only
+- maximum 5 pages per PDF
+- small non-confidential PDF samples only
+- no legal documents
+- no medical documents
+- no financial documents
+- no personal or confidential documents
+- no sensitive documents
+- no safety-critical documents
+- access is shared manually with selected testers
 
-Start by selecting a PDF from your computer. The tester demo is designed for small, non-confidential sample documents.
+## What feedback is useful
 
-![Upload PDF](docs/public/screenshots/voila-01-upload-pdf.png)
+The most useful feedback is practical and workflow-focused:
 
-### 2. Generated course library
+- Is the idea clear?
+- Are the generated outputs useful?
+- Which PDF types work well?
+- Where does the workflow fail?
+- What is confusing, missing, or unnecessary?
+- What would make Voila worth using again?
 
-After upload and generation, Voila shows the PDF in the local library with course actions such as Generate course, Open course, Figures, Edit crops, Study, Progress, and Logs.
+## Development status
 
-![Generated course library](docs/public/screenshots/voila-02-generated-library.png)
+Voila is still experimental.
 
-### 3. Lessons
+The project is being developed and tested incrementally. Current work focuses on:
 
-Generated courses are split into lessons, making the PDF easier to review and study.
+- Windows tester workflow
+- PDF upload and local processing
+- course generation
+- OCR review
+- figure extraction
+- study mode
+- progress tracking
+- tester feedback collection
 
-![Lessons](docs/public/screenshots/voila-03-lessons.png)
+## Important notes
 
-### 4. Figures
+Do not use confidential, sensitive, personal, legal, medical, financial, or safety-critical documents with the current tester demo.
 
-Voila extracts and displays figures separately, which is useful for diagrams, charts, illustrations, and technical content.
+The current tester phase is for validation and feedback only.
 
-![Figures gallery](docs/public/screenshots/voila-04-figures-gallery.png)
+## Links
 
-### 5. Edit crops
-
-The crop editor helps review and adjust figure/OCR regions when a document needs cleanup.
-
-![Edit crops](docs/public/screenshots/voila-05-edit-crops.png)
-
-### 6. Study mode
-
-Study mode recommends questions generated from the course content and lets users mark answers as correct or incorrect.
-
-![Study mode](docs/public/screenshots/voila-06-study-mode.png)
-
-### 7. Progress dashboard
-
-The progress dashboard shows overall mastery, study coverage, concept status, and recommended next focus.
-
-![Progress dashboard](docs/public/screenshots/voila-07-progress-dashboard.png)
-
-### 8. Course tools
-
-Course Tools provides a central place for opening the generated course, lessons, study mode, OCR review, figures, crop editing, and progress.
-
-![Course tools](docs/public/screenshots/voila-08-course-tools.png)
-
----
-
-## Features
-
-### PDF to course generation
-
-Voila transforms a PDF into structured learning material, including lessons and study artifacts.
-
-### Local-first workflow
-
-The app runs locally on the user's Windows machine during beta testing. No cloud account is required for the local tester workflow.
-
-### OCR-assisted review
-
-Voila includes OCR-related tools for PDFs where text extraction is incomplete, scanned, or imperfect.
-
-### Lessons
-
-Generated lessons make the document easier to read, navigate, and study.
-
-### Figure extraction
-
-Figures are surfaced separately so users can inspect diagrams and visual information without hunting through the original PDF.
-
-### Crop editing
-
-Users can review and adjust crop areas to improve figure extraction and OCR-related workflows.
-
-### Study mode
-
-Voila generates recommended questions from the course content and supports simple review actions.
-
-### Progress tracking
-
-Progress tools help users see what they have studied and which concepts need more review.
-
----
-
-## Download guidance
-
-Voila releases may have different purposes.
-
-Use the release notes to identify the correct package before downloading.
-
-Recommended wording:
-
-```text
-Download the public beta runtime package identified in the release notes.
-```
-
-Avoid saying only:
-
-```text
-Download the latest release.
-```
-
-Reason:
-
-```text
-Some later releases may be tester demo builds, language-pack release candidates, documentation-only updates, or packages with page-count limits.
-```
-
-Release type examples:
-
-```text
-Public Beta Runtime Package:
-- intended for public evaluation and feedback
-- includes the runtime package for users/testers
-
-Tester Demo Build:
-- may include strict page-count limits
-- intended for selected testers
-- not necessarily the same as the public runtime package
-
-Language Pack Release Candidate:
-- may focus on language-pack assets or validation
-- may not be the recommended runtime package for general users
-
-Docs-only Update:
-- updates README, screenshots, terms, or planning docs
-- does not change the runtime package
-```
-
-## Quick start
-
-1. Download the public beta runtime package identified in the release notes. Do not assume the latest GitHub release is always the public runtime package; tester/demo builds or release-candidate materials may include limits or non-runtime changes.
-2. Extract the ZIP archive.
-3. Run the included start script.
-4. Open the local Voila interface in your browser.
-5. Upload a small PDF.
-6. Generate a course.
-7. Review Lessons, Figures, Study, Progress, and Course Tools.
-8. Send feedback.
-
-For limited tester demo builds, use small, non-confidential sample PDFs.
-
----
-
-## Architecture overview
-
-Voila uses a local-first architecture for the public beta tester workflow.
-
-```text
-PDF document
-   ↓
-Local upload
-   ↓
-Text extraction + OCR support
-   ↓
-Course generation
-   ↓
-Lessons + figures + study questions + progress
-   ↓
-Local study workflow
-```
-
-Main components:
-
-- local FastAPI service
-- local browser-based UI
-- PDF extraction workflow
-- OCR tooling
-- LanguageTool integration
-- generated course artifacts stored locally
-
-The goal is to keep early testing simple: download, extract, start, upload PDF, generate course, study.
-
----
-
-## Roadmap
-
-### v0.3.x public beta polish
-
-- improve README and showcase materials
-- improve screenshot-based documentation
-- collect structured tester feedback
-- simplify tester onboarding
-- improve troubleshooting notes
-
-### Learning workflow
-
-- improve generated lesson quality
-- improve study questions
-- improve flashcards and review flows
-- improve progress and concept mastery signals
-
-### OCR and figures
-
-- improve figure extraction
-- improve crop editing workflow
-- improve OCR review workflow
-- improve document diagnostics
-
-### Packaging
-
-- simplify Windows tester package
-- improve start/stop scripts
-- improve local smoke checks
-- improve release checklist
-
-### Monetization and distribution
-
-- evaluate supporter package
-- evaluate professional package
-- keep licensing and commercial decisions flexible during beta
-
----
-
-## Feedback
-
-Voila is looking for practical feedback from early testers.
-
-Useful feedback:
-
-- Was Voila easy to start?
-- Was PDF upload clear?
-- Did course generation work?
-- Were the lessons useful?
-- Were the figures useful?
-- Was study mode helpful?
-- Was progress tracking understandable?
-- What was confusing?
-- What should be improved first?
-- Would you use Voila again with another PDF?
-
-See:
-
-- `docs/public/FEEDBACK-COLLECTION-PLAN.md`
-
----
-
-## Public showcase docs
-
-Additional public presentation material:
-
-- `docs/public/LANDING-PAGE-CONTENT.md`
-- `docs/public/SCREENSHOT-SHOWCASE-GUIDE.md`
-- `docs/public/FEEDBACK-COLLECTION-PLAN.md`
-- `docs/public/screenshots/README.md`
-
----
-
-## Windows ZIP candidate build helper
-
-Voila includes a release helper for preparing controlled Windows ZIP package candidates:
-
-```text
-scripts/release/build-windows-zip-candidate.ps1
-```
-
-The helper can prepare a package staging folder from an explicit runtime source, copy legal files, validate package staging with `-Strict`, and write a build summary.
-
-Safe DryRun usage:
-
-```powershell
-.\scripts\release\build-windows-zip-candidate.ps1 `
-  -RuntimeSource <runtime-source-folder> `
-  -OutputRoot .\.release-cache\voila-windows-package-candidate `
-  -Version "v0.3.x" `
-  -ReleaseType PublicBeta `
-  -DryRun
-```
-
-The DryRun flow has been validated. It confirms:
-
-```text
-runtime source copied to staging
-package legal files copied
-package staging validation -Strict passes
-BUILD-SUMMARY.txt created
-no ZIP created
-no SHA256 created
-no EXE/MSI created
-```
-
-Full local candidate build, when ready:
-
-```powershell
-.\scripts\release\build-windows-zip-candidate.ps1 `
-  -RuntimeSource <runtime-source-folder> `
-  -OutputRoot .\.release-cache\voila-windows-package-candidate `
-  -Version "v0.3.x" `
-  -ReleaseType PublicBeta `
-  -Force
-```
-
-This helper does not publish a GitHub release, upload assets, create an installer, sign binaries, implement payment/licensing, or provide final legal approval.
-
-## Windows package staging dry-run
-
-Voila has a validated Windows package staging dry-run flow for future controlled packages.
-
-The dry-run confirmed that a package staging folder can include:
-
-```text
-README-WINDOWS.txt
-RELEASE-NOTES.txt
-START-VOILA.bat
-STOP-VOILA.bat
-legal/EULA.txt
-legal/LICENSE.txt
-legal/BETA-TERMS.md
-legal/THIRD-PARTY-NOTICES.md
-```
-
-The validated helper sequence is:
-
-```powershell
-.\scripts\release\copy-package-legal-files.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta
-
-.\scripts\release\validate-package-staging.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta `
-  -Strict
-```
-
-Dry-run result:
-
-```text
-legal file copy: PASS
-package staging validation: PASS
-Strict validation: PASS
-ValidateLegalOnly validation: PASS
-required staging files present: PASS
-no ZIP / EXE / MSI created during dry-run: PASS
-```
-
-This dry-run does not create a public release, ZIP, installer, payment flow, or final legal approval. It only validates the future package staging process before a package candidate is created.
-
-## Package staging validation
-
-Before a future Voila Windows package is zipped, installed, or published, the package staging folder should be validated.
-
-Recommended release/package helper sequence:
-
-```powershell
-.\scripts\release\copy-package-legal-files.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta
-
-.\scripts\release\validate-package-staging.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta
-```
-
-The validation helper checks the package staging folder for:
-
-```text
-legal/EULA.txt
-legal/LICENSE.txt
-legal/BETA-TERMS.md
-legal/THIRD-PARTY-NOTICES.md
-README-WINDOWS.txt or README-TESTERS.txt
-RELEASE-NOTES.txt
-START-VOILA.bat
-STOP-VOILA.bat
-forbidden private/secrets files
-```
-
-Useful validation modes:
-
-```powershell
-# Treat warnings as failures
-.\scripts\release\validate-package-staging.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta `
-  -Strict
-
-# Validate only the legal/ folder and legal file content indicators
-.\scripts\release\validate-package-staging.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta `
-  -ValidateLegalOnly
-```
-
-The validation script does not build a package, create a release, upload assets, or provide final legal approval. It is a release/package readiness check before ZIP or installer creation.
-
-## Package legal files
-
-Voila Windows packages should include an offline `legal/` folder with the package terms and third-party notices.
-
-Expected package structure:
-
-```text
-legal/
-  EULA.txt
-  LICENSE.txt
-  BETA-TERMS.md
-  THIRD-PARTY-NOTICES.md
-```
-
-For future package staging, Voila includes a release helper script:
-
-```powershell
-.\scripts\release\copy-package-legal-files.ps1 `
-  -PackageRoot <package-staging-folder> `
-  -ReleaseType PublicBeta
-```
-
-The helper copies repository legal sources into package-ready filenames and validates the required outputs.
-
-Default mapping:
-
-```text
-docs/legal/VOILA-BETA-EULA-DRAFT.md -> legal/EULA.txt
-LICENSE.txt -> legal/LICENSE.txt
-BETA-TERMS.md -> legal/BETA-TERMS.md
-docs/legal/THIRD-PARTY-NOTICES.md -> legal/THIRD-PARTY-NOTICES.md
-```
-
-This script is for package preparation only. It does not rebuild Voila, create a release, upload assets, change runtime behavior, or provide final legal approval.
-
-## License and beta terms
-
-Voila is currently shared as public beta software.
-
-Public GitHub visibility does not mean that Voila is open-source licensed.
-
-Unless a separate written license agreement says otherwise:
-
-- all rights are reserved
-- commercial redistribution is not allowed
-- resale is not allowed
-- repackaging under another brand is not allowed
-- modified commercial derivative products are not allowed
-- paid hosting or software-as-a-service redistribution is not allowed
-
-The public beta package is intended for evaluation, testing, feedback, and personal/internal learning workflows.
-
-Some later tester/demo builds may include additional limits, such as page-count limits, demo restrictions, or release-candidate-only materials.
-
-See:
-
-- `LICENSE.txt`
-- `BETA-TERMS.md`
-- `docs/legal/THIRD-PARTY-NOTICES.md`
-
-## Repository
-
-GitHub repository:
-
-```text
-CyberXecure/voila
-```
-
----
-
-## Disclaimer
-
-Voila is beta software. Generated content may contain extraction, OCR, formatting, or interpretation errors. Always review generated course material before using it for professional, academic, or technical decisions.
+- Tester access page: https://cxtrading.ro/voila/
+- Project owner: CX Trading Lab
