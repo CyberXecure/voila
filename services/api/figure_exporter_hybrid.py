@@ -6,6 +6,7 @@ import json
 import math
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 import fitz
 
@@ -519,8 +520,14 @@ def render_crop(page: fitz.Page, clip: fitz.Rect, output_path: Path, zoom: float
 
 def build_gallery_html(manifest: dict, output_path: Path) -> None:
     cards = []
+    all_items = manifest.get("figure_crops", [])
+    visible_items = [
+        item for item in all_items
+        if str(item.get("status", "accepted")).strip().lower() != "rejected"
+    ]
+    rejected_count = len(all_items) - len(visible_items)
 
-    for item in manifest.get("figure_crops", []):
+    for item in visible_items:
         rel = Path(item["relative_path"]).as_posix()
         title = f"Figure {item['number']}"
         caption = item.get("caption") or ""
@@ -541,11 +548,31 @@ def build_gallery_html(manifest: dict, output_path: Path) -> None:
         cards.append(
             """
             <article class="card">
-              <h2>No figures detected</h2>
-              <p>No figure captions were detected in this range.</p>
+              <h2>No accepted figures</h2>
+              <p>No accepted figures are available. Rejected false figures are hidden from this gallery.</p>
             </article>
             """
         )
+
+    rejected_note = (
+        f"<p>Rejected false figures hidden: {rejected_count}</p>"
+        if rejected_count
+        else ""
+    )
+
+    pdf_name = Path(str(manifest.get("source_file", ""))).name
+    pdf_query = quote(pdf_name)
+    toolbar_style = "display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 26px;"
+    btn_style = "display:inline-flex;align-items:center;justify-content:center;border:1px solid #d7c5a8;border-radius:999px;padding:10px 16px;color:#2f2a24;text-decoration:none;background:rgba(255,255,255,0.34);font-weight:700;"
+    primary_btn_style = btn_style + "background:#8a5a32;color:#fff7ea;border-color:#8a5a32;"
+    toolbar = (
+        f'<div class="toolbar" style="{toolbar_style}">'
+        f'<a class="btn primary" style="{primary_btn_style}" href="http://127.0.0.1:8787/edit-crops?pdf={pdf_query}">Back to Crop Editor</a>'
+        f'<a class="btn" style="{btn_style}" href="http://127.0.0.1:8787">Back to Voila!</a>'
+        f'</div>'
+        if pdf_name
+        else f'<div class="toolbar" style="{toolbar_style}"><a class="btn" style="{btn_style}" href="http://127.0.0.1:8787">Back to Voila!</a></div>'
+    )
 
     doc = f"""<!doctype html>
 <html lang="en">
@@ -631,7 +658,9 @@ def build_gallery_html(manifest: dict, output_path: Path) -> None:
     <h1>Voila! Hybrid Figure Extraction</h1>
     <p>Source: <code>{html.escape(manifest.get("source_file", ""))}</code></p>
     <p>Page range: {manifest.get("page_from")}–{manifest.get("page_to")}</p>
-    <p>Detected figures: {len(manifest.get("figure_crops", []))}</p>
+    <p>Detected figures: {len(visible_items)}</p>
+    {rejected_note}
+    {toolbar}
     <div class="grid">
       {''.join(cards)}
     </div>
