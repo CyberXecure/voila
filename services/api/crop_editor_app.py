@@ -183,6 +183,39 @@ def rect_label(item: dict) -> str:
     return ", ".join(f"{float(v):.1f}" for v in item.get("crop_rect", []))
 
 
+def item_is_rejected(item: dict) -> bool:
+    return str(item.get("status", "accepted")).strip().lower() == "rejected"
+
+
+def rebuild_gallery(pdf: Path, manifest: dict) -> None:
+    from figure_exporter_hybrid import build_gallery_html
+
+    gallery_path = OUTPUT_DIR / pdf.stem / "figures_hybrid" / "figures_hybrid.html"
+    build_gallery_html(manifest, gallery_path)
+
+
+def set_item_rejection(pdf: Path, index: int, rejected: bool) -> dict:
+    manifest = load_manifest(pdf)
+    items = manifest.get("figure_crops", [])
+
+    if index < 0 or index >= len(items):
+        raise IndexError("Invalid figure index.")
+
+    item = items[index]
+
+    if rejected:
+        item["status"] = "rejected"
+        item["reject_reason"] = "false_figure"
+    else:
+        item["status"] = "accepted"
+        item.pop("reject_reason", None)
+
+    save_manifest(pdf, manifest)
+    rebuild_gallery(pdf, manifest)
+
+    return item
+
+
 def page(title: str, body: str) -> HTMLResponse:
     doc = f"""<!doctype html>
 <html lang="en">
@@ -475,6 +508,8 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
         return page("Voila! Crop Editor", body)
 
     items = manifest.get("figure_crops", [])
+    accepted_count = sum(1 for item in items if not item_is_rejected(item))
+    rejected_count = len(items) - accepted_count
     cards = []
 
     for index, item in enumerate(items):
@@ -487,16 +522,24 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
         pdf_page = html.escape(str(item.get("pdf_page", "")))
         method = html.escape(str(item.get("crop_method", "")))
         rect = html.escape(rect_label(item))
+        rejected = item_is_rejected(item)
+        card_class = "card rejected" if rejected else "card"
+        status_label = '<p class="meta rejected-label">Rejected as false figure</p>' if rejected else ""
+        action_label = "Restore" if rejected else "Mark as false figure"
+        action_rejected = "false" if rejected else "true"
+        action_class = "" if rejected else "danger"
 
         cards.append(
             f"""
-            <article class="card" id="card-{index}">
+            <article class="{card_class}" id="card-{index}">
               <h2>Figure {number}</h2>
               <p class="caption">{caption}</p>
               <p class="meta">PDF page {pdf_page} · {method}</p>
+              {status_label}
               <img id="card-img-{index}" src="{src}?v={mtime}" alt="Figure {number}">
               <div class="card-actions">
                 <button class="primary" type="button" onclick="openEditor({index})">Edit crop</button>
+                <button class="{action_class}" type="button" onclick="markFalseFigure({index}, {action_rejected})">{action_label}</button>
               </div>
               <div class="fine">
                 crop_rect: <code id="card-rect-{index}">{rect}</code>
@@ -509,14 +552,37 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
     items_json = json.dumps(items, ensure_ascii=False)
 
     body = f"""
+    <style>
+      .card.rejected {{
+        display: none;
+        opacity: 0.72;
+        border-style: dashed;
+      }}
+
+      body.show-rejected .card.rejected {{
+        display: block;
+      }}
+
+      .rejected-label {{
+        color: #8a3a2b;
+        font-weight: 700;
+      }}
+
+      button.danger {{
+        border-color: #9b3b30;
+        color: #7a2c24;
+      }}
+    </style>
+
     <h1>Voila! Crop Editor</h1>
     <div class="meta">
       PDF: <code>{html.escape(pdf_path.name)}</code><br>
-      Items: {len(items)}
+      Accepted figures: {accepted_count} · Rejected false figures: {rejected_count} · Total: {len(items)}
     </div>
     <div class="toolbar">
       <a class="btn primary" href="{gallery_url}">Open hybrid gallery</a>
       <a class="btn" href="http://127.0.0.1:8787">Back to Voila!</a>
+      <label class="btn"><input id="showRejectedToggle" type="checkbox" onchange="toggleRejected()"> Show rejected</label>
     </div>
 
     <div class="grid">
@@ -559,6 +625,7 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
           <div class="status" id="modalStatus"></div>
 
           <div class="modal-footer">
+            <button id="modalRejectButton" class="danger" type="button" onclick="toggleCurrentRejected()">Mark as false figure</button>
             <button type="button" onclick="previousFigure()">← Previous</button>
             <button type="button" onclick="nextFigure()">Next →</button>
             <button class="primary" type="button" onclick="closeEditor()">Close</button>
@@ -581,6 +648,10 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
 
       function rectText(item) {{
         return (item.crop_rect || []).map(v => Number(v).toFixed(1)).join(", ");
+      }}
+
+      function isRejected(item) {{
+        return String(item.status || "accepted").toLowerCase() === "rejected";
       }}
 
       function openEditor(index) {{
@@ -610,7 +681,10 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
         document.getElementById("modalMeta").textContent = "PDF page " + item.pdf_page + " · " + item.crop_method;
         document.getElementById("modalRect").textContent = rectText(item);
         document.getElementById("modalImage").src = imageUrl(item);
-        document.getElementById("modalStatus").textContent = "";
+
+        const rejected = isRejected(item);
+        document.getElementById("modalStatus").textContent = rejected ? "Rejected as false figure." : "";
+        document.getElementById("modalRejectButton").textContent = rejected ? "Restore" : "Mark as false figure";
       }}
 
       function setAmount(value) {{
@@ -662,6 +736,35 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
         status.textContent = "Updated.";
       }}
 
+      async function markFalseFigure(index, rejected) {{
+        const formData = new FormData();
+        formData.append("pdf_name", pdfName);
+        formData.append("index", String(index));
+        formData.append("rejected", rejected ? "true" : "false");
+
+        const response = await fetch("/figure-status-json", {{
+          method: "POST",
+          body: formData
+        }});
+
+        if (!response.ok) {{
+          alert("Could not update figure status.");
+          return;
+        }}
+
+        window.location.reload();
+      }}
+
+      function toggleCurrentRejected() {{
+        const item = items[currentIndex];
+        markFalseFigure(currentIndex, !isRejected(item));
+      }}
+
+      function toggleRejected() {{
+        const checked = document.getElementById("showRejectedToggle").checked;
+        document.body.classList.toggle("show-rejected", checked);
+      }}
+
       function previousFigure() {{
         if (currentIndex > 0) {{
           currentIndex -= 1;
@@ -697,6 +800,23 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
     """
 
     return page("Voila! Crop Editor", body)
+
+
+@app.post("/figure-status-json")
+def figure_status_json(
+    pdf_name: str = Form(...),
+    index: int = Form(...),
+    rejected: bool = Form(...),
+) -> JSONResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+    item = set_item_rejection(pdf_path, index, rejected)
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "item": item,
+        }
+    )
 
 
 @app.post("/adjust-json")
