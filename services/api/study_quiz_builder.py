@@ -66,6 +66,78 @@ def normalize_key(value: str) -> str:
     return normalize_space(value).lower()
 
 
+def is_noisy_concept_title(value: str) -> bool:
+    title = normalize_space(value)
+    lower = title.lower()
+
+    if not title:
+        return True
+
+    if len(title) < 3:
+        return True
+
+    if len(title) > 90:
+        return True
+
+    if lower in {"prof", "prof.", "credit", "source", "figure", "fig.", "table"}:
+        return True
+
+    if any(
+        phrase in lower
+        for phrase in [
+            "department of energy",
+            "wikimedia commons",
+            "nasa/ames",
+            "ames research center",
+            "modification of work",
+            "credit a",
+            "credit b",
+            "credit c",
+            "courtesy of",
+        ]
+    ):
+        return True
+
+    if re.search(r"^\s*(fig\.|figure|table|caption)\b", lower):
+        return True
+
+    letters = len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", title))
+    digits = len(re.findall(r"\d", title))
+
+    if digits > letters and letters < 4:
+        return True
+
+    if len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]{3,}", title)) < 1:
+        return True
+
+    return False
+
+
+def clean_concept_title(value: str, fallback: str = "") -> str:
+    title = normalize_space(value)
+
+    if " — " in title:
+        title = title.split(" — ", 1)[1]
+
+    title = re.sub(
+        r"\([^)]*\b(credit|source|wikimedia|commons|nasa|ames|department of energy|modification of work)\b[^)]*\)",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
+    title = re.sub(r"\bcredit\s+[a-z]?\s*:.*$", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"\bmodification of work by\b.*$", "", title, flags=re.IGNORECASE)
+
+    title = normalize_space(title)
+    title = title.strip(" .,:;—–-()[]{}'\"“”‘’")
+    title = re.sub(r"[\)\]\}]+$", "", title).strip(" .,:;—–-")
+
+    if is_noisy_concept_title(title):
+        return fallback
+
+    return title[:90]
+
+
 def detect_language(text: str) -> str:
     lower = normalize_key(text)
     ro_markers = [
@@ -190,17 +262,18 @@ def technical_score(sentence: str) -> int:
 def infer_concept_title(lesson_title: str, sentence: str, language: str) -> str:
     lower = normalize_key(sentence + " " + lesson_title)
     rules = RO_TOPIC_RULES if language == "ro" else EN_TOPIC_RULES
+    fallback = "noțiuni tehnice" if language == "ro" else "technical fundamentals"
 
     for topic, keywords in rules:
         if any(keyword in lower for keyword in keywords):
-            return topic
+            return clean_concept_title(topic, fallback=fallback) or fallback
 
-    title = normalize_space(lesson_title)
+    title = clean_concept_title(lesson_title, fallback="")
 
     if title:
         return title[:90]
 
-    return "noțiuni tehnice" if language == "ro" else "technical fundamentals"
+    return fallback
 
 
 def question_from_sentence(sentence: str, concept: str, language: str) -> tuple[str, str]:
@@ -379,7 +452,7 @@ def build_questions(lessons: list[dict], max_per_lesson: int, max_total: int, mi
                     "lesson_id": lesson_id,
                     "concept_id": f"{lesson_id} — {concept}",
                     "concept_title": concept,
-                    "lesson_title": title,
+                    "lesson_title": clean_concept_title(title, fallback=concept) or concept,
                     "question_type": qtype,
                     "language": language,
                     "question": question_text,
