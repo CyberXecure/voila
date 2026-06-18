@@ -16,6 +16,62 @@ DEFAULT_BKT = {
 }
 
 
+QUESTION_TYPE_BKT_PROFILES = {
+    "definition": {"learn": 0.20, "guess": 0.22, "slip": 0.08, "difficulty": 0.85},
+    "example": {"learn": 0.20, "guess": 0.24, "slip": 0.09, "difficulty": 0.90},
+    "purpose": {"learn": 0.19, "guess": 0.20, "slip": 0.09, "difficulty": 1.00},
+    "components": {"learn": 0.18, "guess": 0.18, "slip": 0.10, "difficulty": 1.05},
+    "requirement": {"learn": 0.18, "guess": 0.18, "slip": 0.10, "difficulty": 1.05},
+    "technical_fact": {"learn": 0.17, "guess": 0.18, "slip": 0.11, "difficulty": 1.05},
+    "condition": {"learn": 0.17, "guess": 0.17, "slip": 0.11, "difficulty": 1.10},
+    "cause_effect": {"learn": 0.16, "guess": 0.17, "slip": 0.12, "difficulty": 1.15},
+    "comparison": {"learn": 0.16, "guess": 0.16, "slip": 0.12, "difficulty": 1.15},
+    "process": {"learn": 0.16, "guess": 0.15, "slip": 0.12, "difficulty": 1.15},
+    "numeric_check": {"learn": 0.14, "guess": 0.12, "slip": 0.14, "difficulty": 1.25},
+    "visual_interpretation": {"learn": 0.14, "guess": 0.13, "slip": 0.14, "difficulty": 1.25},
+}
+
+
+def question_type_for(question: dict) -> str:
+    source = question.get("source") if isinstance(question, dict) else None
+    raw = ""
+
+    if isinstance(question, dict):
+        raw = str(question.get("question_type") or "").strip().lower()
+
+    if not raw and isinstance(source, dict):
+        raw = str(source.get("question_type") or "").strip().lower()
+
+    return raw or "technical_fact"
+
+
+def bkt_params_for_question(question: dict, concept: dict | None = None) -> dict:
+    qtype = question_type_for(question)
+    profile = QUESTION_TYPE_BKT_PROFILES.get(qtype, QUESTION_TYPE_BKT_PROFILES["technical_fact"])
+
+    params = dict(DEFAULT_BKT)
+    params.update(
+        {
+            "learn": profile.get("learn", DEFAULT_BKT["learn"]),
+            "guess": profile.get("guess", DEFAULT_BKT["guess"]),
+            "slip": profile.get("slip", DEFAULT_BKT["slip"]),
+            "difficulty": profile.get("difficulty", 1.0),
+            "question_type": qtype,
+        }
+    )
+
+    return params
+
+
+def ensure_concept_metadata(concept: dict) -> dict:
+    concept.setdefault("question_type_stats", {})
+    concept.setdefault("recent_misses", 0)
+    concept.setdefault("last_question_type", None)
+    concept.setdefault("last_correct", None)
+    concept.setdefault("last_incorrect", None)
+    return concept
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -100,6 +156,7 @@ def normalize_quiz(raw: Any) -> list[dict]:
                 "question_id": str(item.get("question_id") or item.get("id") or f"Q{index:03d}"),
                 "lesson_id": lesson_id,
                 "concept_id": str(item.get("concept_id") or item.get("concept") or lesson_id).strip(),
+                "question_type": str(item.get("question_type") or "technical_fact").strip() or "technical_fact",
                 "question": question,
                 "answer": str(answer).strip(),
                 "source": item,
@@ -137,6 +194,11 @@ def default_concept_state(concept_id: str) -> dict:
         "correct": 0,
         "incorrect": 0,
         "last_seen": None,
+        "last_correct": None,
+        "last_incorrect": None,
+        "last_question_type": None,
+        "recent_misses": 0,
+        "question_type_stats": {},
         "status": mastery_status(DEFAULT_BKT["prior"]),
         "bkt": dict(DEFAULT_BKT),
     }
@@ -186,6 +248,8 @@ def load_state(output_dir: Path, questions: list[dict]) -> dict:
 
         if concept_id not in concepts:
             concepts[concept_id] = default_concept_state(concept_id)
+        else:
+            ensure_concept_metadata(concepts[concept_id])
 
     attempts = state.setdefault("attempts", [])
 
@@ -265,17 +329,71 @@ def choose_next_question(questions: list[dict], state: dict) -> dict | None:
     ]
 
     pool = unanswered if unanswered else questions
-
     concepts = state.get("concepts", {})
 
-    def score(question: dict) -> tuple[float, int]:
-        concept = concepts.get(question["concept_id"], {})
+    last_attempt = state.get("last_attempt") if isinstance(state, dict) else None
+    last_concept_id = ""
+
+    if isinstance(last_attempt, dict):
+        last_concept_id = str(last_attempt.get("concept_id") or "")
+
+    if last_concept_id and len(pool) > 1:
+        alternatives = [
+            question for question in pool
+            if str(question.get("concept_id") or "") != last_concept_id
+        ]
+
+        if alternatives:
+            pool = alternatives
+
+    def score(question: dict) -> tuple[float, int, int, float, str]:
+        concept = ensure_concept_metadata(concepts.get(question["concept_id"], {}))
         mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
         attempts = int(concept.get("attempts", 0))
+        recent_misses = int(concept.get("recent_misses", 0))
+        qtype = question_type_for(question)
+        stats = concept.get("question_type_stats") or {}
+        type_attempts = int((stats.get(qtype) or {}).get("attempts") or 0)
+        difficulty = float(bkt_params_for_question(question, concept).get("difficulty", 1.0))
 
-        return (mastery, attempts)
+        return (
+            mastery,
+            type_attempts,
+            attempts,
+            -recent_misses,
+            -difficulty,
+            str(question.get("question_id") or ""),
+        )
 
-    return sorted(pool, key=score)[0]
+    selected = sorted(pool, key=score)[0]
+    selected = dict(selected)
+
+    selected["recommendation_reason"] = recommendation_reason_for_question(selected, state)
+
+    return selected
+
+
+def recommendation_reason_for_question(question: dict, state: dict) -> str:
+    concepts = state.get("concepts", {}) if isinstance(state, dict) else {}
+    concept = ensure_concept_metadata(concepts.get(question.get("concept_id"), {}))
+    mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
+    attempts = int(concept.get("attempts", 0))
+    recent_misses = int(concept.get("recent_misses", 0))
+    qtype = question_type_for(question)
+
+    if attempts == 0:
+        return f"new concept · {qtype}"
+
+    if recent_misses > 0:
+        return f"recent mistakes · {qtype}"
+
+    if mastery < 0.40:
+        return f"low mastery · {qtype}"
+
+    if mastery < 0.75:
+        return f"in progress · {qtype}"
+
+    return f"scheduled review · {qtype}"
 
 
 def record_answer(output_dir: Path, question_id: str, correct: bool) -> dict:
@@ -295,26 +413,53 @@ def record_answer(output_dir: Path, question_id: str, correct: bool) -> dict:
     concept_id = question["concept_id"]
     concept = state["concepts"].setdefault(concept_id, default_concept_state(concept_id))
 
+    ensure_concept_metadata(concept)
+
+    qtype = question_type_for(question)
     old_mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
-    params = concept.get("bkt") or dict(DEFAULT_BKT)
+    params = bkt_params_for_question(question, concept)
     new_mastery = bkt_update(old_mastery, correct, params)
+    timestamp = now_iso()
 
     concept["mastery"] = new_mastery
     concept["attempts"] = int(concept.get("attempts", 0)) + 1
     concept["correct"] = int(concept.get("correct", 0)) + (1 if correct else 0)
     concept["incorrect"] = int(concept.get("incorrect", 0)) + (0 if correct else 1)
-    concept["last_seen"] = now_iso()
+    concept["last_seen"] = timestamp
+    concept["last_question_type"] = qtype
     concept["status"] = mastery_status(new_mastery)
     concept["bkt"] = params
 
+    if correct:
+        concept["last_correct"] = timestamp
+        concept["recent_misses"] = max(0, int(concept.get("recent_misses", 0)) - 1)
+    else:
+        concept["last_incorrect"] = timestamp
+        concept["recent_misses"] = int(concept.get("recent_misses", 0)) + 1
+
+    type_stats = concept.setdefault("question_type_stats", {})
+    qtype_stats = type_stats.setdefault(
+        qtype,
+        {
+            "attempts": 0,
+            "correct": 0,
+            "incorrect": 0,
+        },
+    )
+    qtype_stats["attempts"] = int(qtype_stats.get("attempts", 0)) + 1
+    qtype_stats["correct"] = int(qtype_stats.get("correct", 0)) + (1 if correct else 0)
+    qtype_stats["incorrect"] = int(qtype_stats.get("incorrect", 0)) + (0 if correct else 1)
+
     attempt = {
-        "timestamp": now_iso(),
+        "timestamp": timestamp,
         "question_id": question_id,
         "lesson_id": question["lesson_id"],
         "concept_id": concept_id,
+        "question_type": qtype,
         "correct": bool(correct),
         "mastery_before": old_mastery,
         "mastery_after": new_mastery,
+        "bkt": params,
     }
 
     state["attempts"].append(attempt)
@@ -353,6 +498,11 @@ def get_study_view(output_dir: Path) -> dict:
                 "correct": int(concept.get("correct", 0)),
                 "incorrect": int(concept.get("incorrect", 0)),
                 "last_seen": concept.get("last_seen"),
+                "last_correct": concept.get("last_correct"),
+                "last_incorrect": concept.get("last_incorrect"),
+                "last_question_type": concept.get("last_question_type"),
+                "recent_misses": int(concept.get("recent_misses", 0)),
+                "question_type_stats": concept.get("question_type_stats") or {},
             }
         )
 

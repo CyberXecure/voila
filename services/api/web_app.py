@@ -160,6 +160,87 @@ def _study_status_label(value: str) -> str:
 
     return mapping.get(key, raw)
 
+def _ui_language_code() -> str:
+    try:
+        import i18n
+
+        return str(i18n.get_ui_language(PROJECT_ROOT).get("ui_language") or "en").lower()
+    except Exception:
+        return "en"
+
+
+def _study_recommendation_reason_label(value: str) -> str:
+    raw = str(value or "").strip()
+
+    if not raw:
+        return ""
+
+    parts = [part.strip() for part in raw.split("·")]
+    reason_key = parts[0].lower() if parts else raw.lower()
+    qtype = parts[1].lower() if len(parts) > 1 else ""
+
+    lang = _ui_language_code()
+
+    reason_labels = {
+        "ro": {
+            "new concept": "concept nou",
+            "recent mistakes": "greșeli recente",
+            "low mastery": "stăpânire redusă",
+            "in progress": "în progres",
+            "scheduled review": "revizuire programată",
+        },
+        "en": {
+            "new concept": "new concept",
+            "recent mistakes": "recent mistakes",
+            "low mastery": "low mastery",
+            "in progress": "in progress",
+            "scheduled review": "scheduled review",
+        },
+    }
+
+    type_labels = {
+        "ro": {
+            "definition": "definiție",
+            "components": "componente",
+            "purpose": "scop",
+            "requirement": "cerință",
+            "condition": "condiție",
+            "cause_effect": "cauză/efect",
+            "comparison": "comparație",
+            "example": "exemplu",
+            "process": "proces",
+            "numeric_check": "verificare numerică",
+            "visual_interpretation": "interpretare vizuală",
+            "technical_fact": "precizare tehnică",
+        },
+        "en": {
+            "definition": "definition",
+            "components": "components",
+            "purpose": "purpose",
+            "requirement": "requirement",
+            "condition": "condition",
+            "cause_effect": "cause/effect",
+            "comparison": "comparison",
+            "example": "example",
+            "process": "process",
+            "numeric_check": "numeric check",
+            "visual_interpretation": "visual interpretation",
+            "technical_fact": "technical fact",
+        },
+    }
+
+    labels_lang = "ro" if lang == "ro" else "en"
+
+    reason = reason_labels[labels_lang].get(reason_key, parts[0] if parts else raw)
+
+    if not qtype:
+        return reason
+
+    qtype_label = type_labels[labels_lang].get(qtype, qtype.replace("_", " "))
+
+    return f"{reason} · {qtype_label}"
+
+
 
 def page(title: str, body: str) -> HTMLResponse:
     doc = f"""<!doctype html>
@@ -1424,11 +1505,17 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         concept_id = html.escape(str(current.get("concept_id") or current.get("lesson_id") or ""))
         question = html.escape(str(current.get("question") or ""))
         answer_id = html.escape(str(current.get("question_id") or ""))
+        recommendation_reason = html.escape(_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
+
+        reason_html = ""
+        if recommendation_reason:
+            reason_html = f'<div class="meta">{_ut("recommended_because", "Recommended because")}: <strong>{recommendation_reason}</strong></div>'
 
         question_html = f"""
         <article class="card">
           <h2>{_ut("ui.heading.review_question", "Review question")}</h2>
           <div class="meta">{_ut("status.focused_concept", "Focused concept")}: <strong>{concept_id}</strong></div>
+          {reason_html}
           <p style="font-size: 20px;"><strong>{question}</strong></p>
           {answer_html}
 
@@ -1748,10 +1835,16 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
             </details>
             """
 
+        recommendation_reason = html.escape(_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
+        reason_html = ""
+        if recommendation_reason:
+            reason_html = f'<div class="meta">{_ut("recommended_because", "Recommended because")}: <strong>{recommendation_reason}</strong></div>'
+
         question_html = f"""
         <article class="card">
           <h2>{_ut("recommended_question", "Recommended question")}</h2>
           <div class="meta">{_ut("lesson_concept", "Lesson / concept")}: <strong>{html.escape(str(current.get("lesson_id")))}</strong></div>
+          {reason_html}
           <p style="font-size: 20px;"><strong>{html.escape(_build_study_question_display(current, pdf_path.name))}</strong></p>
           {answer_html}
 

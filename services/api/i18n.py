@@ -116,6 +116,8 @@ TRANSLATIONS = {
         "reset_study_progress": "Resetează progresul de studiu",
         "questions_answered": "Întrebări răspunse",
         "recommended_next_focus": "Următorul focus recomandat",
+        "recommended_because": "Recommended because",
+        "recommended_because": "Recomandat deoarece",
         "no_study_recommendation": "Nu există încă o recomandare de studiu. Generează mai întâi un quiz de studiu.",
         "no_questions_available": "Nu există întrebări disponibile",
         "generate_course_files_first": "Generează mai întâi fișierele cursului, apoi modul Studiu va folosi quiz.json.",
