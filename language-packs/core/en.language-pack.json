@@ -188,7 +188,8 @@
     "ui.no_file_selected": "No file selected",
     "message.choose_pdf_from_computer": "Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.",
     "message.limited_tester_demo_notice": "<strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.",
-    "ui.delete_from_library_confirm": "Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted."
+    "ui.delete_from_library_confirm": "Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted.",
+    "recommended_because": "Recommended because"
   },
   "feedback": {
     "feedback.correct": "Correct!",
