@@ -80,6 +80,19 @@ def document_language(project_root: Path | str, pdf_name: str, fallback_text: st
     return "en"
 
 
+def ui_language(project_root: Path | str) -> str:
+    try:
+        import i18n
+
+        lang = str(i18n.get_ui_language(project_root).get("ui_language") or "en")
+        if lang in QUESTION_TEMPLATES:
+            return lang
+    except Exception:
+        pass
+
+    return "en"
+
+
 def build_study_question(
     project_root: Path | str,
     pdf_name: str,
@@ -96,7 +109,9 @@ def build_study_question(
         for key in ["source_text", "answer", "question", "concept_title", "lesson_title"]
     )
 
-    lang = document_language(project_root, pdf_name, fallback_text=fallback_text)
+    # Display language follows the UI language, not the document language.
+    # The source answer/content remains in the original document language.
+    lang = ui_language(project_root)
 
     if concept:
         template = QUESTION_TEMPLATES.get(lang, QUESTION_TEMPLATES["en"])
