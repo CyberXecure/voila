@@ -92,6 +92,14 @@ def _ut(key: str, fallback: str) -> str:
     return str(_ui_texts().get(key) or fallback)
 
 
+def _utf(key: str, fallback: str, **kwargs) -> str:
+    template = _ut(key, fallback)
+    try:
+        return template.format(**kwargs)
+    except Exception:
+        return fallback.format(**kwargs)
+
+
 def _build_study_question_display(question: dict, pdf_name: str) -> str:
     try:
         import study_questions
@@ -130,7 +138,11 @@ def _study_question_display(value: str) -> str:
         concept = concept.strip("'\"“”‘’")
 
         if concept:
-            return f"Ce idee importantă susține sursa despre „{concept}”?"
+            return _utf(
+                "study_question_important_idea",
+                "What important idea does the source support about “{concept}”?",
+                concept=concept,
+            )
 
     return raw
 
@@ -1390,7 +1402,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
 
         last_html = f"""
         <div class="notice">
-          Last review answer: <strong>{result}</strong>.
+          {_ut("last_review_answer", "Last review answer")}: <strong>{result}</strong>.
           {_ut("mastery_changed", "Mastery changed from")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
         </div>
         """
@@ -1482,9 +1494,9 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
-      Needs review: <strong>{len(weak)}</strong> ·
-      In progress: <strong>{len(review_items)}</strong> ·
-      Almost mastered: <strong>{len(almost)}</strong>
+      {_ut("needs_review", "Needs review")}: <strong>{len(weak)}</strong> ·
+      {_ut("in_progress", "In progress")}: <strong>{len(review_items)}</strong> ·
+      {_ut("almost_mastered", "Almost mastered")}: <strong>{len(almost)}</strong>
     </div>
 
     {last_html}
@@ -1497,12 +1509,12 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
       <a class="btn primary" href="/review?pdf={quote(pdf_path.name)}">{_ut("ui.link.next_review", "Next review")}</a>
       <a class="btn" href="/study?pdf={quote(pdf_path.name)}">{_ut("ui.link.study", "Study")}</a>
       <a class="btn" href="/progress?pdf={quote(pdf_path.name)}">{_ut("ui.link.progress", "Progress")}</a>
-      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
+      <a class="btn" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
     </div>
 
-    {mini_list("Needs review", weak, "No weak concepts yet.")}
-    {mini_list("In progress", review_items, "No concepts in progress yet.")}
-    {mini_list("Almost mastered", almost, "No almost-mastered concepts yet.")}
+    {mini_list(_ut("needs_review", "Needs review"), weak, _ut("no_weak_concepts_yet", "No weak concepts yet."))}
+    {mini_list(_ut("in_progress", "In progress"), review_items, _ut("no_concepts_in_progress_yet", "No concepts in progress yet."))}
+    {mini_list(_ut("almost_mastered", "Almost mastered"), almost, _ut("no_almost_mastered_concepts_yet", "No almost-mastered concepts yet."))}
     """
 
     return page("Voila! Review", body)
@@ -1580,8 +1592,8 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
                   </div>
                   <div class="meta" style="margin-top: 10px;">
                     {_ut("status.attempts", _ut("attempts", "Attempts"))}: {attempts}<br>
-                    Correct: {correct}<br>
-                    Incorrect: {incorrect}
+                    {_ut("correct", "Correct")}: {correct}<br>
+                    {_ut("incorrect", "Incorrect")}: {incorrect}
                   </div>
                 </article>
                 """
@@ -1618,7 +1630,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     if recommended:
         recommended_html = f"""
         <div class="notice">
-          Recommended next focus:
+          {_ut("recommended_next_focus", "Recommended next focus")}:
           <strong>{html.escape(str(recommended.get("concept_id") or ""))}</strong>
           — mastery <strong>{int(recommended.get("mastery_percent") or 0)}%</strong>.
         </div>
@@ -1626,7 +1638,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     else:
         recommended_html = """
         <div class="notice">
-          No study recommendation yet. Generate a study quiz first.
+          {_ut("no_study_recommendation", "No study recommendation yet. Generate a study quiz first.")}
         </div>
         """
 
@@ -1637,7 +1649,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
       {_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}: <strong>{overall_mastery}%</strong> ·
       {_ut("status.status", "Status")}: <strong>{overall_status}</strong><br>
-      Questions answered: <strong>{answered_count}</strong> / <strong>{total_questions}</strong>
+      {_ut("questions_answered", "Questions answered")}: <strong>{answered_count}</strong> / <strong>{total_questions}</strong>
       ({answered_percent}%)
     </div>
 
@@ -1665,23 +1677,23 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
       <article class="card">
         <h2>{_ut("status.concept_status", "Concept status")}</h2>
         <div class="meta">
-          Needs review: <strong>{len(weak)}</strong><br>
-          In progress: <strong>{len(review)}</strong><br>
-          Almost mastered: <strong>{len(almost)}</strong><br>
-          Mastered: <strong>{len(mastered)}</strong>
+          {_ut("needs_review", "Needs review")}: <strong>{len(weak)}</strong><br>
+          {_ut("in_progress", "In progress")}: <strong>{len(review)}</strong><br>
+          {_ut("almost_mastered", "Almost mastered")}: <strong>{len(almost)}</strong><br>
+          {_ut("mastered", "Mastered")}: <strong>{len(mastered)}</strong>
         </div>
       </article>
     </div>
 
     <div class="actions" style="margin-top: 24px;">
       <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">{_ut("ui.link.continue_study", "Continue Study")}</a>
-      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
+      <a class="btn" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
     </div>
 
-    {concept_list("Needs review", weak, "No weak concepts yet.")}
-    {concept_list("In progress", review, "No concepts in this range yet.")}
-    {concept_list("Almost mastered", almost, "No almost-mastered concepts yet.")}
-    {concept_list("Mastered", mastered, "No mastered concepts yet.")}
+    {concept_list(_ut("needs_review", "Needs review"), weak, _ut("no_weak_concepts_yet", "No weak concepts yet."))}
+    {concept_list(_ut("in_progress", "In progress"), review, _ut("no_concepts_in_this_range_yet", "No concepts in this range yet."))}
+    {concept_list(_ut("almost_mastered", "Almost mastered"), almost, _ut("no_almost_mastered_concepts_yet", "No almost-mastered concepts yet."))}
+    {concept_list(_ut("mastered", "Mastered"), mastered, _ut("no_mastered_concepts_yet", "No mastered concepts yet."))}
     """
 
     return page("Voila! Progress", body)
@@ -1760,8 +1772,8 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     else:
         question_html = """
         <article class="card">
-          <h2>No questions available</h2>
-          <p>Generate course files first, then Study Mode will use quiz.json.</p>
+          <h2>{_ut("no_questions_available", "No questions available")}</h2>
+          <p>{_ut("generate_course_files_first", "Generate course files first, then Study Mode will use quiz.json.")}</p>
         </article>
         """
 
@@ -1804,7 +1816,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
       {_ut("questions", "Questions")}: <strong>{view.get("total_questions")}</strong> ·
       {_ut("answered", "Answered")}: <strong>{view.get("answered_count")}</strong> ·
       {_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
-      {_ut("status.status", _ut("status", "Status"))}: <strong>{html.escape(str(view.get("overall_status")))}</strong>
+      {_ut("status.status", _ut("status", "Status"))}: <strong>{html.escape(_study_status_label(str(view.get("overall_status") or "")))}</strong>
     </div>
 
     {last_html}
@@ -1819,7 +1831,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
     </div>
 
     <div class="actions" style="margin-top: 24px;">
-      <a class="btn" href="/">{_ut("back", "Back")} Voila!</a>
+      <a class="btn" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
       {reset_form}
     </div>
     """
@@ -3948,6 +3960,28 @@ def view_figures(pdf: str = ""):
 def quick_tools():
     from fastapi.responses import HTMLResponse
     from urllib.parse import quote
+    import i18n
+
+    ui_state = i18n.get_ui_language(PROJECT_ROOT)
+    current_ui_language = str(ui_state.get("ui_language") or "ro")
+    supported_ui_languages = ui_state.get("supported") or {}
+
+    language_options = []
+    for code, label in supported_ui_languages.items():
+        selected = " selected" if str(code) == current_ui_language else ""
+        language_options.append(
+            f'<option value="{html.escape(str(code))}"{selected}>{html.escape(str(label))}</option>'
+        )
+
+    language_selector = f"""
+      <form method="post" action="/ui-language-form" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0;">
+        <label for="uiLanguageSelect" style="font-weight:800;color:var(--muted);">{_ut("ui_language", "Interface language")}</label>
+        <select id="uiLanguageSelect" name="language" onchange="this.form.submit()" style="border:1px solid var(--line);border-radius:999px;padding:10px 14px;background:var(--panel2);color:var(--text);font-weight:800;">
+          {''.join(language_options)}
+        </select>
+        <noscript><button type="submit">{_ut("save", "Save")}</button></noscript>
+      </form>
+    """
 
     input_dir = PROJECT_ROOT / "data" / "input"
     output_dir = PROJECT_ROOT / "data" / "output"
@@ -3969,7 +4003,8 @@ def quick_tools():
 
         status = []
         for key, ok in exists.items():
-            status.append(f"<span class='{key if ok else 'missing'}'>{key}: {'OK' if ok else '-'}</span>")
+            status_label = _ut(f"ui.status.{key}", key)
+            status.append(f"<span class='{key if ok else 'missing'}'>{html.escape(status_label)}: {'OK' if ok else '-'}</span>")
 
         cards.append(f"""
         <section class="card">
@@ -4085,7 +4120,10 @@ def quick_tools():
   <div class="wrap">
     <div class="top">
       <h1>{_ut("ui.quick_tools", "Quick Tools")}</h1>
-      <a href="/">{_ut("library", "Library")}</a>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        {language_selector}
+        <a href="/">{_ut("library", "Library")}</a>
+      </div>
     </div>
     {''.join(cards) if cards else '<p>' + _ut("ui.message.no_pdfs_found", "No PDFs found.") + '</p>'}
   </div>
@@ -4732,6 +4770,17 @@ async def voila_run_ocr_page(request: _VoilaRequest):
 
 
 
+@app.post("/ui-language-form")
+def voila_set_ui_language_form(
+    language: str = Form(...),
+) -> RedirectResponse:
+    import i18n
+
+    i18n.set_ui_language(PROJECT_ROOT, language)
+
+    return RedirectResponse(url="/quick-tools", status_code=303)
+
+
 @app.get("/ui-language")
 def voila_get_ui_language():
     from fastapi.responses import JSONResponse
@@ -4942,7 +4991,7 @@ def voila_study_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HT
     else:
         question_html = f"""
         <article class="card">
-          <h2>No questions available</h2>
+          <h2>{_ut("no_questions_available", "No questions available")}</h2>
           <p>{_ut("no_questions_for_lesson", "No questions are available for the selected lesson.")}</p>
         </article>
         """
