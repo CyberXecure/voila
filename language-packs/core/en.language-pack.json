@@ -55,7 +55,7 @@
     "error.field_required": "{field} is required.",
     "lesson.progress": "Lesson {current} of {total}",
     "ui.upload_pdf": "Upload PDF",
-    "ui.choose_file": "Choose File",
+    "ui.choose_file": "Choose file",
     "ui.generated": "Generated",
     "ui.source_mode": "Source Mode",
     "ui.generate_course": "Generate course",
@@ -184,7 +184,11 @@
     "ui.status.course": "course",
     "ui.status.study": "study",
     "ui.status.figures": "figures",
-    "ui.status.ocr": "ocr"
+    "ui.status.ocr": "ocr",
+    "ui.no_file_selected": "No file selected",
+    "message.choose_pdf_from_computer": "Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.",
+    "message.limited_tester_demo_notice": "<strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.",
+    "ui.delete_from_library_confirm": "Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted."
   },
   "feedback": {
     "feedback.correct": "Correct!",

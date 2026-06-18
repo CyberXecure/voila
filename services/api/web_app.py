@@ -754,7 +754,7 @@ def page(title: str, body: str) -> HTMLResponse:
             form.method = "POST";
             form.action = "/delete-from-library";
             form.onsubmit = function () {{
-              return window.confirm("Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted.");
+              return window.confirm("{_ut("ui.delete_from_library_confirm", "Remove this PDF and its generated course from the library? Files will be moved to data/trash, not permanently deleted.")}");
             }};
 
             const input = document.createElement("input");
@@ -1062,14 +1062,17 @@ def health() -> dict:
 @app.get("/", response_class=HTMLResponse)
 def home(generated: str | None = Query(default=None), uploaded: str | None = Query(default=None)) -> HTMLResponse:
     cards = []
+    no_file_selected = html.escape(_ut("ui.no_file_selected", "No file selected"), quote=True)
 
     upload_box = f"""
         <div class="upload-box">
           <h2>{_ut("ui.upload_pdf", "Upload PDF")}</h2>
-          <div class="meta">Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.</div>
-          <div class="meta"><strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.</div>
+          <div class="meta">{_ut("message.choose_pdf_from_computer", "Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.")}</div>
+          <div class="meta">{_ut("message.limited_tester_demo_notice", "<strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.")}</div>
           <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
-            <input type="file" name="file" accept="application/pdf" required>
+            <input id="pdfUploadInput" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" type="file" name="file" accept="application/pdf" required onchange="document.getElementById('selectedFileName').textContent = this.files && this.files[0] ? this.files[0].name : '{no_file_selected}';">
+            <label class="btn" for="pdfUploadInput">{_ut("ui.choose_file", "Choose file")}</label>
+            <span id="selectedFileName" class="meta">{_ut("ui.no_file_selected", "No file selected")}</span>
             <button class="primary" type="submit">{_ut("ui.upload_pdf", "Upload PDF")}</button>
           </form>
         </div>
@@ -3677,7 +3680,7 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
         (_ut("ui.edit_crops", "Edit crops"), f"/edit-crops?pdf={q}", "crops"),
         (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
-        ("Library", "/", "library"),
+        (_ut("ui.library", _ut("library", "Library")), "/", "library"),
     ]
 
     items = []
