@@ -80,8 +80,47 @@ LEGACY_PATTERNS = [
 
 def _clean_concept(value: str) -> str:
     concept = str(value or "").strip()
+
+    if " — " in concept:
+        concept = concept.split(" — ", 1)[1]
+
+    concept = re.sub(
+        r"\([^)]*\b(credit|source|wikimedia|commons|nasa|ames|department of energy|modification of work)\b[^)]*\)",
+        "",
+        concept,
+        flags=re.IGNORECASE,
+    )
+    concept = re.sub(r"\bcredit\s+[a-z]?\s*:.*$", "", concept, flags=re.IGNORECASE)
+    concept = re.sub(r"\bmodification of work by\b.*$", "", concept, flags=re.IGNORECASE)
+
     concept = concept.rstrip(".?").strip()
-    concept = concept.strip("'\"“”‘’")
+    concept = concept.strip("'\"“”‘’ .,:;—–-()[]{}")
+    concept = re.sub(r"[\)\]\}]+$", "", concept).strip(" .,:;—–-")
+
+    lower = concept.lower()
+
+    if not concept:
+        return ""
+
+    if any(
+        phrase in lower
+        for phrase in [
+            "department of energy",
+            "wikimedia commons",
+            "nasa/ames",
+            "ames research center",
+            "modification of work",
+            "credit a",
+            "credit b",
+            "credit c",
+            "courtesy of",
+        ]
+    ):
+        return ""
+
+    if re.search(r"^\s*(fig\.|figure|table|caption)\b", lower):
+        return ""
+
     return concept
 
 

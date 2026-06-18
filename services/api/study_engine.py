@@ -158,13 +158,57 @@ def load_state(output_dir: Path, questions: list[dict]) -> dict:
 
     concepts = state.setdefault("concepts", {})
 
+    if not isinstance(concepts, dict):
+        concepts = {}
+        state["concepts"] = concepts
+
+    valid_question_ids = {
+        str(question.get("question_id") or "")
+        for question in questions
+        if question.get("question_id")
+    }
+    valid_concept_ids = {
+        str(question.get("concept_id") or "")
+        for question in questions
+        if question.get("concept_id")
+    }
+
+    if valid_concept_ids:
+        state["concepts"] = {
+            concept_id: concept
+            for concept_id, concept in concepts.items()
+            if concept_id in valid_concept_ids
+        }
+        concepts = state["concepts"]
+
     for question in questions:
         concept_id = question["concept_id"]
 
         if concept_id not in concepts:
             concepts[concept_id] = default_concept_state(concept_id)
 
-    state.setdefault("attempts", [])
+    attempts = state.setdefault("attempts", [])
+
+    if valid_question_ids and valid_concept_ids:
+        state["attempts"] = [
+            attempt
+            for attempt in attempts
+            if str(attempt.get("question_id") or "") in valid_question_ids
+            and str(attempt.get("concept_id") or "") in valid_concept_ids
+        ]
+
+        last_attempt = state.get("last_attempt")
+
+        if isinstance(last_attempt, dict):
+            last_question_id = str(last_attempt.get("question_id") or "")
+            last_concept_id = str(last_attempt.get("concept_id") or "")
+
+            if (
+                last_question_id not in valid_question_ids
+                or last_concept_id not in valid_concept_ids
+            ):
+                state.pop("last_attempt", None)
+
     state["updated_at"] = now_iso()
 
     return state
