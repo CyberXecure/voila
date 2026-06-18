@@ -17,6 +17,55 @@ QUESTION_TEMPLATES = {
 }
 
 
+QUESTION_TYPE_TEMPLATES = {
+    "en": {
+        "definition": "How does the source define “{concept}”?",
+        "components": "What parts or components does the source describe for “{concept}”?",
+        "purpose": "What purpose does the source describe for “{concept}”?",
+        "requirement": "What requirement or recommendation does the source state for “{concept}”?",
+        "condition": "Under what condition or situation does the source describe “{concept}”?",
+        "cause_effect": "What cause, reason, or effect does the source describe for “{concept}”?",
+        "comparison": "What comparison does the source make about “{concept}”?",
+        "example": "What example does the source give for “{concept}”?",
+        "process": "What process or sequence does the source describe for “{concept}”?",
+        "numeric_check": "What numerical detail or measurement does the source give for “{concept}”?",
+        "visual_interpretation": "What figure or table detail does the source provide for “{concept}”?",
+        "technical_fact": "What technical point does the source state about “{concept}”?",
+        "important_idea": "What important idea does the source support about “{concept}”?",
+    },
+    "ro": {
+        "definition": "Cum definește sursa „{concept}”?",
+        "components": "Ce părți sau componente descrie sursa pentru „{concept}”?",
+        "purpose": "Ce scop sau rol descrie sursa pentru „{concept}”?",
+        "requirement": "Ce cerință sau recomandare menționează sursa pentru „{concept}”?",
+        "condition": "În ce condiție sau situație descrie sursa „{concept}”?",
+        "cause_effect": "Ce cauză, motiv sau efect descrie sursa pentru „{concept}”?",
+        "comparison": "Ce comparație face sursa despre „{concept}”?",
+        "example": "Ce exemplu oferă sursa pentru „{concept}”?",
+        "process": "Ce proces sau secvență descrie sursa pentru „{concept}”?",
+        "numeric_check": "Ce detaliu numeric sau măsurătoare oferă sursa pentru „{concept}”?",
+        "visual_interpretation": "Ce detaliu din figură sau tabel oferă sursa pentru „{concept}”?",
+        "technical_fact": "Ce precizare tehnică face sursa despre „{concept}”?",
+        "important_idea": "Ce idee importantă susține sursa despre „{concept}”?",
+    },
+    "ru": {
+        "definition": "Как источник определяет «{concept}»?",
+        "components": "Какие части или компоненты источник описывает для «{concept}»?",
+        "purpose": "Какую цель или функцию источник описывает для «{concept}»?",
+        "requirement": "Какое требование или рекомендацию источник указывает для «{concept}»?",
+        "condition": "При каком условии или в какой ситуации источник описывает «{concept}»?",
+        "cause_effect": "Какую причину, основание или следствие источник описывает для «{concept}»?",
+        "comparison": "Какое сравнение источник делает относительно «{concept}»?",
+        "example": "Какой пример источник приводит для «{concept}»?",
+        "process": "Какой процесс или последовательность источник описывает для «{concept}»?",
+        "numeric_check": "Какую числовую деталь или измерение источник приводит для «{concept}»?",
+        "visual_interpretation": "Какую деталь рисунка или таблицы источник приводит для «{concept}»?",
+        "technical_fact": "Какой технический момент источник указывает относительно «{concept}»?",
+        "important_idea": "Какую важную идею источник подтверждает о «{concept}»?",
+    },
+}
+
+
 LEGACY_PATTERNS = [
     r"^What technical point does the source state about\s+(.+?)\??$",
     r"^Under what condition or operating situation does the source describe\s+(.+?)\??$",
@@ -93,6 +142,45 @@ def ui_language(project_root: Path | str) -> str:
     return "en"
 
 
+def question_type(question: dict, raw_question: str) -> str:
+    explicit = str(question.get("question_type") or "").strip().lower()
+    if explicit:
+        return explicit
+
+    raw = str(raw_question or "").strip().lower()
+
+    if raw.startswith("how does the source define") or "define" in raw:
+        return "definition"
+    if raw.startswith("what purpose"):
+        return "purpose"
+    if raw.startswith("what requirement"):
+        return "requirement"
+    if raw.startswith("under what condition"):
+        return "condition"
+    if "comparison" in raw or "compare" in raw:
+        return "comparison"
+    if "example" in raw:
+        return "example"
+    if "process" in raw or "sequence" in raw:
+        return "process"
+    if "numerical" in raw or "measurement" in raw:
+        return "numeric_check"
+    if "figure" in raw or "table" in raw:
+        return "visual_interpretation"
+
+    return "technical_fact"
+
+
+def localized_question_template(language: str, qtype: str) -> str:
+    templates = QUESTION_TYPE_TEMPLATES.get(language) or QUESTION_TYPE_TEMPLATES["en"]
+    return (
+        templates.get(qtype)
+        or templates.get("technical_fact")
+        or QUESTION_TEMPLATES.get(language)
+        or QUESTION_TEMPLATES["en"]
+    )
+
+
 def build_study_question(
     project_root: Path | str,
     pdf_name: str,
@@ -112,9 +200,10 @@ def build_study_question(
     # Display language follows the UI language, not the document language.
     # The source answer/content remains in the original document language.
     lang = ui_language(project_root)
+    qtype = question_type(question, raw_question)
 
     if concept:
-        template = QUESTION_TEMPLATES.get(lang, QUESTION_TEMPLATES["en"])
+        template = localized_question_template(lang, qtype)
         return template.format(concept=concept)
 
     return raw_question

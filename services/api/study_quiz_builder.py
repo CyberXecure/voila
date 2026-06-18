@@ -206,35 +206,83 @@ def infer_concept_title(lesson_title: str, sentence: str, language: str) -> str:
 def question_from_sentence(sentence: str, concept: str, language: str) -> tuple[str, str]:
     lower = normalize_key(sentence)
 
+    has_number_or_unit = bool(
+        re.search(
+            r"\b\d+(?:[.,]\d+)?\s*(m|cm|mm|km|kg|g|s|min|h|hz|khz|mhz|n|pa|j|w|kw|v|a|ma|mol|k|°c|°|%)\b",
+            lower,
+        )
+        or re.search(r"\b10[\-−–]?\d+\b", lower)
+        or re.search(r"×\s*10", sentence)
+    )
+
     if language == "ro":
-        if re.search(r"\b(se numește|reprezintă|este definit|se definește)\b", lower):
+        if re.search(r"\b(fig\.|figură|figura|tabel|diagramă|grafic|caption|legendă)\b", lower):
+            return f"Ce detaliu din figură sau tabel oferă sursa pentru {concept}?", "visual_interpretation"
+
+        if has_number_or_unit:
+            return f"Ce detaliu numeric sau măsurătoare oferă sursa pentru {concept}?", "numeric_check"
+
+        if re.search(r"\b(se numește|reprezintă|este definit|se definește|înseamnă|se referă la)\b", lower):
             return f"Cum definește sursa {concept}?", "definition"
 
-        if re.search(r"\b(se compune|este alcătuit|sunt alcătuite|conține|cuprinde)\b", lower):
+        if re.search(r"\b(comparativ cu|în comparație|spre deosebire|față de|decât)\b", lower):
+            return f"Ce comparație face sursa despre {concept}?", "comparison"
+
+        if re.search(r"\b(de exemplu|cum ar fi|precum|inclusiv|include)\b", lower):
+            return f"Ce exemplu oferă sursa pentru {concept}?", "example"
+
+        if re.search(r"\b(se compune|este alcătuit|sunt alcătuite|conține|cuprinde|include|este format)\b", lower):
             return f"Din ce este alcătuit sau ce cuprinde {concept}?", "components"
 
-        if re.search(r"\b(se folosește|se folosesc|este utilizat|sunt utilizate|servește|rolul)\b", lower):
+        if re.search(r"\b(mai întâi|apoi|după aceea|următorul pas|proces|secvență|etapă)\b", lower):
+            return f"Ce proces sau secvență descrie sursa pentru {concept}?", "process"
+
+        if re.search(r"\b(se folosește|se folosesc|este utilizat|sunt utilizate|servește|rolul|scopul|funcția)\b", lower):
             return f"Care este rolul sau scopul descris pentru {concept}?", "purpose"
 
-        if re.search(r"\b(trebuie|este necesar|se recomandă|obligatoriu)\b", lower):
+        if re.search(r"\b(trebuie|este necesar|sunt necesare|se recomandă|obligatoriu|necesită)\b", lower):
             return f"Ce cerință sau recomandare menționează sursa pentru {concept}?", "requirement"
 
-        if re.search(r"\b(când|dacă|în cazul|la pornire|în timpul|pentru)\b", lower):
-            return f"În ce situație sau condiții descrie sursa {concept}?", "condition"
+        if re.search(r"\b(când|dacă|în cazul|la pornire|în timpul|în condiții)\b", lower):
+            return f"În ce condiție sau situație descrie sursa {concept}?", "condition"
 
-        if re.search(r"\b(deoarece|pentru că|astfel|ca urmare|determină|produce)\b", lower):
+        if re.search(r"\b(deoarece|pentru că|astfel|ca urmare|determină|produce|duce la|rezultă)\b", lower):
             return f"Ce cauză, motiv sau efect descrie sursa pentru {concept}?", "cause_effect"
 
         return f"Ce precizare tehnică face sursa despre {concept}?", "technical_fact"
 
-    if "used" in lower:
+    if re.search(r"\b(fig\.|figure|table|diagram|graph|caption)\b", lower):
+        return f"What figure or table detail does the source provide for {concept}?", "visual_interpretation"
+
+    if has_number_or_unit:
+        return f"What numerical detail or measurement does the source give for {concept}?", "numeric_check"
+
+    if re.search(r"\b(is defined as|defined as|is called|are called|means|refers to|is equal to|is a measure of|is designed to be|is an?|is the)\b", lower):
+        return f"How does the source define {concept}?", "definition"
+
+    if re.search(r"\b(compared with|compared to|whereas|while|unlike|in contrast|versus| vs\.? )\b", lower):
+        return f"What comparison does the source make about {concept}?", "comparison"
+
+    if re.search(r"\b(for example|for instance|such as|including|e\.g\.)\b", lower):
+        return f"What example does the source give for {concept}?", "example"
+
+    if re.search(r"\b(consists of|contains|includes|is made of|are made of|comprises|is composed of)\b", lower):
+        return f"What parts or components does the source describe for {concept}?", "components"
+
+    if re.search(r"\b(first|then|next|finally|step|steps|process|sequence|procedure|involves)\b", lower):
+        return f"What process or sequence does the source describe for {concept}?", "process"
+
+    if re.search(r"\b(used to|used for|is used|are used|purpose|function|role|in order to|so that)\b", lower):
         return f"What purpose does the source describe for {concept}?", "purpose"
 
-    if "must" in lower or "should" in lower or "required" in lower:
-        return f"What requirement does the source state for {concept}?", "requirement"
+    if re.search(r"\b(must|should|required|requires|necessary|recommended|need to|has to)\b", lower):
+        return f"What requirement or recommendation does the source state for {concept}?", "requirement"
 
-    if "when" in lower or "if" in lower or "during" in lower:
-        return f"Under what condition does the source describe {concept}?", "condition"
+    if re.search(r"\b(when|if|during|in case of|under .*condition|provided that)\b", lower):
+        return f"Under what condition or situation does the source describe {concept}?", "condition"
+
+    if re.search(r"\b(because|therefore|due to|causes|caused by|results in|leads to|as a result|so that)\b", lower):
+        return f"What cause, reason, or effect does the source describe for {concept}?", "cause_effect"
 
     return f"What technical point does the source state about {concept}?", "technical_fact"
 
