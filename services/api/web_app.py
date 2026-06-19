@@ -1660,6 +1660,82 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     else:
         answered_percent = 0
 
+    def progress_question_type_label(value: str) -> str:
+        raw = str(value or "").strip().lower()
+
+        if not raw:
+            return _ut("not_available", "Not available")
+
+        lang = _ui_language_code()
+        labels = {
+            "ro": {
+                "definition": "definiție",
+                "components": "componente",
+                "purpose": "scop",
+                "requirement": "cerință",
+                "condition": "condiție",
+                "cause_effect": "cauză/efect",
+                "comparison": "comparație",
+                "example": "exemplu",
+                "process": "proces",
+                "numeric_check": "verificare numerică",
+                "visual_interpretation": "interpretare vizuală",
+                "technical_fact": "precizare tehnică",
+            },
+            "en": {
+                "definition": "definition",
+                "components": "components",
+                "purpose": "purpose",
+                "requirement": "requirement",
+                "condition": "condition",
+                "cause_effect": "cause/effect",
+                "comparison": "comparison",
+                "example": "example",
+                "process": "process",
+                "numeric_check": "numeric check",
+                "visual_interpretation": "visual interpretation",
+                "technical_fact": "technical fact",
+            },
+        }
+
+        lang_key = "ro" if lang == "ro" else "en"
+        return labels[lang_key].get(raw, raw.replace("_", " "))
+
+
+    def progress_timestamp_label(value) -> str:
+        raw = str(value or "").strip()
+
+        if not raw:
+            return _ut("not_available", "Not available")
+
+        return raw.replace("T", " ").replace("Z", "")[:19]
+
+
+    def progress_question_type_stats_label(stats) -> str:
+        if not isinstance(stats, dict) or not stats:
+            return _ut("not_available", "Not available")
+
+        rows = []
+
+        for qtype, values in sorted(stats.items()):
+            if not isinstance(values, dict):
+                continue
+
+            attempts = int(values.get("attempts") or 0)
+            correct = int(values.get("correct") or 0)
+            incorrect = int(values.get("incorrect") or 0)
+
+            if attempts <= 0:
+                continue
+
+            rows.append(
+                f"{html.escape(progress_question_type_label(str(qtype)))}: "
+                f"{attempts} / {correct}✓ / {incorrect}✗"
+            )
+
+        return "<br>".join(rows) if rows else _ut("not_available", "Not available")
+
+
     def concept_list(title: str, items: list, empty: str) -> str:
         rows = []
 
@@ -1670,6 +1746,11 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
             correct = int(item.get("correct") or 0)
             incorrect = int(item.get("incorrect") or 0)
             status = html.escape(_study_status_label(str(item.get("status") or "")))
+            recent_misses = int(item.get("recent_misses") or 0)
+            last_question_type = html.escape(progress_question_type_label(item.get("last_question_type")))
+            last_correct = html.escape(progress_timestamp_label(item.get("last_correct")))
+            last_incorrect = html.escape(progress_timestamp_label(item.get("last_incorrect")))
+            type_stats = progress_question_type_stats_label(item.get("question_type_stats") or {})
 
             rows.append(
                 f"""
@@ -1685,6 +1766,17 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
                     {_ut("correct", "Correct")}: {correct}<br>
                     {_ut("incorrect", "Incorrect")}: {incorrect}
                   </div>
+                  <details style="margin-top: 12px;">
+                    <summary>{_ut("bkt_diagnostics", "BKT diagnostics")}</summary>
+                    <div class="meta" style="margin-top: 10px;">
+                      {_ut("recent_misses", "Recent misses")}: <strong>{recent_misses}</strong><br>
+                      {_ut("last_question_type", "Last question type")}: <strong>{last_question_type}</strong><br>
+                      {_ut("last_correct", "Last correct")}: <strong>{last_correct}</strong><br>
+                      {_ut("last_incorrect", "Last incorrect")}: <strong>{last_incorrect}</strong><br>
+                      {_ut("question_type_stats", "Question-type stats")}:<br>
+                      {type_stats}
+                    </div>
+                  </details>
                 </article>
                 """
             )
@@ -1717,12 +1809,28 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     elif concepts:
         recommended = concepts[0]
 
+    current_question = view.get("current_question") or {}
+    recommended_reason_html = ""
+    next_question_type_html = ""
+
+    if isinstance(current_question, dict) and current_question:
+        reason = html.escape(_study_recommendation_reason_label(str(current_question.get("recommendation_reason") or "")))
+        qtype = html.escape(progress_question_type_label(str(current_question.get("question_type") or "")))
+
+        if reason:
+            recommended_reason_html = f'<br>{_ut("recommended_because", "Recommended because")}: <strong>{reason}</strong>'
+
+        if qtype:
+            next_question_type_html = f'<br>{_ut("next_question_type", "Next question type")}: <strong>{qtype}</strong>'
+
     if recommended:
         recommended_html = f"""
         <div class="notice">
           {_ut("recommended_next_focus", "Recommended next focus")}:
           <strong>{html.escape(str(recommended.get("concept_id") or ""))}</strong>
-          — mastery <strong>{int(recommended.get("mastery_percent") or 0)}%</strong>.
+          — {_ut("mastery_label", "mastery")} <strong>{int(recommended.get("mastery_percent") or 0)}%</strong>.
+          {recommended_reason_html}
+          {next_question_type_html}
         </div>
         """
     else:
@@ -1759,8 +1867,8 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
         <h2>{_ut("status.study_coverage", _ut("study_coverage", "Study coverage"))}</h2>
         <p style="font-size: 34px; margin: 8px 0;"><strong>{answered_percent}%</strong></p>
         <div class="meta">
-          Answered: {answered_count}<br>
-          Total questions: {total_questions}
+          {_ut("answered", "Answered")}: <strong>{answered_count}</strong><br>
+          {_ut("total_questions", "Total questions")}: <strong>{total_questions}</strong>
         </div>
       </article>
 
