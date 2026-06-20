@@ -201,7 +201,8 @@
     "last_incorrect": "Ultimul răspuns greșit",
     "question_type_stats": "Statistici pe tipuri de întrebări",
     "not_available": "Indisponibil",
-    "next_question_type": "Următorul tip de întrebare"
+    "next_question_type": "Următorul tip de întrebare",
+    "mastery_changed": "Nivelul s-a schimbat de la"
   },
   "feedback": {
     "feedback.correct": "Corect!",
