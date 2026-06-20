@@ -201,7 +201,16 @@
     "last_incorrect": "Last incorrect",
     "question_type_stats": "Question-type stats",
     "not_available": "Not available",
-    "next_question_type": "Next question type"
+    "next_question_type": "Next question type",
+    "review_schedule": "Review schedule",
+    "review_bucket": "Review bucket",
+    "next_review": "Next review",
+    "review_delay_days": "Review delay days",
+    "due_now": "Due now",
+    "due_today": "Due today",
+    "due_later": "Due later",
+    "mastered_review": "Mastered review",
+    "new_concept": "New concept"
   },
   "feedback": {
     "feedback.correct": "Correct!",
