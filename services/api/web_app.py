@@ -185,8 +185,12 @@ def _study_recommendation_reason_label(value: str) -> str:
         "ro": {
             "new concept": "concept nou",
             "recent mistakes": "greșeli recente",
-            "low mastery": "stăpânire redusă",
+            "low mastery": "nivel redus",
             "in progress": "în progres",
+            "due now": "scadent acum",
+            "due today": "scadent azi",
+            "due later": "programat mai târziu",
+            "mastered review": "revizuire de consolidare",
             "scheduled review": "revizuire programată",
         },
         "en": {
@@ -194,6 +198,10 @@ def _study_recommendation_reason_label(value: str) -> str:
             "recent mistakes": "recent mistakes",
             "low mastery": "low mastery",
             "in progress": "in progress",
+            "due now": "due now",
+            "due today": "due today",
+            "due later": "due later",
+            "mastered review": "mastered review",
             "scheduled review": "scheduled review",
         },
     }
@@ -1711,6 +1719,33 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
         return raw.replace("T", " ").replace("Z", "")[:19]
 
 
+    def progress_review_bucket_label(value: str) -> str:
+        raw = str(value or "").strip().lower()
+
+        if not raw:
+            return _ut("not_available", "Not available")
+
+        labels = {
+            "ro": {
+                "due_now": "scadent acum",
+                "due_today": "scadent azi",
+                "due_later": "programat mai târziu",
+                "mastered_review": "revizuire de consolidare",
+                "new_concept": "concept nou",
+            },
+            "en": {
+                "due_now": "due now",
+                "due_today": "due today",
+                "due_later": "due later",
+                "mastered_review": "mastered review",
+                "new_concept": "new concept",
+            },
+        }
+
+        lang_key = "ro" if _ui_language_code() == "ro" else "en"
+        return labels[lang_key].get(raw, raw.replace("_", " "))
+
+
     def progress_question_type_stats_label(stats) -> str:
         if not isinstance(stats, dict) or not stats:
             return _ut("not_available", "Not available")
@@ -1751,6 +1786,9 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
             last_correct = html.escape(progress_timestamp_label(item.get("last_correct")))
             last_incorrect = html.escape(progress_timestamp_label(item.get("last_incorrect")))
             type_stats = progress_question_type_stats_label(item.get("question_type_stats") or {})
+            review_bucket = html.escape(progress_review_bucket_label(item.get("review_bucket")))
+            next_review = html.escape(progress_timestamp_label(item.get("review_due_at")))
+            review_delay_days = int(item.get("review_delay_days") or 0)
 
             rows.append(
                 f"""
@@ -1774,7 +1812,12 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
                       {_ut("last_correct", "Last correct")}: <strong>{last_correct}</strong><br>
                       {_ut("last_incorrect", "Last incorrect")}: <strong>{last_incorrect}</strong><br>
                       {_ut("question_type_stats", "Question-type stats")}:<br>
-                      {type_stats}
+                      {type_stats}<br>
+                      <br>
+                      {_ut("review_schedule", "Review schedule")}:<br>
+                      {_ut("review_bucket", "Review bucket")}: <strong>{review_bucket}</strong><br>
+                      {_ut("next_review", "Next review")}: <strong>{next_review}</strong><br>
+                      {_ut("review_delay_days", "Review delay days")}: <strong>{review_delay_days}</strong>
                     </div>
                   </details>
                 </article>

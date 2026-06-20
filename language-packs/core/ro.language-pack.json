@@ -202,7 +202,16 @@
     "question_type_stats": "Statistici pe tipuri de întrebări",
     "not_available": "Indisponibil",
     "next_question_type": "Următorul tip de întrebare",
-    "mastery_changed": "Nivelul s-a schimbat de la"
+    "mastery_changed": "Nivelul s-a schimbat de la",
+    "review_schedule": "Program revizuire",
+    "review_bucket": "Categorie revizuire",
+    "next_review": "Următoarea revizuire",
+    "review_delay_days": "Zile până la revizuire",
+    "due_now": "Scadent acum",
+    "due_today": "Scadent azi",
+    "due_later": "Programat mai târziu",
+    "mastered_review": "Revizuire de consolidare",
+    "new_concept": "Concept nou"
   },
   "feedback": {
     "feedback.correct": "Corect!",

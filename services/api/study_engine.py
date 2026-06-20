@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -69,11 +69,115 @@ def ensure_concept_metadata(concept: dict) -> dict:
     concept.setdefault("last_question_type", None)
     concept.setdefault("last_correct", None)
     concept.setdefault("last_incorrect", None)
+    concept.setdefault("review_due_at", None)
+    concept.setdefault("review_delay_days", 0)
+    concept.setdefault("review_bucket", "new_concept")
+    concept.setdefault("last_review_scheduled_at", None)
     return concept
 
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def parse_iso_datetime(value: str | None) -> datetime | None:
+    raw = str(value or "").strip()
+
+    if not raw:
+        return None
+
+    try:
+        if raw.endswith("Z"):
+            raw = raw[:-1] + "+00:00"
+
+        parsed = datetime.fromisoformat(raw)
+
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+
+        return parsed.astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def review_delay_days_for_concept(concept: dict) -> int:
+    ensure_concept_metadata(concept)
+
+    attempts = int(concept.get("attempts") or 0)
+
+    if attempts <= 0:
+        return 0
+
+    mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
+    recent_misses = int(concept.get("recent_misses") or 0)
+
+    if recent_misses > 0:
+        return 0
+
+    if mastery < 0.40:
+        return 0
+
+    if mastery < 0.75:
+        return 1
+
+    if mastery < 0.90:
+        return 3
+
+    return 7
+
+
+def update_review_schedule(concept: dict, timestamp: str | None = None) -> dict:
+    ensure_concept_metadata(concept)
+
+    attempts = int(concept.get("attempts") or 0)
+
+    if attempts <= 0:
+        concept["review_due_at"] = None
+        concept["review_delay_days"] = 0
+        concept["review_bucket"] = "new_concept"
+        concept["last_review_scheduled_at"] = timestamp or now_iso()
+        return concept
+
+    timestamp = timestamp or now_iso()
+    base = parse_iso_datetime(timestamp) or datetime.now(timezone.utc)
+    delay_days = review_delay_days_for_concept(concept)
+    due_at = base + timedelta(days=delay_days)
+    mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
+
+    if delay_days <= 0:
+        bucket = "due_now"
+    elif mastery >= 0.90:
+        bucket = "mastered_review"
+    else:
+        bucket = "due_later"
+
+    concept["review_due_at"] = due_at.isoformat()
+    concept["review_delay_days"] = int(delay_days)
+    concept["review_bucket"] = bucket
+    concept["last_review_scheduled_at"] = timestamp
+
+    return concept
+
+
+def review_bucket_for_concept(concept: dict, now: datetime | None = None) -> str:
+    ensure_concept_metadata(concept)
+
+    attempts = int(concept.get("attempts") or 0)
+
+    if attempts <= 0:
+        return "new_concept"
+
+    now = now or datetime.now(timezone.utc)
+    due_at = parse_iso_datetime(concept.get("review_due_at"))
+    bucket = str(concept.get("review_bucket") or "").strip() or "due_later"
+
+    if due_at and due_at <= now:
+        return "due_now"
+
+    if bucket in {"due_now", "due_today", "due_later", "mastered_review", "new_concept"}:
+        return bucket
+
+    return "due_later"
 
 
 def clamp_probability(value: float) -> float:
@@ -199,6 +303,10 @@ def default_concept_state(concept_id: str) -> dict:
         "last_question_type": None,
         "recent_misses": 0,
         "question_type_stats": {},
+        "review_due_at": None,
+        "review_delay_days": 0,
+        "review_bucket": "new_concept",
+        "last_review_scheduled_at": None,
         "status": mastery_status(DEFAULT_BKT["prior"]),
         "bkt": dict(DEFAULT_BKT),
     }
@@ -346,21 +454,35 @@ def choose_next_question(questions: list[dict], state: dict) -> dict | None:
         if alternatives:
             pool = alternatives
 
-    def score(question: dict) -> tuple[float, int, int, float, str]:
+    def score(question: dict) -> tuple[int, int, float, int, int, float, str]:
         concept = ensure_concept_metadata(concepts.get(question["concept_id"], {}))
         mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
         attempts = int(concept.get("attempts", 0))
         recent_misses = int(concept.get("recent_misses", 0))
+
+        if attempts > 0 and not concept.get("review_due_at"):
+            update_review_schedule(concept)
+
+        bucket = review_bucket_for_concept(concept)
+        bucket_priority = {
+            "due_now": 0,
+            "due_today": 1,
+            "due_later": 4,
+            "mastered_review": 5,
+            "new_concept": 3,
+        }.get(bucket, 4)
+
         qtype = question_type_for(question)
         stats = concept.get("question_type_stats") or {}
         type_attempts = int((stats.get(qtype) or {}).get("attempts") or 0)
         difficulty = float(bkt_params_for_question(question, concept).get("difficulty", 1.0))
 
         return (
+            bucket_priority,
+            0 if recent_misses > 0 else 1,
             mastery,
             type_attempts,
             attempts,
-            -recent_misses,
             -difficulty,
             str(question.get("question_id") or ""),
         )
@@ -384,6 +506,14 @@ def recommendation_reason_for_question(question: dict, state: dict) -> str:
     if attempts == 0:
         return f"new concept · {qtype}"
 
+    bucket = review_bucket_for_concept(concept)
+
+    if bucket == "due_now":
+        return f"due now · {qtype}"
+
+    if bucket == "due_today":
+        return f"due today · {qtype}"
+
     if recent_misses > 0:
         return f"recent mistakes · {qtype}"
 
@@ -392,6 +522,9 @@ def recommendation_reason_for_question(question: dict, state: dict) -> str:
 
     if mastery < 0.75:
         return f"in progress · {qtype}"
+
+    if bucket == "mastered_review":
+        return f"mastered review · {qtype}"
 
     return f"scheduled review · {qtype}"
 
@@ -437,6 +570,8 @@ def record_answer(output_dir: Path, question_id: str, correct: bool) -> dict:
         concept["last_incorrect"] = timestamp
         concept["recent_misses"] = int(concept.get("recent_misses", 0)) + 1
 
+    update_review_schedule(concept, timestamp)
+
     type_stats = concept.setdefault("question_type_stats", {})
     qtype_stats = type_stats.setdefault(
         qtype,
@@ -460,6 +595,9 @@ def record_answer(output_dir: Path, question_id: str, correct: bool) -> dict:
         "mastery_before": old_mastery,
         "mastery_after": new_mastery,
         "bkt": params,
+        "review_bucket": concept.get("review_bucket"),
+        "review_due_at": concept.get("review_due_at"),
+        "review_delay_days": concept.get("review_delay_days"),
     }
 
     state["attempts"].append(attempt)
@@ -484,9 +622,17 @@ def get_study_view(output_dir: Path) -> dict:
     save_state(output_dir, state)
 
     concepts = []
+    schedule_changed = False
 
     for concept_id, concept in state.get("concepts", {}).items():
+        ensure_concept_metadata(concept)
+
+        if int(concept.get("attempts") or 0) > 0 and not concept.get("review_due_at"):
+            update_review_schedule(concept)
+            schedule_changed = True
+
         mastery = float(concept.get("mastery", DEFAULT_BKT["prior"]))
+        review_bucket = review_bucket_for_concept(concept)
 
         concepts.append(
             {
@@ -503,10 +649,18 @@ def get_study_view(output_dir: Path) -> dict:
                 "last_question_type": concept.get("last_question_type"),
                 "recent_misses": int(concept.get("recent_misses", 0)),
                 "question_type_stats": concept.get("question_type_stats") or {},
+                "review_due_at": concept.get("review_due_at"),
+                "review_delay_days": int(concept.get("review_delay_days") or 0),
+                "review_bucket": review_bucket,
+                "last_review_scheduled_at": concept.get("last_review_scheduled_at"),
             }
         )
 
-    concepts.sort(key=lambda item: (item["mastery"], item["concept_id"]))
+    if schedule_changed:
+        state["updated_at"] = now_iso()
+        save_state(output_dir, state)
+
+    concepts.sort(key=lambda item: (item.get("review_bucket") != "due_now", item["mastery"], item["concept_id"]))
 
     if concepts:
         overall_mastery = sum(item["mastery"] for item in concepts) / len(concepts)
