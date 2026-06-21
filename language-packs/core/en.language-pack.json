@@ -63,7 +63,7 @@
     "ui.figures": "Figures",
     "ui.edit_crops": "Edit crops",
     "ui.study": "Study",
-    "ui.review_weak": "Review weak",
+    "ui.review_weak": "Review due",
     "ui.progress": "Progress",
     "ui.logs": "Logs",
     "ui.delete_from_library": "Delete from library",
@@ -210,7 +210,14 @@
     "due_today": "Due today",
     "due_later": "Due later",
     "mastered_review": "Mastered review",
-    "new_concept": "New concept"
+    "new_concept": "New concept",
+    "ui.heading.review_due_concepts": "Voila! Review due concepts",
+    "no_due_now_concepts_yet": "No concepts due now.",
+    "no_due_today_concepts_yet": "No concepts due today.",
+    "no_due_later_concepts_yet": "No concepts scheduled later.",
+    "no_mastered_review_concepts_yet": "No mastered-review concepts yet.",
+    "no_new_concepts_yet": "No new concepts yet.",
+    "next_review_action": "Next review"
   },
   "feedback": {
     "feedback.correct": "Correct!",

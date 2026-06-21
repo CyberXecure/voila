@@ -701,7 +701,7 @@ def page(title: str, body: str) -> HTMLResponse:
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
       <a class="primary" href="/">{_ut("ui.link.back", "Back")}</a>
       <a id="fixedStudyLink" href="/" hidden>{_ut("ui.study", _ut("study", "Study"))}</a>
-      <a id="fixedReviewLink" href="/" hidden>{_ut("review", "Review")}</a>
+      <a id="fixedReviewLink" href="/" hidden>{_ut("ui.review_weak", "Review due")}</a>
       <a id="fixedProgressLink" href="/" hidden>{_ut("ui.progress", _ut("progress", "Progress"))}</a>
       <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ {_ut("top", "Top")}</button>
       <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ {_ut("bottom", "Bottom")}</button>
@@ -725,6 +725,11 @@ def page(title: str, body: str) -> HTMLResponse:
           if (studyLink && path !== "/study") {{
             studyLink.href = "/study?pdf=" + encodedPdf;
             studyLink.hidden = false;
+          }}
+
+          if (reviewLink && path !== "/review") {{
+            reviewLink.href = "/review?pdf=" + encodedPdf;
+            reviewLink.hidden = false;
           }}
 
           if (progressLink && path !== "/progress") {{
@@ -1410,6 +1415,10 @@ def choose_review_question_from_view(view: dict) -> dict | None:
     if not questions:
         return None
 
+    current = view.get("current_question")
+    if isinstance(current, dict) and current.get("question_id"):
+        return current
+
     weak_concept_ids = {
         str(item.get("concept_id"))
         for item in concepts
@@ -1478,9 +1487,29 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         return page("Voila! Review", body)
 
     concepts = view.get("concepts") or []
-    weak = [item for item in concepts if float(item.get("mastery", 0)) < 0.40]
-    review_items = [item for item in concepts if 0.40 <= float(item.get("mastery", 0)) < 0.75]
-    almost = [item for item in concepts if 0.75 <= float(item.get("mastery", 0)) < 0.90]
+
+    def review_bucket_label(value: str) -> str:
+        raw = str(value or "").strip().lower()
+        mapping = {
+            "due_now": _ut("due_now", "Due now"),
+            "due_today": _ut("due_today", "Due today"),
+            "due_later": _ut("due_later", "Due later"),
+            "mastered_review": _ut("mastered_review", "Mastered review"),
+            "new_concept": _ut("new_concept", "New concept"),
+        }
+        return mapping.get(raw, raw.replace("_", " ") if raw else _ut("not_available", "Not available"))
+
+    def review_timestamp_label(value) -> str:
+        raw = str(value or "").strip()
+        if not raw:
+            return _ut("not_available", "Not available")
+        return raw.replace("T", " ").replace("Z", "")[:19]
+
+    due_now = [item for item in concepts if str(item.get("review_bucket") or "") == "due_now"]
+    due_today = [item for item in concepts if str(item.get("review_bucket") or "") == "due_today"]
+    due_later = [item for item in concepts if str(item.get("review_bucket") or "") == "due_later"]
+    mastered_review = [item for item in concepts if str(item.get("review_bucket") or "") == "mastered_review"]
+    new_concepts = [item for item in concepts if str(item.get("review_bucket") or "") == "new_concept"]
 
     current = choose_review_question_from_view(view)
     last_attempt = view.get("last_attempt")
@@ -1559,13 +1588,19 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
             concept_id = html.escape(str(item.get("concept_id") or ""))
             mastery = int(item.get("mastery_percent") or 0)
             attempts = int(item.get("attempts") or 0)
+            bucket = html.escape(review_bucket_label(item.get("review_bucket")))
+            next_review = html.escape(review_timestamp_label(item.get("review_due_at")))
 
             rows.append(
                 f"""
                 <article class="card">
                   <h2>{concept_id}</h2>
                   <p style="font-size: 28px; margin: 8px 0;"><strong>{mastery}%</strong></p>
-                  <div class="meta">{_ut("status.attempts", "Attempts")}: {attempts}</div>
+                  <div class="meta">
+                    {_ut("status.attempts", "Attempts")}: {attempts}<br>
+                    {_ut("review_bucket", "Review bucket")}: <strong>{bucket}</strong><br>
+                    {_ut("next_review", "Next review")}: <strong>{next_review}</strong>
+                  </div>
                 </article>
                 """
             )
@@ -1588,13 +1623,15 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         """
 
     body = f"""
-    <h1>{_ut("ui.heading.review_weak_concepts", "Voila! Review weak concepts")}</h1>
+    <h1>{_ut("ui.heading.review_due_concepts", "Voila! Review due concepts")}</h1>
 
     <div class="notice">
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
-      {_ut("needs_review", "Needs review")}: <strong>{len(weak)}</strong> ·
-      {_ut("in_progress", "In progress")}: <strong>{len(review_items)}</strong> ·
-      {_ut("almost_mastered", "Almost mastered")}: <strong>{len(almost)}</strong>
+      {_ut("due_now", "Due now")}: <strong>{len(due_now)}</strong> ·
+      {_ut("due_today", "Due today")}: <strong>{len(due_today)}</strong> ·
+      {_ut("due_later", "Due later")}: <strong>{len(due_later)}</strong> ·
+      {_ut("mastered_review", "Mastered review")}: <strong>{len(mastered_review)}</strong> ·
+      {_ut("new_concept", "New concept")}: <strong>{len(new_concepts)}</strong>
     </div>
 
     {last_html}
@@ -1610,9 +1647,11 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
       <a class="btn" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
     </div>
 
-    {mini_list(_ut("needs_review", "Needs review"), weak, _ut("no_weak_concepts_yet", "No weak concepts yet."))}
-    {mini_list(_ut("in_progress", "In progress"), review_items, _ut("no_concepts_in_progress_yet", "No concepts in progress yet."))}
-    {mini_list(_ut("almost_mastered", "Almost mastered"), almost, _ut("no_almost_mastered_concepts_yet", "No almost-mastered concepts yet."))}
+    {mini_list(_ut("due_now", "Due now"), due_now, _ut("no_due_now_concepts_yet", "No concepts due now."))}
+    {mini_list(_ut("due_today", "Due today"), due_today, _ut("no_due_today_concepts_yet", "No concepts due today."))}
+    {mini_list(_ut("due_later", "Due later"), due_later, _ut("no_due_later_concepts_yet", "No concepts scheduled later."))}
+    {mini_list(_ut("mastered_review", "Mastered review"), mastered_review, _ut("no_mastered_review_concepts_yet", "No mastered-review concepts yet."))}
+    {mini_list(_ut("new_concept", "New concept"), new_concepts, _ut("no_new_concepts_yet", "No new concepts yet."))}
     """
 
     return page("Voila! Review", body)
@@ -1928,6 +1967,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
 
     <div class="actions" style="margin-top: 24px;">
       <a class="btn primary" href="/study?pdf={quote(pdf_path.name)}">{_ut("ui.link.continue_study", "Continue Study")}</a>
+      <a class="btn" href="/review?pdf={quote(pdf_path.name)}">{_ut("ui.review_weak", "Review due")}</a>
       <a class="btn" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
     </div>
 
