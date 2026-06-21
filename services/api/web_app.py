@@ -4073,8 +4073,8 @@ def course_tools(pdf: str = ""):
         """
 
     cards = [
-        card("Open course", _ut("message.open_course_description", "Read the generated course with navigation."), f"/view-course?pdf={q}", checks["course"]),
-        card("Lessons", _ut("message.lessons_description", "Choose a lesson, read it, then study only that lesson."), f"/lessons?pdf={q}", checks["study"]),
+        card(_ut("ui.open_course", _ut("open_course", "Open course")), _ut("message.open_course_description", "Read the generated course with navigation."), f"/view-course?pdf={q}", checks["course"]),
+        card(_ut("ui.lessons", _ut("lessons", "Lessons")), _ut("message.lessons_description", "Choose a lesson, read it, then study only that lesson."), f"/lessons?pdf={q}", checks["study"]),
         card(_ut("ui.study_mode", "Study mode"), _ut("message.study_mode_description", "Practice questions generated from the course."), f"/study?pdf={q}", checks["study"]),
         card(_ut("ui.review_ocr_text", "Review OCR Text"), _ut("message.review_ocr_text_description", "Correct OCR text page by page."), f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
         card(_ut("ui.review_study_concepts", "Review Study Concepts"), _ut("message.review_concepts_description", "Correct lesson and concept titles."), f"/review-concepts?pdf={q}", checks["concepts"]),
