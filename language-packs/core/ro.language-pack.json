@@ -63,7 +63,7 @@
     "ui.figures": "Figuri",
     "ui.edit_crops": "Editează decupaje",
     "ui.study": "Studiază",
-    "ui.review_weak": "Revizuire concepte slabe",
+    "ui.review_weak": "Revizuire programată",
     "ui.progress": "Progres",
     "ui.logs": "Jurnale",
     "ui.delete_from_library": "Șterge din bibliotecă",
@@ -211,7 +211,14 @@
     "due_today": "Scadent azi",
     "due_later": "Programat mai târziu",
     "mastered_review": "Revizuire de consolidare",
-    "new_concept": "Concept nou"
+    "new_concept": "Concept nou",
+    "ui.heading.review_due_concepts": "Voila! Revizuire programată",
+    "no_due_now_concepts_yet": "Nu există concepte scadente acum.",
+    "no_due_today_concepts_yet": "Nu există concepte scadente azi.",
+    "no_due_later_concepts_yet": "Nu există concepte programate mai târziu.",
+    "no_mastered_review_concepts_yet": "Nu există concepte pentru revizuire de consolidare.",
+    "no_new_concepts_yet": "Nu există concepte noi.",
+    "next_review_action": "Următoarea revizuire"
   },
   "feedback": {
     "feedback.correct": "Corect!",
