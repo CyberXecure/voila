@@ -44,7 +44,7 @@ def main() -> None:
     except HTTPException as exc:
         assert exc.status_code == 400
         assert "Limited Tester Demo" in str(exc.detail)
-        assert "5 pages per PDF" in str(exc.detail)
+        assert f"{web_app.VOILA_TESTER_DEMO_MAX_PAGES} pages per PDF" in str(exc.detail)
     else:
         raise AssertionError("Expected 6-page PDF to be blocked.")
 

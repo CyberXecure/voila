@@ -21,7 +21,7 @@ from study_engine import get_study_view, record_answer, reset_study_state
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_DIR = PROJECT_ROOT / "data" / "input"
 VOILA_LIMITED_TESTER_DEMO = True
-VOILA_TESTER_DEMO_MAX_PAGES = 5
+VOILA_TESTER_DEMO_MAX_PAGES = 12
 OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
 
 APP_TITLE = "Voila! Local"
@@ -1162,7 +1162,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
         <div class="upload-box">
           <h2>{_ut("ui.upload_pdf", "Upload PDF")}</h2>
           <div class="meta">{_ut("message.choose_pdf_from_computer", "Choose a PDF from your computer. It will be saved locally in <code>data/input</code>.")}</div>
-          <div class="meta">{_ut("message.limited_tester_demo_notice", "<strong>Voila! Limited Tester Demo:</strong> maximum 5 pages per PDF. Use only small, non-confidential sample documents.")}</div>
+          <div class="meta">{_ut("message.limited_tester_demo_notice", "<strong>Voila! Limited Tester Demo:</strong> maximum 12 pages per PDF. Use only small, non-confidential sample documents.")}</div>
           <form class="upload-form" method="post" action="/upload" enctype="multipart/form-data">
             <input id="pdfUploadInput" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" type="file" name="file" accept="application/pdf" required onchange="document.getElementById('selectedFileName').textContent = this.files && this.files[0] ? this.files[0].name : '{no_file_selected}';">
             <label class="btn" for="pdfUploadInput">{_ut("ui.choose_file", "Choose file")}</label>

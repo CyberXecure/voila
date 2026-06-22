@@ -187,7 +187,7 @@
     "ui.status.ocr": "OCR",
     "ui.no_file_selected": "Niciun fișier selectat",
     "message.choose_pdf_from_computer": "Alege un PDF de pe computer. Acesta va fi salvat local în <code>data/input</code>.",
-    "message.limited_tester_demo_notice": "<strong>Voila! Demo limitat pentru testeri:</strong> maximum 5 pagini per PDF. Folosește doar documente mici, neconfidențiale.",
+    "message.limited_tester_demo_notice": "<strong>Voila! Demo limitat pentru testeri:</strong> maximum 12 pagini per PDF. Folosește doar documente mici, neconfidențiale.",
     "ui.delete_from_library_confirm": "Muți acest PDF și cursul generat în coșul local? Fișierele vor fi mutate în data/trash, nu șterse definitiv.",
     "recommended_because": "Recomandat deoarece",
     "overall_mastery": "Nivel general",
