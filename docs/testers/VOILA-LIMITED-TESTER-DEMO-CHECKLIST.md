@@ -24,7 +24,7 @@ Documentation-only checklist for planning a limited tester demo.
 
 ## Recommended page limit
 
-- [ ] Maximum 5 pages per PDF
+- [ ] Maximum 12 pages per PDF
 - [ ] Limit should be easy to explain
 - [ ] Limit should apply to the tester demo
 - [ ] Limit should prevent large manual/procedure processing
@@ -36,7 +36,7 @@ Documentation-only checklist for planning a limited tester demo.
 Future implementation milestone should verify:
 
 - [ ] page count is detected before heavy processing
-- [ ] PDFs over 5 pages are blocked or clearly rejected
+- [ ] PDFs over 12 pages are blocked or clearly rejected
 - [ ] tester receives a clear message
 - [ ] OCR-heavy documents remain limited
 - [ ] UI or route output explains the demo limit
@@ -46,7 +46,7 @@ Future implementation milestone should verify:
 
 ## Recommended message for blocked PDFs
 
-This tester demo is limited to 5 pages per PDF. Please use a small non-confidential sample document.
+This tester demo is limited to 12 pages per PDF. Please use a small non-confidential sample document.
 
 ## Future package requirements
 
@@ -129,7 +129,7 @@ Recommended tester PDF set:
 Tester guidance:
 
 - [ ] recommend 3-5 PDFs per tester
-- [ ] keep maximum 5 pages per PDF
+- [ ] keep maximum 12 pages per PDF
 - [ ] keep total recommended pages around 15-25 per tester
 - [ ] do not technically enforce total PDF count yet
 - [ ] do not require accounts, usage tracking or cloud logic
@@ -146,5 +146,5 @@ Feedback additions:
 
 Implementation reminder:
 
-- [ ] future implementation should enforce max 5 pages per PDF
+- [ ] future implementation should enforce max 12 pages per PDF
 - [ ] 3-5 PDFs per tester remains a communication limit only

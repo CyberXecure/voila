@@ -34,7 +34,7 @@ Send feedback.
 
 Recommended limit:
 
-Maximum 5 pages per PDF.
+Maximum 12 pages per PDF.
 
 This should apply to the tester demo regardless of PDF type.
 
@@ -74,11 +74,11 @@ The future implementation milestone should add a single central page limit that 
 
 Recommended constant:
 
-VOILA_TESTER_DEMO_MAX_PAGES = 5
+VOILA_TESTER_DEMO_MAX_PAGES = 12
 
 Recommended behavior:
 
-- when a PDF has more than 5 pages, process only the first 5 pages or block with a clear message
+- when a PDF has more than 12 pages, process only the first 12 pages or block with a clear message
 - prefer blocking with a clear message for the first limited demo
 - tell the tester to use a smaller sample PDF
 - show the limit clearly in README-TESTERS.txt and UI text
@@ -86,7 +86,7 @@ Recommended behavior:
 
 Recommended message:
 
-This tester demo is limited to 5 pages per PDF. Please use a small non-confidential sample document.
+This tester demo is limited to 12 pages per PDF. Please use a small non-confidential sample document.
 
 ## Recommended UI / user-facing text
 
@@ -94,7 +94,7 @@ Add a visible tester demo notice:
 
 Voila! Limited Tester Demo
 
-This version is limited to 5 pages per PDF and is intended only for private feedback.
+This version is limited to 12 pages per PDF and is intended only for private feedback.
 
 Do not use confidential, personal, legal, medical, financial, safety-critical or compliance-critical documents.
 
@@ -214,7 +214,7 @@ For better product feedback, selected testers should be encouraged to test sever
 
 Technical limit:
 
-- maximum 5 pages per PDF
+- maximum 12 pages per PDF
 
 Recommended tester limit:
 
@@ -314,7 +314,7 @@ The goal is not perfect conversion. The goal is to understand where Voila is use
 
 ## Recommended tester instruction
 
-For this limited demo, please test up to 3-5 small PDFs, each with a maximum of 5 pages.
+For this limited demo, please test up to 3-5 small PDFs, each with a maximum of 12 pages.
 
 Useful samples:
 
@@ -355,7 +355,7 @@ Ask testers:
 
 The future implementation milestone should still enforce only one simple technical limit first:
 
-- maximum 5 pages per PDF
+- maximum 12 pages per PDF
 
 Do not add account-based limits, total-document counters or usage tracking yet.
 

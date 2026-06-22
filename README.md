@@ -52,7 +52,7 @@ Please use only small, non-confidential PDF samples.
 Current tester boundaries:
 
 - Windows only
-- maximum 5 pages per PDF
+- maximum 12 pages per PDF
 - small non-confidential PDF samples only
 - no legal documents
 - no medical documents
