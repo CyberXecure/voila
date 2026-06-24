@@ -6159,3 +6159,76 @@ async def _v415_exam_prep_related_questions_response_guard(request, call_next):
         headers=headers,
     )
 # --- end v0.4.15 related Modul Studiu questions response guard ---
+
+# --- v0.4.16 next recommended action response guard ---
+from fastapi.responses import HTMLResponse as _V416HTMLResponse
+from urllib.parse import unquote as _v416_unquote
+
+
+def _v416_next_action_html_for_path(path: str) -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_next_action_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_next_action_html
+        except Exception:
+            return ""
+
+    try:
+        skill_id = _v416_unquote(path.rstrip("/").rsplit("/", 1)[-1])
+        return render_exam_prep_next_action_html(skill_id)
+    except Exception:
+        return ""
+
+
+@app.middleware("http")
+async def _v416_exam_prep_next_action_response_guard(request, call_next):
+    response = await call_next(request)
+
+    if not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "exam-prep-next-action-v0416" not in text:
+        section = _v416_next_action_html_for_path(request.url.path)
+
+        if section:
+            if "exam-prep-related-study-questions-v0415" in text:
+                marker = "</section>"
+                start = text.find("exam-prep-related-study-questions-v0415")
+                end = text.find(marker, start)
+                if end != -1:
+                    end = end + len(marker)
+                    text = text[:end] + section + text[end:]
+                else:
+                    text = text + section
+            elif '<div class="actions">' in text:
+                text = text.replace('<div class="actions">', section + '<div class="actions">', 1)
+            elif "</main>" in text:
+                text = text.replace("</main>", section + "</main>", 1)
+            elif "</body>" in text:
+                text = text.replace("</body>", section + "</body>", 1)
+            else:
+                text = text + section
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V416HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.16 next recommended action response guard ---

@@ -110,6 +110,12 @@ try {
         "v415_detail_has_count_or_empty_message" = ($derivate -cmatch "întrebări asociate detectate|întrebare asociată detectată|Nu există încă întrebări asociate detectate")
         "v415_detail_has_answer_instruction" = ($derivate -cmatch "Răspunde la întrebări în Modul Studiu|Răspunde la întrebările asociate în Modul Studiu|Răspunde la întrebarea asociată în Modul Studiu")
         "v415_detail_has_readonly_note" = ($derivate -cmatch "read-only")
+        "v416_detail_has_next_action_marker" = ($derivate -cmatch "exam-prep-next-action-v0416")
+        "v416_detail_has_next_action_title" = ($derivate -cmatch "Acțiune recomandată")
+        "v416_detail_has_current_status" = ($derivate -cmatch "Status curent")
+        "v416_detail_has_action_text" = ($derivate -cmatch "Modul Studiu")
+        "v416_detail_has_continue_modul_studiu" = ($derivate -cmatch "Continuă în Modul Studiu")
+        "v416_detail_has_back_pregatire" = ($derivate -cmatch "Înapoi la Pregătire examene")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 

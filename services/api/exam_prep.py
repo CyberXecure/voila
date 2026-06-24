@@ -1084,3 +1084,90 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
 
     return html, status_code
 # --- end v0.4.15 related Modul Studiu questions display helpers ---
+
+# --- v0.4.16 next recommended action display helpers ---
+def _v416_skill_status_for_next_action(skill_id: str) -> str:
+    try:
+        return _v410_skill_status(skill_id)
+    except Exception:
+        try:
+            linked_questions = _v48_linked_question_count(skill_id)
+        except Exception:
+            linked_questions = 0
+
+        return "În progres" if linked_questions > 0 else "Nepornit"
+
+
+def render_exam_prep_next_action_html(skill_id: str) -> str:
+    raw_status = _v416_skill_status_for_next_action(skill_id)
+
+    if raw_status == "In progres":
+        raw_status = "În progres"
+
+    if raw_status == "Consolidat":
+        title = "Acțiune recomandată"
+        action = "Menține skill-ul consolidat prin recapitulări scurte în Modul Studiu."
+        note = "Poți reveni periodic la întrebările asociate pentru a păstra progresul stabil."
+    elif raw_status == "În progres":
+        title = "Acțiune recomandată"
+        action = "Continuă cu întrebările asociate în Modul Studiu."
+        note = "Răspunsurile noi vor actualiza treptat progresul afișat aici."
+    else:
+        title = "Acțiune recomandată"
+        action = "Începe cu un PDF generat și răspunde la primele întrebări în Modul Studiu."
+        note = "După primele răspunsuri, statusul skill-ului se va actualiza automat aici."
+
+    safe_title = _v48_escape(title)
+    safe_status = _v48_escape(raw_status)
+    safe_action = _v48_escape(action)
+    safe_note = _v48_escape(note)
+
+    return (
+        '<section class="exam-prep-next-action-v0416" '
+        'style="margin-top:22px;background:#f8fafc;border:1px solid #d9e2f1;border-radius:16px;padding:18px;">'
+        f'<h2>{safe_title}</h2>'
+        f'<p><strong>Status curent: {safe_status}</strong></p>'
+        f'<p>{safe_action}</p>'
+        f'<p style="color:#667085;line-height:1.55;">{safe_note}</p>'
+        '<div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">'
+        '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Pregătire examene</a>'
+        '</div>'
+        '</section>'
+    )
+
+
+_v416_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    html, status_code = _v416_base_render_exam_prep_skill_detail_page(skill_id)
+
+    if status_code != 200:
+        return html, status_code
+
+    if "exam-prep-next-action-v0416" in html:
+        return html, status_code
+
+    section = render_exam_prep_next_action_html(skill_id)
+
+    if "exam-prep-related-study-questions-v0415" in html:
+        marker = "</section>"
+        start = html.find("exam-prep-related-study-questions-v0415")
+        end = html.find(marker, start)
+        if end != -1:
+            end = end + len(marker)
+            html = html[:end] + section + html[end:]
+        else:
+            html = html + section
+    elif '<div class="actions">' in html:
+        html = html.replace('<div class="actions">', section + '<div class="actions">', 1)
+    elif "</main>" in html:
+        html = html.replace("</main>", section + "</main>", 1)
+    elif "</body>" in html:
+        html = html.replace("</body>", section + "</body>", 1)
+    else:
+        html = html + section
+
+    return html, status_code
+# --- end v0.4.16 next recommended action display helpers ---
