@@ -6096,3 +6096,66 @@ async def _v414c_exam_prep_force_modul_studiu_wording(request, call_next):
         headers=headers,
     )
 # --- end v0.4.14c force approved Modul Studiu wording ---
+
+# --- v0.4.15 related Modul Studiu questions response guard ---
+from fastapi.responses import HTMLResponse as _V415HTMLResponse
+from urllib.parse import unquote as _v415_unquote
+
+
+def _v415_related_questions_html_for_path(path: str) -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_related_study_questions_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_related_study_questions_html
+        except Exception:
+            return ""
+
+    try:
+        skill_id = _v415_unquote(path.rstrip("/").rsplit("/", 1)[-1])
+        return render_exam_prep_related_study_questions_html(skill_id)
+    except Exception:
+        return ""
+
+
+@app.middleware("http")
+async def _v415_exam_prep_related_questions_response_guard(request, call_next):
+    response = await call_next(request)
+
+    if not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "exam-prep-related-study-questions-v0415" not in text:
+        section = _v415_related_questions_html_for_path(request.url.path)
+        if section:
+            if '<div class="actions">' in text:
+                text = text.replace('<div class="actions">', section + '<div class="actions">', 1)
+            elif "</main>" in text:
+                text = text.replace("</main>", section + "</main>", 1)
+            elif "</body>" in text:
+                text = text.replace("</body>", section + "</body>", 1)
+            else:
+                text = text + section
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V415HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.15 related Modul Studiu questions response guard ---
