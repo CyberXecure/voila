@@ -46,6 +46,9 @@ Write-Host "=== EXAM PREP HEALTH CHECKPOINT v0.4.20 ==="
 Write-Host "=== COMPILE ==="
 python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
 
+Write-Host "=== SAMPLE SKILL COVERAGE CHECK ==="
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+
 Write-Host "=== SOURCE MARKER CHECK ==="
 
 $web = Get-Content ".\services\api\web_app.py" -Raw
@@ -161,4 +164,5 @@ Write-Host "EXAM PREP WEAK SKILL REVIEW ENTRY v0.4.28 PASS"
 finally {
     Invoke-VoilaStop
 }
+
 
