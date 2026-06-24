@@ -1128,6 +1128,43 @@ def _v422b_polish_dashboard_ro_html(html: str) -> str:
     return html
 # --- end v0.4.22b consolidated dashboard Romanian polish helper ---
 
+# --- v0.4.28 Exam Prep weak skill review entry helper ---
+def render_exam_prep_weak_review_entry_html(context: str = "dashboard") -> str:
+    safe_context = _v48_escape(str(context or "dashboard"))
+    href = "/#library"
+
+    if safe_context == "skill":
+        intro = (
+            "După ce ai lucrat întrebările din Modul Studiu, poți reveni la fluxul existent "
+            "de revizuire pentru conceptele slabe detectate în cursuri."
+        )
+    else:
+        intro = (
+            "Folosește fluxul existent de revizuire pentru a relua conceptele slabe "
+            "din cursurile generate și sesiunile de studiu."
+        )
+
+    safe_intro = _v48_escape(intro)
+
+    return (
+        '<section class="exam-prep-weak-review-entry-v0428" '
+        f'data-context="{safe_context}" '
+        'style="margin-top:18px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Revizuire concepte slabe</h2>'
+        f'<p style="color:#475467;line-height:1.55;margin:8px 0 14px;">{safe_intro}</p>'
+        '<p style="color:#667085;line-height:1.55;margin:0 0 14px;">'
+        'Această intrare este doar un link către funcționalitatea existentă. '
+        'Nu schimbă algoritmul de progres sau modul de calcul al statusului.'
+        '</p>'
+        '<a href="/#library" '
+        'style="display:inline-flex;border-radius:999px;padding:9px 13px;'
+        'background:#172033;color:#fff;text-decoration:none;font-weight:650;">'
+        'Deschide revizuirea conceptelor slabe'
+        '</a>'
+        '</section>'
+    )
+# --- end v0.4.28 Exam Prep weak skill review entry helper ---
+
 # --- v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 def _v422_safe_dashboard_section(function_name: str) -> str:
     function = globals().get(function_name)
@@ -1151,6 +1188,7 @@ def render_exam_prep_dashboard_sections_html() -> str:
         _v422_safe_dashboard_section("render_exam_prep_dashboard_next_action_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_progress_summary_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_skill_cards_html"),
+        render_exam_prep_weak_review_entry_html("dashboard"),
     ]
 
     sections = [section for section in sections if section]
@@ -1350,6 +1388,7 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
         _v423_safe_skill_detail_section("render_exam_prep_skill_metadata_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
+        render_exam_prep_weak_review_entry_html("skill"),
     ]
 
     sections = [section for section in sections if section]
