@@ -124,6 +124,9 @@ try {
         "v418_dashboard_has_order_marker" = ($exam -cmatch "exam-prep-dashboard-order-v0418")
         "v418_dashboard_order_next_before_summary" = ($exam.IndexOf("exam-prep-dashboard-next-action-v0417") -ge 0 -and $exam.IndexOf("exam-prep-progress-summary-v0410") -gt $exam.IndexOf("exam-prep-dashboard-next-action-v0417"))
         "v418_dashboard_order_summary_before_cards" = ($exam.IndexOf("exam-prep-progress-summary-v0410") -ge 0 -and $exam.IndexOf("exam-prep-skill-cards-v0411") -gt $exam.IndexOf("exam-prep-progress-summary-v0410"))
+        "v419_dashboard_has_visual_marker" = ($exam -cmatch "exam-prep-dashboard-visual-v0419")
+        "v419_dashboard_has_order_wrapper" = ($exam -cmatch "exam-prep-dashboard-order-v0418")
+        "v419_dashboard_has_next_summary_cards" = ($exam -cmatch "exam-prep-dashboard-next-action-v0417" -and $exam -cmatch "exam-prep-progress-summary-v0410" -and $exam -cmatch "exam-prep-skill-cards-v0411")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
