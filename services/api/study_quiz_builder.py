@@ -13,25 +13,34 @@ except Exception:
 
 
 TECHNICAL_KEYWORDS = [
-    "se folosește", "se folosesc", "este utilizat", "sunt utilizate", "este destinat",
-    "permite", "asigură", "reduce", "mărește", "crește", "scade", "trebuie", "necesar",
-    "se recomandă", "se montează", "se alimentează", "funcționează", "comandă",
-    "tensiune", "curent", "putere", "flux", "iluminare", "rezistență", "motor",
-    "instalație", "protecție", "automatizare", "contact", "releu", "siguranță",
+    "se foloseÈ™te", "se folosesc", "este utilizat", "sunt utilizate", "este destinat",
+    "permite", "asigurÄƒ", "reduce", "mÄƒreÈ™te", "creÈ™te", "scade", "trebuie", "necesar",
+    "se recomandÄƒ", "se monteazÄƒ", "se alimenteazÄƒ", "funcÈ›ioneazÄƒ", "comandÄƒ",
+    "tensiune", "curent", "putere", "flux", "iluminare", "rezistenÈ›Äƒ", "motor",
+    "instalaÈ›ie", "protecÈ›ie", "automatizare", "contact", "releu", "siguranÈ›Äƒ",
     "is used", "are used", "designed", "must", "should", "requires", "provides",
     "pressure", "temperature", "engine", "pump", "valve", "filter", "system",
+    "functie", "funcÈ›ie", "functia", "funcÈ›ia", "grafic", "domeniu",
+    "ecuatie", "ecuaÈ›ie", "ecuatia", "ecuaÈ›ia", "inecuatie", "inecuaÈ›ie",
+    "limita", "limitÄƒ", "continuitate", "derivata", "derivatÄƒ", "derivare",
+    "tangenta", "tangentÄƒ", "integrala", "integralÄƒ", "primitiva", "primitivÄƒ",
+    "probabilitate", "combinari", "combinÄƒri", "aranjamente", "permutari", "permutÄƒri",
+    "multime", "mulÈ›ime", "multimi", "mulÈ›imi", "reuniune", "intersectie", "intersecÈ›ie",
+    "vector", "vectori", "dreapta", "plan", "distanta", "distanÈ›Äƒ", "unghi",
+    "function", "equation", "inequality", "limit", "continuity", "derivative",
+    "tangent", "integral", "primitive", "probability", "combinatorics", "vector", "geometry",
 ]
 
 RO_TOPIC_RULES = [
     ("sisteme de iluminat", ["sistem de iluminat", "sisteme de iluminat", "iluminat interior", "iluminat exterior"]),
-    ("mărimi luminotehnice", ["flux luminos", "iluminare", "intensitate luminoasă", "luminanță"]),
-    ("instalații electrice", ["instalații electrice", "instalația electrică", "alimentare cu energie"]),
-    ("protecții electrice", ["protecție", "siguranță", "descărcări electrice", "supracurent"]),
+    ("mÄƒrimi luminotehnice", ["flux luminos", "iluminare", "intensitate luminoasÄƒ", "luminanÈ›Äƒ"]),
+    ("instalaÈ›ii electrice", ["instalaÈ›ii electrice", "instalaÈ›ia electricÄƒ", "alimentare cu energie"]),
+    ("protecÈ›ii electrice", ["protecÈ›ie", "siguranÈ›Äƒ", "descÄƒrcÄƒri electrice", "supracurent"]),
     ("motoare electrice", ["motor electric", "motoare electrice", "rotor", "stator", "asincron", "sincron"]),
-    ("sisteme de comandă automată", ["comandă automată", "releu", "contactor", "automatizare"]),
-    ("măsurări electrice", ["măsurarea", "aparat de măsură", "voltmetru", "ampermetru", "wattmetru"]),
-    ("surse de lumină", ["lămpi", "lampă", "fluorescente", "incandescență", "vapori de sodiu"]),
-    ("corpuri de iluminat", ["corpuri de iluminat", "cil", "armătură de iluminat"]),
+    ("sisteme de comandÄƒ automatÄƒ", ["comandÄƒ automatÄƒ", "releu", "contactor", "automatizare"]),
+    ("mÄƒsurÄƒri electrice", ["mÄƒsurarea", "aparat de mÄƒsurÄƒ", "voltmetru", "ampermetru", "wattmetru"]),
+    ("surse de luminÄƒ", ["lÄƒmpi", "lampÄƒ", "fluorescente", "incandescenÈ›Äƒ", "vapori de sodiu"]),
+    ("corpuri de iluminat", ["corpuri de iluminat", "cil", "armÄƒturÄƒ de iluminat"]),
 ]
 
 EN_TOPIC_RULES = [
@@ -101,13 +110,13 @@ def is_noisy_concept_title(value: str) -> bool:
     if re.search(r"^\s*(fig\.|figure|table|caption)\b", lower):
         return True
 
-    letters = len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", title))
+    letters = len(re.findall(r"[A-Za-zÄ‚Ã‚ÃŽÈ˜ÈšÄƒÃ¢Ã®È™È›]", title))
     digits = len(re.findall(r"\d", title))
 
     if digits > letters and letters < 4:
         return True
 
-    if len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]{3,}", title)) < 1:
+    if len(re.findall(r"[A-Za-zÄ‚Ã‚ÃŽÈ˜ÈšÄƒÃ¢Ã®È™È›]{3,}", title)) < 1:
         return True
 
     return False
@@ -116,8 +125,8 @@ def is_noisy_concept_title(value: str) -> bool:
 def clean_concept_title(value: str, fallback: str = "") -> str:
     title = normalize_space(value)
 
-    if " — " in title:
-        title = title.split(" — ", 1)[1]
+    if " â€” " in title:
+        title = title.split(" â€” ", 1)[1]
 
     title = re.sub(
         r"\([^)]*\b(credit|source|wikimedia|commons|nasa|ames|department of energy|modification of work)\b[^)]*\)",
@@ -129,8 +138,8 @@ def clean_concept_title(value: str, fallback: str = "") -> str:
     title = re.sub(r"\bmodification of work by\b.*$", "", title, flags=re.IGNORECASE)
 
     title = normalize_space(title)
-    title = title.strip(" .,:;—–-()[]{}'\"“”‘’")
-    title = re.sub(r"[\)\]\}]+$", "", title).strip(" .,:;—–-")
+    title = title.strip(" .,:;â€”â€“-()[]{}'\"â€œâ€â€˜â€™")
+    title = re.sub(r"[\)\]\}]+$", "", title).strip(" .,:;â€”â€“-")
 
     if is_noisy_concept_title(title):
         return fallback
@@ -141,9 +150,9 @@ def clean_concept_title(value: str, fallback: str = "") -> str:
 def detect_language(text: str) -> str:
     lower = normalize_key(text)
     ro_markers = [
-        " și ", " în ", " este ", " sunt ", " pentru ", " care ", " instala",
-        "măsur", "funcție", "tensiune", "curent", "iluminat", "protecție",
-        "ă", "î", "ș", "ț", "â",
+        " È™i ", " Ã®n ", " este ", " sunt ", " pentru ", " care ", " instala",
+        "mÄƒsur", "funcÈ›ie", "tensiune", "curent", "iluminat", "protecÈ›ie",
+        "Äƒ", "Ã®", "È™", "È›", "Ã¢",
     ]
 
     score = sum(1 for marker in ro_markers if marker in lower)
@@ -157,7 +166,7 @@ def split_sentences(text: str) -> list[str]:
     if not text:
         return []
 
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZĂÂÎȘȚ0-9])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZÄ‚Ã‚ÃŽÈ˜Èš0-9])", text)
     out = []
 
     for part in parts:
@@ -170,7 +179,7 @@ def split_sentences(text: str) -> list[str]:
 
 
 def extract_lessons(course_md: str) -> list[dict]:
-    pattern = re.compile(r"^##\s+(L\d+)\s+—\s+(.+?)\s*$", re.MULTILINE)
+    pattern = re.compile(r"^##\s+(L\d+)\s+â€”\s+(.+?)\s*$", re.MULTILINE)
     matches = list(pattern.finditer(course_md))
     lessons = []
 
@@ -233,7 +242,7 @@ def sentence_is_bad(sentence: str) -> bool:
     if any(fragment in value for fragment in bad_fragments):
         return True
 
-    if len(re.findall(r"[A-Za-zĂÂÎȘȚăâîșț]", sentence)) < 30:
+    if len(re.findall(r"[A-Za-zÄ‚Ã‚ÃŽÈ˜ÈšÄƒÃ¢Ã®È™È›]", sentence)) < 30:
         return True
 
     return False
@@ -247,7 +256,7 @@ def technical_score(sentence: str) -> int:
         if keyword in lower:
             score += 1
 
-    if re.search(r"\b\d+(?:[.,]\d+)?\s*(v|kv|a|ma|w|kw|lm|lx|cd|hz|°|%)\b", lower):
+    if re.search(r"\b\d+(?:[.,]\d+)?\s*(v|kv|a|ma|w|kw|lm|lx|cd|hz|Â°|%)\b", lower):
         score += 2
 
     if ";" in sentence:
@@ -262,7 +271,7 @@ def technical_score(sentence: str) -> int:
 def infer_concept_title(lesson_title: str, sentence: str, language: str) -> str:
     lower = normalize_key(sentence + " " + lesson_title)
     rules = RO_TOPIC_RULES if language == "ro" else EN_TOPIC_RULES
-    fallback = "noțiuni tehnice" if language == "ro" else "technical fundamentals"
+    fallback = "noÈ›iuni tehnice" if language == "ro" else "technical fundamentals"
 
     for topic, keywords in rules:
         if any(keyword in lower for keyword in keywords):
@@ -281,48 +290,48 @@ def question_from_sentence(sentence: str, concept: str, language: str) -> tuple[
 
     has_number_or_unit = bool(
         re.search(
-            r"\b\d+(?:[.,]\d+)?\s*(m|cm|mm|km|kg|g|s|min|h|hz|khz|mhz|n|pa|j|w|kw|v|a|ma|mol|k|°c|°|%)\b",
+            r"\b\d+(?:[.,]\d+)?\s*(m|cm|mm|km|kg|g|s|min|h|hz|khz|mhz|n|pa|j|w|kw|v|a|ma|mol|k|Â°c|Â°|%)\b",
             lower,
         )
-        or re.search(r"\b10[\-−–]?\d+\b", lower)
-        or re.search(r"×\s*10", sentence)
+        or re.search(r"\b10[\-âˆ’â€“]?\d+\b", lower)
+        or re.search(r"Ã—\s*10", sentence)
     )
 
     if language == "ro":
-        if re.search(r"\b(fig\.|figură|figura|tabel|diagramă|grafic|caption|legendă)\b", lower):
-            return f"Ce detaliu din figură sau tabel oferă sursa pentru {concept}?", "visual_interpretation"
+        if re.search(r"\b(fig\.|figurÄƒ|figura|tabel|diagramÄƒ|grafic|caption|legendÄƒ)\b", lower):
+            return f"Ce detaliu din figurÄƒ sau tabel oferÄƒ sursa pentru {concept}?", "visual_interpretation"
 
         if has_number_or_unit:
-            return f"Ce detaliu numeric sau măsurătoare oferă sursa pentru {concept}?", "numeric_check"
+            return f"Ce detaliu numeric sau mÄƒsurÄƒtoare oferÄƒ sursa pentru {concept}?", "numeric_check"
 
-        if re.search(r"\b(se numește|reprezintă|este definit|se definește|înseamnă|se referă la)\b", lower):
-            return f"Cum definește sursa {concept}?", "definition"
+        if re.search(r"\b(se numeÈ™te|reprezintÄƒ|este definit|se defineÈ™te|Ã®nseamnÄƒ|se referÄƒ la)\b", lower):
+            return f"Cum defineÈ™te sursa {concept}?", "definition"
 
-        if re.search(r"\b(comparativ cu|în comparație|spre deosebire|față de|decât)\b", lower):
-            return f"Ce comparație face sursa despre {concept}?", "comparison"
+        if re.search(r"\b(comparativ cu|Ã®n comparaÈ›ie|spre deosebire|faÈ›Äƒ de|decÃ¢t)\b", lower):
+            return f"Ce comparaÈ›ie face sursa despre {concept}?", "comparison"
 
         if re.search(r"\b(de exemplu|cum ar fi|precum|inclusiv|include)\b", lower):
-            return f"Ce exemplu oferă sursa pentru {concept}?", "example"
+            return f"Ce exemplu oferÄƒ sursa pentru {concept}?", "example"
 
-        if re.search(r"\b(se compune|este alcătuit|sunt alcătuite|conține|cuprinde|include|este format)\b", lower):
-            return f"Din ce este alcătuit sau ce cuprinde {concept}?", "components"
+        if re.search(r"\b(se compune|este alcÄƒtuit|sunt alcÄƒtuite|conÈ›ine|cuprinde|include|este format)\b", lower):
+            return f"Din ce este alcÄƒtuit sau ce cuprinde {concept}?", "components"
 
-        if re.search(r"\b(mai întâi|apoi|după aceea|următorul pas|proces|secvență|etapă)\b", lower):
-            return f"Ce proces sau secvență descrie sursa pentru {concept}?", "process"
+        if re.search(r"\b(mai Ã®ntÃ¢i|apoi|dupÄƒ aceea|urmÄƒtorul pas|proces|secvenÈ›Äƒ|etapÄƒ)\b", lower):
+            return f"Ce proces sau secvenÈ›Äƒ descrie sursa pentru {concept}?", "process"
 
-        if re.search(r"\b(se folosește|se folosesc|este utilizat|sunt utilizate|servește|rolul|scopul|funcția)\b", lower):
+        if re.search(r"\b(se foloseÈ™te|se folosesc|este utilizat|sunt utilizate|serveÈ™te|rolul|scopul|funcÈ›ia)\b", lower):
             return f"Care este rolul sau scopul descris pentru {concept}?", "purpose"
 
-        if re.search(r"\b(trebuie|este necesar|sunt necesare|se recomandă|obligatoriu|necesită)\b", lower):
-            return f"Ce cerință sau recomandare menționează sursa pentru {concept}?", "requirement"
+        if re.search(r"\b(trebuie|este necesar|sunt necesare|se recomandÄƒ|obligatoriu|necesitÄƒ)\b", lower):
+            return f"Ce cerinÈ›Äƒ sau recomandare menÈ›ioneazÄƒ sursa pentru {concept}?", "requirement"
 
-        if re.search(r"\b(când|dacă|în cazul|la pornire|în timpul|în condiții)\b", lower):
-            return f"În ce condiție sau situație descrie sursa {concept}?", "condition"
+        if re.search(r"\b(cÃ¢nd|dacÄƒ|Ã®n cazul|la pornire|Ã®n timpul|Ã®n condiÈ›ii)\b", lower):
+            return f"ÃŽn ce condiÈ›ie sau situaÈ›ie descrie sursa {concept}?", "condition"
 
-        if re.search(r"\b(deoarece|pentru că|astfel|ca urmare|determină|produce|duce la|rezultă)\b", lower):
-            return f"Ce cauză, motiv sau efect descrie sursa pentru {concept}?", "cause_effect"
+        if re.search(r"\b(deoarece|pentru cÄƒ|astfel|ca urmare|determinÄƒ|produce|duce la|rezultÄƒ)\b", lower):
+            return f"Ce cauzÄƒ, motiv sau efect descrie sursa pentru {concept}?", "cause_effect"
 
-        return f"Ce precizare tehnică face sursa despre {concept}?", "technical_fact"
+        return f"Ce precizare tehnicÄƒ face sursa despre {concept}?", "technical_fact"
 
     if re.search(r"\b(fig\.|figure|table|diagram|graph|caption)\b", lower):
         return f"What figure or table detail does the source provide for {concept}?", "visual_interpretation"
@@ -450,7 +459,7 @@ def build_questions(lessons: list[dict], max_per_lesson: int, max_total: int, mi
                 {
                     "question_id": qid,
                     "lesson_id": lesson_id,
-                    "concept_id": f"{lesson_id} — {concept}",
+                    "concept_id": f"{lesson_id} â€” {concept}",
                     "concept_title": concept,
                     "lesson_title": clean_concept_title(title, fallback=concept) or concept,
                     "question_type": qtype,
@@ -492,6 +501,12 @@ def main() -> None:
         max_total=args.max_total,
         min_page=args.min_page,
     )
+
+    try:
+        import exam_prep
+        questions = exam_prep.tag_bac_matematica_m1_questions(questions)
+    except Exception:
+        pass
 
     quiz = {
         "version": "0.4.0",
