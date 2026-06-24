@@ -6580,3 +6580,127 @@ async def _v422_exam_prep_dashboard_rendering_consolidation(request, call_next):
         headers=headers,
     )
 # --- end v0.4.22 consolidated Exam Prep dashboard rendering middleware ---
+
+# --- v0.4.23 consolidated Exam Prep skill detail rendering middleware ---
+from fastapi.responses import HTMLResponse as _V423HTMLResponse
+from urllib.parse import unquote as _v423_unquote
+
+
+def _v423_consolidated_skill_detail_sections_html(path: str) -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_skill_detail_sections_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_skill_detail_sections_html
+        except Exception:
+            return ""
+
+    try:
+        skill_id = _v423_unquote(path.rstrip("/").rsplit("/", 1)[-1])
+        return render_exam_prep_skill_detail_sections_html(skill_id)
+    except Exception:
+        return ""
+
+
+def _v423_extract_existing_section(text: str, marker: str) -> tuple[str, str]:
+    marker_index = text.find(marker)
+    if marker_index == -1:
+        return text, ""
+
+    section_start = text.rfind("<section", 0, marker_index)
+    if section_start == -1:
+        return text, ""
+
+    section_end = text.find("</section>", marker_index)
+    if section_end == -1:
+        return text, ""
+
+    section_end += len("</section>")
+    section = text[section_start:section_end]
+    text = text[:section_start] + text[section_end:]
+    return text, section
+
+
+def _v423_insert_before_actions_or_end(text: str, html: str) -> str:
+    if '<div class="actions">' in text:
+        return text.replace('<div class="actions">', html + '<div class="actions">', 1)
+
+    if "</main>" in text:
+        return text.replace("</main>", html + "</main>", 1)
+
+    if "</body>" in text:
+        return text.replace("</body>", html + "</body>", 1)
+
+    return text + html
+
+
+def _v423_polish_skill_detail_response(text: str) -> str:
+    replacements = [
+        ("Functii", "Funcții"),
+        ("In progres", "În progres"),
+        ("Pregatire examene", "Pregătire examene"),
+        ("Matematica M1", "Matematică M1"),
+        ("Intrebari", "Întrebări"),
+        ("Continua", "Continuă"),
+        ("Inapoi", "Înapoi"),
+        ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
+        ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+def _v423_apply_skill_detail_consolidation(path: str, text: str) -> str:
+    if "exam-prep-skill-detail-consolidated-v0423" in text:
+        return _v423_polish_skill_detail_response(text)
+
+    consolidated = _v423_consolidated_skill_detail_sections_html(path)
+    if not consolidated:
+        return _v423_polish_skill_detail_response(text)
+
+    for marker in (
+        "exam-prep-related-study-questions-v0415",
+        "exam-prep-next-action-v0416",
+    ):
+        text, _section = _v423_extract_existing_section(text, marker)
+
+    text = _v423_insert_before_actions_or_end(text, consolidated)
+    text = _v423_polish_skill_detail_response(text)
+
+    return text
+
+
+@app.middleware("http")
+async def _v423_exam_prep_skill_detail_rendering_consolidation(request, call_next):
+    response = await call_next(request)
+
+    if not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v423_apply_skill_detail_consolidation(request.url.path, text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V423HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.23 consolidated Exam Prep skill detail rendering middleware ---

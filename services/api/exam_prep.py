@@ -1313,3 +1313,66 @@ def render_exam_prep_dashboard_sections_html() -> str:
 
     return _v422b_polish_dashboard_ro_html(html)
 # --- end v0.4.22 consolidated Exam Prep dashboard rendering helper ---
+
+# --- v0.4.23 consolidated Exam Prep skill detail rendering helper ---
+def _v423_safe_skill_detail_section(function_name: str, skill_id: str) -> str:
+    function = globals().get(function_name)
+
+    if not callable(function):
+        return ""
+
+    try:
+        html = function(skill_id)
+    except Exception:
+        return ""
+
+    if not isinstance(html, str):
+        return ""
+
+    return html.strip()
+
+
+def _v423_polish_skill_detail_ro_html(html: str) -> str:
+    replacements = [
+        ("Functii", "Funcții"),
+        ("In progres", "În progres"),
+        ("Pregatire examene", "Pregătire examene"),
+        ("Matematica M1", "Matematică M1"),
+        ("Intrebari", "Întrebări"),
+        ("Continua", "Continuă"),
+        ("Inapoi", "Înapoi"),
+    ]
+
+    for old, new in replacements:
+        html = html.replace(old, new)
+
+    return html
+
+
+def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
+    sections = [
+        _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
+        _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
+    ]
+
+    sections = [section for section in sections if section]
+
+    if not sections:
+        html = (
+            '<div class="exam-prep-skill-detail-consolidated-v0423" '
+            'style="display:grid;gap:18px;margin:22px 0;">'
+            '<section><h2>Pregătire examene</h2>'
+            '<p>Secțiunile pentru acest skill nu sunt încă disponibile.</p>'
+            '</section></div>'
+        )
+        return _v423_polish_skill_detail_ro_html(html)
+
+    html = (
+        '<div class="exam-prep-skill-detail-consolidated-v0423" '
+        'style="display:grid;gap:18px;margin:22px 0;">'
+        + "".join(sections)
+        + "</div>"
+    )
+
+    return _v423_polish_skill_detail_ro_html(html)
+# --- end v0.4.23 consolidated Exam Prep skill detail rendering helper ---
