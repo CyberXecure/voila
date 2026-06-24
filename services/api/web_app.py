@@ -674,6 +674,10 @@ def page(title: str, body: str) -> HTMLResponse:
       border-color: rgba(151, 75, 58, 0.92);
     }}
 
+    .library-delete-actions {{
+      margin-top: 16px;
+    }}
+
     .delete-library-form {{
       display: inline-flex;
       margin: 0;
@@ -921,7 +925,8 @@ def page(title: str, body: str) -> HTMLResponse:
             form.appendChild(input);
             form.appendChild(button);
 
-            const actions = card.querySelector(".actions");
+            const deleteActions = card.querySelector(".library-delete-actions");
+            const actions = deleteActions || card.querySelector(".actions");
 
             if (actions) {{
               actions.appendChild(form);
@@ -1302,12 +1307,16 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
             if course_html.exists()
             else f'<span class="status missing">{_ut("status.not_generated_yet", "Not generated yet")}</span>'
         )
-
+        generate_label = (
+            _ut("ui.regenerate_course", "Regenerate course")
+            if course_html.exists()
+            else _ut("ui.generate_course", "Generate course")
+        )
         actions = [
             f"""
             <form method="post" action="/generate">
               <input type="hidden" name="pdf_name" value="{html.escape(pdf.name)}">
-              <button class="primary" type="submit">{_ut("ui.generate_course", "Generate course")}</button>
+              <button class="primary" type="submit">{generate_label}</button>
             </form>
             """
         ]
@@ -1337,13 +1346,13 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
                 f'<a class="btn" href="/study?pdf={quote(pdf.name)}">{_ut("ui.study", _ut("study", "Study"))}</a>'
             )
             actions.append(
-                f'<a class="btn" href="/review?pdf={quote(pdf.name)}">{_ut("ui.review_weak", "Review weak")}</a>'
-            )
-            actions.append(
                 f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">{_ut("ui.progress", _ut("progress", "Progress"))}</a>'
             )
             actions.append(
                 f'<a class="btn" href="/exam-prep">{_ut("ui.exam_prep", "Exam Prep")}</a>'
+            )
+            actions.append(
+                f'<a class="btn" href="/review?pdf={quote(pdf.name)}">{_ut("ui.review_weak", "Review weak")}</a>'
             )
 
         if log_file.exists():
@@ -1358,6 +1367,7 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
               <div class="actions">
                 {''.join(actions)}
               </div>
+              <div class="actions library-delete-actions"></div>
             </article>
             """
         )
