@@ -426,3 +426,269 @@ def _v46_skill_items() -> list[dict]:
         },
     ]
 # --- end v0.4.6 hotfix: robust skill tree parser ---
+
+# --- v0.4.8 stable Exam Prep skill detail helpers ---
+from html import escape as _v48_escape
+from pathlib import Path as _V48Path
+from urllib.parse import quote as _v48_quote
+import json as _v48_json
+
+
+def _v48_repo_root() -> _V48Path:
+    return _V48Path(__file__).resolve().parents[2]
+
+
+def _v48_skill_tree_path() -> _V48Path:
+    return _v48_repo_root() / "assets" / "exam_prep" / "bac" / "matematica_m1" / "skill_tree.json"
+
+
+def _v48_text(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        for key in ("ro", "en", "label", "name", "title", "text", "description"):
+            found = _v48_text(value.get(key))
+            if found:
+                return found
+        return ""
+    return str(value).strip()
+
+
+def _v48_walk(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from _v48_walk(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _v48_walk(child)
+
+
+def _v48_pick(item: dict, keys: tuple[str, ...]) -> str:
+    for key in keys:
+        if key in item:
+            value = _v48_text(item.get(key))
+            if value:
+                return value
+    return ""
+
+
+def _v48_fallback_skills() -> list[dict]:
+    return [
+        {
+            "id": "derivate",
+            "label": "Derivate",
+            "description": "Reguli de derivare, monotonia functiilor si aplicatii pentru Bacalaureat Matematica M1.",
+        },
+        {
+            "id": "integrale",
+            "label": "Integrale",
+            "description": "Primitive, integrale definite si aplicatii pentru Bacalaureat Matematica M1.",
+        },
+        {
+            "id": "functii",
+            "label": "Functii",
+            "description": "Functii, grafice, proprietati si interpretare pentru Bacalaureat Matematica M1.",
+        },
+        {
+            "id": "geometrie",
+            "label": "Geometrie",
+            "description": "Elemente de geometrie relevante pentru Bacalaureat Matematica M1.",
+        },
+    ]
+
+
+def _v48_skill_catalog() -> list[dict]:
+    path = _v48_skill_tree_path()
+
+    if not path.exists():
+        return _v48_fallback_skills()
+
+    try:
+        tree = _v48_json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return _v48_fallback_skills()
+
+    id_keys = ("id", "skill_id", "exam_prep_skill_id", "slug", "key", "code")
+    label_keys = (
+        "name_ro",
+        "title_ro",
+        "label_ro",
+        "display_name_ro",
+        "skill_name_ro",
+        "name",
+        "title",
+        "label",
+        "display_name",
+        "skill_name",
+    )
+    description_keys = (
+        "description_ro",
+        "summary_ro",
+        "objective_ro",
+        "description",
+        "summary",
+        "objective",
+    )
+
+    skip_ids = {
+        "root",
+        "bac",
+        "bac_matematica_m1",
+        "matematica",
+        "matematica_m1",
+        "exam_prep",
+    }
+
+    items = []
+    seen = set()
+
+    for node in _v48_walk(tree):
+        if not isinstance(node, dict):
+            continue
+
+        skill_id = _v48_pick(node, id_keys)
+        label = _v48_pick(node, label_keys)
+
+        if not skill_id or not label:
+            continue
+
+        normalized_id = skill_id.strip()
+        if normalized_id.lower() in skip_ids:
+            continue
+
+        if normalized_id in seen:
+            continue
+
+        seen.add(normalized_id)
+
+        description = _v48_pick(node, description_keys)
+        if not description:
+            description = "Skill din planul de pregatire Bacalaureat Matematica M1. Progresul se actualizeaza pe baza intrebarilor lucrate in Study Mode."
+
+        items.append(
+            {
+                "id": normalized_id,
+                "label": label,
+                "description": description,
+            }
+        )
+
+    return items or _v48_fallback_skills()
+
+
+def _v48_skill_by_id(skill_id: str) -> dict | None:
+    wanted = (skill_id or "").strip()
+    for skill in _v48_skill_catalog():
+        if skill["id"] == wanted:
+            return skill
+    return None
+
+
+def _v48_linked_question_count(skill_id: str) -> int:
+    data_root = _v48_repo_root() / "data"
+    if not data_root.exists():
+        return 0
+
+    count = 0
+    for path in data_root.rglob("quiz.study.json"):
+        try:
+            data = _v48_json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        for item in _v48_walk(data):
+            if isinstance(item, dict) and _v48_text(item.get("exam_prep_skill_id")) == skill_id:
+                count += 1
+
+    return count
+
+
+def render_exam_prep_skill_links_html() -> str:
+    links = []
+
+    for skill in _v48_skill_catalog():
+        href = "/exam-prep/skill/" + _v48_quote(skill["id"], safe="")
+        label = _v48_escape(skill["label"])
+        links.append(
+            '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;'
+            'padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" '
+            f'href="{href}">{label}</a>'
+        )
+
+    return (
+        '<section class="exam-prep-skill-detail-links" style="margin-top:24px;background:#fff;'
+        'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
+        '<h2>Detalii pe skill</h2>'
+        '<p style="color:#667085;line-height:1.55;">'
+        'Deschide un skill pentru descriere, progres si pasii de continuare in Study Mode.'
+        '</p>'
+        '<div class="skill-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">'
+        + "".join(links)
+        + '</div></section>'
+    )
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    skill = _v48_skill_by_id(skill_id)
+
+    if skill is None:
+        safe_id = _v48_escape(skill_id or "")
+        html = (
+            '<!doctype html><html lang="ro"><head><meta charset="utf-8">'
+            '<title>Exam Prep - Skill indisponibil</title>'
+            '</head><body>'
+            '<main><h1>Skill indisponibil</h1>'
+            f'<p>Nu am gasit skill-ul: {safe_id}</p>'
+            '<p><a href="/exam-prep">Inapoi la Exam Prep</a></p>'
+            '</main></body></html>'
+        )
+        return html, 404
+
+    label = _v48_escape(skill["label"])
+    description = _v48_escape(skill["description"])
+    linked_questions = _v48_linked_question_count(skill["id"])
+
+    status_ro = "In progres" if linked_questions > 0 else "Nepornit"
+    status_hint = "Consolidat dupa lucru suficient in Study Mode"
+
+    html = (
+        '<!doctype html><html lang="ro"><head><meta charset="utf-8">'
+        f'<title>Exam Prep - {label}</title>'
+        '<style>'
+        'body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f7f7fb;color:#172033;}'
+        'main{max-width:980px;margin:0 auto;padding:32px 20px 56px;}'
+        '.card{background:#fff;border:1px solid #e5e7ef;border-radius:18px;padding:22px;box-shadow:0 10px 32px rgba(23,32,51,.06);}'
+        '.muted{color:#667085;line-height:1.55;}'
+        '.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}'
+        '.button{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:10px 14px;text-decoration:none;border:1px solid #cfd6e6;color:#172033;background:#fff;font-weight:650;}'
+        '.button.primary{background:#172033;color:#fff;border-color:#172033;}'
+        '.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0;}'
+        '.metric{background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;}'
+        '.metric strong{display:block;font-size:1.35rem;margin-top:4px;}'
+        '</style></head><body><main><div class="card">'
+        '<p class="muted">Pregatire examene - Bacalaureat - Matematica M1</p>'
+        f'<h1>Detaliu skill: {label}</h1>'
+        f'<p>{description}</p>'
+        '<div class="metric-grid">'
+        f'<div class="metric"><span>Stare consolidare</span><strong>{status_ro}</strong>'
+        f'<small class="muted">{status_hint}</small></div>'
+        '<div class="metric"><span>Scor progres</span><strong>-</strong>'
+        '<small class="muted">read-only din Study Mode, unde exista</small></div>'
+        f'<div class="metric"><span>Intrebari Study legate</span><strong>{linked_questions}</strong>'
+        '<small class="muted">din quiz.study.json</small></div>'
+        '</div>'
+        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. '
+        'Progresul Exam Prep se actualizeaza gradual din Study Mode.</p>'
+        '<div class="actions">'
+        '<a class="button primary" href="/#library">Continua in Study Mode</a>'
+        '<a class="button" href="/exam-prep">Inapoi la Exam Prep</a>'
+        '<a class="button" href="/quick-tools">Quick Tools</a>'
+        '</div>'
+        '</div></main></body></html>'
+    )
+
+    return html, 200
+# --- end v0.4.8 stable Exam Prep skill detail helpers ---
