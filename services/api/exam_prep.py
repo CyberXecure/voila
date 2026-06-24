@@ -623,7 +623,7 @@ def render_exam_prep_skill_links_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
         '<h2>Detalii pe skill</h2>'
         '<p style="color:#667085;line-height:1.55;">'
-        'Deschide un skill pentru descriere, progres și pașii de continuare în Study Mode.'
+        'Deschide un skill pentru descriere, progres și pașii de continuare în Modul Studiu.'
         '</p>'
         '<div class="skill-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">'
         + "".join(links)
@@ -642,7 +642,7 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
             '</head><body>'
             '<main><h1>Skill indisponibil</h1>'
             f'<p>Nu am gasit skill-ul: {safe_id}</p>'
-            '<p><a href="/exam-prep">Înapoi la Exam Prep</a></p>'
+            '<p><a href="/exam-prep">Înapoi la Pregătire examene</a></p>'
             '</main></body></html>'
         )
         return html, 404
@@ -680,8 +680,8 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         f'<div class="metric"><span>Stare consolidare</span><strong>{status_ro}</strong>'
         f'<small class="muted">{status_hint}</small></div>'
         '<div class="metric"><span>Scor progres</span><strong>-</strong>'
-        '<small class="muted">read-only din Study Mode, unde există</small></div>'
-        f'<div class="metric"><span>Întrebări Study legate</span><strong>{linked_questions}</strong>'
+        '<small class="muted">read-only din Modul Studiu, unde există</small></div>'
+        f'<div class="metric"><span>Întrebări asociate din Modul Studiu</span><strong>{linked_questions}</strong>'
         '<small class="muted">din quiz.study.json</small></div>'
         '</div>'
         '<section class="study-entry">'
@@ -694,8 +694,8 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         '<p class="muted">Obiectivul este sa ajungi treptat la nivel Consolidat, fara sa modificam motorul BKT existent.</p>'
         '</section>'
         '<div class="actions">'
-        '<a class="button primary" href="/#library">Continuă în Study Mode</a>'
-        '<a class="button" href="/exam-prep">Înapoi la Exam Prep</a>'
+        '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Pregătire examene</a>'
         '<a class="button" href="/quick-tools">Quick Tools</a>'
         '</div>'
         '</div></main></body></html>'
@@ -801,7 +801,7 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;box-shadow:0 10px 32px rgba(23,32,51,.06);">'
         '<h2 style="margin:0 0 8px;">Rezumat progres</h2>'
         '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
-        'Sursa progres: Study Mode. Rezumatul este read-only și nu modifică motorul BKT existent.'
+        'Sursa progres: Modul Studiu. Rezumatul este read-only și nu modifică motorul BKT existent.'
         '</p>'
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">'
         '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
@@ -868,7 +868,7 @@ def render_exam_prep_dashboard_skill_cards_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
         '<h2 style="margin:0 0 8px;">Skill-uri Exam Prep</h2>'
         '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
-        'Alege un skill pentru descriere, status și pașii de lucru în Study Mode.'
+        'Alege un skill pentru descriere, status și pașii de lucru în Modul Studiu.'
         '</p>'
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">'
         + "".join(cards)
@@ -886,9 +886,9 @@ def _v412b_polish_ro_html(html: str) -> str:
         ("În progres", "În progres"),
         ("Pregătire examene", "Pregătire examene"),
         ("Matematică M1", "Matematică M1"),
-        ("Întrebări Study legate", "Întrebări Study legate"),
-        ("Continuă în Study Mode", "Continuă în Study Mode"),
-        ("Înapoi la Exam Prep", "Înapoi la Exam Prep"),
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
         ("biblioteca si foloseste", "bibliotecă și folosește"),
         ("actualizeaza gradual", "actualizează gradual"),
         ("unde exista", "unde există"),
@@ -924,3 +924,97 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
 def render_exam_prep_dashboard_skill_cards_html() -> str:
     return _v412b_polish_ro_html(_v412b_base_render_exam_prep_dashboard_skill_cards_html())
 # --- end v0.4.12b Romanian display polish wrappers ---
+
+# --- v0.4.14 Modul Studiu wording polish wrappers ---
+def _v414_polish_modul_studiu_html(html: str) -> str:
+    replacements = [
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
+        ("Sursa progres: Modul Studiu.", "Sursa progres: Modul Studiu."),
+        ("read-only din Modul Studiu", "read-only din Modul Studiu"),
+        ("pașii de continuare în Modul Studiu", "pașii de continuare în Modul Studiu"),
+        ("pașii de lucru în Modul Studiu", "pașii de lucru în Modul Studiu"),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+    ]
+
+    for old, new in replacements:
+        html = html.replace(old, new)
+
+    return html
+
+
+_v414_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
+_v414_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
+_v414_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
+_v414_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
+
+
+def render_exam_prep_skill_links_html() -> str:
+    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_skill_links_html())
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    html, status_code = _v414_base_render_exam_prep_skill_detail_page(skill_id)
+    return _v414_polish_modul_studiu_html(html), status_code
+
+
+def render_exam_prep_dashboard_progress_summary_html() -> str:
+    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_dashboard_progress_summary_html())
+
+
+def render_exam_prep_dashboard_skill_cards_html() -> str:
+    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_dashboard_skill_cards_html())
+# --- end v0.4.14 Modul Studiu wording polish wrappers ---
+
+# --- v0.4.14b final Modul Studiu wording wrappers ---
+def _v414b_polish_modul_studiu_html(html: str) -> str:
+    replacements = [
+        ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Intrebari Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
+        ("Continua in Study Mode", "Continuă în Modul Studiu"),
+        ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("Inapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("Sursa progres: Study Mode.", "Sursa progres: Modul Studiu."),
+        ("read-only din Study Mode", "read-only din Modul Studiu"),
+        ("pașii de continuare în Study Mode", "pașii de continuare în Modul Studiu"),
+        ("pașii de lucru în Study Mode", "pașii de lucru în Modul Studiu"),
+        ("Răspunde la întrebări în Study Mode, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. Progresul Exam Prep se actualizează gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. Progresul Exam Prep se actualizeaza gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+    ]
+
+    for old, new in replacements:
+        html = html.replace(old, new)
+
+    return html
+
+
+_v414b_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
+_v414b_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
+_v414b_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
+_v414b_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
+
+
+def render_exam_prep_skill_links_html() -> str:
+    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_skill_links_html())
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    html, status_code = _v414b_base_render_exam_prep_skill_detail_page(skill_id)
+    return _v414b_polish_modul_studiu_html(html), status_code
+
+
+def render_exam_prep_dashboard_progress_summary_html() -> str:
+    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_dashboard_progress_summary_html())
+
+
+def render_exam_prep_dashboard_skill_cards_html() -> str:
+    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_dashboard_skill_cards_html())
+# --- end v0.4.14b final Modul Studiu wording wrappers ---
