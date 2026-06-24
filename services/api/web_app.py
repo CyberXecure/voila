@@ -6461,3 +6461,122 @@ async def _v419_exam_prep_dashboard_visual_consistency(request, call_next):
         headers=headers,
     )
 # --- end v0.4.19 Exam Prep dashboard visual consistency polish ---
+
+# --- v0.4.22 consolidated Exam Prep dashboard rendering middleware ---
+from fastapi.responses import HTMLResponse as _V422HTMLResponse
+
+
+def _v422_consolidated_dashboard_sections_html() -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_dashboard_sections_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_dashboard_sections_html
+        except Exception:
+            return ""
+
+    try:
+        return render_exam_prep_dashboard_sections_html()
+    except Exception:
+        return ""
+
+
+def _v422_extract_existing_section(text: str, marker: str) -> tuple[str, str]:
+    marker_index = text.find(marker)
+    if marker_index == -1:
+        return text, ""
+
+    section_start = text.rfind("<section", 0, marker_index)
+    if section_start == -1:
+        return text, ""
+
+    section_end = text.find("</section>", marker_index)
+    if section_end == -1:
+        return text, ""
+
+    section_end += len("</section>")
+    section = text[section_start:section_end]
+    text = text[:section_start] + text[section_end:]
+    return text, section
+
+
+def _v422_remove_empty_order_wrappers(text: str) -> str:
+    # Keep this intentionally conservative. It only removes the exact empty wrapper
+    # left after extracting the three legacy sections.
+    text = text.replace(
+        '<div class="exam-prep-dashboard-order-v0418" style="display:block;margin:0 0 24px;"></div>',
+        "",
+    )
+    text = text.replace(
+        '<div class="exam-prep-dashboard-order-v0418" style="display:block;margin:0 0 24px;">\n</div>',
+        "",
+    )
+    return text
+
+
+def _v422_insert_after_main(text: str, html: str) -> str:
+    import re
+
+    match = re.search(r"<main[^>]*>", text, flags=re.IGNORECASE)
+    if match:
+        return text[: match.end()] + html + text[match.end() :]
+
+    if "<body>" in text:
+        return text.replace("<body>", "<body>" + html, 1)
+
+    return html + text
+
+
+def _v422_apply_dashboard_consolidation(text: str) -> str:
+    if "exam-prep-dashboard-consolidated-v0422" in text:
+        return text
+
+    consolidated = _v422_consolidated_dashboard_sections_html()
+    if not consolidated:
+        return text
+
+    for marker in (
+        "exam-prep-dashboard-next-action-v0417",
+        "exam-prep-progress-summary-v0410",
+        "exam-prep-skill-cards-v0411",
+    ):
+        text, _section = _v422_extract_existing_section(text, marker)
+
+    text = _v422_remove_empty_order_wrappers(text)
+    text = _v422_insert_after_main(text, consolidated)
+
+    return text
+
+
+@app.middleware("http")
+async def _v422_exam_prep_dashboard_rendering_consolidation(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v422_apply_dashboard_consolidation(text)
+    text = text.replace("Functii", "Funcții").replace("In progres", "În progres")
+    text = text.replace("reprezentari", "reprezentări").replace("proprietati", "proprietăți").replace("interpretari", "interpretări")
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V422HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.22 consolidated Exam Prep dashboard rendering middleware ---

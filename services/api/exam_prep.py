@@ -1250,3 +1250,66 @@ def render_exam_prep_dashboard_next_action_html() -> str:
         '</section>'
     )
 # --- end v0.4.17 dashboard next action summary helpers ---
+
+# --- v0.4.22b consolidated dashboard Romanian polish helper ---
+def _v422b_polish_dashboard_ro_html(html: str) -> str:
+    replacements = [
+        ("Functii", "Funcții"),
+        ("In progres", "În progres"),
+        ("reprezentari", "reprezentări"),
+        ("proprietati", "proprietăți"),
+        ("interpretari", "interpretări"),
+        ("Matematica M1", "Matematică M1"),
+        ("Pregatire examene", "Pregătire examene"),
+    ]
+
+    for old, new in replacements:
+        html = html.replace(old, new)
+
+    return html
+# --- end v0.4.22b consolidated dashboard Romanian polish helper ---
+
+# --- v0.4.22 consolidated Exam Prep dashboard rendering helper ---
+def _v422_safe_dashboard_section(function_name: str) -> str:
+    function = globals().get(function_name)
+
+    if not callable(function):
+        return ""
+
+    try:
+        html = function()
+    except Exception:
+        return ""
+
+    if not isinstance(html, str):
+        return ""
+
+    return html.strip()
+
+
+def render_exam_prep_dashboard_sections_html() -> str:
+    sections = [
+        _v422_safe_dashboard_section("render_exam_prep_dashboard_next_action_html"),
+        _v422_safe_dashboard_section("render_exam_prep_dashboard_progress_summary_html"),
+        _v422_safe_dashboard_section("render_exam_prep_dashboard_skill_cards_html"),
+    ]
+
+    sections = [section for section in sections if section]
+
+    if not sections:
+        return (
+            '<div class="exam-prep-dashboard-consolidated-v0422 exam-prep-dashboard-order-v0418">'
+            '<section><h2>Pregătire examene</h2>'
+            '<p>Dashboard-ul Exam Prep nu are încă secțiuni disponibile.</p>'
+            '</section></div>'
+        )
+
+    html = (
+        '<div class="exam-prep-dashboard-consolidated-v0422 exam-prep-dashboard-order-v0418" '
+        'style="display:grid;gap:18px;margin:0 0 24px;">'
+        + "".join(sections)
+        + "</div>"
+    )
+
+    return _v422b_polish_dashboard_ro_html(html)
+# --- end v0.4.22 consolidated Exam Prep dashboard rendering helper ---
