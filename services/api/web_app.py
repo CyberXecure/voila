@@ -6301,3 +6301,99 @@ async def _v417_exam_prep_dashboard_next_action(request, call_next):
         headers=headers,
     )
 # --- end v0.4.17 dashboard next action summary injection ---
+
+# --- v0.4.18 Exam Prep dashboard section ordering cleanup ---
+from fastapi.responses import HTMLResponse as _V418HTMLResponse
+
+
+def _v418_extract_section(text: str, marker: str) -> tuple[str, str]:
+    marker_index = text.find(marker)
+    if marker_index == -1:
+        return text, ""
+
+    section_start = text.rfind("<section", 0, marker_index)
+    if section_start == -1:
+        return text, ""
+
+    section_end = text.find("</section>", marker_index)
+    if section_end == -1:
+        return text, ""
+
+    section_end += len("</section>")
+    section = text[section_start:section_end]
+    text = text[:section_start] + text[section_end:]
+    return text, section
+
+
+def _v418_insert_after_main(text: str, html: str) -> str:
+    import re
+
+    match = re.search(r"<main[^>]*>", text, flags=re.IGNORECASE)
+    if match:
+        return text[: match.end()] + html + text[match.end() :]
+
+    if "<body>" in text:
+        return text.replace("<body>", "<body>" + html, 1)
+
+    return html + text
+
+
+def _v418_order_exam_prep_dashboard_sections(text: str) -> str:
+    if "exam-prep-dashboard-order-v0418" in text:
+        return text
+
+    ordered_markers = [
+        "exam-prep-dashboard-next-action-v0417",
+        "exam-prep-progress-summary-v0410",
+        "exam-prep-skill-cards-v0411",
+    ]
+
+    sections = []
+    for marker in ordered_markers:
+        text, section = _v418_extract_section(text, marker)
+        if section:
+            sections.append(section)
+
+    if not sections:
+        return text
+
+    wrapper = (
+        '<div class="exam-prep-dashboard-order-v0418" '
+        'style="display:block;margin:0 0 24px;">'
+        + "".join(sections)
+        + "</div>"
+    )
+
+    return _v418_insert_after_main(text, wrapper)
+
+
+@app.middleware("http")
+async def _v418_exam_prep_dashboard_section_ordering(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v418_order_exam_prep_dashboard_sections(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V418HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.18 Exam Prep dashboard section ordering cleanup ---
