@@ -5686,3 +5686,78 @@ async def _v410_exam_prep_dashboard_progress_summary(request, call_next):
         headers=headers,
     )
 # --- end v0.4.10 Exam Prep dashboard progress summary injection ---
+
+# --- v0.4.11 Exam Prep dashboard skill cards injection ---
+from fastapi.responses import HTMLResponse as _V411HTMLResponse
+
+
+def _v411_dashboard_skill_cards_html() -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_dashboard_skill_cards_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_dashboard_skill_cards_html
+        except Exception:
+            return ""
+
+    try:
+        return render_exam_prep_dashboard_skill_cards_html()
+    except Exception:
+        return ""
+
+
+@app.middleware("http")
+async def _v411_exam_prep_dashboard_skill_cards(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "exam-prep-skill-cards-v0411" not in text:
+        cards_html = _v411_dashboard_skill_cards_html()
+
+        if cards_html:
+            if "exam-prep-progress-summary-v0410" in text:
+                marker = "</section>"
+                start = text.find("exam-prep-progress-summary-v0410")
+                end = text.find(marker, start)
+                if end != -1:
+                    end = end + len(marker)
+                    text = text[:end] + cards_html + text[end:]
+                else:
+                    text = cards_html + text
+            else:
+                import re
+
+                match = re.search(r"<main[^>]*>", text, flags=re.IGNORECASE)
+                if match:
+                    text = text[: match.end()] + cards_html + text[match.end() :]
+                elif "<body>" in text:
+                    text = text.replace("<body>", "<body>" + cards_html, 1)
+                elif "</body>" in text:
+                    text = text.replace("</body>", cards_html + "</body>", 1)
+                else:
+                    text = cards_html + text
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V411HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.11 Exam Prep dashboard skill cards injection ---
