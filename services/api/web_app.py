@@ -6397,3 +6397,67 @@ async def _v418_exam_prep_dashboard_section_ordering(request, call_next):
         headers=headers,
     )
 # --- end v0.4.18 Exam Prep dashboard section ordering cleanup ---
+
+# --- v0.4.19 Exam Prep dashboard visual consistency polish ---
+from fastapi.responses import HTMLResponse as _V419HTMLResponse
+
+
+def _v419_dashboard_visual_css() -> str:
+    return (
+        '<style id="exam-prep-dashboard-visual-v0419">'
+        '.exam-prep-dashboard-order-v0418{display:grid!important;gap:18px!important;margin:0 0 24px!important;}'
+        '.exam-prep-dashboard-order-v0418 section{margin:0!important;}'
+        '.exam-prep-dashboard-order-v0418 h2{letter-spacing:-0.01em;}'
+        '.exam-prep-dashboard-order-v0418 a[href^="/exam-prep/skill/"],'
+        '.exam-prep-dashboard-order-v0418 a[href="/exam-prep"],'
+        '.exam-prep-dashboard-order-v0418 a[href="/#library"]{text-decoration:none;}'
+        '.exam-prep-dashboard-order-v0418 strong{font-weight:750;}'
+        '</style>'
+    )
+
+
+def _v419_apply_dashboard_visual_polish(text: str) -> str:
+    if "exam-prep-dashboard-visual-v0419" in text:
+        return text
+
+    css = _v419_dashboard_visual_css()
+
+    if "</head>" in text:
+        return text.replace("</head>", css + "</head>", 1)
+
+    if "<body>" in text:
+        return text.replace("<body>", "<body>" + css, 1)
+
+    return css + text
+
+
+@app.middleware("http")
+async def _v419_exam_prep_dashboard_visual_consistency(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v419_apply_dashboard_visual_polish(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V419HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.19 Exam Prep dashboard visual consistency polish ---
