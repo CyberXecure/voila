@@ -1287,6 +1287,9 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
             actions.append(
                 f'<a class="btn" href="/progress?pdf={quote(pdf.name)}">{_ut("ui.progress", _ut("progress", "Progress"))}</a>'
             )
+            actions.append(
+                f'<a class="btn" href="/exam-prep">{_ut("ui.exam_prep", "Exam Prep")}</a>'
+            )
 
         if log_file.exists():
             actions.append(
@@ -4140,6 +4143,7 @@ def course_tools(pdf: str = ""):
         card(_ut("ui.figures", "Figures"), _ut("message.figures_description", "View extracted figures."), f"/view-figures?pdf={q}", checks["figures"]),
         card(_ut("ui.edit_crops", "Edit crops"), _ut("message.edit_crops_description", "Manually edit figure crops."), f"/edit-crops?pdf={q}", checks["figures"]),
         card(_ut("ui.progress", _ut("progress", "Progress")), _ut("message.progress_description", "View study progress."), f"/progress?pdf={q}", checks["study"]),
+        card(_ut("ui.exam_prep", "Exam Prep"), _ut("exam_prep.foundation_description", "Foundation dashboard for skill-based exam preparation. Progress is updated from Study Mode."), "/exam-prep", checks["study"]),
         card(_ut("ui.library", _ut("library", "Library")), _ut("message.return_to_library_description", "Return to the main course library."), "/", True),
     ]
 
