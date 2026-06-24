@@ -79,7 +79,7 @@ def bac_matematica_m1_dashboard() -> dict:
         )
 
     return {
-        "title": skill_tree.get("title", "Bacalaureat Matematica M1"),
+        "title": skill_tree.get("title", "Bacalaureat Matematică M1"),
         "skills": rows,
     }
 
@@ -480,22 +480,22 @@ def _v48_fallback_skills() -> list[dict]:
         {
             "id": "derivate",
             "label": "Derivate",
-            "description": "Reguli de derivare, monotonia functiilor si aplicatii pentru Bacalaureat Matematica M1.",
+            "description": "Reguli de derivare, monotonia funcțiilor și aplicații pentru Bacalaureat Matematică M1.",
         },
         {
             "id": "integrale",
             "label": "Integrale",
-            "description": "Primitive, integrale definite si aplicatii pentru Bacalaureat Matematica M1.",
+            "description": "Primitive, integrale definite și aplicații pentru Bacalaureat Matematică M1.",
         },
         {
             "id": "functii",
-            "label": "Functii",
-            "description": "Functii, grafice, proprietati si interpretare pentru Bacalaureat Matematica M1.",
+            "label": "Funcții",
+            "description": "Funcții, grafice, proprietăți și interpretare pentru Bacalaureat Matematică M1.",
         },
         {
             "id": "geometrie",
             "label": "Geometrie",
-            "description": "Elemente de geometrie relevante pentru Bacalaureat Matematica M1.",
+            "description": "Elemente de geometrie relevante pentru Bacalaureat Matematică M1.",
         },
     ]
 
@@ -566,7 +566,7 @@ def _v48_skill_catalog() -> list[dict]:
 
         description = _v48_pick(node, description_keys)
         if not description:
-            description = "Skill din planul de pregatire Bacalaureat Matematica M1. Progresul se actualizeaza pe baza intrebarilor lucrate in Study Mode."
+            description = "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Study Mode."
 
         items.append(
             {
@@ -623,7 +623,7 @@ def render_exam_prep_skill_links_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
         '<h2>Detalii pe skill</h2>'
         '<p style="color:#667085;line-height:1.55;">'
-        'Deschide un skill pentru descriere, progres si pasii de continuare in Study Mode.'
+        'Deschide un skill pentru descriere, progres și pașii de continuare în Study Mode.'
         '</p>'
         '<div class="skill-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">'
         + "".join(links)
@@ -642,7 +642,7 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
             '</head><body>'
             '<main><h1>Skill indisponibil</h1>'
             f'<p>Nu am gasit skill-ul: {safe_id}</p>'
-            '<p><a href="/exam-prep">Inapoi la Exam Prep</a></p>'
+            '<p><a href="/exam-prep">Înapoi la Exam Prep</a></p>'
             '</main></body></html>'
         )
         return html, 404
@@ -651,8 +651,8 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
     description = _v48_escape(skill["description"])
     linked_questions = _v48_linked_question_count(skill["id"])
 
-    status_ro = "In progres" if linked_questions > 0 else "Nepornit"
-    status_hint = "Consolidat dupa lucru suficient in Study Mode"
+    status_ro = "În progres" if linked_questions > 0 else "Nepornit"
+    status_hint = "Consolidat după lucru suficient în Study Mode"
 
     html = (
         '<!doctype html><html lang="ro"><head><meta charset="utf-8">'
@@ -673,15 +673,15 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         '.study-steps{margin:0;padding-left:22px;color:#344054;line-height:1.6;}'
         '.study-steps li{margin:6px 0;}'
         '</style></head><body><main><div class="card">'
-        '<p class="muted">Pregatire examene - Bacalaureat - Matematica M1</p>'
+        '<p class="muted">Pregătire examene - Bacalaureat - Matematică M1</p>'
         f'<h1>Detaliu skill: {label}</h1>'
         f'<p>{description}</p>'
         '<div class="metric-grid">'
         f'<div class="metric"><span>Stare consolidare</span><strong>{status_ro}</strong>'
         f'<small class="muted">{status_hint}</small></div>'
         '<div class="metric"><span>Scor progres</span><strong>-</strong>'
-        '<small class="muted">read-only din Study Mode, unde exista</small></div>'
-        f'<div class="metric"><span>Intrebari Study legate</span><strong>{linked_questions}</strong>'
+        '<small class="muted">read-only din Study Mode, unde există</small></div>'
+        f'<div class="metric"><span>Întrebări Study legate</span><strong>{linked_questions}</strong>'
         '<small class="muted">din quiz.study.json</small></div>'
         '</div>'
         '<section class="study-entry">'
@@ -694,8 +694,8 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         '<p class="muted">Obiectivul este sa ajungi treptat la nivel Consolidat, fara sa modificam motorul BKT existent.</p>'
         '</section>'
         '<div class="actions">'
-        '<a class="button primary" href="/#library">Continua in Study Mode</a>'
-        '<a class="button" href="/exam-prep">Inapoi la Exam Prep</a>'
+        '<a class="button primary" href="/#library">Continuă în Study Mode</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Exam Prep</a>'
         '<a class="button" href="/quick-tools">Quick Tools</a>'
         '</div>'
         '</div></main></body></html>'
@@ -757,10 +757,10 @@ def _v410_skill_status(skill_id: str) -> str:
         return "Consolidat"
 
     if score is not None and score > 0:
-        return "In progres"
+        return "În progres"
 
     if linked_questions > 0:
-        return "In progres"
+        return "În progres"
 
     return "Nepornit"
 
@@ -780,7 +780,7 @@ def exam_prep_dashboard_progress_summary() -> dict:
 
         if status == "Consolidat":
             summary["consolidat"] += 1
-        elif status == "In progres":
+        elif status == "În progres":
             summary["in_progres"] += 1
         else:
             summary["nepornit"] += 1
@@ -801,7 +801,7 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;box-shadow:0 10px 32px rgba(23,32,51,.06);">'
         '<h2 style="margin:0 0 8px;">Rezumat progres</h2>'
         '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
-        'Sursa progres: Study Mode. Rezumatul este read-only si nu modifica motorul BKT existent.'
+        'Sursa progres: Study Mode. Rezumatul este read-only și nu modifică motorul BKT existent.'
         '</p>'
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">'
         '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
@@ -813,7 +813,7 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
         f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{nepornit}</strong>'
         '</div>'
         '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
-        '<span>In progres</span>'
+        '<span>În progres</span>'
         f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{in_progres}</strong>'
         '</div>'
         '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
@@ -834,7 +834,7 @@ def _v411_skill_status_for_card(skill_id: str) -> str:
             linked_questions = _v48_linked_question_count(skill_id)
         except Exception:
             linked_questions = 0
-        return "In progres" if linked_questions > 0 else "Nepornit"
+        return "În progres" if linked_questions > 0 else "Nepornit"
 
 
 def render_exam_prep_dashboard_skill_cards_html() -> str:
@@ -845,7 +845,10 @@ def render_exam_prep_dashboard_skill_cards_html() -> str:
         label = _v48_escape(skill["label"])
         description = _v48_escape(skill.get("description", ""))
         href = "/exam-prep/skill/" + _v48_quote(skill_id, safe="")
-        status = _v48_escape(_v411_skill_status_for_card(skill_id))
+        raw_status = _v411_skill_status_for_card(skill_id)
+        if raw_status == "În progres":
+            raw_status = "În progres"
+        status = _v48_escape(raw_status)
 
         cards.append(
             '<article style="background:#fff;border:1px solid #e5e7ef;border-radius:16px;'
@@ -865,10 +868,59 @@ def render_exam_prep_dashboard_skill_cards_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
         '<h2 style="margin:0 0 8px;">Skill-uri Exam Prep</h2>'
         '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
-        'Alege un skill pentru descriere, status si pasii de lucru in Study Mode.'
+        'Alege un skill pentru descriere, status și pașii de lucru în Study Mode.'
         '</p>'
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">'
         + "".join(cards)
         + '</div></section>'
     )
 # --- end v0.4.11 Exam Prep dashboard skill cards helpers ---
+
+# --- v0.4.12 Romanian UI polish ---
+
+# --- v0.4.12b Romanian display polish wrappers ---
+def _v412b_polish_ro_html(html: str) -> str:
+    replacements = [
+        ("Funcții", "Funcții"),
+        ("functii,", "funcții,"),
+        ("În progres", "În progres"),
+        ("Pregătire examene", "Pregătire examene"),
+        ("Matematică M1", "Matematică M1"),
+        ("Întrebări Study legate", "Întrebări Study legate"),
+        ("Continuă în Study Mode", "Continuă în Study Mode"),
+        ("Înapoi la Exam Prep", "Înapoi la Exam Prep"),
+        ("biblioteca si foloseste", "bibliotecă și folosește"),
+        ("actualizeaza gradual", "actualizează gradual"),
+        ("unde exista", "unde există"),
+        ("dupa lucru", "după lucru"),
+        ("in Study Mode", "în Study Mode"),
+    ]
+
+    for old, new in replacements:
+        html = html.replace(old, new)
+
+    return html
+
+
+_v412b_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
+_v412b_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
+_v412b_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
+_v412b_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
+
+
+def render_exam_prep_skill_links_html() -> str:
+    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_skill_links_html())
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    html, status_code = _v412b_base_render_exam_prep_skill_detail_page(skill_id)
+    return _v412b_polish_ro_html(html), status_code
+
+
+def render_exam_prep_dashboard_progress_summary_html() -> str:
+    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_dashboard_progress_summary_html())
+
+
+def render_exam_prep_dashboard_skill_cards_html() -> str:
+    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_dashboard_skill_cards_html())
+# --- end v0.4.12b Romanian display polish wrappers ---
