@@ -1155,29 +1155,46 @@ def generate_for_pdf(pdf_path: Path) -> Path:
 def exam_prep_home() -> HTMLResponse:
     dashboard = exam_prep.bac_matematica_m1_dashboard()
 
+    def exam_prep_status_label(mastery: float, attempts: int) -> str:
+        if attempts <= 0:
+            return _ut("exam_prep.status.no_attempts", "Not started")
+        if mastery < 0.40:
+            return _ut("exam_prep.status.needs_review", "Needs review")
+        if mastery < 0.75:
+            return _ut("exam_prep.status.in_progress", "In progress")
+        if mastery < 0.90:
+            return _ut("exam_prep.status.almost_consolidated", "Almost mastered")
+        return _ut("exam_prep.status.consolidated", "Mastered")
+
     rows = []
     for skill in dashboard.get("skills", []):
-        mastery_percent = int(round(float(skill.get("mastery") or 0.0) * 100))
+        mastery = float(skill.get("mastery") or 0.0)
+        attempts = int(skill.get("attempts") or 0)
+        correct = int(skill.get("correct") or 0)
+        mastery_percent = int(round(mastery * 100))
+        status_label = html.escape(exam_prep_status_label(mastery, attempts))
+
         rows.append(
             f"""
             <article class="card">
               <h2>{html.escape(str(skill.get("name") or ""))}</h2>
               <p>{html.escape(str(skill.get("description") or ""))}</p>
               <div class="meta">
-                Mastery: <strong>{mastery_percent}%</strong><br>
-                Attempts: <strong>{int(skill.get("attempts") or 0)}</strong><br>
-                Correct: <strong>{int(skill.get("correct") or 0)}</strong>
+                {_ut("exam_prep.consolidated", "Mastery")}: <strong>{mastery_percent}%</strong><br>
+                {_ut("exam_prep.status_label", "Status")}: <strong>{status_label}</strong><br>
+                {_ut("exam_prep.attempts", "Attempts")}: <strong>{attempts}</strong><br>
+                {_ut("exam_prep.correct", "Correct")}: <strong>{correct}</strong>
               </div>
             </article>
             """
         )
 
     body = f"""
-    <h1>Voila! Exam Prep</h1>
+    <h1>{_ut("ui.exam_prep_title", "Voila! Exam Prep")}</h1>
 
     <div class="notice">
-      Bacalaureat → Matematică M1<br>
-      Foundation dashboard for skill-based exam preparation.
+      <strong>{_ut("exam_prep.bac_matematica_m1", "Baccalaureate → Mathematics M1")}</strong><br>
+      {_ut("exam_prep.foundation_description", "Foundation dashboard for skill-based exam preparation. Progress is updated from Study Mode.")}
     </div>
 
     <section class="grid">
@@ -1185,12 +1202,11 @@ def exam_prep_home() -> HTMLResponse:
     </section>
 
     <div class="actions" style="margin-top: 24px;">
-      <a class="btn primary" href="/">Back to Voila!</a>
+      <a class="btn primary" href="/">{_ut("ui.link.back_to_voila", "Back to Voila!")}</a>
     </div>
     """
 
-    return page("Voila! Exam Prep", body)
-
+    return page(_ut("ui.exam_prep_title", "Voila! Exam Prep"), body)
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
