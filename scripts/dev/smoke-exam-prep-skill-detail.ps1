@@ -116,6 +116,11 @@ try {
         "v416_detail_has_action_text" = ($derivate -cmatch "Modul Studiu")
         "v416_detail_has_continue_modul_studiu" = ($derivate -cmatch "Continuă în Modul Studiu")
         "v416_detail_has_back_pregatire" = ($derivate -cmatch "Înapoi la Pregătire examene")
+        "v417_dashboard_has_next_action_marker" = ($exam -cmatch "exam-prep-dashboard-next-action-v0417")
+        "v417_dashboard_has_next_action_title" = ($exam -cmatch "Ce să faci acum")
+        "v417_dashboard_has_recommended_skill" = ($exam -cmatch "Skill recomandat")
+        "v417_dashboard_has_current_status" = ($exam -cmatch "Status curent")
+        "v417_dashboard_has_vezi_detalii" = ($exam -cmatch "Vezi detalii")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 

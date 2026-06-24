@@ -1171,3 +1171,82 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
 
     return html, status_code
 # --- end v0.4.16 next recommended action display helpers ---
+
+# --- v0.4.17 dashboard next action summary helpers ---
+def _v417_first_recommended_skill() -> dict | None:
+    skills = _v48_skill_catalog()
+
+    for preferred_status in ("În progres", "In progres", "Nepornit"):
+        for skill in skills:
+            try:
+                status = _v410_skill_status(skill["id"])
+            except Exception:
+                status = "Nepornit"
+
+            if status == "In progres":
+                status = "În progres"
+
+            if status == preferred_status:
+                return {
+                    "id": skill["id"],
+                    "label": skill["label"],
+                    "description": skill.get("description", ""),
+                    "status": status,
+                }
+
+    if skills:
+        skill = skills[0]
+        return {
+            "id": skill["id"],
+            "label": skill["label"],
+            "description": skill.get("description", ""),
+            "status": "Nepornit",
+        }
+
+    return None
+
+
+def render_exam_prep_dashboard_next_action_html() -> str:
+    skill = _v417_first_recommended_skill()
+
+    if skill is None:
+        return (
+            '<section class="exam-prep-dashboard-next-action-v0417" '
+            'style="margin:0 0 24px;background:#fff;border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
+            '<h2>Ce să faci acum?</h2>'
+            '<p>Nu există încă skill-uri disponibile pentru Pregătire examene.</p>'
+            '</section>'
+        )
+
+    skill_id = skill["id"]
+    label = _v48_escape(skill["label"])
+    status = _v48_escape(skill["status"])
+    href = "/exam-prep/skill/" + _v48_quote(skill_id, safe="")
+
+    if skill["status"] == "Consolidat":
+        action = "Menține progresul cu o recapitulare scurtă în Modul Studiu."
+    elif skill["status"] == "În progres":
+        action = "Continuă cu acest skill în Modul Studiu pentru a consolida progresul."
+    else:
+        action = "Începe cu acest skill și răspunde la primele întrebări în Modul Studiu."
+
+    safe_action = _v48_escape(action)
+
+    return (
+        '<section class="exam-prep-dashboard-next-action-v0417" '
+        'style="margin:0 0 24px;background:#fff;border:1px solid #d9e2f1;border-radius:18px;'
+        'padding:20px;box-shadow:0 10px 32px rgba(23,32,51,.06);">'
+        '<h2 style="margin:0 0 8px;">Ce să faci acum?</h2>'
+        '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
+        'Recomandare simplă bazată pe statusul curent din Pregătire examene.'
+        '</p>'
+        '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:16px;padding:16px;">'
+        f'<p style="margin:0 0 8px;"><strong>Skill recomandat: {label}</strong></p>'
+        f'<p style="margin:0 0 8px;">Status curent: <strong>{status}</strong></p>'
+        f'<p style="margin:0 0 14px;">{safe_action}</p>'
+        f'<a href="{href}" style="display:inline-flex;border-radius:999px;padding:9px 13px;'
+        'background:#172033;color:#fff;text-decoration:none;font-weight:650;">Vezi detalii</a>'
+        '</div>'
+        '</section>'
+    )
+# --- end v0.4.17 dashboard next action summary helpers ---
