@@ -132,6 +132,9 @@ try {
         "v422_dashboard_has_next_summary_cards" = ($exam -cmatch "exam-prep-dashboard-next-action-v0417" -and $exam -cmatch "exam-prep-progress-summary-v0410" -and $exam -cmatch "exam-prep-skill-cards-v0411")
         "v422_dashboard_order_next_before_summary" = ($exam.IndexOf("exam-prep-dashboard-next-action-v0417") -ge 0 -and $exam.IndexOf("exam-prep-progress-summary-v0410") -gt $exam.IndexOf("exam-prep-dashboard-next-action-v0417"))
         "v422_dashboard_order_summary_before_cards" = ($exam.IndexOf("exam-prep-progress-summary-v0410") -ge 0 -and $exam.IndexOf("exam-prep-skill-cards-v0411") -gt $exam.IndexOf("exam-prep-progress-summary-v0410"))
+        "v423_detail_has_consolidated_marker" = ($derivate -cmatch "exam-prep-skill-detail-consolidated-v0423")
+        "v423_detail_has_related_and_next_sections" = ($derivate -cmatch "exam-prep-related-study-questions-v0415" -and $derivate -cmatch "exam-prep-next-action-v0416")
+        "v423_detail_order_related_before_next" = ($derivate.IndexOf("exam-prep-related-study-questions-v0415") -ge 0 -and $derivate.IndexOf("exam-prep-next-action-v0416") -gt $derivate.IndexOf("exam-prep-related-study-questions-v0415"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
