@@ -347,6 +347,54 @@ def page(title: str, body: str) -> HTMLResponse:
       box-shadow: 0 8px 24px var(--shadow);
     }}
 
+    .top-nav {{
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }}
+
+    .nav-pill {{
+      min-height: 42px;
+      box-sizing: border-box;
+      border-radius: 999px;
+      padding: 10px 14px;
+      text-decoration: none;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+    }}
+
+    .nav-pill-primary {{
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fffaf0;
+    }}
+
+    .nav-pill-exam {{
+      background: #8b5cf6;
+      border: 1px solid #8b5cf6;
+      color: #fffaf0;
+    }}
+
+    .top-nav .theme-toggle {{
+      margin: 0;
+      background: var(--paper);
+      border-color: var(--border);
+      color: var(--text);
+    }}
+
+    @media (max-width: 760px) {{
+      header {{
+        align-items: flex-start;
+      }}
+
+      .top-nav {{
+        justify-content: flex-start;
+        width: 100%;
+      }}
+    }}
     .panel {{
       background: var(--paper);
       border: 1px solid var(--border);
@@ -663,15 +711,17 @@ def page(title: str, body: str) -> HTMLResponse:
 
 </head>
 <body>
-<a href="/quick-tools" style="position:fixed;right:18px;top:18px;z-index:9999;background:#e0ad68;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">{_ut("ui.quick_tools", "Quick Tools")}</a>
-<a href="/exam-prep" style="position:fixed;right:18px;top:68px;z-index:9999;background:#8b5cf6;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">Exam Prep</a>
   <div class="wrap">
     <header>
       <div class="brand">
         <h1>{_ut("ui.heading.home", "Voila!")}</h1>
         <p>{_ut("ui.message.local_pdf_learning_studio", "Your local PDF learning studio")}</p>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button">{_ut("ui.toggle_theme", "Toggle theme")}</button>
+      <nav class="top-nav" aria-label="Primary">
+        <a class="nav-pill nav-pill-primary" href="/quick-tools">{_ut("ui.quick_tools", "Quick Tools")}</a>
+        <a class="nav-pill nav-pill-exam" href="/exam-prep">{_ut("ui.exam_prep", "Exam Prep")}</a>
+        <button class="theme-toggle nav-pill" id="themeToggle" type="button">{_ut("ui.toggle_theme", "Toggle theme")}</button>
+      </nav>
     </header>
 
     <section class="panel">
@@ -713,6 +763,11 @@ def page(title: str, body: str) -> HTMLResponse:
     <script>
       (function () {{
         const params = new URLSearchParams(window.location.search);
+        const floatingNav = document.getElementById("floatingNav");
+        const simpleDashboardPaths = new Set(["/", "/exam-prep", "/quick-tools"]);
+        if (floatingNav && simpleDashboardPaths.has(window.location.pathname)) {{
+          floatingNav.hidden = true;
+        }}
         const pdf = params.get("pdf");
         const path = window.location.pathname;
 
