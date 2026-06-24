@@ -5621,3 +5621,68 @@ async def _v46f_exam_prep_skill_detail_page(skill_id: str):
 
     return _V46FHTMLResponse(content=_v46f_fallback_skill_detail_page(skill_id), status_code=200)
 # --- end v0.4.6f clean safe Exam Prep skill detail route ---
+
+# --- v0.4.10 Exam Prep dashboard progress summary injection ---
+from fastapi.responses import HTMLResponse as _V410HTMLResponse
+
+
+def _v410_dashboard_summary_html() -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_dashboard_progress_summary_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_dashboard_progress_summary_html
+        except Exception:
+            return ""
+
+    try:
+        return render_exam_prep_dashboard_progress_summary_html()
+    except Exception:
+        return ""
+
+
+@app.middleware("http")
+async def _v410_exam_prep_dashboard_progress_summary(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "exam-prep-progress-summary-v0410" not in text:
+        summary_html = _v410_dashboard_summary_html()
+
+        if summary_html:
+            import re
+
+            match = re.search(r"<main[^>]*>", text, flags=re.IGNORECASE)
+            if match:
+                text = text[: match.end()] + summary_html + text[match.end() :]
+            elif "<body>" in text:
+                text = text.replace("<body>", "<body>" + summary_html, 1)
+            elif "</body>" in text:
+                text = text.replace("</body>", summary_html + "</body>", 1)
+            else:
+                text = summary_html + text
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V410HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.10 Exam Prep dashboard progress summary injection ---
