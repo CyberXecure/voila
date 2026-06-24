@@ -824,3 +824,51 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
         '</section>'
     )
 # --- end v0.4.10 Exam Prep dashboard progress summary helpers ---
+
+# --- v0.4.11 Exam Prep dashboard skill cards helpers ---
+def _v411_skill_status_for_card(skill_id: str) -> str:
+    try:
+        return _v410_skill_status(skill_id)
+    except Exception:
+        try:
+            linked_questions = _v48_linked_question_count(skill_id)
+        except Exception:
+            linked_questions = 0
+        return "In progres" if linked_questions > 0 else "Nepornit"
+
+
+def render_exam_prep_dashboard_skill_cards_html() -> str:
+    cards = []
+
+    for skill in _v48_skill_catalog():
+        skill_id = skill["id"]
+        label = _v48_escape(skill["label"])
+        description = _v48_escape(skill.get("description", ""))
+        href = "/exam-prep/skill/" + _v48_quote(skill_id, safe="")
+        status = _v48_escape(_v411_skill_status_for_card(skill_id))
+
+        cards.append(
+            '<article style="background:#fff;border:1px solid #e5e7ef;border-radius:16px;'
+            'padding:16px;box-shadow:0 8px 24px rgba(23,32,51,.05);">'
+            f'<h3 style="margin:0 0 8px;">{label}</h3>'
+            f'<p style="color:#667085;line-height:1.5;margin:0 0 12px;">{description}</p>'
+            '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;">'
+            f'<span style="display:inline-flex;border:1px solid #cfd6e6;border-radius:999px;padding:6px 10px;font-weight:650;">Status: {status}</span>'
+            f'<a href="{href}" style="display:inline-flex;border-radius:999px;padding:8px 12px;'
+            'background:#172033;color:#fff;text-decoration:none;font-weight:650;">Vezi detalii</a>'
+            '</div>'
+            '</article>'
+        )
+
+    return (
+        '<section class="exam-prep-skill-cards-v0411" style="margin:24px 0;background:#f8fafc;'
+        'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
+        '<h2 style="margin:0 0 8px;">Skill-uri Exam Prep</h2>'
+        '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
+        'Alege un skill pentru descriere, status si pasii de lucru in Study Mode.'
+        '</p>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">'
+        + "".join(cards)
+        + '</div></section>'
+    )
+# --- end v0.4.11 Exam Prep dashboard skill cards helpers ---
