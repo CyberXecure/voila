@@ -64,6 +64,10 @@ $sourceChecks = [ordered]@{
     "source_has_pregatire_examene" = (($web + $exam) -cmatch "Pregătire examene")
     "source_has_consolidat" = (($web + $exam) -cmatch "Consolidat")
     "source_no_stapanire" = (($web + $exam) -cnotmatch "Stăpânire|stăpânire|Stapanire|stapanire")
+    "source_has_dashboard_consolidated_v0422" = (($web + $exam) -cmatch "exam-prep-dashboard-consolidated-v0422")
+    "source_has_skill_detail_consolidated_v0423" = (($web + $exam) -cmatch "exam-prep-skill-detail-consolidated-v0423")
+    "source_has_v424_cleanup_marker" = (($web + $exam) -cmatch "v0.4.24 Exam Prep wording wrapper cleanup checkpoint")
+    "smoke_has_v424_checks" = ($smoke -cmatch "v424_combined_has_dashboard_consolidation")
     "smoke_has_v0419_checks" = ($smoke -cmatch "v419_dashboard_has_visual_marker")
 }
 
@@ -129,6 +133,11 @@ try {
         "combined_no_old_mixed_wording" = ($combined -cnotmatch "Întrebări Study legate|Continuă în Study Mode|Înapoi la Exam Prep")
         "combined_no_ascii_ro_regressions" = ($combined -cnotmatch ">Functii<|Functii,|Status: In progres|>In progres<")
         "combined_no_stapanire" = ($combined -cnotmatch "Stăpânire|stăpânire|Stapanire|stapanire")
+        "v425_dashboard_has_consolidated_marker_v0422" = ($dashboard -cmatch "exam-prep-dashboard-consolidated-v0422")
+        "v425_detail_has_consolidated_marker_v0423" = ($detail -cmatch "exam-prep-skill-detail-consolidated-v0423")
+        "v425_combined_has_v424_smoke_guarded_markers" = ($combined -cmatch "exam-prep-dashboard-consolidated-v0422" -and $combined -cmatch "exam-prep-skill-detail-consolidated-v0423")
+        "v425_combined_keeps_modul_studiu_wording" = ($combined -cmatch "Modul Studiu" -and $combined -cmatch "Pregătire examene")
+        "v425_combined_keeps_romanian_labels" = ($combined -cmatch "Funcții" -and $combined -cmatch "În progres")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
@@ -141,6 +150,7 @@ try {
     }
 
     Write-Host "EXAM PREP HEALTH CHECKPOINT PASS"
+Write-Host "EXAM PREP POST-CLEANUP HEALTH EXPANSION v0.4.25 PASS"
 }
 finally {
     Invoke-VoilaStop
