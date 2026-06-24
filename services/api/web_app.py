@@ -6232,3 +6232,72 @@ async def _v416_exam_prep_next_action_response_guard(request, call_next):
         headers=headers,
     )
 # --- end v0.4.16 next recommended action response guard ---
+
+# --- v0.4.17 dashboard next action summary injection ---
+from fastapi.responses import HTMLResponse as _V417HTMLResponse
+
+
+def _v417_dashboard_next_action_html() -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_dashboard_next_action_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_dashboard_next_action_html
+        except Exception:
+            return ""
+
+    try:
+        return render_exam_prep_dashboard_next_action_html()
+    except Exception:
+        return ""
+
+
+@app.middleware("http")
+async def _v417_exam_prep_dashboard_next_action(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "exam-prep-dashboard-next-action-v0417" not in text:
+        next_action_html = _v417_dashboard_next_action_html()
+
+        if next_action_html:
+            if "exam-prep-progress-summary-v0410" in text:
+                text = text.replace(
+                    '<section class="exam-prep-progress-summary-v0410"',
+                    next_action_html + '<section class="exam-prep-progress-summary-v0410"',
+                    1,
+                )
+            else:
+                import re
+                match = re.search(r"<main[^>]*>", text, flags=re.IGNORECASE)
+                if match:
+                    text = text[: match.end()] + next_action_html + text[match.end() :]
+                elif "<body>" in text:
+                    text = text.replace("<body>", "<body>" + next_action_html, 1)
+                else:
+                    text = next_action_html + text
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V417HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.17 dashboard next action summary injection ---
