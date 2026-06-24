@@ -705,3 +705,122 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
 
 # --- v0.4.9 skill detail study entry polish ---
 # --- end v0.4.8 stable Exam Prep skill detail helpers ---
+
+# --- v0.4.10 Exam Prep dashboard progress summary helpers ---
+def _v410_skill_score_percent(skill_id: str) -> int | None:
+    data_root = _v48_repo_root() / "data"
+    if not data_root.exists():
+        return None
+
+    scores = []
+
+    for path in data_root.rglob("study_state.json"):
+        try:
+            data = _v48_json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        for item in _v48_walk(data):
+            if not isinstance(item, dict):
+                continue
+
+            item_skill_id = _v48_text(item.get("exam_prep_skill_id") or item.get("skill_id"))
+            if item_skill_id != skill_id:
+                continue
+
+            for key in ("mastery", "p_mastery", "knowledge", "score"):
+                raw_value = item.get(key)
+                if raw_value is None:
+                    continue
+
+                try:
+                    value = float(raw_value)
+                except Exception:
+                    continue
+
+                if 0 <= value <= 1:
+                    scores.append(value * 100)
+                elif 1 < value <= 100:
+                    scores.append(value)
+
+    if not scores:
+        return None
+
+    return round(sum(scores) / len(scores))
+
+
+def _v410_skill_status(skill_id: str) -> str:
+    score = _v410_skill_score_percent(skill_id)
+    linked_questions = _v48_linked_question_count(skill_id)
+
+    if score is not None and score >= 85:
+        return "Consolidat"
+
+    if score is not None and score > 0:
+        return "In progres"
+
+    if linked_questions > 0:
+        return "In progres"
+
+    return "Nepornit"
+
+
+def exam_prep_dashboard_progress_summary() -> dict:
+    skills = _v48_skill_catalog()
+
+    summary = {
+        "total": len(skills),
+        "nepornit": 0,
+        "in_progres": 0,
+        "consolidat": 0,
+    }
+
+    for skill in skills:
+        status = _v410_skill_status(skill["id"])
+
+        if status == "Consolidat":
+            summary["consolidat"] += 1
+        elif status == "In progres":
+            summary["in_progres"] += 1
+        else:
+            summary["nepornit"] += 1
+
+    return summary
+
+
+def render_exam_prep_dashboard_progress_summary_html() -> str:
+    summary = exam_prep_dashboard_progress_summary()
+
+    total = summary["total"]
+    nepornit = summary["nepornit"]
+    in_progres = summary["in_progres"]
+    consolidat = summary["consolidat"]
+
+    return (
+        '<section class="exam-prep-progress-summary-v0410" style="margin:0 0 24px;background:#fff;'
+        'border:1px solid #e5e7ef;border-radius:18px;padding:20px;box-shadow:0 10px 32px rgba(23,32,51,.06);">'
+        '<h2 style="margin:0 0 8px;">Rezumat progres</h2>'
+        '<p style="color:#667085;line-height:1.55;margin:0 0 16px;">'
+        'Sursa progres: Study Mode. Rezumatul este read-only si nu modifica motorul BKT existent.'
+        '</p>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">'
+        '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
+        '<span>Total skill-uri</span>'
+        f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{total}</strong>'
+        '</div>'
+        '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
+        '<span>Nepornit</span>'
+        f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{nepornit}</strong>'
+        '</div>'
+        '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
+        '<span>In progres</span>'
+        f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{in_progres}</strong>'
+        '</div>'
+        '<div style="background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;">'
+        '<span>Consolidat</span>'
+        f'<strong style="display:block;font-size:1.45rem;margin-top:4px;">{consolidat}</strong>'
+        '</div>'
+        '</div>'
+        '</section>'
+    )
+# --- end v0.4.10 Exam Prep dashboard progress summary helpers ---
