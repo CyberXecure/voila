@@ -121,6 +121,9 @@ try {
         "v417_dashboard_has_recommended_skill" = ($exam -cmatch "Skill recomandat")
         "v417_dashboard_has_current_status" = ($exam -cmatch "Status curent")
         "v417_dashboard_has_vezi_detalii" = ($exam -cmatch "Vezi detalii")
+        "v418_dashboard_has_order_marker" = ($exam -cmatch "exam-prep-dashboard-order-v0418")
+        "v418_dashboard_order_next_before_summary" = ($exam.IndexOf("exam-prep-dashboard-next-action-v0417") -ge 0 -and $exam.IndexOf("exam-prep-progress-summary-v0410") -gt $exam.IndexOf("exam-prep-dashboard-next-action-v0417"))
+        "v418_dashboard_order_summary_before_cards" = ($exam.IndexOf("exam-prep-progress-summary-v0410") -ge 0 -and $exam.IndexOf("exam-prep-skill-cards-v0411") -gt $exam.IndexOf("exam-prep-progress-summary-v0410"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
