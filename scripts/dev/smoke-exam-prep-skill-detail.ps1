@@ -105,6 +105,11 @@ try {
         "ro_combined_no_visible_functii_ascii" = ($combined -cnotmatch ">Functii<|Functii,|Status: Functii")
         "ro_combined_no_visible_in_progres_ascii" = ($combined -cnotmatch ">In progres<|Status: In progres")
         "ro_combined_no_old_study_wording" = ($combined -cnotmatch "Întrebări Study legate|Intrebari Study legate|Continuă în Study Mode|Continua in Study Mode|Înapoi la Exam Prep|Inapoi la Exam Prep")
+        "v415_detail_has_related_questions_marker" = ($derivate -cmatch "exam-prep-related-study-questions-v0415")
+        "v415_detail_has_questions_heading" = ($derivate -cmatch "Întrebări asociate din Modul Studiu")
+        "v415_detail_has_count_or_empty_message" = ($derivate -cmatch "întrebări asociate detectate|întrebare asociată detectată|Nu există încă întrebări asociate detectate")
+        "v415_detail_has_answer_instruction" = ($derivate -cmatch "Răspunde la întrebări în Modul Studiu|Răspunde la întrebările asociate în Modul Studiu|Răspunde la întrebarea asociată în Modul Studiu")
+        "v415_detail_has_readonly_note" = ($derivate -cmatch "read-only")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 

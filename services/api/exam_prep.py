@@ -1018,3 +1018,69 @@ def render_exam_prep_dashboard_progress_summary_html() -> str:
 def render_exam_prep_dashboard_skill_cards_html() -> str:
     return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_dashboard_skill_cards_html())
 # --- end v0.4.14b final Modul Studiu wording wrappers ---
+
+# --- v0.4.15 related Modul Studiu questions display helpers ---
+from html import escape as _v415_escape
+
+
+def render_exam_prep_related_study_questions_html(skill_id: str) -> str:
+    try:
+        linked_questions = _v48_linked_question_count(skill_id)
+    except Exception:
+        linked_questions = 0
+
+    if linked_questions == 1:
+        count_text = "1 întrebare asociată detectată"
+        helper_text = "Răspunde la întrebarea asociată în Modul Studiu, iar progresul se va actualiza aici."
+    elif linked_questions > 1:
+        count_text = f"{linked_questions} întrebări asociate detectate"
+        helper_text = "Răspunde la întrebările asociate în Modul Studiu, iar progresul se va actualiza aici."
+    else:
+        count_text = "Nu există încă întrebări asociate detectate"
+        helper_text = "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."
+
+    safe_count_text = _v415_escape(count_text)
+    safe_helper_text = _v415_escape(helper_text)
+
+    return (
+        '<section class="exam-prep-related-study-questions-v0415" '
+        'style="margin-top:22px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Întrebări asociate din Modul Studiu</h2>'
+        f'<p><strong>{safe_count_text}</strong></p>'
+        f'<p>{safe_helper_text}</p>'
+        '<p style="color:#667085;line-height:1.55;">'
+        'Acest rezumat este read-only și folosește progresul existent din Modul Studiu.'
+        '</p>'
+        '<div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">'
+        '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Pregătire examene</a>'
+        '</div>'
+        '</section>'
+    )
+
+
+_v415_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
+
+
+def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
+    html, status_code = _v415_base_render_exam_prep_skill_detail_page(skill_id)
+
+    if status_code != 200:
+        return html, status_code
+
+    if "exam-prep-related-study-questions-v0415" in html:
+        return html, status_code
+
+    section = render_exam_prep_related_study_questions_html(skill_id)
+
+    if '<div class="actions">' in html:
+        html = html.replace('<div class="actions">', section + '<div class="actions">', 1)
+    elif "</main>" in html:
+        html = html.replace("</main>", section + "</main>", 1)
+    elif "</body>" in html:
+        html = html.replace("</body>", section + "</body>", 1)
+    else:
+        html = html + section
+
+    return html, status_code
+# --- end v0.4.15 related Modul Studiu questions display helpers ---
