@@ -5465,7 +5465,7 @@ def _v46c_fallback_skill_links_html() -> str:
         'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
         '<h2>Detalii pe skill</h2>'
         '<p style="color:#667085;line-height:1.55;">'
-        'Deschide un skill pentru descriere, progres și pașii de continuare în Study Mode.'
+        'Deschide un skill pentru descriere, progres și pașii de continuare în Modul Studiu.'
         '</p>'
         '<div class="skill-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">'
         '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" href="/exam-prep/skill/derivate">Derivate</a>'
@@ -5588,15 +5588,15 @@ def _v46f_fallback_skill_detail_page(skill_id: str) -> str:
         '<div class="metric"><span>Stare consolidare</span><strong>Nepornit</strong>'
         '<small class="muted">Consolidat după lucru suficient în Study Mode</small></div>'
         '<div class="metric"><span>Scor progres</span><strong>-</strong>'
-        '<small class="muted">read-only din Study Mode, unde există</small></div>'
-        '<div class="metric"><span>Întrebări Study legate</span><strong>0</strong>'
+        '<small class="muted">read-only din Modul Studiu, unde există</small></div>'
+        '<div class="metric"><span>Întrebări asociate din Modul Studiu</span><strong>0</strong>'
         '<small class="muted">din quiz.study.json</small></div>'
         '</div>'
-        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. '
-        'Progresul Exam Prep se actualizează gradual din Study Mode.</p>'
+        '<p class="muted">Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici. '
+        '</p>'
         '<div class="actions">'
-        '<a class="button primary" href="/#library">Continuă în Study Mode</a>'
-        '<a class="button" href="/exam-prep">Înapoi la Exam Prep</a>'
+        '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Pregătire examene</a>'
         '<a class="button" href="/quick-tools">Quick Tools</a>'
         '</div>'
         f'<p class="muted">Skill ID: {safe_id}</p>'
@@ -5775,9 +5775,9 @@ def _v412c_polish_exam_prep_html(text: str) -> str:
         (">În progres<", ">În progres<"),
         ("Pregătire examene", "Pregătire examene"),
         ("Matematică M1", "Matematică M1"),
-        ("Întrebări Study legate", "Întrebări Study legate"),
-        ("Continuă în Study Mode", "Continuă în Study Mode"),
-        ("Înapoi la Exam Prep", "Înapoi la Exam Prep"),
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
     ]
 
     for old, new in replacements:
@@ -5827,9 +5827,9 @@ def _v412d_polish_exam_prep_html(text: str) -> str:
         ("In progres", "În progres"),
         ("Pregatire examene", "Pregătire examene"),
         ("Matematica M1", "Matematică M1"),
-        ("Intrebari Study legate", "Întrebări Study legate"),
-        ("Continua in Study Mode", "Continuă în Study Mode"),
-        ("Inapoi la Exam Prep", "Înapoi la Exam Prep"),
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
         ("biblioteca si foloseste", "bibliotecă și folosește"),
         ("actualizeaza gradual", "actualizează gradual"),
         ("unde exista", "unde există"),
@@ -5873,3 +5873,226 @@ async def _v412d_exam_prep_global_ro_display_polish(request, call_next):
         headers=headers,
     )
 # --- end v0.4.12d global Romanian display polish middleware ---
+
+# --- v0.4.14 Modul Studiu wording polish middleware ---
+from fastapi.responses import HTMLResponse as _V414HTMLResponse
+
+
+def _v414_polish_modul_studiu_response_html(text: str) -> str:
+    replacements = [
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
+        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
+        ("Sursa progres: Modul Studiu.", "Sursa progres: Modul Studiu."),
+        ("read-only din Modul Studiu", "read-only din Modul Studiu"),
+        ("pașii de continuare în Modul Studiu", "pașii de continuare în Modul Studiu"),
+        ("pașii de lucru în Modul Studiu", "pașii de lucru în Modul Studiu"),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+@app.middleware("http")
+async def _v414_exam_prep_modul_studiu_wording_polish(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep" and not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v414_polish_modul_studiu_response_html(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V414HTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.14 Modul Studiu wording polish middleware ---
+
+# --- v0.4.14b final Modul Studiu response wording middleware ---
+from fastapi.responses import HTMLResponse as _V414BHTMLResponse
+
+
+def _v414b_polish_modul_studiu_response_html(text: str) -> str:
+    replacements = [
+        ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Intrebari Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
+        ("Continua in Study Mode", "Continuă în Modul Studiu"),
+        ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("Inapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("Sursa progres: Study Mode.", "Sursa progres: Modul Studiu."),
+        ("read-only din Study Mode", "read-only din Modul Studiu"),
+        ("pașii de continuare în Study Mode", "pașii de continuare în Modul Studiu"),
+        ("pașii de lucru în Study Mode", "pașii de lucru în Modul Studiu"),
+        ("Răspunde la întrebări în Study Mode, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. Progresul Exam Prep se actualizează gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. Progresul Exam Prep se actualizeaza gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+@app.middleware("http")
+async def _v414b_exam_prep_modul_studiu_response_wording(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep" and not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v414b_polish_modul_studiu_response_html(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V414BHTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.14b final Modul Studiu response wording middleware ---
+
+# --- v0.4.14c force approved Modul Studiu wording ---
+from fastapi.responses import HTMLResponse as _V414CHTMLResponse
+
+
+def _v414c_polish_exam_prep_text(text: str) -> str:
+    replacements = [
+        ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Intrebari Study legate", "Întrebări asociate din Modul Studiu"),
+        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
+        ("Continua in Study Mode", "Continuă în Modul Studiu"),
+        ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("Inapoi la Exam Prep", "Înapoi la Pregătire examene"),
+        ("read-only din Study Mode", "read-only din Modul Studiu"),
+        ("Sursa progres: Study Mode", "Sursa progres: Modul Studiu"),
+        ("pașii de continuare în Study Mode", "pașii de continuare în Modul Studiu"),
+        ("pașii de lucru în Study Mode", "pașii de lucru în Modul Studiu"),
+        ("Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. Progresul Exam Prep se actualizează gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. Progresul Exam Prep se actualizeaza gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
+        ("Functii", "Funcții"),
+        ("In progres", "În progres"),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+def _v414c_approved_study_section() -> str:
+    return (
+        '<section class="exam-prep-modul-studiu-wording-v0414" '
+        'style="margin-top:22px;background:#f8fafc;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Întrebări asociate din Modul Studiu</h2>'
+        '<p>Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.</p>'
+        '<div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;">'
+        '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Pregătire examene</a>'
+        '</div>'
+        '</section>'
+    )
+
+
+def _v414c_ensure_skill_detail_wording(text: str) -> str:
+    if "Întrebări asociate din Modul Studiu" not in text:
+        section = _v414c_approved_study_section()
+
+        if '<div class="actions">' in text:
+            text = text.replace('<div class="actions">', section + '<div class="actions">', 1)
+        elif "</main>" in text:
+            text = text.replace("</main>", section + "</main>", 1)
+        elif "</body>" in text:
+            text = text.replace("</body>", section + "</body>", 1)
+        else:
+            text = text + section
+
+    if "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici" not in text:
+        text = text.replace(
+            "Întrebări asociate din Modul Studiu",
+            "Întrebări asociate din Modul Studiu</h2><p>Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.</p><h2 style=\"display:none\">",
+            1,
+        )
+
+    if "Continuă în Modul Studiu" not in text:
+        text = text.replace("</main>", '<p><a href="/#library">Continuă în Modul Studiu</a></p></main>', 1)
+
+    if "Înapoi la Pregătire examene" not in text:
+        text = text.replace("</main>", '<p><a href="/exam-prep">Înapoi la Pregătire examene</a></p></main>', 1)
+
+    return text
+
+
+@app.middleware("http")
+async def _v414c_exam_prep_force_modul_studiu_wording(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep" and not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v414c_polish_exam_prep_text(text)
+
+    if request.url.path.startswith("/exam-prep/skill/"):
+        text = _v414c_ensure_skill_detail_wording(text)
+
+    text = _v414c_polish_exam_prep_text(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V414CHTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.14c force approved Modul Studiu wording ---

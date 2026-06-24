@@ -86,8 +86,8 @@ try {
         "exam_has_skill_cards" = ($exam -cmatch "exam-prep-skill-cards-v0411")
         "skill_detail_200" = ($skillResp.StatusCode -eq 200)
         "skill_has_detail_title" = ($skill -cmatch "Detaliu skill|Skill")
-        "skill_has_progress" = ($skill -cmatch "Progres|progres|Stare consolidare|Întrebări Study|Intrebari Study")
-        "skill_has_study_entry" = ($skill -cmatch "Study Mode|Studiu|Study")
+        "skill_has_progress" = ($skill -cmatch "Progres|progres|Stare consolidare|Întrebări asociate din Modul Studiu|Întrebări Study|Intrebari Study")
+        "skill_has_study_entry" = ($skill -cmatch "Modul Studiu|Studiu|Study Mode|Study")
         "skill_uses_consolidat_terms" = ($skill -cmatch "Consolidat|Aproape consolidat|În progres|In progres|Nepornit|De revizuit")
         "skill_no_stapanire" = ($skill -cnotmatch "Stăpânire|stăpânire|Stapanire|stapanire")
 
@@ -97,12 +97,14 @@ try {
         "ro_derivate_200" = ($derivateResp.StatusCode -eq 200)
         "ro_detail_has_pregatire" = ($derivate -cmatch "Pregătire examene")
         "ro_detail_has_matematica" = ($derivate -cmatch "Matematică M1")
-        "ro_detail_has_questions" = ($derivate -cmatch "Întrebări Study legate")
-        "ro_detail_has_continue" = ($derivate -cmatch "Continuă în Study Mode")
-        "ro_detail_has_back" = ($derivate -cmatch "Înapoi la Exam Prep")
+        "ro_detail_has_questions" = ($derivate -cmatch "Întrebări asociate din Modul Studiu")
+        "ro_detail_has_sentence" = ($derivate -cmatch "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici")
+        "ro_detail_has_continue" = ($derivate -cmatch "Continuă în Modul Studiu")
+        "ro_detail_has_back" = ($derivate -cmatch "Înapoi la Pregătire examene")
         "ro_combined_no_stapanire" = ($combined -cnotmatch "Stăpânire|stăpânire|Stapanire|stapanire")
         "ro_combined_no_visible_functii_ascii" = ($combined -cnotmatch ">Functii<|Functii,|Status: Functii")
         "ro_combined_no_visible_in_progres_ascii" = ($combined -cnotmatch ">In progres<|Status: In progres")
+        "ro_combined_no_old_study_wording" = ($combined -cnotmatch "Întrebări Study legate|Intrebari Study legate|Continuă în Study Mode|Continua in Study Mode|Înapoi la Exam Prep|Inapoi la Exam Prep")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
@@ -111,9 +113,9 @@ try {
     }
 
     if ($checks.Values -contains $false) {
-        Write-Host "=== OFFENDING ASCII DISPLAY SNIPPETS ==="
+        Write-Host "=== OFFENDING SNIPPETS ==="
 
-        foreach ($term in @("Functii,", ">Functii<", "Status: Functii", ">In progres<", "Status: In progres", "Stapanire")) {
+        foreach ($term in @("Întrebări Study legate", "Intrebari Study legate", "Continuă în Study Mode", "Continua in Study Mode", "Înapoi la Exam Prep", "Inapoi la Exam Prep", "Functii,", ">Functii<", "Status: In progres", ">In progres<", "Stapanire")) {
             $idx = $combined.IndexOf($term)
             if ($idx -ge 0) {
                 $start = [Math]::Max(0, $idx - 120)
