@@ -154,7 +154,7 @@ def _study_status_label(value: str) -> str:
 
     mapping = {
         "needs_review": _ut("needs_review", "Needs review"),
-        "in_progress": _ut("in_progress", "In progress"),
+        "in_progress": _ut("in_progress", "În progress"),
         "almost_mastered": _ut("almost_mastered", "Almost mastered"),
         "mastered": _ut("mastered", "Mastered"),
     }
@@ -1221,7 +1221,7 @@ def exam_prep_home() -> HTMLResponse:
         if mastery < 0.40:
             return _ut("exam_prep.status.needs_review", "Needs review")
         if mastery < 0.75:
-            return _ut("exam_prep.status.in_progress", "In progress")
+            return _ut("exam_prep.status.in_progress", "În progress")
         if mastery < 0.90:
             return _ut("exam_prep.status.almost_consolidated", "Almost mastered")
         return _ut("exam_prep.status.consolidated", "Mastered")
@@ -2085,7 +2085,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
         <h2>{_ut("status.concept_status", "Concept status")}</h2>
         <div class="meta">
           {_ut("needs_review", "Needs review")}: <strong>{len(weak)}</strong><br>
-          {_ut("in_progress", "In progress")}: <strong>{len(review)}</strong><br>
+          {_ut("in_progress", "În progress")}: <strong>{len(review)}</strong><br>
           {_ut("almost_mastered", "Almost mastered")}: <strong>{len(almost)}</strong><br>
           {_ut("mastered", "Mastered")}: <strong>{len(mastered)}</strong>
         </div>
@@ -2099,7 +2099,7 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     </div>
 
     {concept_list(_ut("needs_review", "Needs review"), weak, _ut("no_weak_concepts_yet", "No weak concepts yet."))}
-    {concept_list(_ut("in_progress", "In progress"), review, _ut("no_concepts_in_this_range_yet", "No concepts in this range yet."))}
+    {concept_list(_ut("in_progress", "În progress"), review, _ut("no_concepts_in_this_range_yet", "No concepts in this range yet."))}
     {concept_list(_ut("almost_mastered", "Almost mastered"), almost, _ut("no_almost_mastered_concepts_yet", "No almost-mastered concepts yet."))}
     {concept_list(_ut("mastered", "Mastered"), mastered, _ut("no_mastered_concepts_yet", "No mastered concepts yet."))}
     """
@@ -5554,8 +5554,8 @@ def _v46f_skill_label(skill_id: str) -> str:
     labels = {
         "derivate": "Derivate",
         "integrale": "Integrale",
-        "functii": "Functii",
-        "funcții": "Functii",
+        "functii": "Funcții",
+        "funcții": "Funcții",
         "geometrie": "Geometrie",
     }
     return labels.get(value, (skill_id or "Skill").replace("_", " ").title())
@@ -5580,23 +5580,23 @@ def _v46f_fallback_skill_detail_page(skill_id: str) -> str:
         '.metric{background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;}'
         '.metric strong{display:block;font-size:1.35rem;margin-top:4px;}'
         '</style></head><body><main><div class="card">'
-        '<p class="muted">Pregatire examene - Bacalaureat - Matematica M1</p>'
+        '<p class="muted">Pregătire examene - Bacalaureat - Matematică M1</p>'
         f'<h1>Detaliu skill: {label}</h1>'
-        '<p>Skill din planul de pregatire Bacalaureat Matematica M1. '
-        'Progresul se actualizeaza pe baza intrebarilor lucrate in Study Mode.</p>'
+        '<p>Skill din planul de pregătire Bacalaureat Matematică M1. '
+        'Progresul se actualizeaza pe baza întrebărilor lucrate în Study Mode.</p>'
         '<div class="metric-grid">'
         '<div class="metric"><span>Stare consolidare</span><strong>Nepornit</strong>'
-        '<small class="muted">Consolidat dupa lucru suficient in Study Mode</small></div>'
+        '<small class="muted">Consolidat după lucru suficient în Study Mode</small></div>'
         '<div class="metric"><span>Scor progres</span><strong>-</strong>'
-        '<small class="muted">read-only din Study Mode, unde exista</small></div>'
-        '<div class="metric"><span>Intrebari Study legate</span><strong>0</strong>'
+        '<small class="muted">read-only din Study Mode, unde există</small></div>'
+        '<div class="metric"><span>Întrebări Study legate</span><strong>0</strong>'
         '<small class="muted">din quiz.study.json</small></div>'
         '</div>'
-        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. '
-        'Progresul Exam Prep se actualizeaza gradual din Study Mode.</p>'
+        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. '
+        'Progresul Exam Prep se actualizează gradual din Study Mode.</p>'
         '<div class="actions">'
-        '<a class="button primary" href="/#library">Continua in Study Mode</a>'
-        '<a class="button" href="/exam-prep">Inapoi la Exam Prep</a>'
+        '<a class="button primary" href="/#library">Continuă în Study Mode</a>'
+        '<a class="button" href="/exam-prep">Înapoi la Exam Prep</a>'
         '<a class="button" href="/quick-tools">Quick Tools</a>'
         '</div>'
         f'<p class="muted">Skill ID: {safe_id}</p>'
@@ -5761,3 +5761,115 @@ async def _v411_exam_prep_dashboard_skill_cards(request, call_next):
         headers=headers,
     )
 # --- end v0.4.11 Exam Prep dashboard skill cards injection ---
+
+# --- v0.4.12c final Romanian HTML polish middleware ---
+from fastapi.responses import HTMLResponse as _V412CHTMLResponse
+
+
+def _v412c_polish_exam_prep_html(text: str) -> str:
+    replacements = [
+        ("Funcții,", "Funcții,"),
+        (">Funcții<", ">Funcții<"),
+        ("Funcții</", "Funcții</"),
+        ("Status: În progres", "Status: În progres"),
+        (">În progres<", ">În progres<"),
+        ("Pregătire examene", "Pregătire examene"),
+        ("Matematică M1", "Matematică M1"),
+        ("Întrebări Study legate", "Întrebări Study legate"),
+        ("Continuă în Study Mode", "Continuă în Study Mode"),
+        ("Înapoi la Exam Prep", "Înapoi la Exam Prep"),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+@app.middleware("http")
+async def _v412c_exam_prep_final_ro_html_polish(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep" and not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v412c_polish_exam_prep_html(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V412CHTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.12c final Romanian HTML polish middleware ---
+
+# --- v0.4.12d global Romanian display polish middleware ---
+from fastapi.responses import HTMLResponse as _V412DHTMLResponse
+
+
+def _v412d_polish_exam_prep_html(text: str) -> str:
+    replacements = [
+        ("Functii", "Funcții"),
+        ("In progres", "În progres"),
+        ("Pregatire examene", "Pregătire examene"),
+        ("Matematica M1", "Matematică M1"),
+        ("Intrebari Study legate", "Întrebări Study legate"),
+        ("Continua in Study Mode", "Continuă în Study Mode"),
+        ("Inapoi la Exam Prep", "Înapoi la Exam Prep"),
+        ("biblioteca si foloseste", "bibliotecă și folosește"),
+        ("actualizeaza gradual", "actualizează gradual"),
+        ("unde exista", "unde există"),
+        ("dupa lucru", "după lucru"),
+        ("in Study Mode", "în Study Mode"),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+@app.middleware("http")
+async def _v412d_exam_prep_global_ro_display_polish(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep" and not request.url.path.startswith("/exam-prep/skill/"):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+    text = _v412d_polish_exam_prep_html(text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    return _V412DHTMLResponse(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.12d global Romanian display polish middleware ---
