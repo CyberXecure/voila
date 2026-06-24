@@ -878,147 +878,6 @@ def render_exam_prep_dashboard_skill_cards_html() -> str:
 
 # --- v0.4.12 Romanian UI polish ---
 
-# --- v0.4.12b Romanian display polish wrappers ---
-def _v412b_polish_ro_html(html: str) -> str:
-    replacements = [
-        ("Funcții", "Funcții"),
-        ("functii,", "funcții,"),
-        ("În progres", "În progres"),
-        ("Pregătire examene", "Pregătire examene"),
-        ("Matematică M1", "Matematică M1"),
-        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
-        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
-        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
-        ("biblioteca si foloseste", "bibliotecă și folosește"),
-        ("actualizeaza gradual", "actualizează gradual"),
-        ("unde exista", "unde există"),
-        ("dupa lucru", "după lucru"),
-        ("in Study Mode", "în Study Mode"),
-    ]
-
-    for old, new in replacements:
-        html = html.replace(old, new)
-
-    return html
-
-
-_v412b_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
-_v412b_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
-_v412b_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
-_v412b_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
-
-
-def render_exam_prep_skill_links_html() -> str:
-    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_skill_links_html())
-
-
-def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
-    html, status_code = _v412b_base_render_exam_prep_skill_detail_page(skill_id)
-    return _v412b_polish_ro_html(html), status_code
-
-
-def render_exam_prep_dashboard_progress_summary_html() -> str:
-    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_dashboard_progress_summary_html())
-
-
-def render_exam_prep_dashboard_skill_cards_html() -> str:
-    return _v412b_polish_ro_html(_v412b_base_render_exam_prep_dashboard_skill_cards_html())
-# --- end v0.4.12b Romanian display polish wrappers ---
-
-# --- v0.4.14 Modul Studiu wording polish wrappers ---
-def _v414_polish_modul_studiu_html(html: str) -> str:
-    replacements = [
-        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
-        ("Întrebări asociate din Modul Studiu", "Întrebări asociate din Modul Studiu"),
-        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
-        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
-        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
-        ("Înapoi la Pregătire examene", "Înapoi la Pregătire examene"),
-        ("Sursa progres: Modul Studiu.", "Sursa progres: Modul Studiu."),
-        ("read-only din Modul Studiu", "read-only din Modul Studiu"),
-        ("pașii de continuare în Modul Studiu", "pașii de continuare în Modul Studiu"),
-        ("pașii de lucru în Modul Studiu", "pașii de lucru în Modul Studiu"),
-        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-        ("Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-    ]
-
-    for old, new in replacements:
-        html = html.replace(old, new)
-
-    return html
-
-
-_v414_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
-_v414_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
-_v414_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
-_v414_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
-
-
-def render_exam_prep_skill_links_html() -> str:
-    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_skill_links_html())
-
-
-def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
-    html, status_code = _v414_base_render_exam_prep_skill_detail_page(skill_id)
-    return _v414_polish_modul_studiu_html(html), status_code
-
-
-def render_exam_prep_dashboard_progress_summary_html() -> str:
-    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_dashboard_progress_summary_html())
-
-
-def render_exam_prep_dashboard_skill_cards_html() -> str:
-    return _v414_polish_modul_studiu_html(_v414_base_render_exam_prep_dashboard_skill_cards_html())
-# --- end v0.4.14 Modul Studiu wording polish wrappers ---
-
-# --- v0.4.14b final Modul Studiu wording wrappers ---
-def _v414b_polish_modul_studiu_html(html: str) -> str:
-    replacements = [
-        ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
-        ("Intrebari Study legate", "Întrebări asociate din Modul Studiu"),
-        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
-        ("Continua in Study Mode", "Continuă în Modul Studiu"),
-        ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
-        ("Inapoi la Exam Prep", "Înapoi la Pregătire examene"),
-        ("Sursa progres: Study Mode.", "Sursa progres: Modul Studiu."),
-        ("read-only din Study Mode", "read-only din Modul Studiu"),
-        ("pașii de continuare în Study Mode", "pașii de continuare în Modul Studiu"),
-        ("pașii de lucru în Study Mode", "pașii de lucru în Modul Studiu"),
-        ("Răspunde la întrebări în Study Mode, iar progresul se va actualiza aici.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-        ("Pentru a lucra acest skill, deschide un PDF generat din bibliotecă și folosește acțiunea Study. Progresul Exam Prep se actualizează gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-        ("Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. Progresul Exam Prep se actualizeaza gradual din Study Mode.", "Răspunde la întrebări în Modul Studiu, iar progresul se va actualiza aici."),
-    ]
-
-    for old, new in replacements:
-        html = html.replace(old, new)
-
-    return html
-
-
-_v414b_base_render_exam_prep_skill_links_html = render_exam_prep_skill_links_html
-_v414b_base_render_exam_prep_skill_detail_page = render_exam_prep_skill_detail_page
-_v414b_base_render_exam_prep_dashboard_progress_summary_html = render_exam_prep_dashboard_progress_summary_html
-_v414b_base_render_exam_prep_dashboard_skill_cards_html = render_exam_prep_dashboard_skill_cards_html
-
-
-def render_exam_prep_skill_links_html() -> str:
-    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_skill_links_html())
-
-
-def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
-    html, status_code = _v414b_base_render_exam_prep_skill_detail_page(skill_id)
-    return _v414b_polish_modul_studiu_html(html), status_code
-
-
-def render_exam_prep_dashboard_progress_summary_html() -> str:
-    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_dashboard_progress_summary_html())
-
-
-def render_exam_prep_dashboard_skill_cards_html() -> str:
-    return _v414b_polish_modul_studiu_html(_v414b_base_render_exam_prep_dashboard_skill_cards_html())
-# --- end v0.4.14b final Modul Studiu wording wrappers ---
-
 # --- v0.4.15 related Modul Studiu questions display helpers ---
 from html import escape as _v415_escape
 
@@ -1376,3 +1235,8 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
 
     return _v423_polish_skill_detail_ro_html(html)
 # --- end v0.4.23 consolidated Exam Prep skill detail rendering helper ---
+
+# --- v0.4.24 Exam Prep wording wrapper cleanup checkpoint ---
+# Legacy wording wrapper blocks were removed after dashboard/skill-detail rendering consolidation.
+# The permanent smoke and health checkpoint remain the safety gate.
+# --- end v0.4.24 Exam Prep wording wrapper cleanup checkpoint ---

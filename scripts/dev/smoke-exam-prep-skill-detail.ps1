@@ -135,6 +135,9 @@ try {
         "v423_detail_has_consolidated_marker" = ($derivate -cmatch "exam-prep-skill-detail-consolidated-v0423")
         "v423_detail_has_related_and_next_sections" = ($derivate -cmatch "exam-prep-related-study-questions-v0415" -and $derivate -cmatch "exam-prep-next-action-v0416")
         "v423_detail_order_related_before_next" = ($derivate.IndexOf("exam-prep-related-study-questions-v0415") -ge 0 -and $derivate.IndexOf("exam-prep-next-action-v0416") -gt $derivate.IndexOf("exam-prep-related-study-questions-v0415"))
+        "v424_combined_has_dashboard_consolidation" = ($combined -cmatch "exam-prep-dashboard-consolidated-v0422")
+        "v424_combined_has_skill_detail_consolidation" = ($combined -cmatch "exam-prep-skill-detail-consolidated-v0423")
+        "v424_combined_no_old_mixed_wording" = ($combined -cnotmatch "Întrebări Study legate|Continuă în Study Mode|Înapoi la Exam Prep")
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
