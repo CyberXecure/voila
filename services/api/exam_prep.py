@@ -1173,6 +1173,143 @@ def render_exam_prep_dashboard_sections_html() -> str:
     return _v422b_polish_dashboard_ro_html(html)
 # --- end v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 
+# --- v0.4.27 Exam Prep skill metadata display helper ---
+def _v427_polish_metadata_ro_text(value: object) -> str:
+    text = str(value or "").strip()
+
+    replacements = [
+        ("Functii", "Funcții"),
+        ("functii", "funcții"),
+        ("In progres", "În progres"),
+        ("in progres", "în progres"),
+        ("Matematica M1", "Matematică M1"),
+        ("Pregatire examene", "Pregătire examene"),
+        ("reprezentari", "reprezentări"),
+        ("proprietati", "proprietăți"),
+        ("interpretari", "interpretări"),
+    ]
+
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+
+def _v427_skill_by_id(skill_id: str) -> dict:
+    try:
+        skills = _v48_skill_catalog()
+    except Exception:
+        skills = []
+
+    for skill in skills:
+        try:
+            if str(skill.get("id", "")) == str(skill_id):
+                return skill
+        except Exception:
+            continue
+
+    return {"id": skill_id, "label": skill_id, "description": ""}
+
+
+def _v427_first_existing_value(data: dict, keys: list[str], default: str = "") -> str:
+    for key in keys:
+        value = data.get(key)
+        if value:
+            return _v427_polish_metadata_ro_text(value)
+
+    return default
+
+
+def _v427_prerequisites_text(skill: dict) -> str:
+    raw = (
+        skill.get("prerequisites")
+        or skill.get("prerequisite_ids")
+        or skill.get("requires")
+        or skill.get("depends_on")
+        or []
+    )
+
+    if isinstance(raw, str):
+        raw = [raw]
+
+    if not isinstance(raw, list):
+        return "Nu sunt definite condiții preliminare."
+
+    cleaned = [_v427_polish_metadata_ro_text(item) for item in raw if str(item).strip()]
+
+    if not cleaned:
+        return "Nu sunt definite condiții preliminare."
+
+    return ", ".join(cleaned)
+
+
+def _v427_related_study_status(skill_id: str) -> str:
+    try:
+        status = _v416_skill_status_for_next_action(skill_id)
+    except Exception:
+        status = "Nepornit"
+
+    status = _v427_polish_metadata_ro_text(status)
+
+    try:
+        linked_questions = _v48_linked_question_count(skill_id)
+    except Exception:
+        linked_questions = 0
+
+    if linked_questions == 1:
+        return f"{status} · 1 întrebare asociată"
+    if linked_questions > 1:
+        return f"{status} · {linked_questions} întrebări asociate"
+
+    return f"{status} · fără întrebări asociate detectate"
+
+
+def render_exam_prep_skill_metadata_html(skill_id: str) -> str:
+    skill = _v427_skill_by_id(skill_id)
+
+    label = _v427_polish_metadata_ro_text(skill.get("label") or skill_id)
+    description = _v427_first_existing_value(
+        skill,
+        ["short_description", "description", "summary"],
+        "Descriere scurtă indisponibilă momentan.",
+    )
+    topic_group = _v427_first_existing_value(
+        skill,
+        ["topic_group", "group", "category", "chapter", "unit", "domain", "strand"],
+        "Matematică M1",
+    )
+    prerequisites = _v427_prerequisites_text(skill)
+    study_status = _v427_related_study_status(skill_id)
+
+    safe_label = _v48_escape(label)
+    safe_description = _v48_escape(description)
+    safe_topic_group = _v48_escape(topic_group)
+    safe_prerequisites = _v48_escape(prerequisites)
+    safe_study_status = _v48_escape(study_status)
+
+    return (
+        '<section class="exam-prep-skill-metadata-v0427" '
+        'style="margin-top:22px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Detalii skill</h2>'
+        '<dl style="display:grid;grid-template-columns:minmax(120px,180px) 1fr;gap:10px 16px;margin:12px 0 0;">'
+        '<dt style="font-weight:750;color:#344054;">Skill</dt>'
+        f'<dd style="margin:0;">{safe_label}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Capitol</dt>'
+        f'<dd style="margin:0;">{safe_topic_group}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Descriere</dt>'
+        f'<dd style="margin:0;">{safe_description}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Condiții preliminare</dt>'
+        f'<dd style="margin:0;">{safe_prerequisites}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Status Modul Studiu</dt>'
+        f'<dd style="margin:0;">{safe_study_status}</dd>'
+        '</dl>'
+        '<p style="color:#667085;line-height:1.55;margin:14px 0 0;">'
+        'Această secțiune este read-only și folosește skill tree-ul Exam Prep împreună cu progresul existent.'
+        '</p>'
+        '</section>'
+    )
+# --- end v0.4.27 Exam Prep skill metadata display helper ---
+
 # --- v0.4.23 consolidated Exam Prep skill detail rendering helper ---
 def _v423_safe_skill_detail_section(function_name: str, skill_id: str) -> str:
     function = globals().get(function_name)
@@ -1210,6 +1347,7 @@ def _v423_polish_skill_detail_ro_html(html: str) -> str:
 
 def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
     sections = [
+        _v423_safe_skill_detail_section("render_exam_prep_skill_metadata_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
     ]

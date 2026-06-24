@@ -138,6 +138,10 @@ try {
         "v424_combined_has_dashboard_consolidation" = ($combined -cmatch "exam-prep-dashboard-consolidated-v0422")
         "v424_combined_has_skill_detail_consolidation" = ($combined -cmatch "exam-prep-skill-detail-consolidated-v0423")
         "v424_combined_no_old_mixed_wording" = ($combined -cnotmatch "Întrebări Study legate|Continuă în Study Mode|Înapoi la Exam Prep")
+        "v427_detail_has_metadata_marker" = ($derivate -cmatch "exam-prep-skill-metadata-v0427")
+        "v427_detail_has_metadata_title" = ($derivate -cmatch "Detalii skill")
+        "v427_detail_has_metadata_fields" = ($derivate -cmatch "Capitol" -and $derivate -cmatch "Descriere" -and $derivate -cmatch "Condiții preliminare" -and $derivate -cmatch "Status Modul Studiu")
+        "v427_detail_order_metadata_before_related" = ($derivate.IndexOf("exam-prep-skill-metadata-v0427") -ge 0 -and $derivate.IndexOf("exam-prep-related-study-questions-v0415") -gt $derivate.IndexOf("exam-prep-skill-metadata-v0427"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
