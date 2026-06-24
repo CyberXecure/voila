@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from study_engine import get_study_view, record_answer, reset_study_state
+import exam_prep
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -663,6 +664,7 @@ def page(title: str, body: str) -> HTMLResponse:
 </head>
 <body>
 <a href="/quick-tools" style="position:fixed;right:18px;top:18px;z-index:9999;background:#e0ad68;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">{_ut("ui.quick_tools", "Quick Tools")}</a>
+<a href="/exam-prep" style="position:fixed;right:18px;top:68px;z-index:9999;background:#8b5cf6;color:white;padding:12px 16px;border-radius:999px;text-decoration:none;font-weight:900;">Exam Prep</a>
   <div class="wrap">
     <header>
       <div class="brand">
@@ -1147,6 +1149,47 @@ def generate_for_pdf(pdf_path: Path) -> Path:
 
     return output_dir
 
+
+
+@app.get("/exam-prep", response_class=HTMLResponse)
+def exam_prep_home() -> HTMLResponse:
+    dashboard = exam_prep.bac_matematica_m1_dashboard()
+
+    rows = []
+    for skill in dashboard.get("skills", []):
+        mastery_percent = int(round(float(skill.get("mastery") or 0.0) * 100))
+        rows.append(
+            f"""
+            <article class="card">
+              <h2>{html.escape(str(skill.get("name") or ""))}</h2>
+              <p>{html.escape(str(skill.get("description") or ""))}</p>
+              <div class="meta">
+                Mastery: <strong>{mastery_percent}%</strong><br>
+                Attempts: <strong>{int(skill.get("attempts") or 0)}</strong><br>
+                Correct: <strong>{int(skill.get("correct") or 0)}</strong>
+              </div>
+            </article>
+            """
+        )
+
+    body = f"""
+    <h1>Voila! Exam Prep</h1>
+
+    <div class="notice">
+      Bacalaureat → Matematică M1<br>
+      Foundation dashboard for skill-based exam preparation.
+    </div>
+
+    <section class="grid">
+      {''.join(rows)}
+    </section>
+
+    <div class="actions" style="margin-top: 24px;">
+      <a class="btn primary" href="/">Back to Voila!</a>
+    </div>
+    """
+
+    return page("Voila! Exam Prep", body)
 
 @app.get("/health")
 def health() -> dict:
@@ -5323,6 +5366,3 @@ def voila_study_lesson_answer(
         f"/study-lesson?pdf={quote(pdf_path.name)}&lesson_id={quote(str(lesson_id))}",
         status_code=303,
     )
-
-
-
