@@ -60,7 +60,7 @@ def load_or_initialize_bac_matematica_m1_progress() -> dict:
 
 def bac_matematica_m1_dashboard() -> dict:
     skill_tree = load_bac_matematica_m1_skill_tree()
-    progress = load_or_initialize_bac_matematica_m1_progress()
+    progress = merged_bac_matematica_m1_progress()
     progress_skills = progress.get("skills", {})
 
     rows = []
@@ -82,3 +82,230 @@ def bac_matematica_m1_dashboard() -> dict:
         "title": skill_tree.get("title", "Bacalaureat Matematica M1"),
         "skills": rows,
     }
+
+BAC_MATEMATICA_M1_SKILL_KEYWORDS = {
+    "derivate": [
+        "derivata", "derivată", "derivare", "f'", "f’", "tangenta", "tangentă",
+        "monotonie", "punct critic", "maxim", "minim", "convex", "concav"
+    ],
+    "integrale": [
+        "integrala", "integrală", "integrale", "primitiva", "primitivă",
+        "aria", "∫", "antiderivata", "antiderivată"
+    ],
+    "limite_continuitate": [
+        "limita", "limită", "continuitate", "continua", "continuă",
+        "asimptota", "asimptotă", "tinde la", "lim "
+    ],
+    "functii": [
+        "functie", "funcție", "functii", "funcții", "domeniu", "codomeniu",
+        "grafic", "imaginea functiei", "imaginea funcției", "injectiva", "surjectiva",
+        "bijectiva", "compunere"
+    ],
+    "ecuatii_inecuatii": [
+        "ecuatie", "ecuație", "ecuatia", "ecuația", "ecuatii", "ecuații",
+        "inecuatie", "inecuație", "inecuatia", "inecuația",
+        "sistem", "radacina", "rădăcină", "solutie", "soluție"
+    ],
+    "probabilitati_combinatorica": [
+        "probabilitate", "probabilitati", "probabilități", "combinari", "combinări",
+        "aranjamente", "permutari", "permutări", "binomial", "eveniment"
+    ],
+    "geometrie": [
+        "geometrie", "vector", "vectori", "dreapta", "plan", "distanta", "distanță",
+        "unghi", "coordonate", "coliniar", "ortogonal", "perpendicular"
+    ],
+    "multimi": [
+        "multime", "mulțime", "multimi", "mulțimi", "reuniune", "intersectie",
+        "intersecție", "incluziune", "apartine", "aparține", "submultime", "submulțime"
+    ],
+}
+
+
+def normalize_skill_text(value: str) -> str:
+    return str(value or "").lower().replace("ţ", "ț").replace("ş", "ș")
+
+
+def infer_bac_matematica_m1_skill_id_from_text(value: str) -> str | None:
+    text = normalize_skill_text(value)
+
+    if not text.strip():
+        return None
+
+    best_skill = None
+    best_score = 0
+
+    for skill_id, keywords in BAC_MATEMATICA_M1_SKILL_KEYWORDS.items():
+        score = 0
+        for keyword in keywords:
+            needle = normalize_skill_text(keyword)
+            if needle and needle in text:
+                score += 1
+
+        if score > best_score:
+            best_skill = skill_id
+            best_score = score
+
+    return best_skill
+
+
+def infer_bac_matematica_m1_skill_id_from_question(question: dict) -> str | None:
+    parts = [
+        question.get("concept_id"),
+        question.get("concept_title"),
+        question.get("lesson_title"),
+        question.get("question"),
+        question.get("answer"),
+        question.get("source_sentence"),
+    ]
+
+    return infer_bac_matematica_m1_skill_id_from_text(" ".join(str(part or "") for part in parts))
+
+
+
+def bac_matematica_m1_skill_name_by_id() -> dict:
+    skill_tree = load_bac_matematica_m1_skill_tree()
+    return {
+        str(skill.get("id") or ""): str(skill.get("name") or skill.get("id") or "")
+        for skill in skill_tree.get("skills", [])
+        if skill.get("id")
+    }
+
+
+def tag_bac_matematica_m1_question(question: dict) -> dict:
+    tagged = dict(question)
+    skill_id = infer_bac_matematica_m1_skill_id_from_question(tagged)
+    skill_names = bac_matematica_m1_skill_name_by_id()
+
+    if skill_id:
+        tagged["exam_prep_track"] = "exam_prep"
+        tagged["exam_prep_exam"] = "bacalaureat"
+        tagged["exam_prep_subject"] = "matematica_m1"
+        tagged["exam_prep_skill_id"] = skill_id
+        tagged["exam_prep_skill_name"] = skill_names.get(skill_id, skill_id)
+
+    return tagged
+
+
+def tag_bac_matematica_m1_questions(questions: list[dict]) -> list[dict]:
+    return [tag_bac_matematica_m1_question(question) for question in questions]
+
+
+OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
+
+
+def load_json_or_default(path: Path, default):
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+    return default
+
+
+def aggregate_bac_matematica_m1_progress_from_study_outputs(output_root: Path | None = None) -> dict:
+    output_root = output_root or OUTPUT_DIR
+    skill_tree = load_bac_matematica_m1_skill_tree()
+    valid_skill_ids = {
+        str(skill.get("id") or "")
+        for skill in skill_tree.get("skills", [])
+        if skill.get("id")
+    }
+
+    aggregate = {
+        skill_id: {
+            "attempts": 0,
+            "correct": 0,
+            "mastery": 0.0,
+            "_weighted_mastery": 0.0,
+        }
+        for skill_id in valid_skill_ids
+    }
+
+    if not output_root.exists():
+        return {
+            skill_id: {
+                "attempts": 0,
+                "correct": 0,
+                "mastery": 0.0,
+            }
+            for skill_id in valid_skill_ids
+        }
+
+    for output_dir in output_root.iterdir():
+        if not output_dir.is_dir():
+            continue
+
+        quiz_path = output_dir / "quiz.study.json"
+        state_path = output_dir / "study_state.json"
+
+        if not quiz_path.exists() or not state_path.exists():
+            continue
+
+        quiz = load_json_or_default(quiz_path, {"questions": []})
+        state = load_json_or_default(state_path, {"concepts": {}})
+
+        questions = quiz.get("questions") or []
+        concepts = state.get("concepts") or {}
+
+        skill_to_concepts: dict[str, set[str]] = {}
+
+        for question in questions:
+            if not isinstance(question, dict):
+                continue
+
+            skill_id = str(question.get("exam_prep_skill_id") or "").strip()
+            concept_id = str(question.get("concept_id") or "").strip()
+
+            if not skill_id or skill_id not in valid_skill_ids or not concept_id:
+                continue
+
+            skill_to_concepts.setdefault(skill_id, set()).add(concept_id)
+
+        for skill_id, concept_ids in skill_to_concepts.items():
+            for concept_id in concept_ids:
+                concept = concepts.get(concept_id)
+
+                if not isinstance(concept, dict):
+                    continue
+
+                attempts = int(concept.get("attempts") or 0)
+                correct = int(concept.get("correct") or 0)
+                mastery = float(concept.get("mastery") or 0.0)
+
+                aggregate[skill_id]["attempts"] += attempts
+                aggregate[skill_id]["correct"] += correct
+                aggregate[skill_id]["_weighted_mastery"] += mastery * attempts
+
+    cleaned = {}
+
+    for skill_id, item in aggregate.items():
+        attempts = int(item.get("attempts") or 0)
+        correct = int(item.get("correct") or 0)
+
+        if attempts > 0:
+            mastery = float(item.get("_weighted_mastery") or 0.0) / attempts
+        else:
+            mastery = 0.0
+
+        cleaned[skill_id] = {
+            "attempts": attempts,
+            "correct": correct,
+            "mastery": mastery,
+        }
+
+    return cleaned
+
+
+def merged_bac_matematica_m1_progress() -> dict:
+    progress = load_or_initialize_bac_matematica_m1_progress()
+    aggregated = aggregate_bac_matematica_m1_progress_from_study_outputs()
+
+    merged = dict(progress)
+    merged_skills = dict(progress.get("skills", {}))
+
+    for skill_id, state in aggregated.items():
+        if int(state.get("attempts") or 0) > 0:
+            merged_skills[skill_id] = state
+
+    merged["skills"] = merged_skills
+    return merged
