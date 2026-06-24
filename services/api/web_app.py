@@ -5451,3 +5451,173 @@ def voila_study_lesson_answer(
         f"/study-lesson?pdf={quote(pdf_path.name)}&lesson_id={quote(str(lesson_id))}",
         status_code=303,
     )
+
+# --- v0.4.6c safe Exam Prep dashboard skill links ---
+try:
+    from fastapi.responses import HTMLResponse as _V46CHTMLResponse
+except Exception:
+    _V46CHTMLResponse = None
+
+
+def _v46c_fallback_skill_links_html() -> str:
+    return (
+        '<section class="exam-prep-skill-detail-links" style="margin-top:24px;background:#fff;'
+        'border:1px solid #e5e7ef;border-radius:18px;padding:20px;">'
+        '<h2>Detalii pe skill</h2>'
+        '<p style="color:#667085;line-height:1.55;">'
+        'Deschide un skill pentru descriere, progres și pașii de continuare în Study Mode.'
+        '</p>'
+        '<div class="skill-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px;">'
+        '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" href="/exam-prep/skill/derivate">Derivate</a>'
+        '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" href="/exam-prep/skill/integrale">Integrale</a>'
+        '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" href="/exam-prep/skill/functii">Funcții</a>'
+        '<a style="display:block;border:1px solid #e5e7ef;border-radius:14px;padding:12px;text-decoration:none;color:#172033;background:#fff;font-weight:650;" href="/exam-prep/skill/geometrie">Geometrie</a>'
+        '</div>'
+        '</section>'
+    )
+
+
+def _v46c_skill_links_html() -> str:
+    try:
+        from services.api.exam_prep import render_exam_prep_skill_links_html
+    except Exception:
+        try:
+            from exam_prep import render_exam_prep_skill_links_html
+        except Exception:
+            return _v46c_fallback_skill_links_html()
+
+    try:
+        html = render_exam_prep_skill_links_html()
+    except Exception:
+        html = ""
+
+    if "/exam-prep/skill/" not in html:
+        return _v46c_fallback_skill_links_html()
+
+    return html
+
+
+@app.middleware("http")
+async def _v46c_exam_prep_dashboard_skill_links(request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/exam-prep":
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if response.status_code != 200 or "text/html" not in content_type:
+        return response
+
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        chunks.append(chunk)
+
+    text = b"".join(chunks).decode("utf-8", errors="replace")
+
+    if "/exam-prep/skill/" not in text:
+        links_html = _v46c_skill_links_html()
+
+        if "</main>" in text:
+            text = text.replace("</main>", links_html + "</main>", 1)
+        elif "</body>" in text:
+            text = text.replace("</body>", links_html + "</body>", 1)
+        else:
+            text = text + links_html
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+
+    response_class = _V46CHTMLResponse
+    if response_class is None:
+        try:
+            from fastapi.responses import HTMLResponse as response_class
+        except Exception:
+            return response
+
+    return response_class(
+        content=text,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# --- end v0.4.6c safe Exam Prep dashboard skill links ---
+
+# --- v0.4.6f clean safe Exam Prep skill detail route ---
+from html import escape as _v46f_escape
+from fastapi.responses import HTMLResponse as _V46FHTMLResponse
+
+
+def _v46f_skill_label(skill_id: str) -> str:
+    value = (skill_id or "").strip().lower()
+    labels = {
+        "derivate": "Derivate",
+        "integrale": "Integrale",
+        "functii": "Functii",
+        "funcții": "Functii",
+        "geometrie": "Geometrie",
+    }
+    return labels.get(value, (skill_id or "Skill").replace("_", " ").title())
+
+
+def _v46f_fallback_skill_detail_page(skill_id: str) -> str:
+    safe_id = _v46f_escape(skill_id or "")
+    label = _v46f_escape(_v46f_skill_label(skill_id))
+
+    return (
+        '<!doctype html><html lang="ro"><head><meta charset="utf-8">'
+        f'<title>Exam Prep - {label}</title>'
+        '<style>'
+        'body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f7f7fb;color:#172033;}'
+        'main{max-width:980px;margin:0 auto;padding:32px 20px 56px;}'
+        '.card{background:#fff;border:1px solid #e5e7ef;border-radius:18px;padding:22px;box-shadow:0 10px 32px rgba(23,32,51,.06);}'
+        '.muted{color:#667085;line-height:1.55;}'
+        '.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}'
+        '.button{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:10px 14px;text-decoration:none;border:1px solid #cfd6e6;color:#172033;background:#fff;font-weight:650;}'
+        '.button.primary{background:#172033;color:#fff;border-color:#172033;}'
+        '.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0;}'
+        '.metric{background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;}'
+        '.metric strong{display:block;font-size:1.35rem;margin-top:4px;}'
+        '</style></head><body><main><div class="card">'
+        '<p class="muted">Pregatire examene - Bacalaureat - Matematica M1</p>'
+        f'<h1>Detaliu skill: {label}</h1>'
+        '<p>Skill din planul de pregatire Bacalaureat Matematica M1. '
+        'Progresul se actualizeaza pe baza intrebarilor lucrate in Study Mode.</p>'
+        '<div class="metric-grid">'
+        '<div class="metric"><span>Stare consolidare</span><strong>Nepornit</strong>'
+        '<small class="muted">Consolidat dupa lucru suficient in Study Mode</small></div>'
+        '<div class="metric"><span>Scor progres</span><strong>-</strong>'
+        '<small class="muted">read-only din Study Mode, unde exista</small></div>'
+        '<div class="metric"><span>Intrebari Study legate</span><strong>0</strong>'
+        '<small class="muted">din quiz.study.json</small></div>'
+        '</div>'
+        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. '
+        'Progresul Exam Prep se actualizeaza gradual din Study Mode.</p>'
+        '<div class="actions">'
+        '<a class="button primary" href="/#library">Continua in Study Mode</a>'
+        '<a class="button" href="/exam-prep">Inapoi la Exam Prep</a>'
+        '<a class="button" href="/quick-tools">Quick Tools</a>'
+        '</div>'
+        f'<p class="muted">Skill ID: {safe_id}</p>'
+        '</div></main></body></html>'
+    )
+
+
+@app.get("/exam-prep/skill/{skill_id}", response_class=_V46FHTMLResponse)
+@app.get("/exam-prep/skill/{skill_id}/", response_class=_V46FHTMLResponse)
+async def _v46f_exam_prep_skill_detail_page(skill_id: str):
+    try:
+        try:
+            from services.api.exam_prep import render_exam_prep_skill_detail_page
+        except Exception:
+            from exam_prep import render_exam_prep_skill_detail_page
+
+        html, status_code = render_exam_prep_skill_detail_page(skill_id)
+        if status_code == 200 and html and "Detaliu skill" in html:
+            return _V46FHTMLResponse(content=html, status_code=200)
+    except Exception:
+        pass
+
+    return _V46FHTMLResponse(content=_v46f_fallback_skill_detail_page(skill_id), status_code=200)
+# --- end v0.4.6f clean safe Exam Prep skill detail route ---

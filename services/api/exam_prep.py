@@ -309,3 +309,120 @@ def merged_bac_matematica_m1_progress() -> dict:
 
     merged["skills"] = merged_skills
     return merged
+
+# --- v0.4.6 hotfix: robust skill tree parser ---
+def _v46_skill_items() -> list[dict]:
+    tree = _v46_load_skill_tree()
+    items = []
+    seen = set()
+
+    id_keys = (
+        "id",
+        "skill_id",
+        "exam_prep_skill_id",
+        "slug",
+        "key",
+        "code",
+    )
+
+    label_keys = (
+        "name_ro",
+        "title_ro",
+        "label_ro",
+        "display_name_ro",
+        "skill_name_ro",
+        "name",
+        "title",
+        "label",
+        "display_name",
+        "skill_name",
+        "skill_label",
+    )
+
+    description_keys = (
+        "description_ro",
+        "summary_ro",
+        "objective_ro",
+        "description",
+        "summary",
+        "objective",
+    )
+
+    skip_ids = {
+        "bac",
+        "matematica",
+        "matematica_m1",
+        "bac_matematica_m1",
+        "root",
+        "exam_prep",
+    }
+
+    def pick_from_keys(item: dict, keys: tuple[str, ...]) -> str:
+        for key in keys:
+            if key in item:
+                text = _v46_as_text(item.get(key))
+                if text:
+                    return text
+        return ""
+
+    for item in _v46_walk(tree):
+        if not isinstance(item, dict):
+            continue
+
+        skill_id = pick_from_keys(item, id_keys)
+        label = pick_from_keys(item, label_keys)
+        description = pick_from_keys(item, description_keys)
+
+        if not skill_id or not label:
+            continue
+
+        normalized_id = skill_id.strip()
+        if normalized_id.lower() in skip_ids:
+            continue
+
+        if normalized_id in seen:
+            continue
+
+        seen.add(normalized_id)
+
+        normalized = dict(item)
+        normalized["id"] = normalized_id
+        normalized.setdefault("name_ro", label)
+
+        if description:
+            normalized.setdefault("description_ro", description)
+        else:
+            normalized.setdefault(
+                "description_ro",
+                "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Study Mode.",
+            )
+
+        items.append(normalized)
+
+    if items:
+        return items
+
+    # Safety fallback only if the JSON structure changes and no skill can be inferred.
+    return [
+        {
+            "id": "derivate",
+            "name_ro": "Derivate",
+            "description_ro": "Reguli de derivare, monotonia funcțiilor și aplicații pentru Bacalaureat Matematică M1.",
+        },
+        {
+            "id": "integrale",
+            "name_ro": "Integrale",
+            "description_ro": "Primitive, integrale definite și aplicații pentru Bacalaureat Matematică M1.",
+        },
+        {
+            "id": "functii",
+            "name_ro": "Funcții",
+            "description_ro": "Funcții, grafice, proprietăți și interpretare pentru Bacalaureat Matematică M1.",
+        },
+        {
+            "id": "geometrie",
+            "name_ro": "Geometrie",
+            "description_ro": "Elemente de geometrie relevante pentru Bacalaureat Matematică M1.",
+        },
+    ]
+# --- end v0.4.6 hotfix: robust skill tree parser ---
