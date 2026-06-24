@@ -165,3 +165,90 @@ python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\ser
 - permanent Exam Prep smoke passes
 - permanent Exam Prep health checkpoint passes
 - no application runtime logic is changed
+
+## v0.4.26 consolidation status update
+
+The consolidation plan from v0.4.21 has now been executed through small protected milestones.
+
+Completed cleanup milestones:
+
+- v0.4.22 — dashboard rendering consolidation
+  - added `render_exam_prep_dashboard_sections_html()`
+  - added `exam-prep-dashboard-consolidated-v0422`
+  - preserved dashboard order: `Ce să faci acum?` → `Rezumat progres` → `Skill-uri Exam Prep`
+
+- v0.4.23 — skill detail rendering consolidation
+  - added `render_exam_prep_skill_detail_sections_html(skill_id)`
+  - added `exam-prep-skill-detail-consolidated-v0423`
+  - preserved related questions before next action
+
+- v0.4.24 — wording wrapper cleanup
+  - removed legacy wording wrapper/middleware blocks
+  - kept consolidated dashboard and skill detail helpers as canonical paths
+  - preserved approved Romanian wording
+
+- v0.4.25 — post-cleanup health checkpoint expansion
+  - expanded `scripts/dev/check-exam-prep-health.ps1`
+  - now directly guards v0.4.22, v0.4.23 and v0.4.24 markers
+  - confirms `Modul Studiu`, `Pregătire examene`, `Funcții`, `În progres`, and `Consolidat`
+
+Current stable safety gate:
+
+```powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+```
+
+## Recommended next functional phase
+
+After consolidation, the next safe product direction is to return to small functional Exam Prep improvements.
+
+Recommended next milestones:
+
+### Proposed v0.4.27 — Exam Prep skill metadata display
+
+Add read-only metadata to skill detail pages:
+
+- topic group
+- short description
+- prerequisites if available
+- related Study Mode status
+
+Constraints:
+
+- no BKT algorithm changes
+- no OCR/PDF/course generation changes
+- no packaging/release changes
+
+### Proposed v0.4.28 — Exam Prep weak skill review entry
+
+Improve the path from Exam Prep to existing weak-concept review flows:
+
+- keep it link/display only
+- do not change the Study/Review/Progress engine
+- protect with smoke and health checkpoint
+
+### Proposed v0.4.29 — Exam Prep sample skill coverage check
+
+Add a test/checkpoint validating that the Bac Matematică M1 skill tree includes expected core areas:
+
+- Mulțimi
+- Funcții
+- Derivate
+- Integrale
+- Geometrie
+
+This should remain a test/checkpoint milestone, not a runtime feature.
+
+## Current non-goals remain unchanged
+
+Do not change in this phase:
+
+- OCR
+- PDF processing
+- course generation
+- Study/Review/Progress BKT engine
+- packaging
+- ZIP/release assets
+- public publishing
