@@ -668,6 +668,10 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         '.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0;}'
         '.metric{background:#f8fafc;border:1px solid #e5e7ef;border-radius:14px;padding:14px;}'
         '.metric strong{display:block;font-size:1.35rem;margin-top:4px;}'
+        '.study-entry{margin-top:22px;background:#f8fafc;border:1px solid #e5e7ef;border-radius:16px;padding:18px;}'
+        '.study-entry h2{margin:0 0 10px;font-size:1.15rem;}'
+        '.study-steps{margin:0;padding-left:22px;color:#344054;line-height:1.6;}'
+        '.study-steps li{margin:6px 0;}'
         '</style></head><body><main><div class="card">'
         '<p class="muted">Pregatire examene - Bacalaureat - Matematica M1</p>'
         f'<h1>Detaliu skill: {label}</h1>'
@@ -680,8 +684,15 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         f'<div class="metric"><span>Intrebari Study legate</span><strong>{linked_questions}</strong>'
         '<small class="muted">din quiz.study.json</small></div>'
         '</div>'
-        '<p class="muted">Pentru a lucra acest skill, deschide un PDF generat din biblioteca si foloseste actiunea Study. '
-        'Progresul Exam Prep se actualizeaza gradual din Study Mode.</p>'
+        '<section class="study-entry">'
+        '<h2>Cum lucrezi acest skill?</h2>'
+        '<ol class="study-steps">'
+        '<li>Deschide un PDF generat din biblioteca Voila.</li>'
+        '<li>Foloseste actiunea Study pentru intrebari legate de acest skill.</li>'
+        '<li>Revino in Exam Prep pentru a vedea progresul actualizat din Study Mode.</li>'
+        '</ol>'
+        '<p class="muted">Obiectivul este sa ajungi treptat la nivel Consolidat, fara sa modificam motorul BKT existent.</p>'
+        '</section>'
         '<div class="actions">'
         '<a class="button primary" href="/#library">Continua in Study Mode</a>'
         '<a class="button" href="/exam-prep">Inapoi la Exam Prep</a>'
@@ -691,4 +702,6 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
     )
 
     return html, 200
+
+# --- v0.4.9 skill detail study entry polish ---
 # --- end v0.4.8 stable Exam Prep skill detail helpers ---
