@@ -252,3 +252,107 @@ Do not change in this phase:
 - packaging
 - ZIP/release assets
 - public publishing
+
+## v0.4.30 post-consolidation status update
+
+The first post-consolidation functional checkpoints are complete.
+
+Completed functional/test milestones after cleanup:
+
+- v0.4.27 — Exam Prep skill metadata display
+  - added read-only metadata to skill detail pages
+  - displays `Detalii skill`, `Capitol`, `Descriere`, `Condiții preliminare`, and `Status Modul Studiu`
+  - added `exam-prep-skill-metadata-v0427`
+  - kept the section before related questions and next action
+
+- v0.4.28 — Exam Prep weak skill review entry
+  - added `Revizuire concepte slabe`
+  - added `Deschide revizuirea conceptelor slabe`
+  - linked to the existing course/library flow through `/#library`
+  - added `exam-prep-weak-review-entry-v0428`
+  - did not change Review, Study, Progress, or BKT behavior
+
+- v0.4.29 — Exam Prep sample skill coverage check
+  - added `scripts/dev/check-exam-prep-skill-coverage.ps1`
+  - validates the Bac Matematică M1 skill tree contains:
+    - `Mulțimi`
+    - `Funcții`
+    - `Derivate`
+    - `Integrale`
+    - `Geometrie`
+  - integrated the coverage script into `scripts/dev/check-exam-prep-health.ps1`
+
+Current protected safety gate:
+
+```powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+```
+
+## Recommended next functional phase after v0.4.30
+
+The codebase is now ready for small product improvements again.
+
+Recommended next milestones:
+
+### Proposed v0.4.31 — Exam Prep prerequisites / learning path display
+
+Add a small read-only learning path view on skill detail pages.
+
+Possible display:
+
+- current skill
+- prerequisite skills if available
+- next recommended neighboring skill if available
+- fallback message when prerequisites are not defined
+
+Constraints:
+
+- display only
+- no BKT algorithm changes
+- no Study/Review/Progress engine changes
+- no OCR/PDF/course generation changes
+
+### Proposed v0.4.32 — Exam Prep dashboard learning path entry
+
+Add a dashboard entry that points users toward the learning path.
+
+Possible display:
+
+- `Traseu recomandat`
+- recommended skill from existing dashboard next action
+- link to skill detail
+- no new adaptive engine
+
+### Proposed v0.4.33 — Exam Prep learning path checkpoint
+
+Add a test/checkpoint that validates learning path display markers and approved Romanian terminology.
+
+This should remain test/checkpoint only.
+
+## Current product state
+
+Exam Prep now has:
+
+- dashboard consolidation
+- skill detail consolidation
+- health checkpoint expansion
+- sample skill coverage check
+- skill metadata display
+- weak concept review entry
+- approved Romanian terminology
+- permanent smoke and health safety gates
+
+## Current non-goals remain unchanged
+
+Do not change in this phase:
+
+- OCR
+- PDF processing
+- course generation
+- Study/Review/Progress BKT engine
+- packaging
+- ZIP/release assets
+- public publishing
