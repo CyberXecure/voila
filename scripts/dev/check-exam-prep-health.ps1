@@ -75,6 +75,8 @@ $sourceChecks = [ordered]@{
     "smoke_has_v427_checks" = ($smoke -cmatch "v427_detail_has_metadata_marker")
     "source_has_weak_review_entry_v0428" = (($web + $exam) -cmatch "exam-prep-weak-review-entry-v0428")
     "smoke_has_v428_checks" = ($smoke -cmatch "v428_dashboard_has_weak_review_entry")
+    "source_has_learning_path_v0431" = (($web + $exam) -cmatch "exam-prep-learning-path-v0431")
+    "smoke_has_v431_checks" = ($smoke -cmatch "v431_detail_has_learning_path_marker")
     "smoke_has_v0419_checks" = ($smoke -cmatch "v419_dashboard_has_visual_marker")
 }
 
@@ -160,6 +162,7 @@ try {
 Write-Host "EXAM PREP POST-CLEANUP HEALTH EXPANSION v0.4.25 PASS"
 Write-Host "EXAM PREP SKILL METADATA DISPLAY v0.4.27 PASS"
 Write-Host "EXAM PREP WEAK SKILL REVIEW ENTRY v0.4.28 PASS"
+Write-Host "EXAM PREP LEARNING PATH DISPLAY v0.4.31 PASS"
 }
 finally {
     Invoke-VoilaStop
