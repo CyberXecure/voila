@@ -579,3 +579,171 @@ Current non-goals remain unchanged:
 - ZIP/release assets
 - public publishing
 
+## v0.4.41 final consolidation status
+
+This milestone records the completed Exam Prep v0.4.x stabilization chain and defines what is safe to build next.
+
+### Completed stabilization chain
+
+Exam Prep v0.4.x now includes:
+
+- dashboard progress summary polish
+- dashboard skill cards polish
+- Romanian wording cleanup
+- Modul Studiu wording normalization
+- related Study Mode questions on skill detail pages
+- next action on skill detail pages
+- next action on dashboard
+- dashboard section ordering
+- dashboard visual polish
+- permanent health checkpoint expansion
+- dashboard rendering consolidation
+- skill detail rendering consolidation
+- post-cleanup health expansion
+- skill metadata display
+- weak concept review entry
+- sample skill coverage checkpoint
+- skill detail learning path display
+- dashboard learning path entry
+- learning path checkpoint
+- Study Mode entry polish
+- progress interpretation helper
+- Study/Progress copy checkpoint
+- dashboard compactness polish
+- skill detail compactness polish
+- compactness checkpoint
+
+### Current protected safety gate
+
+``powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+& .\scripts\dev\check-exam-prep-learning-path.ps1
+& .\scripts\dev\check-exam-prep-study-progress-copy.ps1
+& .\scripts\dev\check-exam-prep-compactness.ps1
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+``
+
+### Current stable dashboard
+
+The dashboard should preserve:
+
+- Ce să faci acum
+- Traseu recomandat
+- Rezumat progres
+- Cum interpretăm progresul
+- Skill-uri Exam Prep
+- Revizuire concepte slabe
+
+Important dashboard markers:
+
+- xam-prep-dashboard-consolidated-v0422
+- xam-prep-dashboard-compact-v0438
+
+### Current stable skill detail page
+
+The skill detail page should preserve:
+
+- Detalii skill
+- Traseu de învățare
+- Întrebări asociate din Modul Studiu
+- Intrare în Modul Studiu
+- Cum interpretăm progresul
+- Acțiune recomandată
+- Revizuire concepte slabe
+
+Important skill detail markers:
+
+- xam-prep-skill-detail-consolidated-v0423
+- xam-prep-skill-detail-compact-v0439
+
+### Approved Romanian terminology
+
+Keep using:
+
+- Pregătire examene
+- Modul Studiu
+- Consolidat
+- Nepornit
+- În progres
+- Traseu recomandat
+- Traseu de învățare
+- Întrebări asociate din Modul Studiu
+- Revizuire concepte slabe
+
+Avoid reintroducing:
+
+- Study Mode
+- Exam Prep as a Romanian navigation label where Pregătire examene is expected
+- Stăpânire / Stapanire
+- visible ASCII regressions such as Functii or In progres
+
+Technical slugs such as /exam-prep/skill/functii remain allowed.
+
+### Current non-goals
+
+This consolidation chain did not change:
+
+- OCR
+- PDF processing
+- course generation
+- quiz generation
+- Study Mode generation
+- Review weak concepts engine
+- Progress engine
+- BKT algorithm
+- scoring thresholds
+- packaging
+- ZIP/release assets
+- public publishing
+
+### Safe next phase
+
+The next phase should be read-only first.
+
+Recommended next milestones:
+
+#### Proposed v0.4.42 — Exam Prep real progress data audit
+
+Read-only audit of where progress data currently comes from:
+
+- Study Mode answers
+- Review weak concepts
+- dashboard summaries
+- skill detail summaries
+- generated question sources
+- weak skill links
+
+No BKT/scoring changes.
+
+#### Proposed v0.4.43 — Exam Prep generated question quality audit
+
+Read-only audit of current generated question quality:
+
+- repetitiveness
+- overly simple questions
+- missing reasoning steps
+- weak distractors
+- lack of problem variety
+- poor connection between course content and exam-prep skills
+
+No generation engine changes yet.
+
+#### Proposed v0.4.44 — Exam Prep next functional planning checkpoint
+
+Planning-only milestone for the next functional phase.
+
+Likely direction:
+
+- improve real question quality
+- improve practice session depth
+- add better skill-specific prompts/templates
+- keep local/no-API path available
+
+### Final status
+
+Exam Prep is stable enough for the next planning/audit phase.
+
+Do not start a large functional rewrite until the read-only progress data audit and generated question quality audit are complete.
+
