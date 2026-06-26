@@ -201,3 +201,6 @@ Write-Host "=== LOCAL PEDAGOGY ENGINE CHECK ==="
 Write-Host "=== LOCAL EXERCISE BANK DISCOVERY CHECK ==="
 & .\scripts\dev\check-local-exercise-bank-discovery.ps1
 
+Write-Host "=== EXAM PREP LOCAL BANK PREVIEW CHECK ==="
+& .\scripts\dev\check-exam-prep-local-bank-preview.ps1
+
