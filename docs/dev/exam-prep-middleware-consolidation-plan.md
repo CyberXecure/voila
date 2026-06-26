@@ -851,3 +851,25 @@ Recommended next step:
 
 - v0.4.45 — Local exercise bank discovery and non-destructive Exam Prep fallback integration
 
+## v0.4.45 Local exercise bank discovery
+
+Status: scaffold integration checkpoint.
+
+Purpose: add a safe discovery and validation layer for `exercise_bank.local.json` after the v0.4.44 Local Pedagogy Engine scaffold.
+
+Scope:
+
+- add `services/api/local_exercise_bank.py`
+- add `scripts/dev/check-local-exercise-bank-discovery.ps1`
+- add `docs/dev/local-exercise-bank-discovery.md`
+- validate minimum local exercise-bank schema
+- expose selected valid local bank diagnostics
+- keep Exam Prep UI and progress behavior unchanged
+- keep legacy quiz/question fallback
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.46 — Non-destructive Exam Prep local exercise bank source preview
+

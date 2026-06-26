@@ -198,3 +198,6 @@ finally {
 Write-Host "=== LOCAL PEDAGOGY ENGINE CHECK ==="
 & .\scripts\dev\check-local-pedagogy-engine.ps1
 
+Write-Host "=== LOCAL EXERCISE BANK DISCOVERY CHECK ==="
+& .\scripts\dev\check-local-exercise-bank-discovery.ps1
+
