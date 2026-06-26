@@ -747,3 +747,65 @@ Exam Prep is stable enough for the next planning/audit phase.
 
 Do not start a large functional rewrite until the read-only progress data audit and generated question quality audit are complete.
 
+## v0.4.42 real progress data audit
+
+This milestone adds a read-only progress data audit.
+
+Added:
+
+- scripts/dev/audit-exam-prep-progress-data.ps1
+- docs/dev/exam-prep-real-progress-data-audit.md
+
+The audit verifies current progress-related surfaces:
+
+- dashboard progress summary
+- dashboard learning path
+- dashboard weak review entry
+- skill detail metadata
+- skill detail learning path
+- related Study Mode questions
+- Study Mode entry
+- progress interpretation helper
+- next action
+- weak review entry
+- sample skill tree coverage
+
+The audit is integrated into:
+
+- scripts/dev/check-exam-prep-health.ps1
+
+Current safety gate now includes:
+
+``powershell
+& .\scripts\dev\audit-exam-prep-progress-data.ps1 -Mode Check
+``
+
+### v0.4.42 result
+
+The audit is read-only and does not change:
+
+- BKT
+- scoring thresholds
+- quiz generation
+- Study/Review/Progress engine
+- OCR
+- PDF processing
+- course generation
+- packaging
+- ZIP/release assets
+
+### Recommended next milestone
+
+Proceed with:
+
+- v0.4.43 — Exam Prep generated question quality audit
+
+This should be read-only first and should evaluate:
+
+- repetitive questions
+- overly simple questions
+- weak distractors
+- missing reasoning steps
+- missing exam-grade variations
+- poor mapping between course content and skill-specific practice
+
