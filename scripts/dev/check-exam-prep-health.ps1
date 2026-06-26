@@ -52,6 +52,9 @@ Write-Host "=== SAMPLE SKILL COVERAGE CHECK ==="
 Write-Host "=== LEARNING PATH CHECKPOINT ==="
 & .\scripts\dev\check-exam-prep-learning-path.ps1
 
+Write-Host "=== STUDY/PROGRESS COPY CHECKPOINT ==="
+& .\scripts\dev\check-exam-prep-study-progress-copy.ps1
+
 Write-Host "=== SOURCE MARKER CHECK ==="
 
 $web = Get-Content ".\services\api\web_app.py" -Raw
@@ -179,6 +182,7 @@ Write-Host "EXAM PREP PROGRESS INTERPRETATION HELPER v0.4.36 PASS"
 finally {
     Invoke-VoilaStop
 }
+
 
 
 

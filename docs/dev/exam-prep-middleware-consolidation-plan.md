@@ -450,3 +450,56 @@ Do not change in this phase:
 - ZIP/release assets
 - public publishing
 
+## v0.4.37 study/progress copy checkpoint update
+
+The Study Mode entry and progress interpretation polish phase is now protected by a permanent checkpoint.
+
+Completed milestones:
+
+- v0.4.35 — Exam Prep study session entry polish
+  - added Intrare în Modul Studiu
+  - clarified that Exam Prep progress updates after answering questions in Modul Studiu
+  - kept the action display-only / link-only
+  - did not change quiz generation, BKT, scoring, Study, Review, or Progress engine behavior
+
+- v0.4.36 — Exam Prep progress interpretation helper
+  - added Cum interpretăm progresul
+  - explains Nepornit, În progres, and Consolidat
+  - clarifies that the helper does not modify scores, thresholds, or BKT
+
+- v0.4.37 — Exam Prep study/progress copy checkpoint
+  - added scripts/dev/check-exam-prep-study-progress-copy.ps1
+  - validates Study Mode entry copy and CTA
+  - validates progress interpretation copy
+  - validates section order and approved Romanian wording
+  - integrated the checkpoint into scripts/dev/check-exam-prep-health.ps1
+
+Current protected safety gate:
+
+``powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+& .\scripts\dev\check-exam-prep-learning-path.ps1
+& .\scripts\dev\check-exam-prep-study-progress-copy.ps1
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+``
+
+## Recommended next functional phase after v0.4.37
+
+Recommended next milestones:
+
+### Proposed v0.4.38 — Exam Prep dashboard compactness polish
+
+Small UI/copy polish for dashboard density. Keep order and existing markers stable; no logic changes.
+
+### Proposed v0.4.39 — Exam Prep skill detail compactness polish
+
+Small UI/copy polish for skill detail page density. Keep all sections and reduce duplication between Study entry, progress interpretation, and next action; no Study/Review/Progress or BKT changes.
+
+### Proposed v0.4.40 — Exam Prep post-polish checkpoint refresh
+
+Refresh checkpoint/docs after v0.4.38-v0.4.39 if those UI polish milestones are completed.
+
+Current non-goals remain unchanged: OCR, PDF processing, course generation, quiz generation, Study/Review/Progress BKT engine, scoring thresholds, packaging, ZIP/release assets, and public publishing.
+
