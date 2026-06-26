@@ -926,3 +926,32 @@ Recommended next step:
 
 - v0.4.48 — Exam Prep local bank adapter diagnostics route/check
 
+## v0.4.48 Exam Prep local bank diagnostics
+
+Status: read-only diagnostics checkpoint.
+
+Purpose: report adapted local exercise bank availability and validation without enabling live Exam Prep consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_diagnostics.py`
+- add `scripts/dev/check-exam-prep-local-bank-diagnostics.ps1`
+- add `docs/dev/exam-prep-local-bank-diagnostics.md`
+- report:
+  - active source adapter
+  - local question count
+  - question type coverage
+  - difficulty coverage
+  - skill coverage
+  - sample question ids
+  - normalized field validation
+  - legacy fallback availability
+- keep Exam Prep UI and progress behavior unchanged
+- keep legacy quiz/question fallback
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.49 — Local bank read-only study preview
+
