@@ -146,6 +146,11 @@ try {
         "v428_detail_has_weak_review_entry" = ($derivate -cmatch "exam-prep-weak-review-entry-v0428" -and $derivate -cmatch "Revizuire concepte slabe")
         "v428_combined_has_weak_review_link" = ($combined -cmatch "Deschide revizuirea conceptelor slabe" -and $combined -cmatch "/#library")
         "v428_detail_order_next_before_weak_review" = ($derivate.IndexOf("exam-prep-next-action-v0416") -ge 0 -and $derivate.IndexOf("exam-prep-weak-review-entry-v0428") -gt $derivate.IndexOf("exam-prep-next-action-v0416"))
+        "v431_detail_has_learning_path_marker" = ($derivate -cmatch "exam-prep-learning-path-v0431")
+        "v431_detail_has_learning_path_title" = ($derivate -cmatch "Traseu de învățare")
+        "v431_detail_has_learning_path_fields" = ($derivate -cmatch "Skill curent" -and $derivate -cmatch "Condiții preliminare" -and $derivate -cmatch "Următorul pas")
+        "v431_detail_order_metadata_before_learning_path" = ($derivate.IndexOf("exam-prep-skill-metadata-v0427") -ge 0 -and $derivate.IndexOf("exam-prep-learning-path-v0431") -gt $derivate.IndexOf("exam-prep-skill-metadata-v0427"))
+        "v431_detail_order_learning_path_before_related" = ($derivate.IndexOf("exam-prep-learning-path-v0431") -ge 0 -and $derivate.IndexOf("exam-prep-related-study-questions-v0415") -gt $derivate.IndexOf("exam-prep-learning-path-v0431"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 

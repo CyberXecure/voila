@@ -1348,6 +1348,137 @@ def render_exam_prep_skill_metadata_html(skill_id: str) -> str:
     )
 # --- end v0.4.27 Exam Prep skill metadata display helper ---
 
+# --- v0.4.31 Exam Prep learning path display helper ---
+def _v431_skill_catalog() -> list:
+    try:
+        catalog = _v48_skill_catalog()
+    except Exception:
+        catalog = []
+
+    if not isinstance(catalog, list):
+        return []
+
+    return catalog
+
+
+def _v431_skill_label(skill: dict, fallback: str = "") -> str:
+    if not isinstance(skill, dict):
+        return _v427_polish_metadata_ro_text(fallback)
+
+    return _v427_polish_metadata_ro_text(
+        skill.get("label")
+        or skill.get("title")
+        or skill.get("name")
+        or skill.get("id")
+        or fallback
+    )
+
+
+def _v431_find_skill_index(skill_id: str, catalog: list) -> int:
+    for index, skill in enumerate(catalog):
+        if not isinstance(skill, dict):
+            continue
+
+        if str(skill.get("id", "")) == str(skill_id):
+            return index
+
+    return -1
+
+
+def _v431_skill_url(skill: dict) -> str:
+    from urllib.parse import quote
+
+    skill_id = str(skill.get("id", "")).strip()
+    if not skill_id:
+        return "/exam-prep"
+
+    return "/exam-prep/skill/" + quote(skill_id, safe="")
+
+
+def _v431_prerequisite_labels(skill: dict, catalog: list) -> list[str]:
+    raw = (
+        skill.get("prerequisites")
+        or skill.get("prerequisite_ids")
+        or skill.get("requires")
+        or skill.get("depends_on")
+        or []
+    )
+
+    if isinstance(raw, str):
+        raw = [raw]
+
+    if not isinstance(raw, list):
+        return []
+
+    labels = []
+
+    for item in raw:
+        item_text = str(item or "").strip()
+        if not item_text:
+            continue
+
+        match = None
+        for candidate in catalog:
+            if not isinstance(candidate, dict):
+                continue
+
+            if str(candidate.get("id", "")) == item_text:
+                match = candidate
+                break
+
+        labels.append(_v431_skill_label(match, item_text) if match else _v427_polish_metadata_ro_text(item_text))
+
+    return labels
+
+
+def render_exam_prep_learning_path_html(skill_id: str) -> str:
+    catalog = _v431_skill_catalog()
+    current_skill = _v427_skill_by_id(skill_id)
+    current_label = _v431_skill_label(current_skill, skill_id)
+
+    current_index = _v431_find_skill_index(skill_id, catalog)
+    prerequisite_labels = _v431_prerequisite_labels(current_skill, catalog)
+
+    if prerequisite_labels:
+        prerequisite_text = ", ".join(prerequisite_labels)
+    else:
+        prerequisite_text = "Nu sunt definite condiții preliminare în skill tree."
+
+    next_skill = None
+    if current_index >= 0 and current_index + 1 < len(catalog):
+        candidate = catalog[current_index + 1]
+        if isinstance(candidate, dict):
+            next_skill = candidate
+
+    safe_current_label = _v48_escape(current_label)
+    safe_prerequisite_text = _v48_escape(prerequisite_text)
+
+    if next_skill:
+        next_label = _v48_escape(_v431_skill_label(next_skill))
+        next_url = _v48_escape(_v431_skill_url(next_skill))
+        next_html = f'<a href="{next_url}">{next_label}</a>'
+    else:
+        next_html = "Nu există un pas următor definit în skill tree."
+
+    return (
+        '<section class="exam-prep-learning-path-v0431" '
+        'style="margin-top:18px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Traseu de învățare</h2>'
+        '<p style="color:#475467;line-height:1.55;margin:8px 0 14px;">'
+        'Această secțiune este read-only și folosește ordinea existentă din skill tree-ul Exam Prep.'
+        '</p>'
+        '<dl style="display:grid;grid-template-columns:minmax(150px,210px) 1fr;gap:10px 16px;margin:12px 0 0;">'
+        '<dt style="font-weight:750;color:#344054;">Skill curent</dt>'
+        f'<dd style="margin:0;">{safe_current_label}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Condiții preliminare</dt>'
+        f'<dd style="margin:0;">{safe_prerequisite_text}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Următorul pas</dt>'
+        f'<dd style="margin:0;">{next_html}</dd>'
+        '</dl>'
+        '</section>'
+    )
+# --- end v0.4.31 Exam Prep learning path display helper ---
+
 # --- v0.4.23 consolidated Exam Prep skill detail rendering helper ---
 def _v423_safe_skill_detail_section(function_name: str, skill_id: str) -> str:
     function = globals().get(function_name)
@@ -1386,6 +1517,7 @@ def _v423_polish_skill_detail_ro_html(html: str) -> str:
 def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
     sections = [
         _v423_safe_skill_detail_section("render_exam_prep_skill_metadata_html", skill_id),
+        _v423_safe_skill_detail_section("render_exam_prep_learning_path_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
         render_exam_prep_weak_review_entry_html("skill"),
