@@ -49,6 +49,9 @@ python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\ser
 Write-Host "=== SAMPLE SKILL COVERAGE CHECK ==="
 & .\scripts\dev\check-exam-prep-skill-coverage.ps1
 
+Write-Host "=== LEARNING PATH CHECKPOINT ==="
+& .\scripts\dev\check-exam-prep-learning-path.ps1
+
 Write-Host "=== SOURCE MARKER CHECK ==="
 
 $web = Get-Content ".\services\api\web_app.py" -Raw
@@ -170,5 +173,6 @@ Write-Host "EXAM PREP DASHBOARD LEARNING PATH ENTRY v0.4.32 PASS"
 finally {
     Invoke-VoilaStop
 }
+
 
 
