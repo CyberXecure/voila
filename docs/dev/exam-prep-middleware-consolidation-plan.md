@@ -873,3 +873,26 @@ Recommended next step:
 
 - v0.4.46 — Non-destructive Exam Prep local exercise bank source preview
 
+## v0.4.46 Exam Prep local bank preview
+
+Status: non-destructive backend/diagnostic preview.
+
+Purpose: preview whether Exam Prep can see a valid `exercise_bank.local.json` source without replacing current legacy quiz/question behavior.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_preview.py`
+- add `scripts/dev/check-exam-prep-local-bank-preview.ps1`
+- add `docs/dev/exam-prep-local-bank-preview.md`
+- preview source availability:
+  - `local_exercise_bank_preview` when a valid local bank exists
+  - `legacy_fallback` when no valid local bank exists
+- keep Exam Prep UI and progress behavior unchanged
+- keep legacy quiz/question fallback
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.47 — Local bank source adapter for Exam Prep
+
