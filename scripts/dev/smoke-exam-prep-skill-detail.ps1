@@ -162,6 +162,12 @@ try {
         "v435_detail_has_continue_modul_studiu_cta" = ($derivate -cmatch "Continuă în Modul Studiu")
         "v435_detail_order_related_before_study_entry" = ($derivate.IndexOf("exam-prep-related-study-questions-v0415") -ge 0 -and $derivate.IndexOf("exam-prep-study-session-entry-v0435") -gt $derivate.IndexOf("exam-prep-related-study-questions-v0415"))
         "v435_detail_order_study_entry_before_next_action" = ($derivate.IndexOf("exam-prep-study-session-entry-v0435") -ge 0 -and $derivate.IndexOf("exam-prep-next-action-v0416") -gt $derivate.IndexOf("exam-prep-study-session-entry-v0435"))
+        "v436_dashboard_has_progress_interpretation" = ($exam -cmatch "exam-prep-progress-interpretation-v0436" -and $exam -cmatch "Cum interpretăm progresul")
+        "v436_detail_has_progress_interpretation" = ($derivate -cmatch "exam-prep-progress-interpretation-v0436" -and $derivate -cmatch "Cum interpretăm progresul")
+        "v436_combined_has_status_explanations" = ($combined -cmatch "Nepornit" -and $combined -cmatch "În progres" -and $combined -cmatch "Consolidat")
+        "v436_combined_has_readonly_no_threshold_copy" = ($combined -cmatch "read-only" -and $combined -cmatch "nu modifică scorurile, pragurile sau BKT")
+        "v436_dashboard_order_summary_before_interpretation" = ($exam.IndexOf("exam-prep-progress-summary-v0410") -ge 0 -and $exam.IndexOf("exam-prep-progress-interpretation-v0436") -gt $exam.IndexOf("exam-prep-progress-summary-v0410"))
+        "v436_detail_order_study_before_interpretation" = ($derivate.IndexOf("exam-prep-study-session-entry-v0435") -ge 0 -and $derivate.IndexOf("exam-prep-progress-interpretation-v0436") -gt $derivate.IndexOf("exam-prep-study-session-entry-v0435"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
