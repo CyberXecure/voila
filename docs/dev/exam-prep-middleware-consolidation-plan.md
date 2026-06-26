@@ -503,3 +503,79 @@ Refresh checkpoint/docs after v0.4.38-v0.4.39 if those UI polish milestones are 
 
 Current non-goals remain unchanged: OCR, PDF processing, course generation, quiz generation, Study/Review/Progress BKT engine, scoring thresholds, packaging, ZIP/release assets, and public publishing.
 
+## v0.4.40 post-polish checkpoint update
+
+The compactness polish phase is now protected by a permanent checkpoint.
+
+Completed milestones:
+
+- v0.4.38 — Exam Prep dashboard compactness polish
+  - added compact dashboard wrapper/style
+  - kept all existing dashboard sections
+  - preserved the v0.4.22 dashboard consolidation marker
+  - preserved dashboard order: Ce să faci acum → Traseu recomandat → Rezumat progres → Cum interpretăm progresul → Skill-uri Exam Prep → Revizuire concepte slabe
+  - did not change runtime logic, scoring, BKT, quiz generation, OCR, PDF processing, or packaging
+
+- v0.4.39 — Exam Prep skill detail compactness polish
+  - added compact skill detail wrapper/style
+  - kept all existing skill detail sections
+  - preserved the v0.4.23 skill detail consolidation marker
+  - preserved v0.4.24 cleanup/source compatibility markers
+  - preserved skill detail order: Detalii skill → Traseu de învățare → Întrebări asociate din Modul Studiu → Intrare în Modul Studiu → Cum interpretăm progresul → Acțiune recomandată → Revizuire concepte slabe
+  - did not change runtime logic, scoring, BKT, quiz generation, OCR, PDF processing, or packaging
+
+- v0.4.40 — Exam Prep compactness checkpoint
+  - added scripts/dev/check-exam-prep-compactness.ps1
+  - validates dashboard compactness markers and order
+  - validates skill detail compactness markers and order
+  - validates historical consolidation markers
+  - validates approved Romanian wording
+  - integrated the checkpoint into scripts/dev/check-exam-prep-health.ps1
+
+Current protected safety gate:
+
+``powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+& .\scripts\dev\check-exam-prep-learning-path.ps1
+& .\scripts\dev\check-exam-prep-study-progress-copy.ps1
+& .\scripts\dev\check-exam-prep-compactness.ps1
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+``
+
+## Recommended next functional phase after v0.4.40
+
+Recommended next milestones:
+
+### Proposed v0.4.41 — Exam Prep final consolidation status doc
+
+Documentation-only milestone that summarizes the full v0.4.x Exam Prep stabilization chain and identifies what is safe to build next.
+
+### Proposed v0.4.42 — Exam Prep real progress data audit
+
+Read-only audit of where progress data currently comes from:
+
+- Study Mode answers
+- Review weak concepts
+- dashboard summaries
+- skill detail summaries
+
+No BKT/scoring changes.
+
+### Proposed v0.4.43 — Exam Prep next functional planning checkpoint
+
+Planning-only milestone for the next functional phase, likely around real generated question quality and better practice sessions.
+
+Current non-goals remain unchanged:
+
+- OCR
+- PDF processing
+- course generation
+- quiz generation
+- Study/Review/Progress BKT engine
+- scoring thresholds
+- packaging
+- ZIP/release assets
+- public publishing
+
