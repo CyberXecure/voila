@@ -1232,6 +1232,44 @@ def render_exam_prep_dashboard_learning_path_entry_html() -> str:
     )
 # --- end v0.4.32 Exam Prep dashboard learning path entry helper ---
 
+# --- v0.4.36 Exam Prep progress interpretation helper ---
+def render_exam_prep_progress_interpretation_html(context: str = "dashboard") -> str:
+    safe_context = _v48_escape(str(context or "dashboard"))
+
+    if safe_context == "skill":
+        intro = (
+            "Interpretarea de mai jos explică statusul skill-ului curent. "
+            "Nu schimbă pragurile, scorurile sau algoritmul de progres."
+        )
+    else:
+        intro = (
+            "Interpretarea de mai jos explică statusurile afișate în Exam Prep. "
+            "Este doar informativă și nu schimbă modul de calcul al progresului."
+        )
+
+    safe_intro = _v48_escape(intro)
+
+    return (
+        '<section class="exam-prep-progress-interpretation-v0436" '
+        f'data-context="{safe_context}" '
+        'style="margin-top:18px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Cum interpretăm progresul</h2>'
+        f'<p style="color:#475467;line-height:1.55;margin:8px 0 14px;">{safe_intro}</p>'
+        '<dl style="display:grid;grid-template-columns:minmax(130px,180px) 1fr;gap:10px 16px;margin:12px 0 0;">'
+        '<dt style="font-weight:750;color:#344054;">Nepornit</dt>'
+        '<dd style="margin:0;">Nu există încă răspunsuri suficiente în Modul Studiu pentru acest skill.</dd>'
+        '<dt style="font-weight:750;color:#344054;">În progres</dt>'
+        '<dd style="margin:0;">Ai început să lucrezi întrebări, iar progresul încă se consolidează.</dd>'
+        '<dt style="font-weight:750;color:#344054;">Consolidat</dt>'
+        '<dd style="margin:0;">Răspunsurile recente indică un nivel stabil pentru acest skill.</dd>'
+        '</dl>'
+        '<p style="color:#667085;line-height:1.55;margin:14px 0 0;">'
+        'Aceste explicații sunt read-only și nu modifică scorurile, pragurile sau BKT.'
+        '</p>'
+        '</section>'
+    )
+# --- end v0.4.36 Exam Prep progress interpretation helper ---
+
 # --- v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 def _v422_safe_dashboard_section(function_name: str) -> str:
     function = globals().get(function_name)
@@ -1255,6 +1293,7 @@ def render_exam_prep_dashboard_sections_html() -> str:
         _v422_safe_dashboard_section("render_exam_prep_dashboard_next_action_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_learning_path_entry_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_progress_summary_html"),
+        render_exam_prep_progress_interpretation_html("dashboard"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_skill_cards_html"),
         render_exam_prep_weak_review_entry_html("dashboard"),
     ]
@@ -1618,6 +1657,7 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
         _v423_safe_skill_detail_section("render_exam_prep_learning_path_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_study_session_entry_html", skill_id),
+        render_exam_prep_progress_interpretation_html("skill"),
         _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
         render_exam_prep_weak_review_entry_html("skill"),
     ]
