@@ -55,6 +55,9 @@ Write-Host "=== LEARNING PATH CHECKPOINT ==="
 Write-Host "=== STUDY/PROGRESS COPY CHECKPOINT ==="
 & .\scripts\dev\check-exam-prep-study-progress-copy.ps1
 
+Write-Host "=== COMPACTNESS CHECKPOINT ==="
+& .\scripts\dev\check-exam-prep-compactness.ps1
+
 Write-Host "=== SOURCE MARKER CHECK ==="
 
 $web = Get-Content ".\services\api\web_app.py" -Raw
@@ -188,6 +191,7 @@ Write-Host "EXAM PREP SKILL DETAIL COMPACTNESS POLISH v0.4.39 PASS"
 finally {
     Invoke-VoilaStop
 }
+
 
 
 
