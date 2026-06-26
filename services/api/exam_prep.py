@@ -1547,6 +1547,36 @@ def render_exam_prep_learning_path_html(skill_id: str) -> str:
     )
 # --- end v0.4.31 Exam Prep learning path display helper ---
 
+# --- v0.4.35 Exam Prep study session entry polish helper ---
+def render_exam_prep_study_session_entry_html(skill_id: str) -> str:
+    try:
+        skill = _v427_skill_by_id(skill_id)
+        skill_label = _v431_skill_label(skill, skill_id)
+    except Exception:
+        skill_label = str(skill_id or "skill")
+
+    safe_skill_label = _v48_escape(_v427_polish_metadata_ro_text(skill_label))
+
+    return (
+        '<section class="exam-prep-study-session-entry-v0435" '
+        'style="margin-top:18px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Intrare în Modul Studiu</h2>'
+        '<p style="color:#475467;line-height:1.55;margin:8px 0 12px;">'
+        'Răspunde la întrebări în Modul Studiu, iar progresul Exam Prep se va actualiza aici după sesiunea de studiu.'
+        '</p>'
+        '<p style="color:#667085;line-height:1.55;margin:0 0 14px;">'
+        f'Skill vizat: <strong>{safe_skill_label}</strong>. '
+        'Această intrare este doar un ghid de navigare și nu schimbă modul de calcul al progresului.'
+        '</p>'
+        '<a href="/#library" '
+        'style="display:inline-flex;border-radius:999px;padding:9px 13px;'
+        'background:#172033;color:#fff;text-decoration:none;font-weight:650;">'
+        'Continuă în Modul Studiu'
+        '</a>'
+        '</section>'
+    )
+# --- end v0.4.35 Exam Prep study session entry polish helper ---
+
 # --- v0.4.23 consolidated Exam Prep skill detail rendering helper ---
 def _v423_safe_skill_detail_section(function_name: str, skill_id: str) -> str:
     function = globals().get(function_name)
@@ -1587,6 +1617,7 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
         _v423_safe_skill_detail_section("render_exam_prep_skill_metadata_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_learning_path_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_related_study_questions_html", skill_id),
+        _v423_safe_skill_detail_section("render_exam_prep_study_session_entry_html", skill_id),
         _v423_safe_skill_detail_section("render_exam_prep_next_action_html", skill_id),
         render_exam_prep_weak_review_entry_html("skill"),
     ]
