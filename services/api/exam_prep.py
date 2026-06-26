@@ -1165,6 +1165,73 @@ def render_exam_prep_weak_review_entry_html(context: str = "dashboard") -> str:
     )
 # --- end v0.4.28 Exam Prep weak skill review entry helper ---
 
+# --- v0.4.32 Exam Prep dashboard learning path entry helper ---
+def _v432_dashboard_learning_path_recommended_skill() -> tuple[dict, str]:
+    catalog = _v431_skill_catalog()
+
+    if not catalog:
+        return {"id": "derivate", "label": "Derivate"}, "Nepornit"
+
+    fallback = catalog[0] if isinstance(catalog[0], dict) else {"id": "derivate", "label": "Derivate"}
+    fallback_status = "Nepornit"
+
+    for skill in catalog:
+        if not isinstance(skill, dict):
+            continue
+
+        skill_id = str(skill.get("id", "")).strip()
+        if not skill_id:
+            continue
+
+        try:
+            status = _v416_skill_status_for_next_action(skill_id)
+        except Exception:
+            status = "Nepornit"
+
+        status_text = _v427_polish_metadata_ro_text(status)
+
+        if "consolidat" not in status_text.lower():
+            return skill, status_text
+
+        fallback = skill
+        fallback_status = status_text
+
+    return fallback, _v427_polish_metadata_ro_text(fallback_status)
+
+
+def render_exam_prep_dashboard_learning_path_entry_html() -> str:
+    skill, status = _v432_dashboard_learning_path_recommended_skill()
+
+    skill_label = _v431_skill_label(skill, "Derivate")
+    skill_url = _v431_skill_url(skill)
+
+    safe_skill_label = _v48_escape(skill_label)
+    safe_status = _v48_escape(_v427_polish_metadata_ro_text(status))
+    safe_skill_url = _v48_escape(skill_url)
+
+    return (
+        '<section class="exam-prep-dashboard-learning-path-v0432" '
+        'style="margin-top:18px;background:#fff;border:1px solid #e5e7ef;border-radius:16px;padding:18px;">'
+        '<h2>Traseu recomandat</h2>'
+        '<p style="color:#475467;line-height:1.55;margin:8px 0 14px;">'
+        'Continuă pregătirea pornind de la skill-ul recomandat. '
+        'Traseul este read-only și folosește skill tree-ul existent.'
+        '</p>'
+        '<dl style="display:grid;grid-template-columns:minmax(150px,210px) 1fr;gap:10px 16px;margin:12px 0 14px;">'
+        '<dt style="font-weight:750;color:#344054;">Skill recomandat</dt>'
+        f'<dd style="margin:0;">{safe_skill_label}</dd>'
+        '<dt style="font-weight:750;color:#344054;">Status curent</dt>'
+        f'<dd style="margin:0;">{safe_status}</dd>'
+        '</dl>'
+        f'<a href="{safe_skill_url}" '
+        'style="display:inline-flex;border-radius:999px;padding:9px 13px;'
+        'background:#172033;color:#fff;text-decoration:none;font-weight:650;">'
+        'Vezi traseul de învățare'
+        '</a>'
+        '</section>'
+    )
+# --- end v0.4.32 Exam Prep dashboard learning path entry helper ---
+
 # --- v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 def _v422_safe_dashboard_section(function_name: str) -> str:
     function = globals().get(function_name)
@@ -1186,6 +1253,7 @@ def _v422_safe_dashboard_section(function_name: str) -> str:
 def render_exam_prep_dashboard_sections_html() -> str:
     sections = [
         _v422_safe_dashboard_section("render_exam_prep_dashboard_next_action_html"),
+        _v422_safe_dashboard_section("render_exam_prep_dashboard_learning_path_entry_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_progress_summary_html"),
         _v422_safe_dashboard_section("render_exam_prep_dashboard_skill_cards_html"),
         render_exam_prep_weak_review_entry_html("dashboard"),
