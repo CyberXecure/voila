@@ -809,3 +809,21 @@ This should be read-only first and should evaluate:
 - missing exam-grade variations
 - poor mapping between course content and skill-specific practice
 
+## v0.4.43 generated question quality audit
+
+Status: read-only checkpoint.
+
+Purpose: record the safe transition from Exam Prep UI/progress consolidation toward generated question quality improvements.
+
+Scope:
+
+- add `docs/dev/exam-prep-generated-question-quality-audit.md`
+- keep current Exam Prep UI and progress behavior unchanged
+- do not change question generation logic yet
+- do not introduce cloud/API costs
+- prepare the next step: `v0.4.44 — Local Pedagogy Engine scaffold`
+
+Recommended next step:
+
+- v0.4.44 — Local Pedagogy Engine scaffold
+
