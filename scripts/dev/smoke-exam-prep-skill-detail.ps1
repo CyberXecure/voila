@@ -156,6 +156,12 @@ try {
         "v432_dashboard_has_learning_path_fields" = ($exam -cmatch "Skill recomandat" -and $exam -cmatch "Status curent" -and $exam -cmatch "Vezi traseul de învățare")
         "v432_dashboard_order_next_before_learning_path" = ($exam.IndexOf("exam-prep-dashboard-next-action-v0417") -ge 0 -and $exam.IndexOf("exam-prep-dashboard-learning-path-v0432") -gt $exam.IndexOf("exam-prep-dashboard-next-action-v0417"))
         "v432_dashboard_order_learning_path_before_summary" = ($exam.IndexOf("exam-prep-dashboard-learning-path-v0432") -ge 0 -and $exam.IndexOf("exam-prep-progress-summary-v0410") -gt $exam.IndexOf("exam-prep-dashboard-learning-path-v0432"))
+        "v435_detail_has_study_session_entry" = ($derivate -cmatch "exam-prep-study-session-entry-v0435")
+        "v435_detail_has_study_session_title" = ($derivate -cmatch "Intrare în Modul Studiu")
+        "v435_detail_has_progress_update_copy" = ($derivate -cmatch "Răspunde la întrebări în Modul Studiu" -and $derivate -cmatch "progresul Exam Prep se va actualiza aici")
+        "v435_detail_has_continue_modul_studiu_cta" = ($derivate -cmatch "Continuă în Modul Studiu")
+        "v435_detail_order_related_before_study_entry" = ($derivate.IndexOf("exam-prep-related-study-questions-v0415") -ge 0 -and $derivate.IndexOf("exam-prep-study-session-entry-v0435") -gt $derivate.IndexOf("exam-prep-related-study-questions-v0415"))
+        "v435_detail_order_study_entry_before_next_action" = ($derivate.IndexOf("exam-prep-study-session-entry-v0435") -ge 0 -and $derivate.IndexOf("exam-prep-next-action-v0416") -gt $derivate.IndexOf("exam-prep-study-session-entry-v0435"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
