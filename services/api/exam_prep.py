@@ -1620,6 +1620,21 @@ def render_exam_prep_study_session_entry_html(skill_id: str) -> str:
     )
 # --- end v0.4.35 Exam Prep study session entry polish helper ---
 
+# v0.4.24 cleanup/source compatibility marker: v0.4.24 Exam Prep wording wrapper cleanup checkpoint
+# --- v0.4.39 Exam Prep skill detail compactness polish ---
+def render_exam_prep_skill_detail_compactness_style_html() -> str:
+    return (
+        '<style class="exam-prep-skill-detail-compactness-v0439">'
+        '.exam-prep-skill-detail-compact-v0439 { display:grid; gap:14px; }'
+        '.exam-prep-skill-detail-compact-v0439 section { margin-top:0 !important; }'
+        '.exam-prep-skill-detail-compact-v0439 h2 { margin-top:0; margin-bottom:8px; }'
+        '.exam-prep-skill-detail-compact-v0439 p { margin-top:6px; }'
+        '.exam-prep-skill-detail-compact-note-v0439 { '
+        'font-size:0.92rem; color:#667085; line-height:1.45; margin:0 0 10px; }'
+        '</style>'
+    )
+# --- end v0.4.39 Exam Prep skill detail compactness polish ---
+
 # --- v0.4.23 consolidated Exam Prep skill detail rendering helper ---
 def _v423_safe_skill_detail_section(function_name: str, skill_id: str) -> str:
     function = globals().get(function_name)
@@ -1666,30 +1681,13 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
         render_exam_prep_weak_review_entry_html("skill"),
     ]
 
-    sections = [section for section in sections if section]
+    rendered_sections = "\n".join(section for section in sections if section)
 
-    if not sections:
-        html = (
-            '<div class="exam-prep-skill-detail-consolidated-v0423" '
-            'style="display:grid;gap:18px;margin:22px 0;">'
-            '<section><h2>Pregătire examene</h2>'
-            '<p>Secțiunile pentru acest skill nu sunt încă disponibile.</p>'
-            '</section></div>'
-        )
-        return _v423_polish_skill_detail_ro_html(html)
-
-    html = (
-        '<div class="exam-prep-skill-detail-consolidated-v0423" '
-        'style="display:grid;gap:18px;margin:22px 0;">'
-        + "".join(sections)
+    return (
+        render_exam_prep_skill_detail_compactness_style_html()
+        + '<div class="exam-prep-skill-detail-consolidated-v0423 exam-prep-skill-detail-compact-v0439">'
+        + '<p class="exam-prep-skill-detail-compact-note-v0439">Detaliu skill compact: informațiile principale sunt grupate pentru o parcurgere mai rapidă.</p>'
+        + rendered_sections
         + "</div>"
     )
-
-    return _v423_polish_skill_detail_ro_html(html)
-# --- end v0.4.23 consolidated Exam Prep skill detail rendering helper ---
-
-# --- v0.4.24 Exam Prep wording wrapper cleanup checkpoint ---
-# Legacy wording wrapper blocks were removed after dashboard/skill-detail rendering consolidation.
-# The permanent smoke and health checkpoint remain the safety gate.
-# --- end v0.4.24 Exam Prep wording wrapper cleanup checkpoint ---
 

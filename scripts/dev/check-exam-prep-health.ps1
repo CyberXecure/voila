@@ -91,6 +91,8 @@ $sourceChecks = [ordered]@{
     "smoke_has_v436_checks" = ($smoke -cmatch "v436_dashboard_has_progress_interpretation")
     "source_has_dashboard_compactness_v0438" = (($web + $exam) -cmatch "exam-prep-dashboard-compact-v0438")
     "smoke_has_v438_checks" = ($smoke -cmatch "v438_dashboard_has_compact_marker")
+    "source_has_skill_detail_compactness_v0439" = (($web + $exam) -cmatch "exam-prep-skill-detail-compact-v0439")
+    "smoke_has_v439_checks" = ($smoke -cmatch "v439_detail_has_compact_marker")
     "smoke_has_v0419_checks" = ($smoke -cmatch "v419_dashboard_has_visual_marker")
 }
 
@@ -181,6 +183,7 @@ Write-Host "EXAM PREP DASHBOARD LEARNING PATH ENTRY v0.4.32 PASS"
 Write-Host "EXAM PREP STUDY SESSION ENTRY POLISH v0.4.35 PASS"
 Write-Host "EXAM PREP PROGRESS INTERPRETATION HELPER v0.4.36 PASS"
 Write-Host "EXAM PREP DASHBOARD COMPACTNESS POLISH v0.4.38 PASS"
+Write-Host "EXAM PREP SKILL DETAIL COMPACTNESS POLISH v0.4.39 PASS"
 }
 finally {
     Invoke-VoilaStop
