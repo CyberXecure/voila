@@ -896,3 +896,33 @@ Recommended next step:
 
 - v0.4.47 — Local bank source adapter for Exam Prep
 
+## v0.4.47 Local bank source adapter
+
+Status: read-only adapter checkpoint.
+
+Purpose: normalize local `exercise_bank.local.json` exercises into Exam Prep-compatible question records without changing live Exam Prep behavior.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_adapter.py`
+- add `scripts/dev/check-local-bank-source-adapter.ps1`
+- add `docs/dev/local-bank-source-adapter.md`
+- normalize fields:
+  - `question_id`
+  - `skill_id`
+  - `question_type`
+  - `difficulty`
+  - `question`
+  - `choices`
+  - `correct_answer`
+  - `explanation`
+  - `source = local_exercise_bank_adapter`
+- preserve legacy fallback when no valid local bank exists
+- keep Exam Prep UI and progress behavior unchanged
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.48 — Exam Prep local bank adapter diagnostics route/check
+
