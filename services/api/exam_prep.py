@@ -1270,6 +1270,20 @@ def render_exam_prep_progress_interpretation_html(context: str = "dashboard") ->
     )
 # --- end v0.4.36 Exam Prep progress interpretation helper ---
 
+# --- v0.4.38 Exam Prep dashboard compactness polish ---
+def render_exam_prep_dashboard_compactness_style_html() -> str:
+    return (
+        '<style class="exam-prep-dashboard-compactness-v0438">'
+        '.exam-prep-dashboard-compact-v0438 { display:grid; gap:14px; }'
+        '.exam-prep-dashboard-compact-v0438 section { margin-top:0 !important; }'
+        '.exam-prep-dashboard-compact-v0438 h2 { margin-top:0; margin-bottom:8px; }'
+        '.exam-prep-dashboard-compact-v0438 p { margin-top:6px; }'
+        '.exam-prep-dashboard-compact-note-v0438 { '
+        'font-size:0.92rem; color:#667085; line-height:1.45; margin:0 0 10px; }'
+        '</style>'
+    )
+# --- end v0.4.38 Exam Prep dashboard compactness polish ---
+
 # --- v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 def _v422_safe_dashboard_section(function_name: str) -> str:
     function = globals().get(function_name)
@@ -1298,27 +1312,17 @@ def render_exam_prep_dashboard_sections_html() -> str:
         render_exam_prep_weak_review_entry_html("dashboard"),
     ]
 
-    sections = [section for section in sections if section]
+    rendered_sections = "\n".join(section for section in sections if section)
 
-    if not sections:
-        return (
-            '<div class="exam-prep-dashboard-consolidated-v0422 exam-prep-dashboard-order-v0418">'
-            '<section><h2>Pregătire examene</h2>'
-            '<p>Dashboard-ul Exam Prep nu are încă secțiuni disponibile.</p>'
-            '</section></div>'
-        )
-
-    html = (
-        '<div class="exam-prep-dashboard-consolidated-v0422 exam-prep-dashboard-order-v0418" '
-        'style="display:grid;gap:18px;margin:0 0 24px;">'
-        + "".join(sections)
+    return (
+        render_exam_prep_dashboard_compactness_style_html()
+        + '<div class="exam-prep-dashboard-consolidated-v0422 exam-prep-dashboard-compact-v0438">'
+        + '<p class="exam-prep-dashboard-compact-note-v0438">Dashboard compact: pașii principali sunt grupați pentru o parcurgere mai rapidă.</p>'
+        + rendered_sections
         + "</div>"
     )
 
-    return _v422b_polish_dashboard_ro_html(html)
-# --- end v0.4.22 consolidated Exam Prep dashboard rendering helper ---
 
-# --- v0.4.27 Exam Prep skill metadata display helper ---
 def _v427_polish_metadata_ro_text(value: object) -> str:
     text = str(value or "").strip()
 
@@ -1688,3 +1692,4 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
 # Legacy wording wrapper blocks were removed after dashboard/skill-detail rendering consolidation.
 # The permanent smoke and health checkpoint remain the safety gate.
 # --- end v0.4.24 Exam Prep wording wrapper cleanup checkpoint ---
+
