@@ -827,3 +827,27 @@ Recommended next step:
 
 - v0.4.44 — Local Pedagogy Engine scaffold
 
+## v0.4.44 Local Pedagogy Engine scaffold
+
+Status: scaffold checkpoint.
+
+Purpose: add the first local-only content supplier foundation after the v0.4.43 generated question quality audit.
+
+Scope:
+
+- add `services/api/local_pedagogy_engine.py`
+- add `scripts/dev/check-local-pedagogy-engine.ps1`
+- add `docs/dev/local-pedagogy-engine-scaffold.md`
+- generate deterministic scaffold structures for:
+  - `course_analysis.local.json`
+  - `exercise_bank.local.json`
+  - `exam_blueprint.local.json`
+- keep Exam Prep UI and progress behavior unchanged
+- keep legacy quiz/question fallback
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.45 — Local exercise bank discovery and non-destructive Exam Prep fallback integration
+

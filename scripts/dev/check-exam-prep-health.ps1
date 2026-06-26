@@ -195,8 +195,6 @@ finally {
     Invoke-VoilaStop
 }
 
-
-
-
-
+Write-Host "=== LOCAL PEDAGOGY ENGINE CHECK ==="
+& .\scripts\dev\check-local-pedagogy-engine.ps1
 
