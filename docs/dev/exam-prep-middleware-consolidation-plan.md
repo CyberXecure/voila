@@ -356,3 +356,97 @@ Do not change in this phase:
 - packaging
 - ZIP/release assets
 - public publishing
+
+## v0.4.34 learning path status update
+
+The learning path phase is now completed and protected by a permanent checkpoint.
+
+Completed learning path milestones:
+
+- v0.4.31 — Exam Prep prerequisites / learning path display
+  - added the skill detail section Traseu de învățare
+  - added xam-prep-learning-path-v0431
+  - displays Skill curent, Condiții preliminare, and Următorul pas
+  - keeps the section order: Detalii skill → Traseu de învățare → Întrebări asociate din Modul Studiu → Acțiune recomandată
+
+- v0.4.32 — Exam Prep dashboard learning path entry
+  - added the dashboard section Traseu recomandat
+  - added xam-prep-dashboard-learning-path-v0432
+  - displays Skill recomandat, Status curent, and Vezi traseul de învățare
+  - keeps the dashboard order: Ce să faci acum → Traseu recomandat → Rezumat progres
+
+- v0.4.33 — Exam Prep learning path checkpoint
+  - added scripts/dev/check-exam-prep-learning-path.ps1
+  - validates dashboard and skill detail learning path markers
+  - validates section order
+  - validates approved Romanian wording
+  - integrated the checkpoint into scripts/dev/check-exam-prep-health.ps1
+
+Current protected safety gate:
+
+``powershell
+python -m py_compile .\services\api\exam_prep.py .\services\api\web_app.py .\services\api\study_quiz_builder.py
+& .\scripts\dev\check-exam-prep-skill-coverage.ps1
+& .\scripts\dev\check-exam-prep-learning-path.ps1
+& .\scripts\dev\smoke-exam-prep-skill-detail.ps1
+& .\scripts\dev\check-exam-prep-health.ps1
+``
+
+## Recommended next functional phase after v0.4.34
+
+The Exam Prep UI now has a stable dashboard, skill detail pages, metadata, weak-review entry, and learning path.
+
+Recommended next milestones:
+
+### Proposed v0.4.35 — Exam Prep study session entry polish
+
+Improve the copy and CTA around Continuă în Modul Studiu.
+
+Possible changes:
+
+- clarify that progress updates after answering Study Mode questions
+- keep the action display-only / link-only
+- do not alter quiz generation, BKT, or study state calculations
+
+### Proposed v0.4.36 — Exam Prep progress interpretation helper
+
+Add small read-only explanatory text for statuses:
+
+- Nepornit
+- În progres
+- Consolidat
+
+This should be UI/copy only and should not change thresholds or scoring.
+
+### Proposed v0.4.37 — Exam Prep learning path docs/checkpoint refresh
+
+Add a checkpoint/doc refresh after v0.4.35-v0.4.36 if those UI polish milestones are completed.
+
+## Current product state
+
+Exam Prep now has:
+
+- dashboard consolidation
+- skill detail consolidation
+- Romanian wording cleanup
+- expanded health checkpoint
+- sample skill coverage check
+- skill metadata display
+- weak concept review entry
+- skill detail learning path
+- dashboard learning path entry
+- permanent learning path checkpoint
+
+## Current non-goals remain unchanged
+
+Do not change in this phase:
+
+- OCR
+- PDF processing
+- course generation
+- Study/Review/Progress BKT engine
+- scoring thresholds
+- packaging
+- ZIP/release assets
+- public publishing
+
