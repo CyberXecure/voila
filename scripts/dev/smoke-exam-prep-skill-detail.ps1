@@ -151,6 +151,11 @@ try {
         "v431_detail_has_learning_path_fields" = ($derivate -cmatch "Skill curent" -and $derivate -cmatch "Condiții preliminare" -and $derivate -cmatch "Următorul pas")
         "v431_detail_order_metadata_before_learning_path" = ($derivate.IndexOf("exam-prep-skill-metadata-v0427") -ge 0 -and $derivate.IndexOf("exam-prep-learning-path-v0431") -gt $derivate.IndexOf("exam-prep-skill-metadata-v0427"))
         "v431_detail_order_learning_path_before_related" = ($derivate.IndexOf("exam-prep-learning-path-v0431") -ge 0 -and $derivate.IndexOf("exam-prep-related-study-questions-v0415") -gt $derivate.IndexOf("exam-prep-learning-path-v0431"))
+        "v432_dashboard_has_learning_path_entry" = ($exam -cmatch "exam-prep-dashboard-learning-path-v0432")
+        "v432_dashboard_has_learning_path_title" = ($exam -cmatch "Traseu recomandat")
+        "v432_dashboard_has_learning_path_fields" = ($exam -cmatch "Skill recomandat" -and $exam -cmatch "Status curent" -and $exam -cmatch "Vezi traseul de învățare")
+        "v432_dashboard_order_next_before_learning_path" = ($exam.IndexOf("exam-prep-dashboard-next-action-v0417") -ge 0 -and $exam.IndexOf("exam-prep-dashboard-learning-path-v0432") -gt $exam.IndexOf("exam-prep-dashboard-next-action-v0417"))
+        "v432_dashboard_order_learning_path_before_summary" = ($exam.IndexOf("exam-prep-dashboard-learning-path-v0432") -ge 0 -and $exam.IndexOf("exam-prep-progress-summary-v0410") -gt $exam.IndexOf("exam-prep-dashboard-learning-path-v0432"))
         "technical_slug_functii_allowed" = ($combined -cmatch "/exam-prep/skill/functii")
     }
 
