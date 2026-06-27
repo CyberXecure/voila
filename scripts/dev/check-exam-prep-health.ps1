@@ -219,3 +219,6 @@ Write-Host "=== LOCAL BANK PROTECTED PREVIEW ROUTE CHECK ==="
 Write-Host "=== LOCAL BANK PREVIEW INTERNAL PANEL CHECK ==="
 & .\scripts\dev\check-local-bank-preview-internal-panel.ps1
 
+Write-Host "=== LOCAL BANK CONTROLLED CONSUMPTION FLAG CHECK ==="
+& .\scripts\dev\check-local-bank-consumption-flag.ps1
+

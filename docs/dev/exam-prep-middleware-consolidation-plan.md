@@ -1024,3 +1024,29 @@ Recommended next step:
 
 - v0.4.52 — Local bank controlled consumption flag scaffold
 
+## v0.4.52 Local bank controlled consumption flag
+
+Status: disabled-by-default consumption flag scaffold.
+
+Purpose: introduce an explicit flag for future controlled local-bank consumption while preserving legacy fallback as default.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_consumption_flag.py`
+- add `scripts/dev/check-local-bank-consumption-flag.ps1`
+- add `docs/dev/local-bank-controlled-consumption-flag.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_CONSUMPTION`
+- default OFF selects `legacy_fallback`
+- ON selects `local_exercise_bank_adapter` only in diagnostic source-selection snapshot
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not save attempts, score answers, or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.53 — Local bank source selection adapter for dry-run study sessions
+
