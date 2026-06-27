@@ -216,3 +216,6 @@ Write-Host "=== LOCAL BANK READ-ONLY STUDY PREVIEW CHECK ==="
 Write-Host "=== LOCAL BANK PROTECTED PREVIEW ROUTE CHECK ==="
 & .\scripts\dev\check-local-bank-protected-preview-route.ps1
 
+Write-Host "=== LOCAL BANK PREVIEW INTERNAL PANEL CHECK ==="
+& .\scripts\dev\check-local-bank-preview-internal-panel.ps1
+

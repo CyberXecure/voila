@@ -1001,3 +1001,26 @@ Recommended next step:
 
 - v0.4.51 — Local bank preview UI marker or internal panel
 
+## v0.4.51 Local bank preview internal panel
+
+Status: protected/internal read-only diagnostics panel.
+
+Purpose: expose the local-bank read-only study preview in a minimal internal HTML panel, disabled by default and not linked publicly.
+
+Scope:
+
+- add `GET /exam-prep/local-bank-study-preview/panel`
+- gate the panel with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1`
+- add `scripts/dev/check-local-bank-preview-internal-panel.ps1`
+- add `docs/dev/local-bank-preview-internal-panel.md`
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not save attempts, score answers, or update progress
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.52 — Local bank controlled consumption flag scaffold
+
