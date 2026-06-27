@@ -978,3 +978,26 @@ Recommended next step:
 
 - v0.4.50 — Local bank study preview diagnostics route or protected UI marker
 
+## v0.4.50 Local bank protected preview route
+
+Status: protected read-only route checkpoint.
+
+Purpose: expose the local-bank read-only study preview through an internal/protected backend route, disabled by default.
+
+Scope:
+
+- add `GET /exam-prep/local-bank-study-preview`
+- gate the route with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1`
+- add `scripts/dev/check-local-bank-protected-preview-route.ps1`
+- add `docs/dev/local-bank-protected-preview-route.md`
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not save attempts, score answers, or update progress
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.51 — Local bank preview UI marker or internal panel
+

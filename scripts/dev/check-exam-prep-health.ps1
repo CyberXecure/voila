@@ -213,3 +213,6 @@ Write-Host "=== EXAM PREP LOCAL BANK DIAGNOSTICS CHECK ==="
 Write-Host "=== LOCAL BANK READ-ONLY STUDY PREVIEW CHECK ==="
 & .\scripts\dev\check-local-bank-study-preview.ps1
 
+Write-Host "=== LOCAL BANK PROTECTED PREVIEW ROUTE CHECK ==="
+& .\scripts\dev\check-local-bank-protected-preview-route.ps1
+
