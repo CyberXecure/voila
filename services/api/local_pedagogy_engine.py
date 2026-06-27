@@ -1,11 +1,14 @@
-"""Local-first pedagogy engine scaffold for Voila.
+"""Local pedagogy engine for Voila.
 
-This module is intentionally deterministic and dependency-free. It creates
-course-analysis, exercise-bank, and exam-blueprint JSON structures without any
-cloud/API/LLM dependency.
+v0.4.55 keeps the engine deterministic and local-only, but upgrades question
+variety beyond simple concept-recognition prompts.
 
-The scaffold is not a replacement for the legacy quiz generator yet. It is a
-safe content-supplier foundation that later milestones can connect to Exam Prep.
+The generated files remain compatible with the v0.4.45+ local exercise bank
+discovery/adapter stack:
+
+- course_analysis.local.json
+- exercise_bank.local.json
+- exam_blueprint.local.json
 """
 
 from __future__ import annotations
@@ -13,446 +16,425 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import unicodedata
 from collections import Counter
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
-_ENGINE_VERSION = "v0.4.44"
-_DEFAULT_LANGUAGE = "ro"
+ENGINE_NAME = "local_pedagogy_engine"
+ENGINE_VERSION = "v0.4.55"
+QUESTION_VARIETY_VERSION = "v0.4.55"
 
-
-@dataclass(frozen=True)
-class LocalPedagogyBundle:
-    """Generated local pedagogy outputs."""
-
-    course_analysis: dict[str, Any]
-    exercise_bank: dict[str, Any]
-    exam_blueprint: dict[str, Any]
-
-
-_ROMANIAN_STOPWORDS = {
-    "acest",
-    "aceasta",
-    "aceste",
-    "acestea",
-    "acolo",
-    "aici",
-    "ale",
-    "are",
-    "asupra",
-    "care",
-    "către",
-    "cele",
-    "celor",
-    "este",
-    "fără",
-    "fiind",
-    "într",
-    "pentru",
-    "prin",
-    "sau",
+STOPWORDS = {
     "sunt",
-    "toate",
-    "unor",
-    "unei",
     "este",
-    "mai",
-    "mult",
+    "prin",
+    "doua",
+    "două",
+    "unei",
+    "unui",
+    "care",
+    "apoi",
     "poate",
-    "trebuie",
+    "pentru",
+    "calculul",
+    "folosită",
+    "folosita",
+    "locală",
+    "locala",
     "dintre",
-    "același",
+    "între",
+    "intre",
+    "este",
+    "definită",
+    "definita",
+    "descrie",
+    "identifica",
+    "identifică",
+    "conceptul",
+    "bine",
 }
 
-_DEFINITION_MARKERS = (
-    " este ",
-    " sunt ",
-    " reprezintă ",
-    " reprezinta ",
-    " se numește ",
-    " se numeste ",
-    " se definește ",
-    " se defineste ",
-    " constă ",
-    " consta ",
-)
 
-_PROCESS_MARKERS = (
-    " apoi ",
-    " după ",
-    " dupa ",
-    " înainte ",
-    " inainte ",
-    " pas ",
-    " etapă ",
-    " etapa ",
-    " proces ",
-    " metoda ",
-    " metodă ",
-)
-
-_FORMULA_MARKERS = (
-    "=",
-    "formula",
-    "ecuație",
-    "ecuatie",
-    "calcul",
-    "derivat",
-    "integral",
-    "funcție",
-    "functie",
-)
+def _slugify(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^a-zA-Z0-9]+", "_", ascii_text.lower()).strip("_")
+    return slug or "concept"
 
 
-def normalize_whitespace(text: str) -> str:
-    """Normalize whitespace while preserving sentence content."""
-
-    return re.sub(r"\s+", " ", text or "").strip()
+def _words(text: str) -> list[str]:
+    return re.findall(r"[A-Za-zĂÂÎȘȚăâîșț0-9']{4,}", text)
 
 
-def split_sentences(text: str, *, limit: int = 240) -> list[str]:
-    """Split text into a bounded list of sentence-like units."""
-
-    cleaned = normalize_whitespace(text)
-    if not cleaned:
-        return []
-
-    parts = re.split(r"(?<=[.!?])\s+", cleaned)
-    sentences = [part.strip() for part in parts if len(part.strip()) >= 12]
-    return sentences[:limit]
+def _sentence_split(text: str) -> list[str]:
+    sentences = [item.strip() for item in re.split(r"(?<=[.!?])\s+", text.strip()) if item.strip()]
+    if sentences:
+        return sentences
+    return [text.strip()] if text.strip() else []
 
 
-def extract_key_concepts(sentences: list[str], *, max_concepts: int = 24) -> list[dict[str, Any]]:
-    """Extract simple concept candidates from sentence text."""
+def extract_concepts(text: str, limit: int = 16) -> list[dict[str, Any]]:
+    """Extract deterministic concept candidates from text."""
 
-    counter: Counter[str] = Counter()
+    counts: Counter[str] = Counter()
+    display: dict[str, str] = {}
 
-    for sentence in sentences:
-        words = re.findall(r"[A-Za-zĂÂÎȘŞȚŢăâîșşțţ0-9][A-Za-zĂÂÎȘŞȚŢăâîșşțţ0-9\-]{4,}", sentence)
-        for raw_word in words:
-            word = raw_word.strip(" -—:;,.()[]{}").lower()
-            if len(word) < 5 or word in _ROMANIAN_STOPWORDS:
-                continue
-            counter[word] += 1
+    for word in _words(text):
+        key = word.strip(".,;:!?()[]{}«»\"'").lower()
+        if len(key) < 4 or key in STOPWORDS:
+            continue
+        counts[key] += 1
+        display.setdefault(key, word.strip(".,;:!?()[]{}«»\"'"))
 
     concepts: list[dict[str, Any]] = []
-    for index, (term, count) in enumerate(counter.most_common(max_concepts), start=1):
+    for index, (key, count) in enumerate(counts.most_common(limit), start=1):
+        label = display.get(key, key)
         concepts.append(
             {
-                "skill_id": f"local_concept_{index:03d}_{slugify(term)}",
-                "title": term,
+                "id": f"local_concept_{index:03d}_{_slugify(label)}",
+                "label": label,
+                "slug": _slugify(label),
                 "frequency": count,
-                "source": "local_term_frequency",
+            }
+        )
+
+    if not concepts:
+        concepts.append(
+            {
+                "id": "local_concept_001_general",
+                "label": "concept",
+                "slug": "general",
+                "frequency": 1,
             }
         )
 
     return concepts
 
 
-def classify_sentence(sentence: str) -> list[str]:
-    """Classify a sentence by lightweight pedagogical signals."""
+def extract_formulas(text: str) -> list[dict[str, Any]]:
+    """Extract simple formula-like snippets."""
 
-    lower = f" {sentence.lower()} "
-    tags: list[str] = []
+    candidates = []
+    for match in re.finditer(r"[^.!?\n]*(?:=|lim|∫|√|\^|f'\(x\)|\d+\s*[+\-*/]\s*\d+)[^.!?\n]*", text):
+        snippet = match.group(0).strip(" .;:")
+        if snippet and len(snippet) <= 180:
+            candidates.append(snippet)
 
-    if any(marker in lower for marker in _DEFINITION_MARKERS):
-        tags.append("definition")
-    if any(marker in lower for marker in _PROCESS_MARKERS):
-        tags.append("process")
-    if any(marker in lower for marker in _FORMULA_MARKERS):
-        tags.append("formula_or_calculation")
-    if "?" in sentence:
-        tags.append("question_like")
-
-    return tags or ["context"]
-
-
-def slugify(text: str) -> str:
-    """Create a stable ASCII-ish slug."""
-
-    replacements = str.maketrans(
-        {
-            "ă": "a",
-            "â": "a",
-            "î": "i",
-            "ș": "s",
-            "ş": "s",
-            "ț": "t",
-            "ţ": "t",
-            "Ă": "a",
-            "Â": "a",
-            "Î": "i",
-            "Ș": "s",
-            "Ş": "s",
-            "Ț": "t",
-            "Ţ": "t",
-        }
-    )
-    value = text.translate(replacements).lower()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    value = value.strip("-")
-    return value or "item"
-
-
-def infer_learning_objectives(concepts: list[dict[str, Any]]) -> list[str]:
-    """Create local learning objectives from detected concepts."""
-
-    if not concepts:
-        return [
-            "Identifică ideile principale din materialul de curs.",
-            "Revizuiește conceptele-cheie înainte de exerciții.",
-        ]
-
-    objectives: list[str] = []
-    for concept in concepts[:6]:
-        objectives.append(f"Explică noțiunea «{concept['title']}» în contextul materialului.")
-    return objectives
-
-
-def build_course_analysis(
-    course_text: str,
-    *,
-    course_id: str = "local-course",
-    source_path: str = "",
-    language: str = _DEFAULT_LANGUAGE,
-) -> dict[str, Any]:
-    """Build deterministic local course analysis JSON."""
-
-    sentences = split_sentences(course_text)
-    concepts = extract_key_concepts(sentences)
-    tagged_sentences = [
-        {
-            "id": f"sentence_{index:04d}",
-            "text": sentence,
-            "tags": classify_sentence(sentence),
-        }
-        for index, sentence in enumerate(sentences[:80], start=1)
-    ]
-
-    return {
-        "schema_version": "1",
-        "engine": "local_pedagogy_engine",
-        "engine_version": _ENGINE_VERSION,
-        "course_id": course_id,
-        "source_path": source_path,
-        "language": language,
-        "summary": {
-            "sentence_count": len(sentences),
-            "concept_count": len(concepts),
-            "definition_signal_count": sum(1 for item in tagged_sentences if "definition" in item["tags"]),
-            "process_signal_count": sum(1 for item in tagged_sentences if "process" in item["tags"]),
-            "formula_signal_count": sum(1 for item in tagged_sentences if "formula_or_calculation" in item["tags"]),
-        },
-        "learning_objectives": infer_learning_objectives(concepts),
-        "key_concepts": concepts,
-        "tagged_sentences": tagged_sentences,
-        "next_step": "Generate exercise_bank.local.json from this analysis.",
-    }
-
-
-def _choice_pool(concepts: list[dict[str, Any]], correct: str) -> list[str]:
-    titles = [str(item["title"]) for item in concepts if str(item["title"]) != correct]
-    distractors = titles[:3]
-    while len(distractors) < 3:
-        distractors.append(f"opțiune locală {len(distractors) + 1}")
-    return [correct] + distractors[:3]
-
-
-def build_exercise_bank(course_analysis: dict[str, Any]) -> dict[str, Any]:
-    """Build a local exercise bank scaffold from course analysis."""
-
-    concepts = list(course_analysis.get("key_concepts", []))
-    tagged_sentences = list(course_analysis.get("tagged_sentences", []))
-    exercises: list[dict[str, Any]] = []
-
-    for index, concept in enumerate(concepts[:12], start=1):
-        title = str(concept.get("title", f"concept {index}"))
-        skill_id = str(concept.get("skill_id", f"local_concept_{index:03d}"))
-        exercises.append(
+    formulas = []
+    for index, snippet in enumerate(dict.fromkeys(candidates), start=1):
+        formulas.append(
             {
-                "id": f"local_ex_{index:04d}",
+                "id": f"local_formula_{index:03d}",
+                "formula": snippet,
+                "skill_id": "local_formula_review",
+            }
+        )
+
+    return formulas
+
+
+def _concept_sentence(concept: dict[str, Any], sentences: list[str]) -> str:
+    label = str(concept["label"]).lower()
+    for sentence in sentences:
+        if label in sentence.lower():
+            return sentence
+    return sentences[0] if sentences else f"Fragment despre {concept['label']}."
+
+
+def _choice_pool(concepts: list[dict[str, Any]], answer: str, count: int = 4) -> list[str]:
+    choices: list[str] = [answer]
+    for concept in concepts:
+        label = str(concept["label"])
+        if label.lower() != answer.lower() and label not in choices:
+            choices.append(label)
+        if len(choices) >= count:
+            break
+
+    while len(choices) < count:
+        choices.append(f"opțiune {len(choices) + 1}")
+
+    return choices[:count]
+
+
+def build_exercises(text: str, concepts: list[dict[str, Any]], formulas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Build a varied local exercise bank."""
+
+    sentences = _sentence_split(text)
+    exercises: list[dict[str, Any]] = []
+    exercise_index = 1
+
+    def add(exercise: dict[str, Any]) -> None:
+        nonlocal exercise_index
+        exercise = dict(exercise)
+        exercise["id"] = f"local_ex_{exercise_index:04d}"
+        exercise_index += 1
+        exercises.append(exercise)
+
+    primary_concepts = concepts[:8]
+    for index, concept in enumerate(primary_concepts, start=1):
+        label = str(concept["label"])
+        skill_id = str(concept["id"])
+        sentence = _concept_sentence(concept, sentences)
+        related = primary_concepts[index] if index < len(primary_concepts) else primary_concepts[0]
+
+        add(
+            {
                 "skill_id": skill_id,
                 "type": "multiple_choice",
                 "difficulty": "easy",
-                "question": f"Care afirmație identifică cel mai bine conceptul «{title}»?",
-                "choices": _choice_pool(concepts, title),
-                "correct_answer": title,
-                "explanation": "Exercițiu generat local ca verificare de recunoaștere a conceptului.",
-                "source": "local_pedagogy_engine",
+                "question": f"Care afirmație identifică cel mai bine conceptul «{label}»?",
+                "choices": _choice_pool(primary_concepts, label),
+                "correct_answer": label,
+                "explanation": "Exercițiu local de recunoaștere a conceptului, păstrat ca întrebare de încălzire.",
+                "source_excerpt": sentence,
+                "quality_tags": ["concept_recognition", "warmup"],
             }
         )
 
-    definition_sentences = [item for item in tagged_sentences if "definition" in item.get("tags", [])]
-    for offset, item in enumerate(definition_sentences[:8], start=1):
-        exercises.append(
+        add(
             {
-                "id": f"local_def_{offset:04d}",
-                "skill_id": "local_definition_review",
+                "skill_id": skill_id,
                 "type": "short_answer",
                 "difficulty": "medium",
-                "question": "Explică pe scurt ideea principală din fragmentul sursă.",
-                "correct_answer": item.get("text", ""),
-                "explanation": "Răspunsul trebuie verificat cu fragmentul sursă atașat.",
-                "source_excerpt": item.get("text", ""),
-                "source": "local_pedagogy_engine",
+                "question": f"Explică pe scurt, cu propriile cuvinte, rolul conceptului «{label}» în fragment.",
+                "choices": [],
+                "correct_answer": f"Conceptul «{label}» trebuie explicat prin legătura lui cu ideea principală din fragment.",
+                "explanation": "Întrebarea cere reformulare și înțelegere, nu doar recunoaștere.",
+                "source_excerpt": sentence,
+                "quality_tags": ["explain_in_own_words", "understanding"],
             }
         )
 
-    formula_sentences = [item for item in tagged_sentences if "formula_or_calculation" in item.get("tags", [])]
-    for offset, item in enumerate(formula_sentences[:6], start=1):
-        exercises.append(
+        add(
             {
-                "id": f"local_formula_{offset:04d}",
-                "skill_id": "local_formula_review",
-                "type": "formula_or_calculation",
+                "skill_id": skill_id,
+                "type": "evidence_based",
                 "difficulty": "medium",
-                "question": "Identifică rolul relației/formulei semnalate în fragmentul sursă.",
-                "correct_answer": "Răspuns conceptual bazat pe fragmentul sursă.",
-                "explanation": "STEM v1 păstrează formula ca text/imagine sursă și cere verificare conceptuală.",
-                "source_excerpt": item.get("text", ""),
-                "source": "local_pedagogy_engine",
+                "question": f"Selectează ideea din fragment care susține cel mai bine conceptul «{label}».",
+                "choices": _choice_pool(primary_concepts, label),
+                "correct_answer": sentence,
+                "explanation": "Răspunsul trebuie justificat printr-un indiciu textual din fragment.",
+                "source_excerpt": sentence,
+                "quality_tags": ["evidence", "source_grounded"],
             }
         )
 
-    if not exercises:
-        exercises.append(
+        add(
             {
-                "id": "local_ex_0001",
-                "skill_id": "local_general_review",
-                "type": "short_answer",
-                "difficulty": "easy",
-                "question": "Care este ideea principală a materialului procesat?",
-                "correct_answer": "Răspunsul se verifică pe baza materialului sursă.",
-                "explanation": "Fallback local pentru documente fără suficiente semnale detectate.",
-                "source": "local_pedagogy_engine",
+                "skill_id": skill_id,
+                "type": "compare_concepts",
+                "difficulty": "medium",
+                "question": f"Compară conceptul «{label}» cu «{related['label']}» și precizează o diferență relevantă.",
+                "choices": [],
+                "correct_answer": f"Un răspuns bun explică diferența dintre «{label}» și «{related['label']}» pe baza contextului.",
+                "explanation": "Întrebarea verifică relații între concepte, nu memorare izolată.",
+                "source_excerpt": sentence,
+                "quality_tags": ["compare", "concept_relation"],
             }
         )
 
+        add(
+            {
+                "skill_id": skill_id,
+                "type": "apply_concept",
+                "difficulty": "medium",
+                "question": f"Aplică ideea de «{label}» într-un exemplu simplu legat de fragment.",
+                "choices": [],
+                "correct_answer": f"Exemplul trebuie să folosească explicit conceptul «{label}» într-o situație coerentă.",
+                "explanation": "Întrebarea verifică transferul conceptului într-un exemplu.",
+                "source_excerpt": sentence,
+                "quality_tags": ["apply", "transfer"],
+            }
+        )
+
+    for formula in formulas[:4]:
+        snippet = str(formula["formula"])
+        add(
+            {
+                "skill_id": str(formula["skill_id"]),
+                "type": "formula_interpretation",
+                "difficulty": "medium",
+                "question": f"Ce rol are formula sau notația următoare în fragment: {snippet}?",
+                "choices": [],
+                "correct_answer": "Formula trebuie interpretată ca relație sau procedeu de calcul în contextul fragmentului.",
+                "explanation": "Întrebarea cere interpretarea formulei, nu OCR sau calcul numeric automat.",
+                "source_excerpt": snippet,
+                "quality_tags": ["formula", "interpretation"],
+            }
+        )
+
+        add(
+            {
+                "skill_id": str(formula["skill_id"]),
+                "type": "apply_formula",
+                "difficulty": "hard",
+                "question": "Descrie pașii generali prin care ai folosi formula identificată într-un exercițiu.",
+                "choices": [],
+                "correct_answer": "Un răspuns bun menționează identificarea variabilelor, înlocuirea lor și interpretarea rezultatului.",
+                "explanation": "Întrebarea verifică pașii de aplicare, fără a necesita API sau CAS.",
+                "source_excerpt": snippet,
+                "quality_tags": ["formula", "apply"],
+            }
+        )
+
+    return exercises
+
+
+def build_course_analysis(
+    text: str,
+    *,
+    course_id: str,
+    source_path: str,
+    language: str,
+    concepts: list[dict[str, Any]],
+    formulas: list[dict[str, Any]],
+) -> dict[str, Any]:
+    sentences = _sentence_split(text)
     return {
         "schema_version": "1",
-        "engine": "local_pedagogy_engine",
-        "engine_version": _ENGINE_VERSION,
-        "course_id": course_analysis.get("course_id", "local-course"),
-        "source": "course_analysis.local.json",
+        "engine": ENGINE_NAME,
+        "engine_version": ENGINE_VERSION,
+        "question_variety_version": QUESTION_VARIETY_VERSION,
+        "course_id": course_id,
+        "source_path": source_path,
+        "language": language,
+        "concept_count": len(concepts),
+        "formula_count": len(formulas),
+        "sentence_count": len(sentences),
+        "concepts": concepts,
+        "formulas": formulas,
+        "summary": "Analiză locală deterministă pentru generare de exerciții variate, fără API extern.",
+        "legacy_fallback": "Legacy quiz/question data remains available when local analysis is unavailable.",
+    }
+
+
+def build_exercise_bank(
+    *,
+    course_id: str,
+    language: str,
+    exercises: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "schema_version": "1",
+        "engine": ENGINE_NAME,
+        "engine_version": ENGINE_VERSION,
+        "question_variety_version": QUESTION_VARIETY_VERSION,
+        "course_id": course_id,
+        "language": language,
         "exercise_count": len(exercises),
+        "legacy_fallback": "Use legacy quiz/question data when no valid local exercise_bank.local.json is available.",
+        "generation_profile": "varied_local_questions",
+        "quality_goal": "Move beyond concept recognition toward explain/apply/compare/formula interpretation.",
         "exercises": exercises,
-        "legacy_fallback": "Use legacy quiz/question data when this local bank is missing or empty.",
     }
 
 
 def build_exam_blueprint(
-    course_analysis: dict[str, Any],
-    exercise_bank: dict[str, Any],
+    *,
+    course_id: str,
+    exercises: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Build a local exam blueprint scaffold."""
-
-    exercises = list(exercise_bank.get("exercises", []))
-    type_counts: Counter[str] = Counter(str(item.get("type", "unknown")) for item in exercises)
-    difficulty_counts: Counter[str] = Counter(str(item.get("difficulty", "unknown")) for item in exercises)
-
+    type_counts = Counter(str(item.get("type", "")) for item in exercises)
+    skill_counts = Counter(str(item.get("skill_id", "")) for item in exercises)
     return {
         "schema_version": "1",
-        "engine": "local_pedagogy_engine",
-        "engine_version": _ENGINE_VERSION,
-        "course_id": course_analysis.get("course_id", "local-course"),
-        "recommended_question_count": min(30, max(5, len(exercises))),
-        "coverage": {
-            "concepts": len(course_analysis.get("key_concepts", [])),
-            "exercises": len(exercises),
-            "types": dict(type_counts),
-            "difficulty": dict(difficulty_counts),
-        },
+        "engine": ENGINE_NAME,
+        "engine_version": ENGINE_VERSION,
+        "question_variety_version": QUESTION_VARIETY_VERSION,
+        "course_id": course_id,
+        "policy": "Use local exercise bank only when explicitly enabled; otherwise keep legacy fallback.",
         "selection_policy": [
-            "prefer weak skills when progress data exists",
-            "avoid repeating the same question id in a session",
-            "mix definitions, concepts, formulas, and short-answer checks when available",
-            "fallback to legacy quiz/question source if local exercise bank is unavailable",
+            "legacy_fallback_is_default",
+            "local_exercise_bank_requires_explicit_flag",
+            "no_attempts_scoring_or_progress_updates",
         ],
+        "legacy_fallback": "Legacy quiz/question data remains the default safe path.",
+        "question_type_counts": dict(sorted(type_counts.items())),
+        "skill_counts": dict(sorted(skill_counts.items())),
+        "will_save_attempt": False,
+        "will_update_progress": False,
+        "will_score_answer": False,
+        "requires_cloud_or_api": False,
     }
 
 
 def generate_local_pedagogy_bundle(
-    course_text: str,
+    text: str,
     output_dir: str | Path,
     *,
     course_id: str = "local-course",
     source_path: str = "",
-    language: str = _DEFAULT_LANGUAGE,
-) -> LocalPedagogyBundle:
-    """Generate all local pedagogy JSON files in an output directory."""
+    language: str = "ro",
+) -> dict[str, Any]:
+    """Generate local pedagogy outputs into an internal or caller-provided output directory.
 
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
+    This function is used by CLI diagnostics and internal temporary sample
+    generation. Web routes must not pass user-provided filesystem roots here.
+    """
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    concepts = extract_concepts(text)
+    formulas = extract_formulas(text)
+    exercises = build_exercises(text, concepts, formulas)
 
     analysis = build_course_analysis(
-        course_text,
+        text,
         course_id=course_id,
         source_path=source_path,
         language=language,
+        concepts=concepts,
+        formulas=formulas,
     )
-    exercise_bank = build_exercise_bank(analysis)
-    exam_blueprint = build_exam_blueprint(analysis, exercise_bank)
+    exercise_bank = build_exercise_bank(course_id=course_id, language=language, exercises=exercises)
+    blueprint = build_exam_blueprint(course_id=course_id, exercises=exercises)
 
-    files = {
-        "course_analysis.local.json": analysis,
-        "exercise_bank.local.json": exercise_bank,
-        "exam_blueprint.local.json": exam_blueprint,
+    (output_path / "course_analysis.local.json").write_text(
+        json.dumps(analysis, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (output_path / "exercise_bank.local.json").write_text(
+        json.dumps(exercise_bank, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (output_path / "exam_blueprint.local.json").write_text(
+        json.dumps(blueprint, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    return {
+        "status": "ok",
+        "engine_version": ENGINE_VERSION,
+        "question_variety_version": QUESTION_VARIETY_VERSION,
+        "concept_count": len(concepts),
+        "exercise_count": len(exercises),
+        "question_type_count": len({item.get("type") for item in exercises}),
+        "output_dir": str(output_path),
     }
-
-    for filename, payload in files.items():
-        (output / filename).write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-
-    return LocalPedagogyBundle(
-        course_analysis=analysis,
-        exercise_bank=exercise_bank,
-        exam_blueprint=exam_blueprint,
-    )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate local pedagogy scaffold JSON outputs.")
-    parser.add_argument("--text", default="", help="Course text to analyze.")
-    parser.add_argument("--input", default="", help="Optional UTF-8 text input path.")
-    parser.add_argument("--output-dir", required=True, help="Output directory for local pedagogy JSON files.")
-    parser.add_argument("--course-id", default="local-course", help="Stable course id.")
-    parser.add_argument("--language", default=_DEFAULT_LANGUAGE, help="Course language code.")
+    parser = argparse.ArgumentParser(description="Generate local pedagogy outputs.")
+    parser.add_argument("--text", required=True, help="Input text to analyze.")
+    parser.add_argument("--output-dir", required=True, help="Output directory for local pedagogy files.")
+    parser.add_argument("--course-id", default="local-course", help="Course id.")
+    parser.add_argument("--source-path", default="", help="Optional source path label.")
+    parser.add_argument("--language", default="ro", help="Language code.")
     args = parser.parse_args()
 
-    course_text = args.text
-    source_path = args.input
-
-    if args.input:
-        course_text = Path(args.input).read_text(encoding="utf-8")
-
-    bundle = generate_local_pedagogy_bundle(
-        course_text,
+    summary = generate_local_pedagogy_bundle(
+        args.text,
         args.output_dir,
         course_id=args.course_id,
-        source_path=source_path,
+        source_path=args.source_path,
         language=args.language,
     )
-
-    print(
-        json.dumps(
-            {
-                "status": "ok",
-                "engine_version": _ENGINE_VERSION,
-                "concept_count": len(bundle.course_analysis.get("key_concepts", [])),
-                "exercise_count": bundle.exercise_bank.get("exercise_count", 0),
-                "output_dir": str(Path(args.output_dir)),
-            },
-            ensure_ascii=False,
-        )
-    )
+    print(json.dumps(summary, ensure_ascii=True))
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

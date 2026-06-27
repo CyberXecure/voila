@@ -228,3 +228,6 @@ Write-Host "=== LOCAL BANK DRY-RUN SOURCE SELECTION CHECK ==="
 Write-Host "=== LOCAL BANK QUESTION QUALITY GATE CHECK ==="
 & .\scripts\dev\check-local-bank-question-quality-gate.ps1
 
+Write-Host "=== LOCAL PEDAGOGY QUESTION VARIETY CHECK ==="
+& .\scripts\dev\check-local-pedagogy-question-variety.ps1
+

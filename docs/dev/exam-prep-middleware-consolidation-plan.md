@@ -1103,3 +1103,34 @@ Recommended next step:
 
 - v0.4.55 — Local pedagogy question variety upgrade
 
+## v0.4.55 Local pedagogy question variety upgrade
+
+Status: local-only question variety upgrade.
+
+Purpose: improve deterministic local question generation so the local bank contains varied question types and passes the dry-run quality gate.
+
+Scope:
+
+- update `services/api/local_pedagogy_engine.py`
+- update `scripts/dev/check-local-bank-question-quality-gate.ps1`
+- add `scripts/dev/check-local-pedagogy-question-variety.ps1`
+- add `docs/dev/local-pedagogy-question-variety-upgrade.md`
+- generate question types:
+  - multiple_choice
+  - short_answer
+  - evidence_based
+  - compare_concepts
+  - apply_concept
+  - formula_interpretation
+  - apply_formula
+- preserve legacy fallback
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- do not save attempts, score answers, or update progress
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.56 — Local-bank dry-run answer evaluation scaffold
+
