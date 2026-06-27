@@ -210,3 +210,6 @@ Write-Host "=== LOCAL BANK SOURCE ADAPTER CHECK ==="
 Write-Host "=== EXAM PREP LOCAL BANK DIAGNOSTICS CHECK ==="
 & .\scripts\dev\check-exam-prep-local-bank-diagnostics.ps1
 
+Write-Host "=== LOCAL BANK READ-ONLY STUDY PREVIEW CHECK ==="
+& .\scripts\dev\check-local-bank-study-preview.ps1
+

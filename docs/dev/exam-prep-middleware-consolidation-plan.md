@@ -955,3 +955,26 @@ Recommended next step:
 
 - v0.4.49 — Local bank read-only study preview
 
+## v0.4.49 Local bank read-only study preview
+
+Status: read-only study preview checkpoint.
+
+Purpose: preview normalized local-bank questions for a skill without saving attempts, updating progress, scoring answers, or replacing live study sessions.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_study_preview.py`
+- add `scripts/dev/check-local-bank-study-preview.ps1`
+- add `docs/dev/local-bank-read-only-study-preview.md`
+- preview local-bank questions for a selected skill
+- expose available skill counts for diagnostics
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.50 — Local bank study preview diagnostics route or protected UI marker
+
