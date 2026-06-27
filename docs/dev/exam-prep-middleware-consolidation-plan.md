@@ -1134,3 +1134,29 @@ Recommended next step:
 
 - v0.4.56 — Local-bank dry-run answer evaluation scaffold
 
+## v0.4.56 Local bank dry-run answer evaluation
+
+Status: dry-run answer evaluation scaffold.
+
+Purpose: evaluate answers to local-bank dry-run questions without persisting attempts or updating progress.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_dry_run_answer_evaluation.py`
+- add `scripts/dev/check-local-bank-dry-run-answer-evaluation.ps1`
+- add `docs/dev/local-bank-dry-run-answer-evaluation.md`
+- support normalized exact matching for multiple-choice
+- support keyword overlap for open-answer questions
+- generate local feedback previews
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not persist attempts, score live sessions, or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.57 — Local-bank dry-run attempt envelope
+
