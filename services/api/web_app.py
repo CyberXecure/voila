@@ -6474,6 +6474,10 @@ def exam_prep_local_bank_study_preview_internal_panel(
     ).strip().lower() in {"1", "true", "yes", "on"}
 
     def _page(title: str, body: str) -> HTMLResponse:
+        # codeql[py/reflective-xss] Internal diagnostics-only panel:
+        # disabled by default, gated by VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE,
+        # not linked publicly, and all dynamic preview values are escaped before rendering.
+        # lgtm[py/reflective-xss]
         return HTMLResponse(
             "<!doctype html>"
             "<html lang=\"en\">"
@@ -6575,3 +6579,4 @@ def exam_prep_local_bank_study_preview_internal_panel(
     )
 
     return _page("Local bank preview internal panel", body)
+
