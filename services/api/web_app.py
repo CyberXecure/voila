@@ -6452,71 +6452,56 @@ def exam_prep_local_bank_study_preview_internal_panel(
     course_id: str = "",
     skill_id: str = "",
     limit: int = 5,
-):
-    """Internal read-only HTML panel for local bank study preview.
+) -> dict:
+    """Internal JSON-only read-only panel model for local bank study preview.
 
     Disabled by default. Enable only for local diagnostics with:
     VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1
 
-    The panel has no public navigation link and does not save attempts,
-    score answers, update progress, replace live study sessions, or change
-    weak review behavior.
+    This route intentionally returns JSON only. It does not render HTML,
+    save attempts, score answers, update progress, replace live study sessions,
+    or change weak review behavior.
     """
 
-    import html
-    import json
     import os
-    from fastapi.responses import HTMLResponse
 
     enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE",
         "",
     ).strip().lower() in {"1", "true", "yes", "on"}
 
-    def _page(title: str, body: str) -> HTMLResponse:
-        # codeql[py/reflective-xss] Internal diagnostics-only panel:
-        # disabled by default, gated by VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE,
-        # not linked publicly, and all dynamic preview values are escaped before rendering.
-        # lgtm[py/reflective-xss]
-        return HTMLResponse(
-            "<!doctype html>"
-            "<html lang=\"en\">"
-            "<head>"
-            "<meta charset=\"utf-8\">"
-            "<meta name=\"robots\" content=\"noindex,nofollow\">"
-            "<title>" + html.escape(title) + "</title>"
-            "<style>"
-            "body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;line-height:1.45;max-width:1040px}"
-            ".badge{display:inline-block;padding:4px 8px;border:1px solid #999;border-radius:999px;font-size:12px;margin-right:6px}"
-            ".warn{background:#fff4cc}.ok{background:#e8f7ee}.muted{color:#666}.card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}"
-            "pre{background:#f6f6f6;border:1px solid #ddd;border-radius:8px;padding:12px;overflow:auto}"
-            "</style>"
-            "</head><body>" + body + "</body></html>"
-        )
+    base = {
+        "route_version": "v0.4.51",
+        "mode": "protected_json_panel",
+        "panel_kind": "internal_diagnostics_json",
+        "has_public_ui_link": False,
+        "will_save_attempt": False,
+        "will_update_progress": False,
+        "will_score_answer": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
 
     if not enabled:
-        return _page(
-            "Local bank preview panel disabled",
-            "<h1>Local bank preview internal panel</h1>"
-            "<p><span class=\"badge warn\">disabled</span><span class=\"badge\">v0.4.51</span></p>"
-            "<p>This internal diagnostics panel is disabled by default.</p>"
-            "<p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1</code>.</p>"
-            "<ul>"
-            "<li>will_save_attempt = false</li>"
-            "<li>will_update_progress = false</li>"
-            "<li>will_score_answer = false</li>"
-            "<li>will_replace_live_study_session = false</li>"
-            "<li>requires_cloud_or_api = false</li>"
-            "</ul>",
-        )
+        return {
+            **base,
+            "status": "disabled",
+            "message": "Local bank study preview panel is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1",
+            "preview": None,
+        }
 
     if not root:
-        return _page(
-            "Local bank preview panel missing root",
-            "<h1>Local bank preview internal panel</h1>"
-            "<p><span class=\"badge warn\">missing root</span><span class=\"badge\">v0.4.51</span></p>"
-            "<p>Missing required <code>root</code> query parameter.</p>",
-        )
+        return {
+            **base,
+            "status": "error",
+            "error": "Missing required root query parameter.",
+            "preview": None,
+        }
 
     from exam_prep_local_bank_study_preview import (
         build_local_bank_read_only_study_preview,
@@ -6529,53 +6514,8 @@ def exam_prep_local_bank_study_preview_internal_panel(
         limit=limit or None,
     )
 
-    question_cards = []
-    for item in preview.get("questions", []):
-        question_cards.append(
-            "<section class=\"card\">"
-            "<p><strong>" + html.escape(str(item.get("question", ""))) + "</strong></p>"
-            "<p class=\"muted\">"
-            "skill: " + html.escape(str(item.get("skill_id", ""))) +
-            " · type: " + html.escape(str(item.get("question_type", ""))) +
-            " · source: " + html.escape(str(item.get("source", ""))) +
-            "</p>"
-            "<p><strong>Correct answer preview:</strong> " + html.escape(str(item.get("correct_answer", ""))) + "</p>"
-            "<p><strong>Explanation preview:</strong> " + html.escape(str(item.get("explanation", ""))) + "</p>"
-            "</section>"
-        )
-
-    if not question_cards:
-        question_cards.append(
-            "<section class=\"card\"><p>No local preview questions available. Legacy fallback remains available.</p></section>"
-        )
-
-    payload = html.escape(json.dumps(preview, ensure_ascii=False, indent=2))
-
-    body = (
-        "<h1>Local bank preview internal panel</h1>"
-        "<p><span class=\"badge ok\">enabled</span><span class=\"badge\">v0.4.51</span><span class=\"badge\">read-only</span></p>"
-        "<p>This diagnostics panel is internal and has no public UI link.</p>"
-        "<ul>"
-        "<li>active_source: <strong>" + html.escape(str(preview.get("active_source", ""))) + "</strong></li>"
-        "<li>selected_skill_id: <strong>" + html.escape(str(preview.get("selected_skill_id", ""))) + "</strong></li>"
-        "<li>preview_question_count: <strong>" + html.escape(str(preview.get("preview_question_count", ""))) + "</strong></li>"
-        "<li>legacy_fallback_available: <strong>" + html.escape(str(preview.get("legacy_fallback_available", ""))) + "</strong></li>"
-        "</ul>"
-        "<h2>Read-only safety</h2>"
-        "<ul>"
-        "<li>will_save_attempt = false</li>"
-        "<li>will_update_progress = false</li>"
-        "<li>will_score_answer = false</li>"
-        "<li>will_modify_exam_prep_ui = false</li>"
-        "<li>will_modify_weak_review = false</li>"
-        "<li>will_replace_live_study_session = false</li>"
-        "<li>will_replace_legacy_generator = false</li>"
-        "<li>will_enable_live_consumption = false</li>"
-        "<li>requires_cloud_or_api = false</li>"
-        "</ul>"
-        "<h2>Preview questions</h2>"
-        + "".join(question_cards)
-        + "<h2>Raw preview JSON</h2><pre>" + payload + "</pre>"
-    )
-
-    return _page("Local bank preview internal panel", body)
+    return {
+        **base,
+        "status": "ok",
+        "preview": preview,
+    }

@@ -55,46 +55,54 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
 
   $Response = Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 10
   Write-Host "panel_status_code $($Response.StatusCode)"
-  $Content = $Response.Content
-  Write-Host ($Content.Substring(0, [Math]::Min(1600, $Content.Length)))
+  Write-Host $Response.Content
 
-  $status_ok = ($Response.StatusCode -eq 200)
-  $has_title = ($Content -match "Local bank preview internal panel")
-  $has_version = ($Content -match "v0\.4\.51")
-  $has_read_only = ($Content -match "read-only")
-  $has_active_source = ($Content -match "local_exercise_bank_adapter")
-  $has_selected_skill = ($Content -match "local_concept_001_functiile")
-  $has_question_count = ($Content -match "preview_question_count")
-  $has_no_attempt = ($Content -match "will_save_attempt = false")
-  $has_no_progress = ($Content -match "will_update_progress = false")
-  $has_no_score = ($Content -match "will_score_answer = false")
-  $has_no_ui = ($Content -match "will_modify_exam_prep_ui = false")
-  $has_no_weak = ($Content -match "will_modify_weak_review = false")
-  $has_no_live = ($Content -match "will_replace_live_study_session = false")
-  $has_no_legacy_replace = ($Content -match "will_replace_legacy_generator = false")
-  $has_no_live_consumption = ($Content -match "will_enable_live_consumption = false")
-  $has_no_cloud = ($Content -match "requires_cloud_or_api = false")
-  $has_noindex = ($Content -match "noindex,nofollow")
+  $Json = $Response.Content | ConvertFrom-Json
+  $Preview = $Json.preview
+
+  $status_ok = ($Response.StatusCode -eq 200 -and $Json.status -eq "ok")
+  $route_version_ok = ($Json.route_version -eq "v0.4.51")
+  $mode_ok = ($Json.mode -eq "protected_json_panel")
+  $panel_kind_ok = ($Json.panel_kind -eq "internal_diagnostics_json")
+  $no_public_ui_link_ok = ($Json.has_public_ui_link -eq $false)
+  $preview_version_ok = ($Preview.study_preview_version -eq "v0.4.49")
+  $preview_mode_ok = ($Preview.mode -eq "read_only_study_preview")
+  $active_source_ok = ($Preview.active_source -eq "local_exercise_bank_adapter")
+  $selected_skill_ok = ($Preview.selected_skill_id -eq "local_concept_001_functiile")
+  $question_count_ok = ([int]$Preview.preview_question_count -gt 0 -and [int]$Preview.preview_question_count -le 3)
+  $has_questions_ok = (@($Preview.questions).Count -gt 0)
+  $no_attempt_ok = ($Json.will_save_attempt -eq $false -and $Preview.will_save_attempt -eq $false)
+  $no_progress_ok = ($Json.will_update_progress -eq $false -and $Preview.will_update_progress -eq $false)
+  $no_score_ok = ($Json.will_score_answer -eq $false -and $Preview.will_score_answer -eq $false)
+  $no_ui_ok = ($Json.will_modify_exam_prep_ui -eq $false -and $Preview.will_modify_exam_prep_ui -eq $false)
+  $no_weak_ok = ($Json.will_modify_weak_review -eq $false -and $Preview.will_modify_weak_review -eq $false)
+  $no_live_ok = ($Json.will_replace_live_study_session -eq $false -and $Preview.will_replace_live_study_session -eq $false)
+  $no_legacy_replace_ok = ($Json.will_replace_legacy_generator -eq $false -and $Preview.will_replace_legacy_generator -eq $false)
+  $no_live_consumption_ok = ($Json.will_enable_live_consumption -eq $false -and $Preview.will_enable_live_consumption -eq $false)
+  $no_cloud_ok = ($Json.requires_cloud_or_api -eq $false -and $Preview.requires_cloud_or_api -eq $false)
 
   Write-Host "status_ok $status_ok"
-  Write-Host "has_title $has_title"
-  Write-Host "has_version $has_version"
-  Write-Host "has_read_only $has_read_only"
-  Write-Host "has_active_source $has_active_source"
-  Write-Host "has_selected_skill $has_selected_skill"
-  Write-Host "has_question_count $has_question_count"
-  Write-Host "has_no_attempt $has_no_attempt"
-  Write-Host "has_no_progress $has_no_progress"
-  Write-Host "has_no_score $has_no_score"
-  Write-Host "has_no_ui $has_no_ui"
-  Write-Host "has_no_weak $has_no_weak"
-  Write-Host "has_no_live $has_no_live"
-  Write-Host "has_no_legacy_replace $has_no_legacy_replace"
-  Write-Host "has_no_live_consumption $has_no_live_consumption"
-  Write-Host "has_no_cloud $has_no_cloud"
-  Write-Host "has_noindex $has_noindex"
+  Write-Host "route_version_ok $route_version_ok"
+  Write-Host "mode_ok $mode_ok"
+  Write-Host "panel_kind_ok $panel_kind_ok"
+  Write-Host "no_public_ui_link_ok $no_public_ui_link_ok"
+  Write-Host "preview_version_ok $preview_version_ok"
+  Write-Host "preview_mode_ok $preview_mode_ok"
+  Write-Host "active_source_ok $active_source_ok"
+  Write-Host "selected_skill_ok $selected_skill_ok"
+  Write-Host "question_count_ok $question_count_ok"
+  Write-Host "has_questions_ok $has_questions_ok"
+  Write-Host "no_attempt_ok $no_attempt_ok"
+  Write-Host "no_progress_ok $no_progress_ok"
+  Write-Host "no_score_ok $no_score_ok"
+  Write-Host "no_ui_ok $no_ui_ok"
+  Write-Host "no_weak_ok $no_weak_ok"
+  Write-Host "no_live_ok $no_live_ok"
+  Write-Host "no_legacy_replace_ok $no_legacy_replace_ok"
+  Write-Host "no_live_consumption_ok $no_live_consumption_ok"
+  Write-Host "no_cloud_ok $no_cloud_ok"
 
-  if (-not ($status_ok -and $has_title -and $has_version -and $has_read_only -and $has_active_source -and $has_selected_skill -and $has_question_count -and $has_no_attempt -and $has_no_progress -and $has_no_score -and $has_no_ui -and $has_no_weak -and $has_no_live -and $has_no_legacy_replace -and $has_no_live_consumption -and $has_no_cloud -and $has_noindex)) {
+  if (-not ($status_ok -and $route_version_ok -and $mode_ok -and $panel_kind_ok -and $no_public_ui_link_ok -and $preview_version_ok -and $preview_mode_ok -and $active_source_ok -and $selected_skill_ok -and $question_count_ok -and $has_questions_ok -and $no_attempt_ok -and $no_progress_ok -and $no_score_ok -and $no_ui_ok -and $no_weak_ok -and $no_live_ok -and $no_legacy_replace_ok -and $no_live_consumption_ok -and $no_cloud_ok)) {
     throw "LOCAL BANK PREVIEW INTERNAL PANEL CHECK v0.4.51 FAILED"
   }
 
@@ -112,4 +120,3 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
     Remove-Item -Recurse -Force $Tmp
   }
 }
-

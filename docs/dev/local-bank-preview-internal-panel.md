@@ -1,10 +1,10 @@
 # Local bank preview internal panel — v0.4.51
 
-Status: protected/internal read-only diagnostics panel.
+Status: protected/internal read-only JSON diagnostics panel.
 
 ## Purpose
 
-This milestone adds a minimal internal HTML diagnostics panel for the local-bank read-only study preview.
+This milestone adds a minimal internal JSON diagnostics panel for the local-bank read-only study preview.
 
 The panel is disabled by default and has no public UI link.
 
@@ -74,4 +74,3 @@ Suggested scope:
 - keep legacy fallback
 - do not update progress yet
 - do not score attempts yet
-
