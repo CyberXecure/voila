@@ -225,3 +225,6 @@ Write-Host "=== LOCAL BANK CONTROLLED CONSUMPTION FLAG CHECK ==="
 Write-Host "=== LOCAL BANK DRY-RUN SOURCE SELECTION CHECK ==="
 & .\scripts\dev\check-local-bank-dry-run-source-selection.ps1
 
+Write-Host "=== LOCAL BANK QUESTION QUALITY GATE CHECK ==="
+& .\scripts\dev\check-local-bank-question-quality-gate.ps1
+

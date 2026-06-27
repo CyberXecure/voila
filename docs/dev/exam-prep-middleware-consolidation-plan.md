@@ -1076,3 +1076,30 @@ Recommended next step:
 
 - v0.4.54 — Local bank dry-run question quality gate
 
+## v0.4.54 Local bank dry-run question quality gate
+
+Status: dry-run quality gate.
+
+Purpose: detect repetitive/simple local-bank questions before any future live Exam Prep consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_question_quality_gate.py`
+- add `scripts/dev/check-local-bank-question-quality-gate.ps1`
+- add `docs/dev/local-bank-dry-run-question-quality-gate.md`
+- detect repetitive concept-recognition wording
+- detect insufficient question type diversity
+- validate required fields
+- mark current scaffold output as `needs_improvement`
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not save attempts, score answers, or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.55 — Local pedagogy question variety upgrade
+
