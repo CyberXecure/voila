@@ -6369,3 +6369,78 @@ async def _v423_exam_prep_skill_detail_rendering_consolidation(request, call_nex
         headers=headers,
     )
 # --- end v0.4.23 consolidated Exam Prep skill detail rendering middleware ---
+
+# v0.4.50-local-bank-protected-preview-route
+@app.get("/exam-prep/local-bank-study-preview")
+def exam_prep_local_bank_study_preview_route(
+    root: str = "",
+    course_id: str = "",
+    skill_id: str = "",
+    limit: int = 5,
+) -> dict:
+    """Internal read-only local bank study preview route.
+
+    Disabled by default. Enable only for local diagnostics with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1
+
+    This route does not save attempts, score answers, update progress,
+    replace live study sessions, or change weak review behavior.
+    """
+
+    import os
+
+    enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if not enabled:
+        return {
+            "status": "disabled",
+            "route_version": "v0.4.50",
+            "mode": "protected_read_only_route",
+            "message": "Local bank study preview route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1",
+            "will_save_attempt": False,
+            "will_update_progress": False,
+            "will_score_answer": False,
+            "will_replace_live_study_session": False,
+            "requires_cloud_or_api": False,
+        }
+
+    if not root:
+        return {
+            "status": "error",
+            "route_version": "v0.4.50",
+            "error": "Missing required root query parameter.",
+            "will_save_attempt": False,
+            "will_update_progress": False,
+            "will_score_answer": False,
+        }
+
+    from exam_prep_local_bank_study_preview import (
+        build_local_bank_read_only_study_preview,
+    )
+
+    preview = build_local_bank_read_only_study_preview(
+        root,
+        course_id=course_id or None,
+        skill_id=skill_id or None,
+        limit=limit or None,
+    )
+
+    return {
+        "status": "ok",
+        "route_version": "v0.4.50",
+        "mode": "protected_read_only_route",
+        "preview": preview,
+        "will_save_attempt": False,
+        "will_update_progress": False,
+        "will_score_answer": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
