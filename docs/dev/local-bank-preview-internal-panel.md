@@ -74,3 +74,8 @@ Suggested scope:
 - keep legacy fallback
 - do not update progress yet
 - do not score attempts yet
+## Path safety
+
+The v0.4.51 internal panel does not accept a user-provided filesystem root.
+
+For diagnostics, it generates a temporary local sample internally and previews that sample. This avoids passing query parameters into filesystem discovery code.

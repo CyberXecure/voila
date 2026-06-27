@@ -49,9 +49,8 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
     throw "Voila health endpoint did not become ready."
   }
 
-  $encodedRoot = [uri]::EscapeDataString($Tmp)
   $encodedSkill = [uri]::EscapeDataString("local_concept_001_functiile")
-  $url = "http://127.0.0.1:8787/exam-prep/local-bank-study-preview/panel?root=$encodedRoot&course_id=v051-smoke&skill_id=$encodedSkill&limit=3"
+  $url = "http://127.0.0.1:8787/exam-prep/local-bank-study-preview/panel?course_id=v051-smoke&skill_id=$encodedSkill&limit=3"
 
   $Response = Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 10
   Write-Host "panel_status_code $($Response.StatusCode)"
@@ -65,6 +64,7 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
   $mode_ok = ($Json.mode -eq "protected_json_panel")
   $panel_kind_ok = ($Json.panel_kind -eq "internal_diagnostics_json")
   $no_public_ui_link_ok = ($Json.has_public_ui_link -eq $false)
+  $path_policy_ok = ($Json.path_policy -eq "no_user_provided_filesystem_root")
   $preview_version_ok = ($Preview.study_preview_version -eq "v0.4.49")
   $preview_mode_ok = ($Preview.mode -eq "read_only_study_preview")
   $active_source_ok = ($Preview.active_source -eq "local_exercise_bank_adapter")
@@ -86,6 +86,7 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
   Write-Host "mode_ok $mode_ok"
   Write-Host "panel_kind_ok $panel_kind_ok"
   Write-Host "no_public_ui_link_ok $no_public_ui_link_ok"
+  Write-Host "path_policy_ok $path_policy_ok"
   Write-Host "preview_version_ok $preview_version_ok"
   Write-Host "preview_mode_ok $preview_mode_ok"
   Write-Host "active_source_ok $active_source_ok"
@@ -102,7 +103,7 @@ Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei.
   Write-Host "no_live_consumption_ok $no_live_consumption_ok"
   Write-Host "no_cloud_ok $no_cloud_ok"
 
-  if (-not ($status_ok -and $route_version_ok -and $mode_ok -and $panel_kind_ok -and $no_public_ui_link_ok -and $preview_version_ok -and $preview_mode_ok -and $active_source_ok -and $selected_skill_ok -and $question_count_ok -and $has_questions_ok -and $no_attempt_ok -and $no_progress_ok -and $no_score_ok -and $no_ui_ok -and $no_weak_ok -and $no_live_ok -and $no_legacy_replace_ok -and $no_live_consumption_ok -and $no_cloud_ok)) {
+  if (-not ($status_ok -and $route_version_ok -and $mode_ok -and $panel_kind_ok -and $no_public_ui_link_ok -and $path_policy_ok -and $preview_version_ok -and $preview_mode_ok -and $active_source_ok -and $selected_skill_ok -and $question_count_ok -and $has_questions_ok -and $no_attempt_ok -and $no_progress_ok -and $no_score_ok -and $no_ui_ok -and $no_weak_ok -and $no_live_ok -and $no_legacy_replace_ok -and $no_live_consumption_ok -and $no_cloud_ok)) {
     throw "LOCAL BANK PREVIEW INTERNAL PANEL CHECK v0.4.51 FAILED"
   }
 

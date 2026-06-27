@@ -6448,9 +6448,8 @@ def exam_prep_local_bank_study_preview_route(
 # v0.4.51-local-bank-preview-internal-panel
 @app.get("/exam-prep/local-bank-study-preview/panel")
 def exam_prep_local_bank_study_preview_internal_panel(
-    root: str = "",
-    course_id: str = "",
-    skill_id: str = "",
+    course_id: str = "v051-panel",
+    skill_id: str = "local_concept_001_functiile",
     limit: int = 5,
 ) -> dict:
     """Internal JSON-only read-only panel model for local bank study preview.
@@ -6458,12 +6457,14 @@ def exam_prep_local_bank_study_preview_internal_panel(
     Disabled by default. Enable only for local diagnostics with:
     VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE=1
 
-    This route intentionally returns JSON only. It does not render HTML,
-    save attempts, score answers, update progress, replace live study sessions,
-    or change weak review behavior.
+    This route intentionally does not accept a filesystem root from the user.
+    It generates a temporary local sample internally, then previews that sample.
+    It does not render HTML, save attempts, score answers, update progress,
+    replace live study sessions, or change weak review behavior.
     """
 
     import os
+    import tempfile
 
     enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE",
@@ -6474,6 +6475,7 @@ def exam_prep_local_bank_study_preview_internal_panel(
         "route_version": "v0.4.51",
         "mode": "protected_json_panel",
         "panel_kind": "internal_diagnostics_json",
+        "path_policy": "no_user_provided_filesystem_root",
         "has_public_ui_link": False,
         "will_save_attempt": False,
         "will_update_progress": False,
@@ -6495,24 +6497,37 @@ def exam_prep_local_bank_study_preview_internal_panel(
             "preview": None,
         }
 
-    if not root:
-        return {
-            **base,
-            "status": "error",
-            "error": "Missing required root query parameter.",
-            "preview": None,
-        }
+    sample_text = (
+        "Funcțiile sunt relații matematice între două mulțimi. "
+        "O funcție este definită prin domeniu, codomeniu și lege de corespondență. "
+        "Derivata descrie variația locală a unei funcții. "
+        "Apoi se poate studia monotonia și se pot identifica punctele critice. "
+        "Formula f'(x)=lim h->0 (f(x+h)-f(x))/h este folosită pentru calculul derivatei."
+    )
+
+    safe_course_id = course_id or "v051-panel"
+    safe_skill_id = skill_id or "local_concept_001_functiile"
 
     from exam_prep_local_bank_study_preview import (
         build_local_bank_read_only_study_preview,
     )
+    from local_pedagogy_engine import generate_local_pedagogy_bundle
 
-    preview = build_local_bank_read_only_study_preview(
-        root,
-        course_id=course_id or None,
-        skill_id=skill_id or None,
-        limit=limit or None,
-    )
+    with tempfile.TemporaryDirectory(prefix="voila-local-bank-panel-") as tmp_root:
+        generate_local_pedagogy_bundle(
+            sample_text,
+            tmp_root,
+            course_id=safe_course_id,
+            source_path="internal_v051_sample",
+            language="ro",
+        )
+
+        preview = build_local_bank_read_only_study_preview(
+            tmp_root,
+            course_id=safe_course_id,
+            skill_id=safe_skill_id,
+            limit=limit or None,
+        )
 
     return {
         **base,
