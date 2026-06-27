@@ -81,3 +81,9 @@ Suggested scope:
 - preserve local-only/no API design
 - keep live consumption disabled
 
+## v0.4.55 update
+
+After the local pedagogy question variety upgrade, the diagnostic local sample is expected to pass the quality gate.
+
+The gate remains useful because it will still detect future regressions such as repetitive concept-recognition-only output.
+
