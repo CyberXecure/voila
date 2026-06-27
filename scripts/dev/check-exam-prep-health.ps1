@@ -222,3 +222,6 @@ Write-Host "=== LOCAL BANK PREVIEW INTERNAL PANEL CHECK ==="
 Write-Host "=== LOCAL BANK CONTROLLED CONSUMPTION FLAG CHECK ==="
 & .\scripts\dev\check-local-bank-consumption-flag.ps1
 
+Write-Host "=== LOCAL BANK DRY-RUN SOURCE SELECTION CHECK ==="
+& .\scripts\dev\check-local-bank-dry-run-source-selection.ps1
+

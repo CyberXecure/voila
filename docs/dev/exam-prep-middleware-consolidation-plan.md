@@ -1050,3 +1050,29 @@ Recommended next step:
 
 - v0.4.53 — Local bank source selection adapter for dry-run study sessions
 
+## v0.4.53 Local bank dry-run source selection
+
+Status: dry-run source selection scaffold.
+
+Purpose: model which source a future Exam Prep study session would select while preserving legacy fallback and avoiding live consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_dry_run_source_selection.py`
+- add `scripts/dev/check-local-bank-dry-run-source-selection.ps1`
+- add `docs/dev/local-bank-dry-run-source-selection.md`
+- use `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_CONSUMPTION`
+- OFF selects `legacy_fallback`
+- ON selects `local_exercise_bank_adapter` only for dry-run items
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- keep legacy quiz/question fallback
+- do not save attempts, score answers, or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+- do not require OpenAI, Mathpix, Ollama, or LM Studio
+
+Recommended next step:
+
+- v0.4.54 — Local bank dry-run question quality gate
+
