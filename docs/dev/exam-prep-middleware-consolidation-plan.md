@@ -1621,3 +1621,29 @@ Scope:
 Recommended next step:
 
 - v0.4.75 — Guarded live-consumption shadow report/panel consolidation status
+
+## v0.4.75 Guarded live-consumption shadow consolidation status
+
+Status: JSON-only consolidation status for the guarded local-bank shadow chain.
+
+Purpose: consolidate v0.4.60-v0.4.74 before any future step toward real live consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_shadow_consolidation_status.py`
+- add `scripts/dev/check-local-bank-shadow-consolidation-status.ps1`
+- add `docs/dev/local-bank-shadow-consolidation-status.md`
+- confirm all shadow-chain milestones are recorded
+- confirm internal routes/panels and flags
+- confirm `effective_source=legacy_fallback`
+- confirm shadow report and owner panel are sanitized
+- confirm answers, explanations, raw snapshots, dry_run_items, and selected_questions stay out of web routes/panels
+- confirm no live local-bank question delivery or consumption
+- confirm no attempts/progress/session persistence
+- confirm no live scoring
+- confirm no public UI changes
+- define next-phase criteria
+
+Recommended next step:
+
+- v0.4.76 — Guarded local-bank first live trial planning document, still no code-path change
