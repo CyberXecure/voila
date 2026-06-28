@@ -7981,3 +7981,147 @@ def exam_prep_local_bank_first_live_trial_contract_panel():
 </html>
 """
     return HTMLResponse(content=panel_html)
+
+# v0.4.84-guarded-first-live-trial-delivery-route-scaffold
+@app.get("/exam-prep/local-bank/first-live-trial-delivery-noop")
+def exam_prep_local_bank_first_live_trial_delivery_noop() -> dict:
+    """Internal JSON-only first-live-trial delivery route scaffold.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ROUTE=1
+
+    This route calls the v0.4.83 no-op delivery adapter. It does not deliver
+    questions live, does not start a live session, and does not persist attempts,
+    sessions, progress, or scoring.
+    """
+
+    import os
+
+    route_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "delivery_route_scaffold_version": "v0.4.84",
+        "mode": "guarded_first_live_trial_delivery_route_scaffold",
+        "route_path": "/exam-prep/local-bank/first-live-trial-delivery-noop",
+        "route_enabled": route_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "report_sanitized": True,
+        "raw_adapter_result_included": False,
+        "raw_contract_included": False,
+        "raw_session_envelope_included": False,
+        "raw_question_envelopes_included": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "effective_source": "legacy_fallback",
+        "fallback_source": "legacy_fallback",
+        "will_consume_local_bank_live": False,
+        "will_deliver_local_bank_questions_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not route_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "adapter_status": "disabled",
+            "message": "Guarded first live-trial delivery route scaffold is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ROUTE=1",
+            "candidate_source": "",
+            "delivery_attempted": False,
+            "delivery_performed": False,
+            "delivered_question_count": 0,
+            "delivered_question_ids": [],
+        }
+
+    from exam_prep_local_bank_first_live_trial_delivery_adapter import (
+        build_noop_delivery_adapter_result,
+    )
+
+    adapter = build_noop_delivery_adapter_result(
+        course_id="v084-route",
+        skill_id="local_concept_001_functiile",
+        limit=5,
+    )
+    adapter_summary = adapter.get("adapter_summary") or {}
+    adapter_boundary = adapter.get("adapter_contract_boundary") or {}
+
+    return {
+        **base,
+        "status": "ok",
+        "adapter_status": adapter.get("status"),
+        "adapter_ready_for_owner_review": adapter.get("ready_for_owner_review", False),
+        "adapter_flag_name": adapter.get("adapter_flag_name"),
+        "adapter_flag_enabled": adapter.get("adapter_flag_enabled", False),
+        "no_persistence_delivery_contract_status": adapter.get("no_persistence_delivery_contract_status"),
+        "no_persistence_delivery_contract_ready": adapter.get("no_persistence_delivery_contract_ready", False),
+        "candidate_source": adapter.get("candidate_source", "local_exercise_bank_adapter"),
+        "candidate_question_count": adapter_summary.get("candidate_question_count", 0),
+        "delivery_attempted": False,
+        "delivery_performed": False,
+        "delivered_question_count": 0,
+        "delivered_question_ids": [],
+        "adapter_summary": {
+            "delivery_attempted": False,
+            "delivery_performed": False,
+            "delivered_question_count": 0,
+            "candidate_question_count": adapter_summary.get("candidate_question_count", 0),
+            "noop_only": True,
+            "legacy_fallback_available": True,
+        },
+        "adapter_contract_boundary": {
+            "accepts_delivery_contract": bool(adapter_boundary.get("accepts_delivery_contract", True)),
+            "requires_no_persistence_policy": True,
+            "requires_abort_policy": True,
+            "requires_legacy_fallback": True,
+            "requires_owner_only_scope": True,
+            "requires_candidate_questions": True,
+            "blocks_delivery_now": True,
+            "returns_noop_result": True,
+        },
+        "implementation_scope": {
+            "json_only_route_scaffold": True,
+            "calls_noop_adapter": True,
+            "adds_public_ui": False,
+            "starts_live_session": False,
+            "replaces_live_study_session": False,
+            "delivers_local_bank_questions_live": False,
+            "persists_sessions": False,
+            "persists_attempts": False,
+            "updates_progress": False,
+            "scores_live_session": False,
+            "requires_cloud_or_api": False,
+        },
+        "explicit_not_live_yet": [
+            "delivery route scaffold does not change effective_source",
+            "delivery route scaffold calls a no-op adapter",
+            "delivery_performed remains false",
+            "delivered_question_count remains zero",
+            "local-bank questions are not delivered live",
+            "local-bank questions are not consumed live",
+            "live study sessions are not started",
+            "effective_source remains legacy_fallback",
+            "attempts are not persisted",
+            "progress is not updated",
+            "sessions are not persisted",
+            "live scoring is not enabled",
+            "public Exam Prep navigation is not changed",
+        ],
+    }

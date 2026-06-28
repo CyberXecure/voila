@@ -302,3 +302,6 @@ Write-Host "=== LOCAL BANK FIRST LIVE TRIAL CONTRACT REPORT ROUTE CHECK ==="
 
 Write-Host "=== LOCAL BANK FIRST LIVE TRIAL CONTRACT OWNER PANEL CHECK ==="
 & .\scripts\dev\check-local-bank-first-live-trial-contract-owner-panel.ps1
+
+Write-Host "=== LOCAL BANK FIRST LIVE TRIAL DELIVERY ROUTE SCAFFOLD CHECK ==="
+& .\scripts\dev\check-local-bank-first-live-trial-delivery-route-scaffold.ps1
