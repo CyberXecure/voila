@@ -237,3 +237,6 @@ Write-Host "=== LOCAL BANK DRY-RUN ANSWER EVALUATION CHECK ==="
 Write-Host "=== LOCAL BANK DRY-RUN ATTEMPT ENVELOPE CHECK ==="
 & .\scripts\dev\check-local-bank-dry-run-attempt-envelope.ps1
 
+Write-Host "=== LOCAL BANK DRY-RUN SESSION SUMMARY CHECK ==="
+& .\scripts\dev\check-local-bank-dry-run-session-summary.ps1
+
