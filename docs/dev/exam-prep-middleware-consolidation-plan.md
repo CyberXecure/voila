@@ -1252,3 +1252,28 @@ Recommended next step:
 
 - v0.4.61 — Guarded local-bank live-trial scaffold, disabled by default
 
+## v0.4.61 Local bank guarded live-trial scaffold
+
+Status: disabled-by-default guarded live-trial scaffold.
+
+Purpose: prepare a guarded live-trial plan after v0.4.60 readiness without wiring local-bank questions into live study sessions.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_guarded_live_trial.py`
+- add `scripts/dev/check-local-bank-guarded-live-trial.ps1`
+- add `docs/dev/local-bank-guarded-live-trial-scaffold.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_LIVE_TRIAL`
+- default OFF reports disabled
+- flag ON + readiness ready reports `guarded_trial_plan_ready`
+- keep Exam Prep UI and real progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.62 — Guarded live-trial adapter boundary, disabled by default
+

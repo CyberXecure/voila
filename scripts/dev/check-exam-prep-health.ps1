@@ -246,3 +246,6 @@ Write-Host "=== LOCAL BANK DRY-RUN PROGRESS IMPACT CHECK ==="
 Write-Host "=== LOCAL BANK INTEGRATION READINESS CHECK ==="
 & .\scripts\dev\check-local-bank-integration-readiness.ps1
 
+Write-Host "=== LOCAL BANK GUARDED LIVE TRIAL CHECK ==="
+& .\scripts\dev\check-local-bank-guarded-live-trial.ps1
+
