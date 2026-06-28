@@ -1647,3 +1647,28 @@ Scope:
 Recommended next step:
 
 - v0.4.76 — Guarded local-bank first live trial planning document, still no code-path change
+
+## v0.4.76 Guarded local-bank first live trial planning document
+
+Status: planning-only document; no live code-path change.
+
+Purpose: define what a first real guarded local-bank live trial would mean before any implementation changes the source, session, attempts, progress, or scoring paths.
+
+Scope:
+
+- add `docs/dev/local-bank-first-live-trial-planning-document.md`
+- add `scripts/dev/check-local-bank-first-live-trial-planning-document.ps1`
+- define the meaning of "live"
+- define abort/fallback rules to `legacy_fallback`
+- define leakage/XSS/CodeQL risks
+- define minimum criteria for attempt persistence
+- define minimum criteria for progress updates
+- define minimum criteria for live scoring
+- confirm `effective_source=legacy_fallback`
+- confirm no web route or runtime source path is changed
+- keep local-bank questions non-live
+- keep attempts/progress/sessions/scoring disabled
+
+Recommended next step:
+
+- v0.4.77 — Guarded first live trial contract skeleton, disabled by default
