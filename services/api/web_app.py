@@ -7398,3 +7398,236 @@ def exam_prep_local_bank_live_consumption_shadow_report() -> dict:
             "public Exam Prep navigation is not changed",
         ],
     }
+
+# v0.4.74-guarded-live-consumption-shadow-route-owner-panel
+@app.get("/exam-prep/local-bank/live-consumption-shadow-panel")
+def exam_prep_local_bank_live_consumption_shadow_panel():
+    """Hidden/internal owner panel for the guarded local-bank shadow report.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_OWNER_PANEL=1
+
+    The panel reads the v0.4.73 sanitized JSON report route from the browser. It
+    uses safe DOM rendering, does not accept query parameters, does not expose
+    answers/explanations/raw snapshots, and does not consume local-bank questions
+    live.
+    """
+
+    import os
+    from fastapi.responses import HTMLResponse
+
+    panel_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_OWNER_PANEL",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if not panel_enabled:
+        disabled_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Shadow owner panel disabled</title>
+</head>
+<body
+  data-shadow-owner-panel-version="v0.4.74"
+  data-shadow-owner-panel-status="disabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-shadow-questions-live="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+>
+  <main>
+    <h1>Guarded live-consumption shadow owner panel</h1>
+    <p id="shadow-owner-panel-status">disabled</p>
+    <p>This hidden/internal owner panel is disabled by default.</p>
+    <p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_OWNER_PANEL=1</code>.</p>
+    <ul>
+      <li>Effective source remains legacy_fallback.</li>
+      <li>No local-bank questions are delivered live.</li>
+      <li>No attempts, progress, session persistence, or live scoring.</li>
+      <li>No answers, explanations, or raw snapshots are exposed by this panel.</li>
+    </ul>
+  </main>
+</body>
+</html>
+"""
+        return HTMLResponse(content=disabled_html)
+
+    panel_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded shadow owner panel</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      line-height: 1.45;
+      background: Canvas;
+      color: CanvasText;
+    }
+    main { max-width: 1080px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid color-mix(in srgb, CanvasText 20%, transparent); margin-bottom: 1.25rem; padding-bottom: 1rem; }
+    .muted { opacity: .72; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; margin: 1rem 0; }
+    .summary-card { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: .9rem; padding: .85rem; }
+    .summary-card strong { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+    .summary-card span { display: block; font-size: 1.05rem; margin-top: .25rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .65rem 0; }
+    .badge { display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, CanvasText 22%, transparent); border-radius: 999px; padding: .2rem .55rem; font-size: .82rem; }
+    .shadow-card { border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 1rem; padding: 1rem; margin: 1rem 0; }
+    .safety { border-left: .25rem solid color-mix(in srgb, CanvasText 35%, transparent); padding-left: .85rem; margin: 1rem 0; }
+    code { background: color-mix(in srgb, CanvasText 8%, transparent); padding: .1rem .25rem; border-radius: .25rem; }
+  </style>
+</head>
+<body
+  data-shadow-owner-panel-version="v0.4.74"
+  data-shadow-owner-panel-status="enabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-report-route="/exam-prep/local-bank/live-consumption-shadow-report"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-shadow-questions-live="false"
+  data-will-start-live-session="false"
+  data-will-replace-effective-source="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+  data-will-score-live-session="false"
+>
+  <main>
+    <header>
+      <h1>Guarded live-consumption shadow owner panel</h1>
+      <p class="muted">
+        Hidden/internal owner panel. Reads the sanitized v0.4.73 JSON report.
+        Effective source remains <code>legacy_fallback</code>. Shadow questions are metadata-only.
+      </p>
+      <p id="shadow-owner-panel-status">loading</p>
+    </header>
+
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Shadow summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Selector</strong><span id="summary-selector">loading</span></div>
+        <div class="summary-card"><strong>Effective source</strong><span id="summary-effective">legacy_fallback</span></div>
+        <div class="summary-card"><strong>Shadow source</strong><span id="summary-shadow">pending</span></div>
+        <div class="summary-card"><strong>Count</strong><span id="summary-count">0</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="coverage-title">
+      <h2 id="coverage-title">Coverage comparison</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Types</strong><span id="coverage-types">0</span></div>
+        <div class="summary-card"><strong>Difficulty</strong><span id="coverage-difficulty">0</span></div>
+        <div class="summary-card"><strong>Skills</strong><span id="coverage-skills">0</span></div>
+      </div>
+    </section>
+
+    <section class="safety" aria-labelledby="safety-title">
+      <h2 id="safety-title">Safety guardrails</h2>
+      <ul>
+        <li>No local-bank questions are delivered live.</li>
+        <li>No live session start.</li>
+        <li>No effective source replacement.</li>
+        <li>No attempt, progress, or session persistence.</li>
+        <li>No live scoring and no public Exam Prep navigation change.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="questions-title">
+      <h2 id="questions-title">Selected shadow question metadata</h2>
+      <p class="muted" id="questions-subtitle">Waiting for sanitized shadow report...</p>
+      <div id="shadow-question-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const reportUrl = "/exam-prep/local-bank/live-consumption-shadow-report";
+    const statusEl = document.getElementById("shadow-owner-panel-status");
+    const summarySelectorEl = document.getElementById("summary-selector");
+    const summaryEffectiveEl = document.getElementById("summary-effective");
+    const summaryShadowEl = document.getElementById("summary-shadow");
+    const summaryCountEl = document.getElementById("summary-count");
+    const coverageTypesEl = document.getElementById("coverage-types");
+    const coverageDifficultyEl = document.getElementById("coverage-difficulty");
+    const coverageSkillsEl = document.getElementById("coverage-skills");
+    const subtitleEl = document.getElementById("questions-subtitle");
+    const listEl = document.getElementById("shadow-question-list");
+
+    function text(value) {
+      return value === undefined || value === null ? "" : String(value);
+    }
+
+    function appendText(parent, tagName, value, className) {
+      const el = document.createElement(tagName);
+      if (className) el.className = className;
+      el.textContent = text(value);
+      parent.appendChild(el);
+      return el;
+    }
+
+    function appendBadge(parent, value) {
+      appendText(parent, "span", value, "badge");
+    }
+
+    function renderShadowQuestion(item) {
+      const article = document.createElement("article");
+      article.className = "shadow-card";
+
+      const badges = document.createElement("div");
+      badges.className = "badge-row";
+      appendBadge(badges, text(item.question_type) || "unknown_type");
+      appendBadge(badges, text(item.difficulty) || "unknown_difficulty");
+      appendBadge(badges, text(item.skill_id) || "unknown_skill");
+      appendBadge(badges, text(item.source) || "unknown_source");
+      appendBadge(badges, "metadata only");
+      article.appendChild(badges);
+
+      appendText(article, "h3", "Shadow item " + text(item.shadow_index));
+      appendText(article, "p", "Question ID: " + text(item.question_id), "muted");
+      appendText(article, "p", "Dry run only: " + text(item.dry_run_only) + " · Delivered live: " + text(item.will_deliver_live), "muted");
+      return article;
+    }
+
+    fetch(reportUrl, { headers: { "accept": "application/json" } })
+      .then((response) => response.json())
+      .then((data) => {
+        const coverage = data.coverage_comparison || {};
+        const questions = Array.isArray(data.selected_shadow_questions) ? data.selected_shadow_questions : [];
+
+        statusEl.textContent = data.status || "unknown";
+        summarySelectorEl.textContent = data.selector_status || "unknown";
+        summaryEffectiveEl.textContent = data.effective_source || "legacy_fallback";
+        summaryShadowEl.textContent = data.shadow_source || "";
+        summaryCountEl.textContent = String(data.shadow_candidate_count || questions.length || 0);
+        coverageTypesEl.textContent = String(coverage.local_question_type_diversity || 0);
+        coverageDifficultyEl.textContent = String(coverage.local_difficulty_diversity || 0);
+        coverageSkillsEl.textContent = String(coverage.local_skill_diversity || 0);
+        subtitleEl.textContent = "Rendered from sanitized metadata-only shadow report.";
+
+        listEl.replaceChildren();
+        if (questions.length === 0) {
+          appendText(listEl, "p", "No selected shadow questions available.", "muted");
+          return;
+        }
+        questions.forEach((item) => listEl.appendChild(renderShadowQuestion(item)));
+      })
+      .catch((error) => {
+        statusEl.textContent = "error";
+        summarySelectorEl.textContent = "error";
+        subtitleEl.textContent = text(error);
+      });
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=panel_html)

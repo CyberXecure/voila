@@ -284,3 +284,6 @@ Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW SELECTOR CHECK ==="
 
 Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW ROUTE REPORT CHECK ==="
 & .\scripts\dev\check-local-bank-live-consumption-shadow-route-report.ps1
+
+Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW OWNER PANEL CHECK ==="
+& .\scripts\dev\check-local-bank-live-consumption-shadow-owner-panel.ps1
