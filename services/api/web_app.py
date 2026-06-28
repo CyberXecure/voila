@@ -7062,16 +7062,10 @@ def exam_prep_local_bank_guarded_trial_candidates_panel(
 
 # v0.4.68-guarded-trial-candidate-panel-polish-owner-smoke
 @app.get("/exam-prep/local-bank/guarded-trial-candidates-panel-polish")
-def exam_prep_local_bank_guarded_trial_candidates_panel_polish(
-    course_id: str = "v068-panel",
-    skill_id: str = "local_concept_001_functiile",
-    limit: int = 5,
-):
+def exam_prep_local_bank_guarded_trial_candidates_panel_polish():
     """Hidden/internal polished owner-smoke panel for guarded local-bank candidates."""
 
-    import json
     import os
-    from urllib.parse import urlencode
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -7079,9 +7073,6 @@ def exam_prep_local_bank_guarded_trial_candidates_panel_polish(
         "",
     ).strip().lower() in {"1", "true", "yes", "on"}
 
-    safe_course = course_id or "v068-panel"
-    safe_skill = skill_id or "local_concept_001_functiile"
-    safe_limit = max(1, min(int(limit or 5), 20))
 
     if not panel_enabled:
         disabled_html = """
@@ -7119,9 +7110,7 @@ def exam_prep_local_bank_guarded_trial_candidates_panel_polish(
 """
         return HTMLResponse(content=disabled_html)
 
-    query = urlencode({"course_id": safe_course, "skill_id": safe_skill, "limit": safe_limit})
-    candidates_url = f"/exam-prep/local-bank/guarded-trial-candidates?{query}"
-    candidates_url_json = json.dumps(candidates_url)
+    candidates_url_json = '"/exam-prep/local-bank/guarded-trial-candidates?course_id=v068-panel&skill_id=local_concept_001_functiile&limit=5"'
 
     panel_html = f"""
 <!doctype html>
