@@ -7059,3 +7059,208 @@ def exam_prep_local_bank_guarded_trial_candidates_panel(
 </html>
 """
     return HTMLResponse(content=panel_html)
+
+# v0.4.68-guarded-trial-candidate-panel-polish-owner-smoke
+@app.get("/exam-prep/local-bank/guarded-trial-candidates-panel-polish")
+def exam_prep_local_bank_guarded_trial_candidates_panel_polish():
+    """Hidden/internal polished owner-smoke panel for guarded local-bank candidates."""
+
+    import os
+    from fastapi.responses import HTMLResponse
+
+    panel_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL_POLISH",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+
+    if not panel_enabled:
+        disabled_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded candidate panel polish disabled</title>
+</head>
+<body
+  data-panel-polish-version="v0.4.68"
+  data-panel-polish-status="disabled"
+  data-route-kind="internal_hidden_owner_smoke_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-will-consume-local-bank-live="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+>
+  <main>
+    <h1>Guarded candidate preview panel polish</h1>
+    <p id="candidate-panel-polish-status">disabled</p>
+    <p>This hidden/internal owner-smoke panel is disabled by default.</p>
+    <p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL_POLISH=1</code>.</p>
+    <ul>
+      <li>Effective source remains legacy_fallback.</li>
+      <li>No live local-bank consumption.</li>
+      <li>No attempts, progress, session persistence, or live scoring.</li>
+      <li>No answers or explanations are exposed by this panel.</li>
+    </ul>
+  </main>
+</body>
+</html>
+"""
+        return HTMLResponse(content=disabled_html)
+
+    candidates_url_json = '"/exam-prep/local-bank/guarded-trial-candidates?course_id=v068-panel&skill_id=local_concept_001_functiile&limit=5"'
+
+    panel_html = f"""
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded candidate preview owner smoke</title>
+  <style>
+    body {{ font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 0; line-height: 1.45; }}
+    main {{ max-width: 1080px; margin: 0 auto; padding: 2rem; }}
+    header {{ border-bottom: 1px solid #ddd; margin-bottom: 1.25rem; padding-bottom: 1rem; }}
+    .muted {{ opacity: .72; }}
+    .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; margin: 1rem 0; }}
+    .summary-card {{ border: 1px solid #ddd; border-radius: .9rem; padding: .85rem; }}
+    .summary-card strong {{ display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }}
+    .summary-card span {{ display: block; font-size: 1.05rem; margin-top: .25rem; }}
+    .badge-row {{ display: flex; flex-wrap: wrap; gap: .4rem; margin: .65rem 0; }}
+    .badge {{ display: inline-flex; align-items: center; border: 1px solid #bbb; border-radius: 999px; padding: .2rem .55rem; font-size: .82rem; }}
+    .question-card {{ border: 1px solid #ddd; border-radius: 1rem; padding: 1rem; margin: 1rem 0; }}
+    .safety {{ border-left: .25rem solid #999; padding-left: .85rem; margin: 1rem 0; }}
+    code {{ background: #f5f5f5; padding: .1rem .25rem; border-radius: .25rem; }}
+  </style>
+</head>
+<body
+  data-panel-polish-version="v0.4.68"
+  data-panel-polish-status="enabled"
+  data-route-kind="internal_hidden_owner_smoke_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-will-consume-local-bank-live="false"
+  data-will-start-live-session="false"
+  data-will-replace-effective-source="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+  data-will-score-live-session="false"
+>
+  <main>
+    <header>
+      <h1>Guarded candidate preview owner smoke</h1>
+      <p class="muted">Hidden/internal panel. Preview-only. Effective source remains <code>legacy_fallback</code>.</p>
+      <p id="candidate-panel-polish-status">loading</p>
+    </header>
+
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Compact summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Status</strong><span id="summary-status">loading</span></div>
+        <div class="summary-card"><strong>Count</strong><span id="summary-count">0</span></div>
+        <div class="summary-card"><strong>Source</strong><span id="summary-source">legacy_fallback</span></div>
+        <div class="summary-card"><strong>Safety</strong><span id="summary-safety">pending</span></div>
+      </div>
+    </section>
+
+    <section class="safety" aria-labelledby="safety-title">
+      <h2 id="safety-title">Safety guardrails</h2>
+      <ul>
+        <li>No live local-bank consumption.</li>
+        <li>No live session start.</li>
+        <li>No effective source replacement.</li>
+        <li>No attempt, progress, or session persistence.</li>
+        <li>No live scoring and no public Exam Prep navigation change.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="candidate-title">
+      <h2 id="candidate-title">Candidate questions</h2>
+      <p class="muted" id="candidate-subtitle">Waiting for candidate route...</p>
+      <div id="candidate-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const candidateUrl = {candidates_url_json};
+    const statusEl = document.getElementById("candidate-panel-polish-status");
+    const summaryStatusEl = document.getElementById("summary-status");
+    const summaryCountEl = document.getElementById("summary-count");
+    const summarySourceEl = document.getElementById("summary-source");
+    const summarySafetyEl = document.getElementById("summary-safety");
+    const subtitleEl = document.getElementById("candidate-subtitle");
+    const listEl = document.getElementById("candidate-list");
+
+    function text(value) {{
+      return value === undefined || value === null ? "" : String(value);
+    }}
+
+    function appendText(parent, tagName, value, className) {{
+      const el = document.createElement(tagName);
+      if (className) el.className = className;
+      el.textContent = text(value);
+      parent.appendChild(el);
+      return el;
+    }}
+
+    function appendBadge(parent, value) {{
+      appendText(parent, "span", value, "badge");
+    }}
+
+    function renderQuestion(item) {{
+      const article = document.createElement("article");
+      article.className = "question-card";
+
+      const badges = document.createElement("div");
+      badges.className = "badge-row";
+      appendBadge(badges, text(item.question_type) || "unknown_type");
+      appendBadge(badges, text(item.difficulty) || "unknown_difficulty");
+      appendBadge(badges, text(item.skill_id) || "unknown_skill");
+      appendBadge(badges, "answers hidden");
+      appendBadge(badges, "explanations hidden");
+      article.appendChild(badges);
+
+      appendText(article, "h3", "Question " + text(item.candidate_index));
+      appendText(article, "p", item.question || "");
+
+      const choices = Array.isArray(item.choices) ? item.choices : [];
+      if (choices.length > 0) {{
+        const ol = document.createElement("ol");
+        choices.forEach((choice) => appendText(ol, "li", choice));
+        article.appendChild(ol);
+      }}
+
+      appendText(article, "p", "Preview-safe payload rendered without solution fields.", "muted");
+      return article;
+    }}
+
+    fetch(candidateUrl, {{ headers: {{ "accept": "application/json" }} }})
+      .then((response) => response.json())
+      .then((data) => {{
+        const questions = Array.isArray(data.candidate_questions) ? data.candidate_questions : [];
+        statusEl.textContent = data.status || "unknown";
+        summaryStatusEl.textContent = data.candidate_status || data.status || "unknown";
+        summaryCountEl.textContent = String(data.candidate_question_count || questions.length || 0);
+        summarySourceEl.textContent = data.effective_source || "legacy_fallback";
+        summarySafetyEl.textContent = data.safety_ok === true ? "safety_ok" : "needs_review";
+        subtitleEl.textContent = "Rendered from preview-safe candidate route.";
+
+        listEl.replaceChildren();
+        if (questions.length === 0) {{
+          appendText(listEl, "p", "No candidate questions available.", "muted");
+          return;
+        }}
+        questions.forEach((item) => listEl.appendChild(renderQuestion(item)));
+      }})
+      .catch((error) => {{
+        statusEl.textContent = "error";
+        summaryStatusEl.textContent = "error";
+        subtitleEl.textContent = text(error);
+      }});
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=panel_html)

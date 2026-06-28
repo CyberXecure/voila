@@ -1431,3 +1431,32 @@ Scope:
 Recommended next step:
 
 - v0.4.68 — Guarded live-trial candidate preview panel polish and owner smoke
+
+## v0.4.68 Local bank guarded live-trial candidate panel polish owner smoke
+
+Status: disabled-by-default hidden/internal candidate panel polish and owner smoke.
+
+Purpose: polish the internal candidate preview panel with clearer status, summary, badges, and safe DOM rendering while keeping local-bank consumption disabled.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/guarded-trial-candidates-panel-polish`
+- add `scripts/dev/check-local-bank-guarded-trial-candidates-panel-polish.ps1`
+- add `docs/dev/local-bank-guarded-trial-candidates-panel-polish.md`
+- gate the panel with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL_POLISH`
+- keep noindex/nofollow
+- keep hidden/internal owner-smoke status and no public UI link
+- fetch candidate questions from v0.4.66
+- add summary cards and badges
+- use safe DOM rendering without `innerHTML`
+- hide answer and explanation previews
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.69 — Guarded local-bank trial explicit owner enablement checklist
