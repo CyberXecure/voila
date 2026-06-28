@@ -1460,3 +1460,28 @@ Scope:
 Recommended next step:
 
 - v0.4.69 — Guarded local-bank trial explicit owner enablement checklist
+
+## v0.4.69 Guarded local-bank owner enablement checklist
+
+Status: JSON-only local owner enablement checklist.
+
+Purpose: add an explicit owner-facing enablement checklist before any future milestone can attempt real guarded live consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_owner_enablement_checklist.py`
+- add `scripts/dev/check-local-bank-owner-enablement-checklist.ps1`
+- add `docs/dev/local-bank-owner-enablement-checklist.md`
+- verify readiness, guarded trial plan, adapter boundary, no-op hook, required flags, and preview/panel prerequisites
+- define minimum criteria for v0.4.70
+- explicitly record what is still not live
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.70 — Guarded local-bank live consumption decision gate, still disabled by default
