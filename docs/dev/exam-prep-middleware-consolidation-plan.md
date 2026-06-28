@@ -1724,3 +1724,29 @@ Scope:
 Recommended next step:
 
 - v0.4.79 — Guarded first live trial contract owner panel, disabled by default
+
+## v0.4.79 Guarded first live trial contract owner panel
+
+Status: disabled-by-default hidden/internal owner panel.
+
+Purpose: add an owner-only panel over the v0.4.78 sanitized contract report route without enabling live local-bank consumption.
+
+Scope:
+
+- add GET /exam-prep/local-bank/first-live-trial-contract-panel
+- add scripts/dev/check-local-bank-first-live-trial-contract-owner-panel.ps1
+- add docs/dev/local-bank-first-live-trial-contract-owner-panel.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_OWNER_PANEL
+- read the v0.4.78 sanitized report route
+- use safe DOM rendering without innerHTML
+- keep effective_source=legacy_fallback
+- do not add public UI
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.80 — Guarded first live trial question envelope sanitizer, disabled by default

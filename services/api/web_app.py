@@ -7764,3 +7764,220 @@ def exam_prep_local_bank_first_live_trial_contract_report() -> dict:
             "public Exam Prep navigation is not changed",
         ],
     }
+
+# v0.4.79-guarded-first-live-trial-contract-owner-panel
+@app.get("/exam-prep/local-bank/first-live-trial-contract-panel")
+def exam_prep_local_bank_first_live_trial_contract_panel():
+    """Hidden/internal owner panel for the guarded first live-trial contract report.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_OWNER_PANEL=1
+
+    The panel reads the v0.4.78 sanitized JSON report route from the browser.
+    It uses safe DOM rendering, does not accept query parameters, and does not
+    enable live consumption, persistence, progress updates, scoring, or public UI.
+    """
+
+    import os
+    from fastapi.responses import HTMLResponse
+
+    panel_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_OWNER_PANEL",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if not panel_enabled:
+        disabled_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>First live-trial contract owner panel disabled</title>
+</head>
+<body
+  data-first-live-trial-contract-owner-panel-version="v0.4.79"
+  data-first-live-trial-contract-owner-panel-status="disabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-local-bank-questions-live="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+>
+  <main>
+    <h1>Guarded first live-trial contract owner panel</h1>
+    <p id="contract-owner-panel-status">disabled</p>
+    <p>This hidden/internal owner panel is disabled by default.</p>
+    <p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_OWNER_PANEL=1</code>.</p>
+    <ul>
+      <li>Effective source remains legacy_fallback.</li>
+      <li>No local-bank questions are delivered live.</li>
+      <li>No attempts, progress, session persistence, or live scoring.</li>
+      <li>No answers, explanations, raw snapshots, or raw contract payloads are exposed by this panel.</li>
+    </ul>
+  </main>
+</body>
+</html>
+"""
+        return HTMLResponse(content=disabled_html)
+
+    panel_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded first live-trial contract owner panel</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      line-height: 1.45;
+      background: Canvas;
+      color: CanvasText;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid color-mix(in srgb, CanvasText 20%, transparent); margin-bottom: 1.25rem; padding-bottom: 1rem; }
+    .muted { opacity: .72; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; margin: 1rem 0; }
+    .summary-card { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: .9rem; padding: .85rem; }
+    .summary-card strong { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+    .summary-card span { display: block; font-size: 1.05rem; margin-top: .25rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .65rem 0; }
+    .badge { display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, CanvasText 22%, transparent); border-radius: 999px; padding: .2rem .55rem; font-size: .82rem; }
+    .panel-card { border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 1rem; padding: 1rem; margin: 1rem 0; }
+    .safety { border-left: .25rem solid color-mix(in srgb, CanvasText 35%, transparent); padding-left: .85rem; margin: 1rem 0; }
+    code { background: color-mix(in srgb, CanvasText 8%, transparent); padding: .1rem .25rem; border-radius: .25rem; }
+  </style>
+</head>
+<body
+  data-first-live-trial-contract-owner-panel-version="v0.4.79"
+  data-first-live-trial-contract-owner-panel-status="enabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-report-route="/exam-prep/local-bank/first-live-trial-contract-report"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-local-bank-questions-live="false"
+  data-will-start-live-session="false"
+  data-will-replace-effective-source="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+  data-will-score-live-session="false"
+>
+  <main>
+    <header>
+      <h1>Guarded first live-trial contract owner panel</h1>
+      <p class="muted">
+        Hidden/internal owner panel. Reads the sanitized v0.4.78 JSON report.
+        Effective source remains <code>legacy_fallback</code>. This is visual review only.
+      </p>
+      <p id="contract-owner-panel-status">loading</p>
+    </header>
+
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Contract summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Status</strong><span id="summary-contract-status">loading</span></div>
+        <div class="summary-card"><strong>Effective source</strong><span id="summary-effective">legacy_fallback</span></div>
+        <div class="summary-card"><strong>Candidate source</strong><span id="summary-candidate">pending</span></div>
+        <div class="summary-card"><strong>Fallback source</strong><span id="summary-fallback">legacy_fallback</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sections-title">
+      <h2 id="sections-title">Contract sections</h2>
+      <div id="section-badges" class="badge-row"></div>
+    </section>
+
+    <section aria-labelledby="guardrails-title">
+      <h2 id="guardrails-title">Guardrails</h2>
+      <div id="guardrails-list" class="panel-card"></div>
+    </section>
+
+    <section aria-labelledby="implementation-title">
+      <h2 id="implementation-title">Implementation scope</h2>
+      <div id="implementation-list" class="panel-card"></div>
+    </section>
+
+    <section class="safety" aria-labelledby="safety-title">
+      <h2 id="safety-title">Explicitly not live yet</h2>
+      <ul id="not-live-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const reportUrl = "/exam-prep/local-bank/first-live-trial-contract-report";
+    const statusEl = document.getElementById("contract-owner-panel-status");
+    const contractStatusEl = document.getElementById("summary-contract-status");
+    const effectiveEl = document.getElementById("summary-effective");
+    const candidateEl = document.getElementById("summary-candidate");
+    const fallbackEl = document.getElementById("summary-fallback");
+    const sectionBadgesEl = document.getElementById("section-badges");
+    const guardrailsListEl = document.getElementById("guardrails-list");
+    const implementationListEl = document.getElementById("implementation-list");
+    const notLiveListEl = document.getElementById("not-live-list");
+
+    function text(value) {
+      return value === undefined || value === null ? "" : String(value);
+    }
+
+    function appendText(parent, tagName, value, className) {
+      const el = document.createElement(tagName);
+      if (className) el.className = className;
+      el.textContent = text(value);
+      parent.appendChild(el);
+      return el;
+    }
+
+    function appendBadge(parent, value) {
+      appendText(parent, "span", value, "badge");
+    }
+
+    function renderKeyValues(parent, obj) {
+      parent.replaceChildren();
+      const list = document.createElement("ul");
+      Object.keys(obj || {}).sort().forEach((key) => {
+        const item = document.createElement("li");
+        item.textContent = key + ": " + text(obj[key]);
+        list.appendChild(item);
+      });
+      parent.appendChild(list);
+    }
+
+    function renderList(parent, values) {
+      parent.replaceChildren();
+      (Array.isArray(values) ? values : []).forEach((value) => {
+        appendText(parent, "li", value);
+      });
+    }
+
+    fetch(reportUrl, { headers: { "accept": "application/json" } })
+      .then((response) => response.json())
+      .then((data) => {
+        statusEl.textContent = data.status || "unknown";
+        contractStatusEl.textContent = data.contract_status || "unknown";
+        effectiveEl.textContent = data.effective_source || "legacy_fallback";
+        candidateEl.textContent = data.candidate_source || "";
+        fallbackEl.textContent = data.fallback_source || "legacy_fallback";
+
+        sectionBadgesEl.replaceChildren();
+        const sections = Array.isArray(data.contract_sections_available) ? data.contract_sections_available : [];
+        sections.forEach((name) => appendBadge(sectionBadgesEl, name));
+
+        renderKeyValues(guardrailsListEl, data.contract_guardrails || {});
+        renderKeyValues(implementationListEl, data.implementation_scope || {});
+        renderList(notLiveListEl, data.explicit_not_live_yet || []);
+      })
+      .catch((error) => {
+        statusEl.textContent = "error";
+        contractStatusEl.textContent = text(error);
+      });
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=panel_html)
