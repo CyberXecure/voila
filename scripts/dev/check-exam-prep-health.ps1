@@ -252,3 +252,6 @@ Write-Host "=== LOCAL BANK GUARDED LIVE TRIAL CHECK ==="
 Write-Host "=== LOCAL BANK GUARDED ADAPTER BOUNDARY CHECK ==="
 & .\scripts\dev\check-local-bank-guarded-adapter-boundary.ps1
 
+Write-Host "=== LOCAL BANK NO-OP STUDY SESSION HOOK CHECK ==="
+& .\scripts\dev\check-local-bank-noop-study-session-hook.ps1
+
