@@ -1777,3 +1777,30 @@ Scope:
 Recommended next step:
 
 - v0.4.81 — Guarded first live trial dry-run session envelope, disabled by default
+
+## v0.4.81 Guarded first live trial dry-run session envelope
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: group sanitized question envelopes into an owner-only dry-run session envelope without enabling live delivery.
+
+Scope:
+
+- add services/api/exam_prep_local_bank_first_live_trial_dry_run_session.py
+- add scripts/dev/check-local-bank-first-live-trial-dry-run-session.ps1
+- add docs/dev/local-bank-first-live-trial-dry-run-session-envelope.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_DRY_RUN_SESSION_ENVELOPE
+- depend on v0.4.80 question envelope sanitizer
+- keep effective_source=legacy_fallback
+- add no web route
+- do not patch services/api/web_app.py
+- do not add public UI
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.82 — Guarded first live trial no-persistence delivery contract, disabled by default
