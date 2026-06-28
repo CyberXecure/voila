@@ -272,3 +272,6 @@ Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES PANEL POLISH CHECK ==="
 
 Write-Host "=== LOCAL BANK OWNER ENABLEMENT CHECKLIST CHECK ==="
 & .\scripts\dev\check-local-bank-owner-enablement-checklist.ps1
+
+Write-Host "=== LOCAL BANK LIVE CONSUMPTION DECISION GATE CHECK ==="
+& .\scripts\dev\check-local-bank-live-consumption-decision-gate.ps1

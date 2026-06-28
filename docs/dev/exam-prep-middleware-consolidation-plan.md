@@ -1485,3 +1485,30 @@ Scope:
 Recommended next step:
 
 - v0.4.70 — Guarded local-bank live consumption decision gate, still disabled by default
+
+## v0.4.70 Guarded local-bank live consumption decision gate
+
+Status: disabled-by-default decision gate.
+
+Purpose: add an explicit gate after v0.4.69 that can report whether the system is eligible for owner decision, without enabling live local-bank consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_live_consumption_decision_gate.py`
+- add `scripts/dev/check-local-bank-live-consumption-decision-gate.ps1`
+- add `docs/dev/local-bank-live-consumption-decision-gate.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_LIVE_CONSUMPTION_DECISION_GATE`
+- report `blocked` or `eligible_for_owner_decision`
+- consume v0.4.69 owner enablement checklist output
+- list owner decision options
+- explicitly record what is still not live
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.71 — Guarded live-consumption adapter no-op boundary, still disabled by default
