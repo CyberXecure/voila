@@ -1567,3 +1567,29 @@ Scope:
 Recommended next step:
 
 - v0.4.73 — Guarded live-consumption shadow route report, disabled by default
+
+## v0.4.73 Guarded local-bank live consumption shadow route report
+
+Status: disabled-by-default internal JSON-only shadow report route.
+
+Purpose: expose the v0.4.72 shadow selector through a compact sanitized report without raw snapshots, answers, explanations, or preview answer fields.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/live-consumption-shadow-report`
+- add `scripts/dev/check-local-bank-live-consumption-shadow-route-report.ps1`
+- add `docs/dev/local-bank-live-consumption-shadow-route-report.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_ROUTE`
+- return selector_status, effective_source, shadow_source, coverage comparison, and safe shadow metadata
+- omit correct_answer, correct_answer_preview, explanation, explanation_preview, raw snapshots, selected_questions, and dry_run_items
+- keep effective source as `legacy_fallback`
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.74 — Guarded live-consumption shadow route owner panel, disabled by default
