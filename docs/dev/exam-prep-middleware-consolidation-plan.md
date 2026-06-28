@@ -1277,3 +1277,28 @@ Recommended next step:
 
 - v0.4.62 — Guarded live-trial adapter boundary, disabled by default
 
+## v0.4.62 Local bank guarded live-trial adapter boundary
+
+Status: disabled-by-default adapter boundary scaffold.
+
+Purpose: create a boundary object between a future study session and the local-bank source without wiring local bank into live study sessions.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_guarded_adapter_boundary.py`
+- add `scripts/dev/check-local-bank-guarded-adapter-boundary.ps1`
+- add `docs/dev/local-bank-guarded-adapter-boundary.md`
+- flag OFF reports `legacy_fallback_only`
+- flag ON + v0.4.61 trial plan ready reports `local_source_candidate_available`
+- return `local_source_candidate`
+- keep Exam Prep UI and real progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.63 — Guarded live-trial no-op study-session hook, disabled by default
+
