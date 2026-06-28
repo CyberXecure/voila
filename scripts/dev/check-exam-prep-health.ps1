@@ -234,3 +234,6 @@ Write-Host "=== LOCAL PEDAGOGY QUESTION VARIETY CHECK ==="
 Write-Host "=== LOCAL BANK DRY-RUN ANSWER EVALUATION CHECK ==="
 & .\scripts\dev\check-local-bank-dry-run-answer-evaluation.ps1
 
+Write-Host "=== LOCAL BANK DRY-RUN ATTEMPT ENVELOPE CHECK ==="
+& .\scripts\dev\check-local-bank-dry-run-attempt-envelope.ps1
+

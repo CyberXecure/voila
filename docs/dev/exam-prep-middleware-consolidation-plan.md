@@ -1160,3 +1160,25 @@ Recommended next step:
 
 - v0.4.57 — Local-bank dry-run attempt envelope
 
+## v0.4.57 Local bank dry-run attempt envelope
+
+Status: dry-run attempt envelope scaffold.
+
+Purpose: wrap dry-run question, submitted answer, local evaluation, and feedback preview into an attempt-like object without persisting it.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_dry_run_attempt_envelope.py`
+- add `scripts/dev/check-local-bank-dry-run-attempt-envelope.ps1`
+- add `docs/dev/local-bank-dry-run-attempt-envelope.md`
+- include question snapshot, submitted answer, verdict, score preview, feedback preview, and persistence flags
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist attempts, score live sessions, or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.58 — Local-bank dry-run session summary
+
