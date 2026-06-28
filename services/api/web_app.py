@@ -8294,3 +8294,181 @@ def exam_prep_local_bank_first_live_trial_owner_smoke() -> dict:
             "public Exam Prep navigation is not changed",
         ],
     }
+
+# v0.4.87-guarded-first-live-trial-owner-decision-report-route
+@app.get("/exam-prep/local-bank/first-live-trial-owner-decision-report")
+def exam_prep_local_bank_first_live_trial_owner_decision_report() -> dict:
+    """Internal JSON-only owner decision report over the v0.4.86 decision gate.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_REPORT_ROUTE=1
+
+    This route reports the decision-gate state only. It does not deliver
+    questions live, does not start a session, and does not persist attempts,
+    sessions, progress, or scoring.
+    """
+
+    import os
+
+    route_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_REPORT_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "owner_decision_report_route_version": "v0.4.87",
+        "mode": "guarded_first_live_trial_owner_decision_report_route",
+        "route_path": "/exam-prep/local-bank/first-live-trial-owner-decision-report",
+        "route_enabled": route_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "report_sanitized": True,
+        "raw_decision_gate_included": False,
+        "raw_adapter_result_included": False,
+        "raw_contract_included": False,
+        "raw_session_envelope_included": False,
+        "raw_question_envelopes_included": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "effective_source": "legacy_fallback",
+        "fallback_source": "legacy_fallback",
+        "real_delivery_allowed_now": False,
+        "delivery_attempted": False,
+        "delivery_performed": False,
+        "delivered_question_count": 0,
+        "delivered_question_ids": [],
+        "will_consume_local_bank_live": False,
+        "will_deliver_local_bank_questions_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not route_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "decision_gate_status": "disabled",
+            "message": "Guarded first live-trial owner decision report route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_REPORT_ROUTE=1",
+            "candidate_source": "",
+            "ready_for_next_decision": False,
+            "accepted_decision": "",
+            "next_allowed_action": "",
+        }
+
+    from exam_prep_local_bank_first_live_trial_decision_gate import (
+        build_first_live_trial_decision_gate,
+    )
+
+    decision = build_first_live_trial_decision_gate(
+        course_id="v087-decision-report",
+        skill_id="local_concept_001_functiile",
+        limit=5,
+        requested_decision="keep_noop_only",
+    )
+    readiness = decision.get("readiness_checks") or {}
+    policy = decision.get("decision_gate_policy") or {}
+    owner_result = decision.get("owner_decision_result") or {}
+    summary = decision.get("decision_summary") or {}
+    ready_for_next_decision = bool(decision.get("ready_for_next_decision", False))
+
+    return {
+        **base,
+        "status": "ok",
+        "decision_gate_status": decision.get("status"),
+        "decision_gate_ready_for_owner_review": ready_for_next_decision,
+        "decision_gate_flag_name": decision.get("decision_gate_flag_name"),
+        "decision_gate_flag_enabled": decision.get("decision_gate_flag_enabled", False),
+        "noop_delivery_adapter_status": decision.get("noop_delivery_adapter_status"),
+        "noop_delivery_adapter_ready": decision.get("noop_delivery_adapter_ready", False),
+        "candidate_source": decision.get("candidate_source", "local_exercise_bank_adapter"),
+        "requested_decision": decision.get("requested_decision", "keep_noop_only"),
+        "accepted_decision": owner_result.get("accepted_decision", ""),
+        "ready_for_next_decision": ready_for_next_decision,
+        "next_allowed_action": owner_result.get("next_allowed_action", ""),
+        "allowed_decision_values": decision.get("allowed_decision_values", []),
+        "real_delivery_allowed_now": False,
+        "delivery_attempted": False,
+        "delivery_performed": False,
+        "delivered_question_count": 0,
+        "delivered_question_ids": [],
+        "decision_summary": {
+            "ready_for_next_decision": ready_for_next_decision,
+            "real_delivery_allowed_now": False,
+            "delivery_attempted": False,
+            "delivery_performed": False,
+            "delivered_question_count": 0,
+            "candidate_question_count": int(summary.get("candidate_question_count") or 0),
+            "effective_source_after_decision": "legacy_fallback",
+        },
+        "readiness_checks": {
+            "decision_gate_flag_enabled": bool(readiness.get("decision_gate_flag_enabled", False)),
+            "all_required_owner_flags_enabled": bool(readiness.get("all_required_owner_flags_enabled", False)),
+            "noop_adapter_ready": bool(readiness.get("noop_adapter_ready", False)),
+            "candidate_question_count_positive": bool(readiness.get("candidate_question_count_positive", False)),
+            "delivery_attempted_false": bool(readiness.get("delivery_attempted_false", False)),
+            "delivery_performed_false": bool(readiness.get("delivery_performed_false", False)),
+            "delivered_question_count_zero": bool(readiness.get("delivered_question_count_zero", False)),
+            "legacy_fallback_available": bool(readiness.get("legacy_fallback_available", False)),
+            "requested_decision_supported": bool(readiness.get("requested_decision_supported", False)),
+        },
+        "decision_gate_policy": {
+            "real_delivery_allowed_now": False,
+            "may_flip_effective_source_now": False,
+            "may_start_live_session_now": False,
+            "may_persist_session_now": False,
+            "may_persist_attempts_now": False,
+            "may_update_progress_now": False,
+            "may_score_live_session_now": False,
+            "requires_separate_real_delivery_milestone": True,
+            "requires_owner_reconfirmation_before_real_delivery": bool(policy.get("requires_owner_reconfirmation_before_real_delivery", True)),
+            "requires_rollback_to_legacy_fallback": bool(policy.get("requires_rollback_to_legacy_fallback", True)),
+        },
+        "next_decision_options": [
+            "keep_noop_only",
+            "prepare_owner_panel_review",
+            "prepare_future_real_delivery_milestone",
+        ],
+        "implementation_scope": {
+            "json_only_owner_decision_report_route": True,
+            "calls_decision_gate": True,
+            "adds_public_ui": False,
+            "starts_live_session": False,
+            "replaces_live_study_session": False,
+            "delivers_local_bank_questions_live": False,
+            "persists_sessions": False,
+            "persists_attempts": False,
+            "updates_progress": False,
+            "scores_live_session": False,
+            "requires_cloud_or_api": False,
+        },
+        "explicit_not_live_yet": [
+            "owner decision report route does not change effective_source",
+            "owner decision report route calls a decision gate that blocks real delivery",
+            "real_delivery_allowed_now remains false",
+            "delivery_performed remains false",
+            "delivered_question_count remains zero",
+            "local-bank questions are not delivered live",
+            "local-bank questions are not consumed live",
+            "live study sessions are not started",
+            "effective_source remains legacy_fallback",
+            "attempts are not persisted",
+            "progress is not updated",
+            "sessions are not persisted",
+            "live scoring is not enabled",
+            "public Exam Prep navigation is not changed",
+        ],
+    }
