@@ -278,3 +278,6 @@ Write-Host "=== LOCAL BANK LIVE CONSUMPTION DECISION GATE CHECK ==="
 
 Write-Host "=== LOCAL BANK LIVE CONSUMPTION ADAPTER NO-OP BOUNDARY CHECK ==="
 & .\scripts\dev\check-local-bank-live-consumption-adapter-noop-boundary.ps1
+
+Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW SELECTOR CHECK ==="
+& .\scripts\dev\check-local-bank-live-consumption-shadow-selector.ps1

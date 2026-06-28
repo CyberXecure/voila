@@ -1539,3 +1539,31 @@ Scope:
 Recommended next step:
 
 - v0.4.72 — Guarded live-consumption adapter owner dry-run plan, still disabled by default
+
+## v0.4.72 Guarded local-bank live consumption source selector shadow mode
+
+Status: disabled-by-default shadow source selector.
+
+Purpose: compare local-bank candidate metadata with the legacy fallback path while keeping `effective_source=legacy_fallback`.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_live_consumption_shadow_selector.py`
+- add `scripts/dev/check-local-bank-live-consumption-shadow-selector.ps1`
+- add `docs/dev/local-bank-live-consumption-shadow-selector.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_SOURCE_SELECTOR`
+- consume v0.4.71 adapter no-op boundary output
+- report `disabled`, `blocked`, or `shadow_selection_ready`
+- produce `shadow_selection_report`
+- compare count/type/difficulty/skill coverage
+- keep effective source as `legacy_fallback`
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.73 — Guarded live-consumption shadow route report, disabled by default
