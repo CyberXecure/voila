@@ -281,3 +281,6 @@ Write-Host "=== LOCAL BANK LIVE CONSUMPTION ADAPTER NO-OP BOUNDARY CHECK ==="
 
 Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW SELECTOR CHECK ==="
 & .\scripts\dev\check-local-bank-live-consumption-shadow-selector.ps1
+
+Write-Host "=== LOCAL BANK LIVE CONSUMPTION SHADOW ROUTE REPORT CHECK ==="
+& .\scripts\dev\check-local-bank-live-consumption-shadow-route-report.ps1

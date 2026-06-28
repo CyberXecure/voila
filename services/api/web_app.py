@@ -7264,3 +7264,137 @@ def exam_prep_local_bank_guarded_trial_candidates_panel_polish():
 </html>
 """
     return HTMLResponse(content=panel_html)
+
+# v0.4.73-guarded-live-consumption-shadow-route-report
+@app.get("/exam-prep/local-bank/live-consumption-shadow-report")
+def exam_prep_local_bank_live_consumption_shadow_report() -> dict:
+    """Internal JSON-only sanitized report for guarded local-bank shadow selector.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_ROUTE=1
+
+    The route intentionally uses fixed owner-smoke inputs and does not accept
+    user-provided filesystem roots or query parameters. It returns a compact
+    sanitized report and does not include raw snapshots, answers, explanations,
+    correct_answer_preview, or explanation_preview fields.
+    """
+
+    import os
+
+    route_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "shadow_report_route_version": "v0.4.73",
+        "mode": "guarded_live_consumption_shadow_route_report",
+        "route_path": "/exam-prep/local-bank/live-consumption-shadow-report",
+        "route_enabled": route_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "report_sanitized": True,
+        "raw_snapshots_included": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "will_consume_local_bank_live": False,
+        "will_deliver_shadow_questions_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not route_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "selector_status": "disabled",
+            "message": "Guarded local-bank shadow report route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_ROUTE=1",
+            "effective_source": "legacy_fallback",
+            "shadow_source": "",
+            "coverage_comparison": {},
+            "selected_shadow_questions": [],
+        }
+
+    from exam_prep_local_bank_live_consumption_shadow_selector import (
+        build_shadow_source_selector,
+    )
+
+    selector = build_shadow_source_selector(
+        course_id="v073-route",
+        skill_id="local_concept_001_functiile",
+        limit=5,
+    )
+    shadow_report = selector.get("shadow_selection_report") or {}
+    coverage = shadow_report.get("coverage_comparison") or {}
+    local_profile = shadow_report.get("local_candidate_profile") or {}
+    selected = shadow_report.get("selected_shadow_questions") or []
+
+    safe_questions = []
+    for item in selected:
+        if not isinstance(item, dict):
+            continue
+        safe_questions.append(
+            {
+                "shadow_index": item.get("shadow_index"),
+                "question_id": item.get("question_id", ""),
+                "skill_id": item.get("skill_id", ""),
+                "question_type": item.get("question_type", ""),
+                "difficulty": item.get("difficulty", ""),
+                "source": item.get("source", "local_exercise_bank_adapter"),
+                "dry_run_only": True,
+                "will_deliver_live": False,
+                "will_save_attempt": False,
+                "will_update_progress": False,
+                "will_score_answer": False,
+            }
+        )
+
+    return {
+        **base,
+        "status": "ok",
+        "selector_status": selector.get("selector_status"),
+        "adapter_boundary_status": selector.get("adapter_boundary_status"),
+        "effective_source": "legacy_fallback",
+        "shadow_source": selector.get("shadow_source", ""),
+        "shadow_candidate_count": shadow_report.get("shadow_candidate_count", 0),
+        "coverage_comparison": {
+            "compared_against_legacy_live_output": False,
+            "local_question_type_diversity": coverage.get("local_question_type_diversity", 0),
+            "local_difficulty_diversity": coverage.get("local_difficulty_diversity", 0),
+            "local_skill_diversity": coverage.get("local_skill_diversity", 0),
+        },
+        "local_candidate_profile": {
+            "source": "local_exercise_bank_adapter",
+            "available": local_profile.get("available", False),
+            "question_count": local_profile.get("question_count", 0),
+            "question_type_counts": local_profile.get("question_type_counts", {}),
+            "difficulty_counts": local_profile.get("difficulty_counts", {}),
+            "skill_counts": local_profile.get("skill_counts", {}),
+        },
+        "selected_shadow_questions": safe_questions,
+        "explicit_not_live_yet": [
+            "shadow report route does not change effective_source",
+            "local-bank questions are not delivered live",
+            "live study sessions are not started",
+            "effective_source remains legacy_fallback",
+            "attempts are not persisted",
+            "progress is not updated",
+            "sessions are not persisted",
+            "live scoring is not enabled",
+            "public Exam Prep navigation is not changed",
+        ],
+    }
