@@ -1327,3 +1327,29 @@ Recommended next step:
 
 - v0.4.64 — Guarded live-trial route smoke, disabled by default
 
+## v0.4.64 Local bank guarded live-trial route smoke
+
+Status: disabled-by-default internal JSON smoke route.
+
+Purpose: add a protected route that smoke-tests the v0.4.63 no-op study-session hook without consuming local-bank questions live.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/guarded-trial-smoke`
+- add `scripts/dev/check-local-bank-guarded-trial-route-smoke.ps1`
+- add `docs/dev/local-bank-guarded-trial-route-smoke.md`
+- gate the route with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_SMOKE_ROUTE`
+- keep JSON-only output
+- keep no public UI link
+- report hook_status, effective_source, and candidate availability
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.65 — Guarded live-trial route diagnostics panel, JSON-only and disabled by default
+
