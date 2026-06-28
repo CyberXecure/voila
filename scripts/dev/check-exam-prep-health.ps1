@@ -296,3 +296,6 @@ Write-Host "=== LOCAL BANK FIRST LIVE TRIAL PLANNING DOCUMENT CHECK ==="
 
 Write-Host "=== LOCAL BANK FIRST LIVE TRIAL CONTRACT SKELETON CHECK ==="
 & .\scripts\dev\check-local-bank-first-live-trial-contract.ps1
+
+Write-Host "=== LOCAL BANK FIRST LIVE TRIAL CONTRACT REPORT ROUTE CHECK ==="
+& .\scripts\dev\check-local-bank-first-live-trial-contract-report-route.ps1

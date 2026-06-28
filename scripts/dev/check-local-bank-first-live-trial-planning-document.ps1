@@ -95,11 +95,27 @@ $is_v077_contract_feature_change = (
   @($v077ExpectedFiles | Where-Object { $statusNames -notcontains $_ }).Count -eq 0
 )
 
+$v078ExpectedFiles = @(
+  "services/api/web_app.py",
+  "scripts/dev/check-local-bank-first-live-trial-contract-report-route.ps1",
+  "scripts/dev/check-local-bank-first-live-trial-planning-document.ps1",
+  "scripts/dev/check-exam-prep-health.ps1",
+  "docs/dev/local-bank-first-live-trial-contract-report-route.md",
+  "docs/dev/exam-prep-middleware-consolidation-plan.md"
+)
+
+$is_v078_contract_report_route_feature_change = (
+  $current_branch -eq "feat/v0.4.78-guarded-first-live-trial-contract-report-route" -and
+  @($statusNames | Where-Object { $v078ExpectedFiles -notcontains $_ }).Count -eq 0 -and
+  @($v078ExpectedFiles | Where-Object { $statusNames -notcontains $_ }).Count -eq 0
+)
+
 $expected_files_only_ok = (
   $is_main_clean -or
   $is_full_v076_feature_change -or
   $is_check_only_fix_change -or
-  $is_v077_contract_feature_change
+  $is_v077_contract_feature_change -or
+  $is_v078_contract_report_route_feature_change
 )
 
 Write-Host "version_ok $version_ok"

@@ -1699,3 +1699,28 @@ Scope:
 Recommended next step:
 
 - v0.4.78 — Guarded first live trial contract report route, disabled by default
+
+## v0.4.78 Guarded first live trial contract report route
+
+Status: disabled-by-default internal JSON-only route.
+
+Purpose: expose the v0.4.77 contract skeleton through a compact sanitized route without enabling live local-bank consumption.
+
+Scope:
+
+- add GET /exam-prep/local-bank/first-live-trial-contract-report
+- add scripts/dev/check-local-bank-first-live-trial-contract-report-route.ps1
+- add docs/dev/local-bank-first-live-trial-contract-report-route.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_REPORT_ROUTE
+- return a sanitized contract report, not the raw contract object
+- keep effective_source=legacy_fallback
+- do not add public UI
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.79 — Guarded first live trial contract owner panel, disabled by default
