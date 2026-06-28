@@ -6731,3 +6731,162 @@ def exam_prep_local_bank_guarded_trial_diagnostics(
         "summary": summary,
         "hook": hook,
     }
+
+# v0.4.66-guarded-trial-candidate-question-preview-route
+@app.get("/exam-prep/local-bank/guarded-trial-candidates")
+def exam_prep_local_bank_guarded_trial_candidates(
+    course_id: str = "v066-route",
+    skill_id: str = "local_concept_001_functiile",
+    limit: int = 5,
+) -> dict:
+    """Internal JSON-only candidate question preview for guarded local-bank trial.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_ROUTE=1
+
+    For candidate availability, this route also expects the diagnostics route flag
+    and guarded live-trial flag to be enabled. It intentionally does not accept a
+    filesystem root and does not expose answer previews.
+    """
+
+    import os
+
+    candidates_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    diagnostics_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_DIAGNOSTICS_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "candidate_route_version": "v0.4.66",
+        "mode": "guarded_trial_candidate_question_preview",
+        "route_path": "/exam-prep/local-bank/guarded-trial-candidates",
+        "route_enabled": candidates_enabled,
+        "diagnostics_route_flag_enabled": diagnostics_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "will_consume_local_bank_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not candidates_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "candidate_status": "disabled",
+            "message": "Guarded local-bank trial candidate route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_ROUTE=1",
+            "candidate_questions": [],
+        }
+
+    if not diagnostics_enabled:
+        return {
+            **base,
+            "status": "blocked",
+            "candidate_status": "diagnostics_route_flag_required",
+            "message": "Candidate preview requires diagnostics route flag for the guarded trial chain.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_DIAGNOSTICS_ROUTE=1",
+            "candidate_questions": [],
+        }
+
+    from exam_prep_local_bank_noop_study_session_hook import (
+        build_noop_study_session_hook,
+    )
+
+    safe_limit = max(1, min(int(limit or 5), 20))
+    hook = build_noop_study_session_hook(
+        course_id=course_id or "v066-route",
+        skill_id=skill_id or "local_concept_001_functiile",
+        limit=safe_limit,
+    )
+
+    boundary = hook.get("adapter_boundary") or {}
+    trial = boundary.get("guarded_live_trial") or {}
+    readiness = trial.get("readiness_report") or {}
+    snapshots = readiness.get("snapshots") or {}
+    source_selection = snapshots.get("source_selection") or {}
+    dry_run_items = source_selection.get("dry_run_items") or []
+
+    candidate_questions = []
+    for index, item in enumerate(dry_run_items[:safe_limit], start=1):
+        if not isinstance(item, dict):
+            continue
+        candidate_questions.append(
+            {
+                "candidate_index": index,
+                "dry_run_item_id": item.get("dry_run_item_id", ""),
+                "question_id": item.get("question_id", ""),
+                "course_id": item.get("course_id", course_id),
+                "skill_id": item.get("skill_id", skill_id),
+                "question_type": item.get("question_type", ""),
+                "difficulty": item.get("difficulty", ""),
+                "question": item.get("question", ""),
+                "choices": item.get("choices", []),
+                "source": item.get("source", "local_exercise_bank_adapter"),
+                "answer_preview_hidden": True,
+                "explanation_preview_hidden": True,
+                "dry_run_only": True,
+                "will_save_attempt": False,
+                "will_update_progress": False,
+                "will_score_answer": False,
+            }
+        )
+
+    safety_flags = {
+        "will_consume_local_bank_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    safety_ok = all(value is False for value in safety_flags.values())
+
+    return {
+        **base,
+        "status": "ok",
+        "candidate_status": "candidate_questions_preview_ready",
+        "hook_status": hook.get("hook_status"),
+        "boundary_status": boundary.get("boundary_status"),
+        "readiness_status": readiness.get("readiness_status"),
+        "effective_source": hook.get("effective_source"),
+        "reported_candidate_available": hook.get("reported_candidate_available"),
+        "candidate_question_count": len(candidate_questions),
+        "candidate_questions": candidate_questions,
+        "safety_ok": safety_ok,
+        "safety_flags": safety_flags,
+        "versions": {
+            "noop_hook_version": hook.get("noop_hook_version"),
+            "adapter_boundary_version": boundary.get("adapter_boundary_version"),
+            "guarded_trial_version": trial.get("guarded_trial_version"),
+            "readiness_report_version": readiness.get("readiness_report_version"),
+        },
+    }

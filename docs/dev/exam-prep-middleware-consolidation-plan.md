@@ -1379,3 +1379,28 @@ Recommended next step:
 
 - v0.4.66 — Guarded live-trial candidate question preview route, disabled by default
 
+## v0.4.66 Local bank guarded live-trial candidate question preview route
+
+Status: disabled-by-default internal JSON candidate question preview route.
+
+Purpose: preview candidate local-bank questions for a future guarded trial without exposing answer previews or consuming local-bank questions live.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/guarded-trial-candidates`
+- add `scripts/dev/check-local-bank-guarded-trial-candidates-route.ps1`
+- add `docs/dev/local-bank-guarded-trial-candidates-route.md`
+- gate the route with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_ROUTE`
+- require diagnostics and guarded trial flags for candidate readiness
+- keep JSON-only output
+- hide answer and explanation previews
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.67 — Guarded live-trial candidate preview UI panel, hidden/internal and disabled by default
