@@ -1860,3 +1860,29 @@ Scope:
 Recommended next step:
 
 - v0.4.84 — Guarded first live trial no-persistence delivery route scaffold, disabled by default
+
+## v0.4.84 Guarded first live trial delivery route scaffold
+
+Status: disabled-by-default internal JSON-only route.
+
+Purpose: add a route scaffold that calls the v0.4.83 no-op delivery adapter without performing live delivery.
+
+Scope:
+
+- add GET /exam-prep/local-bank/first-live-trial-delivery-noop
+- add scripts/dev/check-local-bank-first-live-trial-delivery-route-scaffold.ps1
+- add docs/dev/local-bank-first-live-trial-delivery-route-scaffold.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ROUTE
+- call the v0.4.83 no-op adapter
+- return delivery_performed=false
+- keep effective_source=legacy_fallback
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.85 — Guarded first live trial no-persistence owner smoke route, disabled by default
