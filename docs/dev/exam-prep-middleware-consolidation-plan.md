@@ -1672,3 +1672,30 @@ Scope:
 Recommended next step:
 
 - v0.4.77 — Guarded first live trial contract skeleton, disabled by default
+
+## v0.4.77 Guarded first live trial contract skeleton
+
+Status: JSON-only contract skeleton; disabled by default.
+
+Purpose: add a contract object for future first live-trial owner review without enabling live local-bank consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_contract.py`
+- add `scripts/dev/check-local-bank-first-live-trial-contract.ps1`
+- add `docs/dev/local-bank-first-live-trial-contract.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT`
+- depend on v0.4.75 shadow consolidation status
+- define source_selection, session_boundary, attempt_persistence, progress_updates, live_scoring, and sanitization contract sections
+- keep `effective_source=legacy_fallback`
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.78 — Guarded first live trial contract report route, disabled by default
