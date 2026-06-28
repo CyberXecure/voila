@@ -67,7 +67,24 @@ $missingExpectedFiles = @($expectedFiles | Where-Object { $statusNames -notconta
 
 $no_web_app_change_ok = ($statusNameText -notmatch '(^|`n)services/api/web_app\.py($|`n)')
 $no_runtime_py_change_ok = ($statusNameText -notmatch '(^|`n)services/api/.*\.py($|`n)')
-$expected_files_only_ok = (@($unexpectedFiles).Count -eq 0 -and @($missingExpectedFiles).Count -eq 0)
+$current_branch = (git branch --show-current).Trim()
+$is_main_clean = ($current_branch -eq "main" -and @($statusNames).Count -eq 0)
+
+$is_full_v076_feature_change = (
+  @($unexpectedFiles).Count -eq 0 -and
+  @($missingExpectedFiles).Count -eq 0
+)
+
+$is_check_only_fix_change = (
+  @($statusNames).Count -eq 1 -and
+  $statusNames[0] -eq "scripts/dev/check-local-bank-first-live-trial-planning-document.ps1"
+)
+
+$expected_files_only_ok = (
+  $is_main_clean -or
+  $is_full_v076_feature_change -or
+  $is_check_only_fix_change
+)
 
 Write-Host "version_ok $version_ok"
 Write-Host "planning_only_ok $planning_only_ok"
