@@ -6534,3 +6534,81 @@ def exam_prep_local_bank_study_preview_internal_panel(
         "status": "ok",
         "preview": preview,
     }
+
+# v0.4.64-guarded-live-trial-route-smoke
+@app.get("/exam-prep/local-bank/guarded-trial-smoke")
+def exam_prep_local_bank_guarded_trial_smoke(
+    course_id: str = "v064-route",
+    skill_id: str = "local_concept_001_functiile",
+    limit: int = 5,
+) -> dict:
+    """Internal JSON-only smoke route for the guarded local-bank trial hook.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_SMOKE_ROUTE=1
+
+    This route intentionally does not accept a filesystem root. It does not
+    consume local-bank questions live, persist attempts/sessions/progress,
+    score live sessions, or modify the Exam Prep UI.
+    """
+
+    import os
+
+    smoke_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_SMOKE_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "route_version": "v0.4.64",
+        "mode": "guarded_trial_smoke_route",
+        "route_path": "/exam-prep/local-bank/guarded-trial-smoke",
+        "route_enabled": smoke_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "will_consume_local_bank_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not smoke_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "message": "Guarded local-bank trial smoke route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_SMOKE_ROUTE=1",
+            "hook": None,
+        }
+
+    from exam_prep_local_bank_noop_study_session_hook import (
+        build_noop_study_session_hook,
+    )
+
+    safe_limit = max(1, min(int(limit or 5), 20))
+    hook = build_noop_study_session_hook(
+        course_id=course_id or "v064-route",
+        skill_id=skill_id or "local_concept_001_functiile",
+        limit=safe_limit,
+    )
+
+    return {
+        **base,
+        "status": "ok",
+        "hook_status": hook.get("hook_status"),
+        "effective_source": hook.get("effective_source"),
+        "reported_candidate_available": hook.get("reported_candidate_available"),
+        "hook": hook,
+    }
