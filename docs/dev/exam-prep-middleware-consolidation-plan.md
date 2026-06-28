@@ -1969,3 +1969,31 @@ Scope:
 Recommended next step:
 
 - v0.4.88 — Guarded first live trial owner decision panel, disabled by default
+
+## v0.4.88 Guarded first live trial owner decision panel
+
+Status: disabled-by-default hidden/internal owner panel.
+
+Purpose: display the v0.4.87 owner decision report in a safe internal panel without performing live delivery.
+
+Scope:
+
+- add GET /exam-prep/local-bank/first-live-trial-owner-decision-panel
+- add scripts/dev/check-local-bank-first-live-trial-owner-decision-panel.ps1
+- add docs/dev/local-bank-first-live-trial-owner-decision-panel.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_PANEL
+- fetch the v0.4.87 owner decision report route
+- render with createElement/textContent/replaceChildren
+- return/display real_delivery_allowed_now=false
+- return/display delivery_performed=false
+- keep effective_source=legacy_fallback
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.89 — owner-ready checkpoint and stop/go summary before any real delivery milestone

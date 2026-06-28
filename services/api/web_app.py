@@ -8472,3 +8472,234 @@ def exam_prep_local_bank_first_live_trial_owner_decision_report() -> dict:
             "public Exam Prep navigation is not changed",
         ],
     }
+
+# v0.4.88-guarded-first-live-trial-owner-decision-panel
+@app.get("/exam-prep/local-bank/first-live-trial-owner-decision-panel")
+def exam_prep_local_bank_first_live_trial_owner_decision_panel():
+    """Hidden/internal owner decision panel over the v0.4.87 decision report.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_PANEL=1
+
+    The panel reads the v0.4.87 sanitized JSON report route from the browser.
+    It uses safe DOM rendering, does not accept query parameters, and does not
+    enable live delivery, persistence, progress updates, scoring, or public UI.
+    """
+
+    import os
+    from fastapi.responses import HTMLResponse
+
+    panel_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_PANEL",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if not panel_enabled:
+        disabled_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>First live-trial owner decision panel disabled</title>
+</head>
+<body
+  data-owner-decision-panel-version="v0.4.88"
+  data-owner-decision-panel-status="disabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-real-delivery-allowed-now="false"
+  data-delivery-performed="false"
+  data-delivered-question-count="0"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-local-bank-questions-live="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+  data-will-score-live-session="false"
+>
+  <main>
+    <h1>Guarded first live-trial owner decision panel</h1>
+    <p id="owner-decision-panel-status">disabled</p>
+    <p>This hidden/internal owner panel is disabled by default.</p>
+    <p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_PANEL=1</code>.</p>
+    <ul>
+      <li>Effective source remains legacy_fallback.</li>
+      <li>Real delivery is not allowed now.</li>
+      <li>No local-bank questions are delivered live.</li>
+      <li>No attempts, progress, session persistence, or live scoring.</li>
+      <li>No answers, explanations, raw envelopes, or raw contracts are exposed by this panel.</li>
+    </ul>
+  </main>
+</body>
+</html>
+"""
+        return HTMLResponse(content=disabled_html)
+
+    panel_html = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded first live-trial owner decision panel</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      line-height: 1.45;
+      background: Canvas;
+      color: CanvasText;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 2rem; }
+    header { border-bottom: 1px solid color-mix(in srgb, CanvasText 20%, transparent); margin-bottom: 1.25rem; padding-bottom: 1rem; }
+    .muted { opacity: .72; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem; margin: 1rem 0; }
+    .summary-card { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: .9rem; padding: .85rem; }
+    .summary-card strong { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+    .summary-card span { display: block; font-size: 1.05rem; margin-top: .25rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .65rem 0; }
+    .badge { display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, CanvasText 22%, transparent); border-radius: 999px; padding: .2rem .55rem; font-size: .82rem; }
+    .panel-card { border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 1rem; padding: 1rem; margin: 1rem 0; }
+    .safety { border-left: .25rem solid color-mix(in srgb, CanvasText 35%, transparent); padding-left: .85rem; margin: 1rem 0; }
+    code { background: color-mix(in srgb, CanvasText 8%, transparent); padding: .1rem .25rem; border-radius: .25rem; }
+  </style>
+</head>
+<body
+  data-owner-decision-panel-version="v0.4.88"
+  data-owner-decision-panel-status="enabled"
+  data-route-kind="internal_hidden_owner_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-report-route="/exam-prep/local-bank/first-live-trial-owner-decision-report"
+  data-real-delivery-allowed-now="false"
+  data-delivery-performed="false"
+  data-delivered-question-count="0"
+  data-will-consume-local-bank-live="false"
+  data-will-deliver-local-bank-questions-live="false"
+  data-will-start-live-session="false"
+  data-will-replace-effective-source="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+  data-will-score-live-session="false"
+>
+  <main>
+    <header>
+      <h1>Guarded first live-trial owner decision panel</h1>
+      <p class="muted">
+        Hidden/internal owner panel. Reads the sanitized v0.4.87 JSON decision report.
+        Effective source remains <code>legacy_fallback</code>. Real delivery is still blocked.
+      </p>
+      <p id="owner-decision-panel-status">loading</p>
+    </header>
+
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Decision summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><strong>Accepted decision</strong><span id="summary-accepted">loading</span></div>
+        <div class="summary-card"><strong>Ready for next decision</strong><span id="summary-ready">loading</span></div>
+        <div class="summary-card"><strong>Real delivery allowed</strong><span id="summary-real-delivery">false</span></div>
+        <div class="summary-card"><strong>Delivery performed</strong><span id="summary-delivery-performed">false</span></div>
+        <div class="summary-card"><strong>Delivered questions</strong><span id="summary-delivered-count">0</span></div>
+        <div class="summary-card"><strong>Effective source</strong><span id="summary-effective">legacy_fallback</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="options-title">
+      <h2 id="options-title">Next decision options</h2>
+      <div id="decision-options" class="badge-row"></div>
+    </section>
+
+    <section aria-labelledby="readiness-title">
+      <h2 id="readiness-title">Readiness checks</h2>
+      <div id="readiness-list" class="panel-card"></div>
+    </section>
+
+    <section aria-labelledby="policy-title">
+      <h2 id="policy-title">Decision gate policy</h2>
+      <div id="policy-list" class="panel-card"></div>
+    </section>
+
+    <section class="safety" aria-labelledby="safety-title">
+      <h2 id="safety-title">Explicitly not live yet</h2>
+      <ul id="not-live-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const reportUrl = "/exam-prep/local-bank/first-live-trial-owner-decision-report";
+    const statusEl = document.getElementById("owner-decision-panel-status");
+    const acceptedEl = document.getElementById("summary-accepted");
+    const readyEl = document.getElementById("summary-ready");
+    const realDeliveryEl = document.getElementById("summary-real-delivery");
+    const deliveryPerformedEl = document.getElementById("summary-delivery-performed");
+    const deliveredCountEl = document.getElementById("summary-delivered-count");
+    const effectiveEl = document.getElementById("summary-effective");
+    const decisionOptionsEl = document.getElementById("decision-options");
+    const readinessListEl = document.getElementById("readiness-list");
+    const policyListEl = document.getElementById("policy-list");
+    const notLiveListEl = document.getElementById("not-live-list");
+
+    function text(value) {
+      return value === undefined || value === null ? "" : String(value);
+    }
+
+    function appendText(parent, tagName, value, className) {
+      const el = document.createElement(tagName);
+      if (className) el.className = className;
+      el.textContent = text(value);
+      parent.appendChild(el);
+      return el;
+    }
+
+    function appendBadge(parent, value) {
+      appendText(parent, "span", value, "badge");
+    }
+
+    function renderKeyValues(parent, obj) {
+      parent.replaceChildren();
+      const list = document.createElement("ul");
+      Object.keys(obj || {}).sort().forEach((key) => {
+        const item = document.createElement("li");
+        item.textContent = key + ": " + text(obj[key]);
+        list.appendChild(item);
+      });
+      parent.appendChild(list);
+    }
+
+    function renderList(parent, values) {
+      parent.replaceChildren();
+      (Array.isArray(values) ? values : []).forEach((value) => {
+        appendText(parent, "li", value);
+      });
+    }
+
+    fetch(reportUrl, { headers: { "accept": "application/json" } })
+      .then((response) => response.json())
+      .then((data) => {
+        statusEl.textContent = data.status || "unknown";
+        acceptedEl.textContent = data.accepted_decision || "";
+        readyEl.textContent = text(data.ready_for_next_decision);
+        realDeliveryEl.textContent = text(data.real_delivery_allowed_now);
+        deliveryPerformedEl.textContent = text(data.delivery_performed);
+        deliveredCountEl.textContent = text(data.delivered_question_count);
+        effectiveEl.textContent = data.effective_source || "legacy_fallback";
+
+        decisionOptionsEl.replaceChildren();
+        const options = Array.isArray(data.next_decision_options) ? data.next_decision_options : [];
+        options.forEach((name) => appendBadge(decisionOptionsEl, name));
+
+        renderKeyValues(readinessListEl, data.readiness_checks || {});
+        renderKeyValues(policyListEl, data.decision_gate_policy || {});
+        renderList(notLiveListEl, data.explicit_not_live_yet || []);
+      })
+      .catch((error) => {
+        statusEl.textContent = "error";
+        acceptedEl.textContent = text(error);
+      });
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=panel_html)
