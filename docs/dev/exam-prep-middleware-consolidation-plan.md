@@ -1593,3 +1593,31 @@ Scope:
 Recommended next step:
 
 - v0.4.74 — Guarded live-consumption shadow route owner panel, disabled by default
+
+## v0.4.74 Guarded local-bank live consumption shadow route owner panel
+
+Status: disabled-by-default hidden/internal owner panel.
+
+Purpose: add a hidden owner panel over the v0.4.73 sanitized shadow report route, showing selector/source/coverage and selected shadow metadata without answers, explanations, or raw snapshots.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/live-consumption-shadow-panel`
+- add `scripts/dev/check-local-bank-live-consumption-shadow-owner-panel.ps1`
+- add `docs/dev/local-bank-live-consumption-shadow-owner-panel.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_OWNER_PANEL`
+- read v0.4.73 sanitized report route
+- render selector_status, effective_source, shadow_source, coverage, and metadata-only shadow items
+- use safe DOM rendering without `innerHTML`
+- omit correct_answer, correct_answer_preview, explanation, explanation_preview, raw snapshots, selected_questions, and dry_run_items
+- keep effective source as `legacy_fallback`
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.75 — Guarded live-consumption shadow report/panel consolidation status
