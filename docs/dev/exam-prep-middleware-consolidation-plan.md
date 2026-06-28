@@ -1750,3 +1750,30 @@ Scope:
 Recommended next step:
 
 - v0.4.80 — Guarded first live trial question envelope sanitizer, disabled by default
+
+## v0.4.80 Guarded first live trial question envelope sanitizer
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: define a safe question envelope sanitizer for future first live-trial delivery without enabling live consumption.
+
+Scope:
+
+- add services/api/exam_prep_local_bank_first_live_trial_question_envelope.py
+- add scripts/dev/check-local-bank-first-live-trial-question-envelope.ps1
+- add docs/dev/local-bank-first-live-trial-question-envelope.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_QUESTION_ENVELOPE_SANITIZER
+- strip answer, explanation, raw snapshot, raw contract, dry-run, selected-question, and source-excerpt fields
+- keep effective_source=legacy_fallback
+- add no web route
+- do not patch services/api/web_app.py
+- do not add public UI
+- do not deliver local-bank questions live
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.81 — Guarded first live trial dry-run session envelope, disabled by default
