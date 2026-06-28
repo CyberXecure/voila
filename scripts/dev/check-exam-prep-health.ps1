@@ -240,3 +240,6 @@ Write-Host "=== LOCAL BANK DRY-RUN ATTEMPT ENVELOPE CHECK ==="
 Write-Host "=== LOCAL BANK DRY-RUN SESSION SUMMARY CHECK ==="
 & .\scripts\dev\check-local-bank-dry-run-session-summary.ps1
 
+Write-Host "=== LOCAL BANK DRY-RUN PROGRESS IMPACT CHECK ==="
+& .\scripts\dev\check-local-bank-dry-run-progress-impact.ps1
+

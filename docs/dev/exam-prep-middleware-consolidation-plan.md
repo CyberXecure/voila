@@ -1205,3 +1205,26 @@ Recommended next step:
 
 - v0.4.59 — Local-bank dry-run progress impact preview
 
+## v0.4.59 Local bank dry-run progress impact preview
+
+Status: dry-run progress impact preview.
+
+Purpose: simulate how a dry-run local-bank session summary could affect skill mastery without writing progress.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_dry_run_progress_impact.py`
+- add `scripts/dev/check-local-bank-dry-run-progress-impact.ps1`
+- add `docs/dev/local-bank-dry-run-progress-impact-preview.md`
+- include old_mastery_preview, mastery_delta_preview, new_mastery_preview, and impact_direction
+- keep Exam Prep UI and real progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.60 — Local-bank dry-run integration readiness report
+
