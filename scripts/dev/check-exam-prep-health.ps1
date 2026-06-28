@@ -308,3 +308,6 @@ Write-Host "=== LOCAL BANK FIRST LIVE TRIAL DELIVERY ROUTE SCAFFOLD CHECK ==="
 
 Write-Host "=== LOCAL BANK FIRST LIVE TRIAL OWNER SMOKE ROUTE CHECK ==="
 & .\scripts\dev\check-local-bank-first-live-trial-owner-smoke-route.ps1
+
+Write-Host "=== LOCAL BANK FIRST LIVE TRIAL OWNER DECISION REPORT ROUTE CHECK ==="
+& .\scripts\dev\check-local-bank-first-live-trial-owner-decision-report-route.ps1
