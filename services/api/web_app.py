@@ -7631,3 +7631,136 @@ def exam_prep_local_bank_live_consumption_shadow_panel():
 </html>
 """
     return HTMLResponse(content=panel_html)
+
+# v0.4.78-guarded-first-live-trial-contract-report-route
+@app.get("/exam-prep/local-bank/first-live-trial-contract-report")
+def exam_prep_local_bank_first_live_trial_contract_report() -> dict:
+    """Internal JSON-only sanitized report for the guarded first live-trial contract.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_REPORT_ROUTE=1
+
+    This route intentionally uses fixed owner-smoke inputs and does not accept
+    user-provided filesystem roots or query parameters. It does not enable live
+    consumption, persistence, progress updates, scoring, or public UI changes.
+    """
+
+    import os
+
+    route_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_REPORT_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "contract_report_route_version": "v0.4.78",
+        "mode": "guarded_first_live_trial_contract_report_route",
+        "route_path": "/exam-prep/local-bank/first-live-trial-contract-report",
+        "route_enabled": route_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "report_sanitized": True,
+        "raw_contract_included": False,
+        "raw_snapshots_included": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "will_consume_local_bank_live": False,
+        "will_deliver_local_bank_questions_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not route_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "contract_status": "disabled",
+            "message": "Guarded first live-trial contract report route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_REPORT_ROUTE=1",
+            "effective_source": "legacy_fallback",
+            "candidate_source": "",
+            "fallback_source": "legacy_fallback",
+            "contract_sections_available": [],
+        }
+
+    from exam_prep_local_bank_first_live_trial_contract import (
+        build_first_live_trial_contract,
+    )
+
+    contract = build_first_live_trial_contract(
+        course_id="v078-route",
+        skill_id="local_concept_001_functiile",
+        limit=5,
+    )
+    sections = contract.get("contract_sections") or {}
+    implementation = contract.get("implementation_scope") or {}
+
+    return {
+        **base,
+        "status": "ok",
+        "contract_status": contract.get("contract_status"),
+        "blocking_reasons": contract.get("blocking_reasons", []),
+        "contract_flag_name": contract.get("contract_flag_name"),
+        "contract_flag_enabled": contract.get("contract_flag_enabled", False),
+        "shadow_consolidation_status": contract.get("shadow_consolidation_status"),
+        "shadow_consolidation_ready": contract.get("shadow_consolidation_ready", False),
+        "effective_source": "legacy_fallback",
+        "candidate_source": contract.get("candidate_source", "local_exercise_bank_adapter"),
+        "fallback_source": "legacy_fallback",
+        "contract_sections_available": sorted(sections.keys()),
+        "source_selection_summary": {
+            "current_effective_source": "legacy_fallback",
+            "candidate_source": "local_exercise_bank_adapter",
+            "fallback_source": "legacy_fallback",
+            "may_select_candidate_live_now": False,
+            "selection_mode": "contract_skeleton_only",
+        },
+        "contract_guardrails": {
+            "session_boundary_defined": "session_boundary" in sections,
+            "attempt_persistence_requires_separate_milestone": True,
+            "progress_updates_require_separate_milestone": True,
+            "live_scoring_requires_separate_milestone": True,
+            "answers_exposed_before_submission": False,
+            "explanations_exposed_before_submission": False,
+            "raw_snapshots_exposed": False,
+            "source_excerpts_exposed": False,
+            "requires_safe_dom_rendering": True,
+        },
+        "implementation_scope": {
+            "json_only_contract_object": bool(implementation.get("json_only_contract_object", True)),
+            "adds_web_route": True,
+            "adds_public_ui": False,
+            "starts_live_session": False,
+            "replaces_live_study_session": False,
+            "persists_attempts": False,
+            "updates_progress": False,
+            "scores_live_session": False,
+            "requires_cloud_or_api": False,
+        },
+        "next_allowed_milestone_options": contract.get("next_allowed_milestone_options", []),
+        "explicit_not_live_yet": [
+            "contract report route does not change effective_source",
+            "local-bank questions are not delivered live",
+            "local-bank questions are not consumed live",
+            "live study sessions are not started",
+            "effective_source remains legacy_fallback",
+            "attempts are not persisted",
+            "progress is not updated",
+            "sessions are not persisted",
+            "live scoring is not enabled",
+            "public Exam Prep navigation is not changed",
+        ],
+    }
