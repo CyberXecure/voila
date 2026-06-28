@@ -311,3 +311,6 @@ Write-Host "=== LOCAL BANK FIRST LIVE TRIAL OWNER SMOKE ROUTE CHECK ==="
 
 Write-Host "=== LOCAL BANK FIRST LIVE TRIAL OWNER DECISION REPORT ROUTE CHECK ==="
 & .\scripts\dev\check-local-bank-first-live-trial-owner-decision-report-route.ps1
+
+Write-Host "=== LOCAL BANK FIRST LIVE TRIAL OWNER DECISION PANEL CHECK ==="
+& .\scripts\dev\check-local-bank-first-live-trial-owner-decision-panel.ps1
