@@ -266,3 +266,6 @@ Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES ROUTE CHECK ==="
 
 Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES PANEL CHECK ==="
 & .\scripts\dev\check-local-bank-guarded-trial-candidates-panel.ps1
+
+Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES PANEL POLISH CHECK ==="
+& .\scripts\dev\check-local-bank-guarded-trial-candidates-panel-polish.ps1
