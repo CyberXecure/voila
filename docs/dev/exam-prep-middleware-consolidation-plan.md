@@ -1913,3 +1913,32 @@ Scope:
 Recommended next step:
 
 - v0.4.86 — Guarded first live trial explicit no-persistence delivery decision gate, disabled by default
+
+## v0.4.86 Guarded first live trial decision gate
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add an explicit decision gate over the guarded first-live-trial chain while blocking real delivery now.
+
+Scope:
+
+- add services/api/exam_prep_local_bank_first_live_trial_decision_gate.py
+- add scripts/dev/check-local-bank-first-live-trial-decision-gate.ps1
+- add docs/dev/local-bank-first-live-trial-decision-gate.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DECISION_GATE
+- verify readiness up to the v0.4.83 no-op adapter boundary
+- define allowed decision values
+- return real_delivery_allowed_now=false
+- keep effective_source=legacy_fallback
+- add no web route
+- do not patch services/api/web_app.py
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.87 — Guarded first live trial owner decision report route, disabled by default
