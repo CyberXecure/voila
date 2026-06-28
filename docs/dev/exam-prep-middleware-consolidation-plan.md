@@ -1512,3 +1512,30 @@ Scope:
 Recommended next step:
 
 - v0.4.71 — Guarded live-consumption adapter no-op boundary, still disabled by default
+
+## v0.4.71 Guarded live-consumption adapter no-op boundary
+
+Status: disabled-by-default no-op adapter boundary.
+
+Purpose: add a no-op boundary for a future guarded local-bank live-consumption adapter without enabling live consumption.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_live_consumption_adapter_noop_boundary.py`
+- add `scripts/dev/check-local-bank-live-consumption-adapter-noop-boundary.ps1`
+- add `docs/dev/local-bank-live-consumption-adapter-noop-boundary.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_LIVE_CONSUMPTION_ADAPTER_NOOP_BOUNDARY`
+- consume v0.4.70 decision gate output
+- report `legacy_fallback_only` or `live_adapter_candidate_noop`
+- define minimum contract for first real live trial
+- explicitly record what is still not live
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.72 — Guarded live-consumption adapter owner dry-run plan, still disabled by default
