@@ -1228,3 +1228,27 @@ Recommended next step:
 
 - v0.4.60 — Local-bank dry-run integration readiness report
 
+## v0.4.60 Local bank integration readiness report
+
+Status: pre-live readiness report.
+
+Purpose: verify the full local-bank dry-run chain before any future guarded live trial.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_integration_readiness.py`
+- add `scripts/dev/check-local-bank-integration-readiness.ps1`
+- add `docs/dev/local-bank-integration-readiness-report.md`
+- verify controlled flag, source selection, quality gate, answer evaluation, attempt envelope, session summary, and progress impact preview
+- produce `readiness_status`
+- keep Exam Prep UI and real progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.61 — Guarded local-bank live-trial scaffold, disabled by default
+

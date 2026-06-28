@@ -243,3 +243,6 @@ Write-Host "=== LOCAL BANK DRY-RUN SESSION SUMMARY CHECK ==="
 Write-Host "=== LOCAL BANK DRY-RUN PROGRESS IMPACT CHECK ==="
 & .\scripts\dev\check-local-bank-dry-run-progress-impact.ps1
 
+Write-Host "=== LOCAL BANK INTEGRATION READINESS CHECK ==="
+& .\scripts\dev\check-local-bank-integration-readiness.ps1
+
