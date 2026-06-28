@@ -258,3 +258,6 @@ Write-Host "=== LOCAL BANK NO-OP STUDY SESSION HOOK CHECK ==="
 Write-Host "=== LOCAL BANK GUARDED TRIAL ROUTE SMOKE CHECK ==="
 & .\scripts\dev\check-local-bank-guarded-trial-route-smoke.ps1
 
+Write-Host "=== LOCAL BANK GUARDED TRIAL DIAGNOSTICS ROUTE CHECK ==="
+& .\scripts\dev\check-local-bank-guarded-trial-diagnostics-route.ps1
+

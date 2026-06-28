@@ -1353,3 +1353,29 @@ Recommended next step:
 
 - v0.4.65 — Guarded live-trial route diagnostics panel, JSON-only and disabled by default
 
+## v0.4.65 Local bank guarded live-trial diagnostics route
+
+Status: disabled-by-default internal JSON diagnostics route.
+
+Purpose: add a compact diagnostics report route for the guarded local-bank trial chain without consuming local-bank questions live.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/guarded-trial-diagnostics`
+- add `scripts/dev/check-local-bank-guarded-trial-diagnostics-route.ps1`
+- add `docs/dev/local-bank-guarded-trial-diagnostics-route.md`
+- gate the route with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_DIAGNOSTICS_ROUTE`
+- keep JSON-only output
+- keep no public UI link
+- report hook_status, boundary_status, readiness_status, candidate availability, effective_source, and safety flags
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.66 — Guarded live-trial candidate question preview route, disabled by default
+
