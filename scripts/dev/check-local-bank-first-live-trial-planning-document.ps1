@@ -80,10 +80,26 @@ $is_check_only_fix_change = (
   $statusNames[0] -eq "scripts/dev/check-local-bank-first-live-trial-planning-document.ps1"
 )
 
+$v077ExpectedFiles = @(
+  "services/api/exam_prep_local_bank_first_live_trial_contract.py",
+  "scripts/dev/check-local-bank-first-live-trial-contract.ps1",
+  "scripts/dev/check-local-bank-first-live-trial-planning-document.ps1",
+  "docs/dev/local-bank-first-live-trial-contract.md",
+  "docs/dev/exam-prep-middleware-consolidation-plan.md",
+  "scripts/dev/check-exam-prep-health.ps1"
+)
+
+$is_v077_contract_feature_change = (
+  $current_branch -eq "feat/v0.4.77-guarded-first-live-trial-contract-skeleton" -and
+  @($statusNames | Where-Object { $v077ExpectedFiles -notcontains $_ }).Count -eq 0 -and
+  @($v077ExpectedFiles | Where-Object { $statusNames -notcontains $_ }).Count -eq 0
+)
+
 $expected_files_only_ok = (
   $is_main_clean -or
   $is_full_v076_feature_change -or
-  $is_check_only_fix_change
+  $is_check_only_fix_change -or
+  $is_v077_contract_feature_change
 )
 
 Write-Host "version_ok $version_ok"

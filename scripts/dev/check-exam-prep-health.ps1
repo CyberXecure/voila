@@ -293,3 +293,6 @@ Write-Host "=== LOCAL BANK SHADOW CONSOLIDATION STATUS CHECK ==="
 
 Write-Host "=== LOCAL BANK FIRST LIVE TRIAL PLANNING DOCUMENT CHECK ==="
 & .\scripts\dev\check-local-bank-first-live-trial-planning-document.ps1
+
+Write-Host "=== LOCAL BANK FIRST LIVE TRIAL CONTRACT SKELETON CHECK ==="
+& .\scripts\dev\check-local-bank-first-live-trial-contract.ps1
