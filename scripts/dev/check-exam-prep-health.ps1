@@ -275,3 +275,6 @@ Write-Host "=== LOCAL BANK OWNER ENABLEMENT CHECKLIST CHECK ==="
 
 Write-Host "=== LOCAL BANK LIVE CONSUMPTION DECISION GATE CHECK ==="
 & .\scripts\dev\check-local-bank-live-consumption-decision-gate.ps1
+
+Write-Host "=== LOCAL BANK LIVE CONSUMPTION ADAPTER NO-OP BOUNDARY CHECK ==="
+& .\scripts\dev\check-local-bank-live-consumption-adapter-noop-boundary.ps1
