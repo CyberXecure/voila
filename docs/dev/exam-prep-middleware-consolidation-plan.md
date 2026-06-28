@@ -1997,3 +1997,34 @@ Scope:
 Recommended next step:
 
 - v0.4.89 — owner-ready checkpoint and stop/go summary before any real delivery milestone
+
+## v0.4.89 Guarded first live trial owner-ready checkpoint
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: consolidate the guarded first-live-trial chain into a final owner-ready checkpoint and stop/go summary before any real delivery milestone.
+
+Scope:
+
+- add services/api/exam_prep_local_bank_first_live_trial_owner_checkpoint.py
+- add scripts/dev/check-local-bank-first-live-trial-owner-checkpoint.ps1
+- add docs/dev/local-bank-first-live-trial-owner-ready-checkpoint.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_READY_CHECKPOINT
+- depend on v0.4.86 decision gate
+- confirm the chain is ready for owner decision review
+- return stop_go_label=STOP
+- return go_for_real_delivery_now=false
+- return real_delivery_allowed_now=false
+- keep effective_source=legacy_fallback
+- add no web route
+- do not patch services/api/web_app.py
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- stop and review before any separate explicitly named real-delivery milestone
