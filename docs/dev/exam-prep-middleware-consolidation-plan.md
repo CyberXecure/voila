@@ -1182,3 +1182,26 @@ Recommended next step:
 
 - v0.4.58 — Local-bank dry-run session summary
 
+## v0.4.58 Local bank dry-run session summary
+
+Status: dry-run session summary scaffold.
+
+Purpose: group non-persistent local-bank dry-run attempt envelopes into a session-like summary.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_dry_run_session_summary.py`
+- add `scripts/dev/check-local-bank-dry-run-session-summary.ps1`
+- add `docs/dev/local-bank-dry-run-session-summary.md`
+- include dry_run_session_id, total_questions, verdict counts, average_score_preview, feedback_summary, and envelopes
+- keep Exam Prep UI and progress behavior unchanged
+- keep live study sessions unchanged
+- do not persist sessions or attempts
+- do not score live sessions or update progress
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.59 — Local-bank dry-run progress impact preview
+
