@@ -249,3 +249,6 @@ Write-Host "=== LOCAL BANK INTEGRATION READINESS CHECK ==="
 Write-Host "=== LOCAL BANK GUARDED LIVE TRIAL CHECK ==="
 & .\scripts\dev\check-local-bank-guarded-live-trial.ps1
 
+Write-Host "=== LOCAL BANK GUARDED ADAPTER BOUNDARY CHECK ==="
+& .\scripts\dev\check-local-bank-guarded-adapter-boundary.ps1
+
