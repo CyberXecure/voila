@@ -1832,3 +1832,31 @@ Scope:
 Recommended next step:
 
 - v0.4.83 — Guarded first live trial no-persistence delivery adapter no-op, disabled by default
+
+## v0.4.83 Guarded first live trial delivery adapter no-op
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add a no-op adapter boundary for the future owner-only first live delivery without performing delivery yet.
+
+Scope:
+
+- add services/api/exam_prep_local_bank_first_live_trial_delivery_adapter.py
+- add scripts/dev/check-local-bank-first-live-trial-delivery-adapter.ps1
+- add docs/dev/local-bank-first-live-trial-delivery-adapter-noop.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ADAPTER_NOOP
+- depend on v0.4.82 no-persistence delivery contract
+- return delivery_performed=false
+- keep effective_source=legacy_fallback
+- add no web route
+- do not patch services/api/web_app.py
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.84 — Guarded first live trial no-persistence delivery route scaffold, disabled by default
