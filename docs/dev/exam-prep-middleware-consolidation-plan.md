@@ -1302,3 +1302,28 @@ Recommended next step:
 
 - v0.4.63 — Guarded live-trial no-op study-session hook, disabled by default
 
+## v0.4.63 Local bank guarded live-trial no-op study-session hook
+
+Status: disabled-by-default no-op study-session hook scaffold.
+
+Purpose: add a no-op hook-shaped boundary that can report a local-bank candidate while keeping live study sessions on legacy fallback.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_noop_study_session_hook.py`
+- add `scripts/dev/check-local-bank-noop-study-session-hook.ps1`
+- add `docs/dev/local-bank-noop-study-session-hook.md`
+- flag OFF reports `legacy_path_unchanged`
+- flag ON + v0.4.62 candidate reports `local_source_candidate_reported_noop`
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- keep Exam Prep UI and real progress behavior unchanged
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.64 — Guarded live-trial route smoke, disabled by default
+
