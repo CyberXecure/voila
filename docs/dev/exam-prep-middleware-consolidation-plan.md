@@ -1886,3 +1886,30 @@ Scope:
 Recommended next step:
 
 - v0.4.85 — Guarded first live trial no-persistence owner smoke route, disabled by default
+
+## v0.4.85 Guarded first live trial owner smoke route
+
+Status: disabled-by-default internal JSON-only route.
+
+Purpose: verify the guarded first-live-trial chain up to the no-op delivery boundary without performing live delivery.
+
+Scope:
+
+- add GET /exam-prep/local-bank/first-live-trial-owner-smoke
+- add scripts/dev/check-local-bank-first-live-trial-owner-smoke-route.ps1
+- add docs/dev/local-bank-first-live-trial-owner-smoke-route.md
+- introduce VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_SMOKE_ROUTE
+- call the v0.4.83 no-op adapter
+- return owner_smoke_ready_for_next_decision
+- return delivery_performed=false
+- keep effective_source=legacy_fallback
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.86 — Guarded first live trial explicit no-persistence delivery decision gate, disabled by default

@@ -8125,3 +8125,172 @@ def exam_prep_local_bank_first_live_trial_delivery_noop() -> dict:
             "public Exam Prep navigation is not changed",
         ],
     }
+
+# v0.4.85-guarded-first-live-trial-owner-smoke-route
+@app.get("/exam-prep/local-bank/first-live-trial-owner-smoke")
+def exam_prep_local_bank_first_live_trial_owner_smoke() -> dict:
+    """Internal JSON-only owner smoke route for the first live-trial chain.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_SMOKE_ROUTE=1
+
+    This route verifies the guarded chain end-to-end up to the no-op delivery
+    boundary. It does not deliver questions live, does not start a session, and
+    does not persist attempts, sessions, progress, or scoring.
+    """
+
+    import os
+
+    route_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_SMOKE_ROUTE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    base = {
+        "schema_version": "1",
+        "owner_smoke_route_version": "v0.4.85",
+        "mode": "guarded_first_live_trial_owner_smoke_route",
+        "route_path": "/exam-prep/local-bank/first-live-trial-owner-smoke",
+        "route_enabled": route_enabled,
+        "route_kind": "internal_json_only",
+        "has_public_ui_link": False,
+        "report_sanitized": True,
+        "raw_adapter_result_included": False,
+        "raw_contract_included": False,
+        "raw_session_envelope_included": False,
+        "raw_question_envelopes_included": False,
+        "answers_exposed": False,
+        "explanations_exposed": False,
+        "path_policy": "no_user_provided_filesystem_root",
+        "effective_source": "legacy_fallback",
+        "fallback_source": "legacy_fallback",
+        "delivery_attempted": False,
+        "delivery_performed": False,
+        "delivered_question_count": 0,
+        "delivered_question_ids": [],
+        "will_consume_local_bank_live": False,
+        "will_deliver_local_bank_questions_live": False,
+        "will_start_live_session": False,
+        "will_replace_effective_source": False,
+        "will_persist_progress": False,
+        "will_persist_session": False,
+        "will_persist_attempts": False,
+        "will_update_progress": False,
+        "will_score_live_session": False,
+        "will_modify_exam_prep_ui": False,
+        "will_modify_weak_review": False,
+        "will_replace_live_study_session": False,
+        "will_replace_legacy_generator": False,
+        "will_enable_live_consumption": False,
+        "requires_cloud_or_api": False,
+    }
+
+    if not route_enabled:
+        return {
+            **base,
+            "status": "disabled",
+            "smoke_status": "disabled",
+            "message": "Guarded first live-trial owner smoke route is disabled by default.",
+            "enable_with": "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_SMOKE_ROUTE=1",
+            "candidate_source": "",
+            "owner_smoke_ready_for_next_decision": False,
+        }
+
+    from exam_prep_local_bank_first_live_trial_delivery_adapter import (
+        build_noop_delivery_adapter_result,
+    )
+
+    adapter = build_noop_delivery_adapter_result(
+        course_id="v085-owner-smoke",
+        skill_id="local_concept_001_functiile",
+        limit=5,
+    )
+    adapter_summary = adapter.get("adapter_summary") or {}
+    adapter_boundary = adapter.get("adapter_contract_boundary") or {}
+    adapter_ready = bool(adapter.get("ready_for_owner_review", False))
+    noop_ok = (
+        adapter_summary.get("delivery_attempted") is False
+        and adapter_summary.get("delivery_performed") is False
+        and int(adapter_summary.get("delivered_question_count") or 0) == 0
+    )
+
+    smoke_checks = {
+        "adapter_ready": adapter_ready,
+        "noop_adapter_status": adapter.get("status"),
+        "delivery_attempted_false": adapter_summary.get("delivery_attempted") is False,
+        "delivery_performed_false": adapter_summary.get("delivery_performed") is False,
+        "delivered_question_count_zero": int(adapter_summary.get("delivered_question_count") or 0) == 0,
+        "candidate_question_count_positive": int(adapter_summary.get("candidate_question_count") or 0) > 0,
+        "legacy_fallback_available": adapter_summary.get("legacy_fallback_available") is True,
+        "blocks_delivery_now": adapter_boundary.get("blocks_delivery_now") is True,
+        "returns_noop_result": adapter_boundary.get("returns_noop_result") is True,
+        "no_persistence_contract_ready": adapter.get("no_persistence_delivery_contract_ready") is True,
+    }
+    smoke_ready = all(smoke_checks.values()) and noop_ok
+
+    return {
+        **base,
+        "status": "ok",
+        "smoke_status": "owner_smoke_ready_for_next_decision" if smoke_ready else "blocked",
+        "owner_smoke_ready_for_next_decision": smoke_ready,
+        "adapter_status": adapter.get("status"),
+        "adapter_ready_for_owner_review": adapter_ready,
+        "adapter_flag_name": adapter.get("adapter_flag_name"),
+        "adapter_flag_enabled": adapter.get("adapter_flag_enabled", False),
+        "no_persistence_delivery_contract_status": adapter.get("no_persistence_delivery_contract_status"),
+        "no_persistence_delivery_contract_ready": adapter.get("no_persistence_delivery_contract_ready", False),
+        "candidate_source": adapter.get("candidate_source", "local_exercise_bank_adapter"),
+        "candidate_question_count": int(adapter_summary.get("candidate_question_count") or 0),
+        "smoke_checks": smoke_checks,
+        "adapter_summary": {
+            "delivery_attempted": False,
+            "delivery_performed": False,
+            "delivered_question_count": 0,
+            "candidate_question_count": int(adapter_summary.get("candidate_question_count") or 0),
+            "noop_only": True,
+            "legacy_fallback_available": True,
+        },
+        "adapter_contract_boundary": {
+            "accepts_delivery_contract": bool(adapter_boundary.get("accepts_delivery_contract", True)),
+            "requires_no_persistence_policy": True,
+            "requires_abort_policy": True,
+            "requires_legacy_fallback": True,
+            "requires_owner_only_scope": True,
+            "requires_candidate_questions": True,
+            "blocks_delivery_now": True,
+            "returns_noop_result": True,
+        },
+        "next_decision_options": [
+            "stop_here_keep_noop_route",
+            "add_owner_smoke_panel_disabled_by_default",
+            "add_explicit_no_persistence_delivery_decision_gate",
+        ],
+        "implementation_scope": {
+            "json_only_owner_smoke_route": True,
+            "calls_noop_adapter": True,
+            "adds_public_ui": False,
+            "starts_live_session": False,
+            "replaces_live_study_session": False,
+            "delivers_local_bank_questions_live": False,
+            "persists_sessions": False,
+            "persists_attempts": False,
+            "updates_progress": False,
+            "scores_live_session": False,
+            "requires_cloud_or_api": False,
+        },
+        "explicit_not_live_yet": [
+            "owner smoke route does not change effective_source",
+            "owner smoke route calls a no-op adapter",
+            "delivery_performed remains false",
+            "delivered_question_count remains zero",
+            "local-bank questions are not delivered live",
+            "local-bank questions are not consumed live",
+            "live study sessions are not started",
+            "effective_source remains legacy_fallback",
+            "attempts are not persisted",
+            "progress is not updated",
+            "sessions are not persisted",
+            "live scoring is not enabled",
+            "public Exam Prep navigation is not changed",
+        ],
+    }
