@@ -263,3 +263,6 @@ Write-Host "=== LOCAL BANK GUARDED TRIAL DIAGNOSTICS ROUTE CHECK ==="
 
 Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES ROUTE CHECK ==="
 & .\scripts\dev\check-local-bank-guarded-trial-candidates-route.ps1
+
+Write-Host "=== LOCAL BANK GUARDED TRIAL CANDIDATES PANEL CHECK ==="
+& .\scripts\dev\check-local-bank-guarded-trial-candidates-panel.ps1

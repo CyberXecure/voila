@@ -6890,3 +6890,172 @@ def exam_prep_local_bank_guarded_trial_candidates(
             "readiness_report_version": readiness.get("readiness_report_version"),
         },
     }
+
+# v0.4.67-guarded-trial-candidate-preview-internal-panel
+@app.get("/exam-prep/local-bank/guarded-trial-candidates-panel")
+def exam_prep_local_bank_guarded_trial_candidates_panel(
+    course_id: str = "v067-panel",
+    skill_id: str = "local_concept_001_functiile",
+    limit: int = 5,
+):
+    """Hidden/internal preview panel for guarded local-bank candidate questions.
+
+    Disabled by default. Enable locally with:
+    VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL=1
+
+    The panel reads the v0.4.66 JSON candidate route from the browser. It does
+    not expose answers, consume local-bank questions live, persist data, score
+    sessions, or modify the Exam Prep UI navigation.
+    """
+
+    import html
+    import os
+    from fastapi.responses import HTMLResponse
+
+    panel_enabled = os.environ.get(
+        "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    safe_course = html.escape(course_id or "v067-panel", quote=True)
+    safe_skill = html.escape(skill_id or "local_concept_001_functiile", quote=True)
+    safe_limit = max(1, min(int(limit or 5), 20))
+
+    if not panel_enabled:
+        disabled_html = f"""
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Local-bank candidate preview disabled</title>
+</head>
+<body data-panel-version="v0.4.67" data-panel-status="disabled">
+  <main>
+    <h1>Guarded local-bank candidate preview</h1>
+    <p id="candidate-panel-status">disabled</p>
+    <p>This hidden/internal panel is disabled by default.</p>
+    <p>Enable locally with <code>VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL=1</code>.</p>
+    <ul>
+      <li>Effective source remains legacy_fallback.</li>
+      <li>No live local-bank consumption.</li>
+      <li>No attempts, progress, session persistence, or live scoring.</li>
+      <li>No answers or explanations are exposed by this panel.</li>
+    </ul>
+  </main>
+</body>
+</html>
+"""
+        return HTMLResponse(content=disabled_html)
+
+    candidates_url = (
+        "/exam-prep/local-bank/guarded-trial-candidates"
+        f"?course_id={safe_course}&skill_id={safe_skill}&limit={safe_limit}"
+    )
+
+    panel_html = f"""
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Guarded local-bank candidate preview</title>
+  <style>
+    body {{ font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; line-height: 1.45; }}
+    main {{ max-width: 960px; margin: 0 auto; }}
+    .badge {{ display: inline-block; padding: .2rem .5rem; border: 1px solid #999; border-radius: 999px; margin-right: .4rem; font-size: .85rem; }}
+    .question-card {{ border: 1px solid #ddd; border-radius: .75rem; padding: 1rem; margin: 1rem 0; }}
+    .muted {{ color: #555; }}
+    code {{ background: #f5f5f5; padding: .1rem .25rem; border-radius: .25rem; }}
+  </style>
+</head>
+<body
+  data-panel-version="v0.4.67"
+  data-panel-status="enabled"
+  data-route-kind="internal_hidden_panel"
+  data-has-public-ui-link="false"
+  data-effective-source="legacy_fallback"
+  data-will-consume-local-bank-live="false"
+  data-will-persist-attempts="false"
+  data-will-update-progress="false"
+>
+  <main>
+    <h1>Guarded local-bank candidate preview</h1>
+    <p id="candidate-panel-status">loading</p>
+    <p class="muted">
+      Internal hidden panel. Preview-only. Effective source remains <code>legacy_fallback</code>.
+      Correct answers and explanations are intentionally not rendered.
+    </p>
+
+    <section aria-labelledby="safety-title">
+      <h2 id="safety-title">Safety guardrails</h2>
+      <ul>
+        <li>No live local-bank consumption.</li>
+        <li>No live session start.</li>
+        <li>No effective source replacement.</li>
+        <li>No attempt, progress, or session persistence.</li>
+        <li>No live scoring and no Exam Prep UI navigation change.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="candidate-title">
+      <h2 id="candidate-title">Candidate questions</h2>
+      <div id="candidate-summary" class="muted"></div>
+      <div id="candidate-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const candidateUrl = "{candidates_url}";
+    const statusEl = document.getElementById("candidate-panel-status");
+    const summaryEl = document.getElementById("candidate-summary");
+    const listEl = document.getElementById("candidate-list");
+
+    function text(value) {{
+      return value === undefined || value === null ? "" : String(value);
+    }}
+
+    function renderChoiceList(choices) {{
+      if (!Array.isArray(choices) || choices.length === 0) return "";
+      const items = choices.map((choice) => `<li>${{text(choice)}}</li>`).join("");
+      return `<ol>${{items}}</ol>`;
+    }}
+
+    function renderQuestion(item) {{
+      const type = text(item.question_type);
+      const difficulty = text(item.difficulty);
+      const skill = text(item.skill_id);
+      const question = text(item.question);
+      const choices = renderChoiceList(item.choices);
+      return `
+        <article class="question-card">
+          <div>
+            <span class="badge">${{type}}</span>
+            <span class="badge">${{difficulty}}</span>
+            <span class="badge">${{skill}}</span>
+          </div>
+          <h3>Question ${{text(item.candidate_index)}}</h3>
+          <p>${{question}}</p>
+          ${{choices}}
+          <p class="muted">Answers hidden: ${{text(item.answer_preview_hidden)}} · Explanations hidden: ${{text(item.explanation_preview_hidden)}}</p>
+        </article>
+      `;
+    }}
+
+    fetch(candidateUrl, {{ headers: {{ "accept": "application/json" }} }})
+      .then((response) => response.json())
+      .then((data) => {{
+        statusEl.textContent = data.status || "unknown";
+        summaryEl.textContent = `candidate_status=${{data.candidate_status || "unknown"}}; effective_source=${{data.effective_source || "legacy_fallback"}}; count=${{data.candidate_question_count || 0}}`;
+        const questions = Array.isArray(data.candidate_questions) ? data.candidate_questions : [];
+        listEl.innerHTML = questions.map(renderQuestion).join("") || "<p>No candidate questions available.</p>";
+      }})
+      .catch((error) => {{
+        statusEl.textContent = "error";
+        summaryEl.textContent = text(error);
+      }});
+  </script>
+</body>
+</html>
+"""
+    return HTMLResponse(content=panel_html)

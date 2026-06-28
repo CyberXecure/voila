@@ -1404,3 +1404,30 @@ Scope:
 Recommended next step:
 
 - v0.4.67 — Guarded live-trial candidate preview UI panel, hidden/internal and disabled by default
+
+## v0.4.67 Local bank guarded live-trial candidate preview internal panel
+
+Status: disabled-by-default hidden/internal candidate preview panel.
+
+Purpose: preview candidate local-bank questions in an internal panel by reading the v0.4.66 candidate route, without exposing answers or consuming local-bank questions live.
+
+Scope:
+
+- add `GET /exam-prep/local-bank/guarded-trial-candidates-panel`
+- add `scripts/dev/check-local-bank-guarded-trial-candidates-panel.ps1`
+- add `docs/dev/local-bank-guarded-trial-candidates-panel.md`
+- gate the panel with `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_PANEL`
+- keep noindex/nofollow
+- keep hidden/internal status and no public UI link
+- fetch candidate questions from v0.4.66
+- hide answer and explanation previews
+- keep effective source as `legacy_fallback`
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not accept user-provided filesystem roots
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- v0.4.68 — Guarded live-trial candidate preview panel polish and owner smoke
