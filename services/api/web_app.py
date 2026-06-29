@@ -8820,3 +8820,186 @@ async def voila_owner_only_session_preview_json(
         if work_root.exists():
             shutil.rmtree(work_root)
 # --- end v0.5.5 owner-only hidden session preview route ---
+
+# --- v0.5.6 owner-only hidden session preview page ---
+from fastapi import Request as _VoilaOwnerSessionPreviewPageRequest
+from fastapi.responses import HTMLResponse as _VoilaOwnerSessionPreviewHTMLResponse
+
+_VOILA_OWNER_SESSION_PREVIEW_PAGE_VERSION = "v0.5.6"
+_VOILA_OWNER_SESSION_PREVIEW_PAGE_FLAG = "VOILA_ENABLE_EXAM_PREP_OWNER_ONLY_SESSION_PREVIEW_PAGE"
+_VOILA_OWNER_SESSION_PREVIEW_PAGE_PATH = "/owner/exam-prep/session-preview"
+
+
+def _voila_owner_session_preview_page_flag_enabled() -> bool:
+    import os
+
+    return str(os.environ.get(_VOILA_OWNER_SESSION_PREVIEW_PAGE_FLAG, "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _voila_owner_session_preview_page_is_local_request(
+    request: _VoilaOwnerSessionPreviewPageRequest,
+) -> bool:
+    client = getattr(request, "client", None)
+    host = str(getattr(client, "host", "") or "").strip().lower()
+    return host in {"127.0.0.1", "::1", "localhost"} or host.startswith("127.")
+
+
+def _voila_owner_session_preview_page_not_found() -> _VoilaOwnerSessionPreviewHTMLResponse:
+    return _VoilaOwnerSessionPreviewHTMLResponse(
+        status_code=404,
+        content="Not found",
+    )
+
+
+def _voila_owner_session_preview_page_escape(value: object) -> str:
+    import html
+
+    return html.escape(str(value or ""), quote=True)
+
+
+def _voila_owner_session_preview_page_html(preview: dict) -> str:
+    prompts = []
+    session = preview.get("session_preview") or {}
+    questions = session.get("questions") or []
+
+    for question in questions:
+        display_index = _voila_owner_session_preview_page_escape(question.get("display_index"))
+        prompt = _voila_owner_session_preview_page_escape(question.get("prompt"))
+        question_id = _voila_owner_session_preview_page_escape(question.get("question_id"))
+        question_type = _voila_owner_session_preview_page_escape(question.get("question_type"))
+        difficulty = _voila_owner_session_preview_page_escape(question.get("difficulty"))
+
+        prompts.append(
+            "<article class=\"question-card\" data-question-id=\""
+            + question_id
+            + "\">"
+            + "<p class=\"question-meta\">Question "
+            + display_index
+            + " · "
+            + question_type
+            + " · "
+            + difficulty
+            + "</p>"
+            + "<h2>"
+            + prompt
+            + "</h2>"
+            + "<p class=\"question-policy\">Answer and explanation are hidden. This preview does not submit, save attempts, update progress, or score answers.</p>"
+            + "</article>"
+        )
+
+    selected_course = _voila_owner_session_preview_page_escape(
+        preview.get("selected_real_course_path")
+    )
+    question_count = _voila_owner_session_preview_page_escape(
+        session.get("question_count")
+    )
+    route_version = _voila_owner_session_preview_page_escape(
+        _VOILA_OWNER_SESSION_PREVIEW_PAGE_VERSION
+    )
+    effective_source = _voila_owner_session_preview_page_escape(
+        (preview.get("delivery_result") or {}).get("effective_source")
+    )
+    rollback_source = _voila_owner_session_preview_page_escape(
+        (preview.get("rollback_result") or {}).get("effective_source")
+    )
+
+    return """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Owner Exam Prep Session Preview</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #0f172a; color: #e5e7eb; }
+    main { max-width: 920px; margin: 0 auto; padding: 32px 20px 56px; }
+    .badge { display: inline-block; padding: 4px 10px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; font-size: 13px; }
+    .summary, .question-card { background: #111827; border: 1px solid #334155; border-radius: 18px; padding: 18px; margin-top: 16px; }
+    .question-meta, .question-policy, .muted { color: #94a3b8; font-size: 14px; }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    h2 { font-size: 18px; line-height: 1.45; }
+    code { color: #bae6fd; }
+  </style>
+</head>
+<body data-route-version=\"""" + route_version + """\" data-owner-only=\"true\" data-hidden-route=\"true\">
+  <main>
+    <span class="badge">Owner-only hidden preview · """ + route_version + """</span>
+    <h1>Exam Prep Session Preview</h1>
+    <p class="muted">This local owner preview shows five sanitized questions. It has no submit action, no attempt saving, no progress update, and no live scoring.</p>
+
+    <section class="summary">
+      <p><strong>Selected course:</strong> <code>""" + selected_course + """</code></p>
+      <p><strong>Questions:</strong> """ + question_count + """</p>
+      <p><strong>Effective source:</strong> """ + effective_source + """</p>
+      <p><strong>Rollback source:</strong> """ + rollback_source + """</p>
+    </section>
+
+    <section aria-label="Session questions">
+      """ + "\n      ".join(prompts) + """
+    </section>
+  </main>
+</body>
+</html>"""
+
+
+@app.get(_VOILA_OWNER_SESSION_PREVIEW_PAGE_PATH, include_in_schema=False)
+async def voila_owner_only_session_preview_page(
+    request: _VoilaOwnerSessionPreviewPageRequest,
+) -> _VoilaOwnerSessionPreviewHTMLResponse:
+    if not _voila_owner_session_preview_page_flag_enabled():
+        return _voila_owner_session_preview_page_not_found()
+
+    if not _voila_owner_session_preview_page_is_local_request(request):
+        return _voila_owner_session_preview_page_not_found()
+
+    import importlib.util
+    import shutil
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    work_root = root / ".tmp" / "v056-owner-only-session-preview-page"
+    output = work_root / "owner_only_session_preview_page.json"
+    helper_path = root / "scripts" / "dev" / "build-local-bank-owner-only-session-preview.py"
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "voila_v056_owner_only_session_preview_helper",
+            helper_path,
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError("owner_preview_helper_unavailable")
+
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+
+        preview = helper.build_preview(root=root, work_root=work_root, output=output)
+        preview["page_version"] = _VOILA_OWNER_SESSION_PREVIEW_PAGE_VERSION
+        preview["page_path"] = _VOILA_OWNER_SESSION_PREVIEW_PAGE_PATH
+        preview["page_flag_name"] = _VOILA_OWNER_SESSION_PREVIEW_PAGE_FLAG
+        preview["page_enabled"] = True
+        preview["owner_only_page"] = True
+        preview["hidden_page"] = True
+        preview["adds_public_ui"] = False
+        preview["persists_sessions"] = False
+        preview["persists_attempts"] = False
+        preview["updates_progress"] = False
+        preview["scores_live_session"] = False
+        preview["requires_cloud_or_api"] = False
+
+        return _VoilaOwnerSessionPreviewHTMLResponse(
+            content=_voila_owner_session_preview_page_html(preview)
+        )
+    except Exception:
+        return _VoilaOwnerSessionPreviewHTMLResponse(
+            status_code=500,
+            content="Owner-only session preview is unavailable.",
+        )
+    finally:
+        if work_root.exists():
+            shutil.rmtree(work_root)
+# --- end v0.5.6 owner-only hidden session preview page ---
