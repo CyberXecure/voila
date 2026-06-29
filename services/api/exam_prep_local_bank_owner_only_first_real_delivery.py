@@ -13,6 +13,10 @@ Safety scope:
 - no live scoring persistence
 - rollback to legacy_fallback by default or on any failed guard
 - no cloud/API/LLM dependency
+
+v0.5.1 keeps the delivery target and readiness guard target separable:
+- readiness guard uses the canonical v0.5.0/v0.4.94 context
+- delivery may target a real course smoke context
 """
 
 from __future__ import annotations
@@ -42,6 +46,8 @@ OWNER_ONLY_FIRST_REAL_DELIVERY_ROLLBACK_FLAG_NAME = (
     "VOILA_FORCE_EXAM_PREP_LOCAL_BANK_OWNER_ONLY_FIRST_REAL_DELIVERY_ROLLBACK"
 )
 MAX_OWNER_ONLY_REAL_DELIVERY_QUESTIONS = 5
+READINESS_GUARD_COURSE_ID = "v050-owner-only-local-bank-first-real-delivery"
+READINESS_GUARD_SKILL_ID = "local_concept_001_functiile"
 
 
 def configure_stdout_utf8() -> None:
@@ -73,6 +79,8 @@ def _fallback_result(
     blocking_reasons: list[str],
     flag_enabled: bool,
     rollback_requested: bool,
+    readiness_course_id: str = READINESS_GUARD_COURSE_ID,
+    readiness_skill_id: str = READINESS_GUARD_SKILL_ID,
     readiness_freeze: dict[str, Any] | None = None,
     local_bank_preview: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -82,6 +90,8 @@ def _fallback_result(
         "mode": "owner_only_local_bank_first_real_delivery",
         "course_id": course_id,
         "skill_id": skill_id,
+        "readiness_guard_course_id": readiness_course_id,
+        "readiness_guard_skill_id": readiness_skill_id,
         "delivery_flag_name": OWNER_ONLY_FIRST_REAL_DELIVERY_FLAG_NAME,
         "delivery_flag_enabled": flag_enabled,
         "rollback_flag_name": OWNER_ONLY_FIRST_REAL_DELIVERY_ROLLBACK_FLAG_NAME,
@@ -162,6 +172,8 @@ def build_owner_only_first_real_delivery(
     root: str | Path = ".",
     course_id: str = "v050-owner-only-local-bank-first-real-delivery",
     skill_id: str = "local_concept_001_functiile",
+    readiness_course_id: str = READINESS_GUARD_COURSE_ID,
+    readiness_skill_id: str = READINESS_GUARD_SKILL_ID,
     limit: int = MAX_OWNER_ONLY_REAL_DELIVERY_QUESTIONS,
     env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
@@ -177,6 +189,8 @@ def build_owner_only_first_real_delivery(
         return _fallback_result(
             course_id=course_id,
             skill_id=skill_id,
+            readiness_course_id=readiness_course_id,
+            readiness_skill_id=readiness_skill_id,
             requested_limit=requested_limit,
             status="disabled",
             blocking_reasons=["owner_only_first_real_delivery_flag_disabled"],
@@ -188,6 +202,8 @@ def build_owner_only_first_real_delivery(
         return _fallback_result(
             course_id=course_id,
             skill_id=skill_id,
+            readiness_course_id=readiness_course_id,
+            readiness_skill_id=readiness_skill_id,
             requested_limit=requested_limit,
             status="rolled_back_to_legacy_fallback",
             blocking_reasons=["rollback_flag_enabled"],
@@ -196,8 +212,8 @@ def build_owner_only_first_real_delivery(
         )
 
     readiness_freeze = build_implementation_readiness_freeze(
-        course_id=course_id,
-        skill_id=skill_id,
+        course_id=readiness_course_id,
+        skill_id=readiness_skill_id,
         limit=requested_limit,
         env=source_env,
     )
@@ -212,6 +228,8 @@ def build_owner_only_first_real_delivery(
         return _fallback_result(
             course_id=course_id,
             skill_id=skill_id,
+            readiness_course_id=readiness_course_id,
+            readiness_skill_id=readiness_skill_id,
             requested_limit=requested_limit,
             status="blocked",
             blocking_reasons=["v0_4_94_readiness_freeze_not_ready"],
@@ -239,6 +257,8 @@ def build_owner_only_first_real_delivery(
         return _fallback_result(
             course_id=course_id,
             skill_id=skill_id,
+            readiness_course_id=readiness_course_id,
+            readiness_skill_id=readiness_skill_id,
             requested_limit=requested_limit,
             status="blocked",
             blocking_reasons=["no_matching_local_bank_questions_available"],
@@ -264,6 +284,8 @@ def build_owner_only_first_real_delivery(
         "mode": "owner_only_local_bank_first_real_delivery",
         "course_id": course_id,
         "skill_id": skill_id,
+        "readiness_guard_course_id": readiness_course_id,
+        "readiness_guard_skill_id": readiness_skill_id,
         "delivery_flag_name": OWNER_ONLY_FIRST_REAL_DELIVERY_FLAG_NAME,
         "delivery_flag_enabled": flag_enabled,
         "rollback_flag_name": OWNER_ONLY_FIRST_REAL_DELIVERY_ROLLBACK_FLAG_NAME,
@@ -357,6 +379,8 @@ def main() -> int:
     parser.add_argument("--root", default=".")
     parser.add_argument("--course-id", default="v050-owner-only-local-bank-first-real-delivery")
     parser.add_argument("--skill-id", default="local_concept_001_functiile")
+    parser.add_argument("--readiness-course-id", default=READINESS_GUARD_COURSE_ID)
+    parser.add_argument("--readiness-skill-id", default=READINESS_GUARD_SKILL_ID)
     parser.add_argument("--limit", type=int, default=MAX_OWNER_ONLY_REAL_DELIVERY_QUESTIONS)
     parser.add_argument("--expect-disabled", action="store_true")
     parser.add_argument("--expect-delivered", action="store_true")
@@ -367,6 +391,8 @@ def main() -> int:
         root=args.root,
         course_id=args.course_id,
         skill_id=args.skill_id,
+        readiness_course_id=args.readiness_course_id,
+        readiness_skill_id=args.readiness_skill_id,
         limit=args.limit,
     )
     print(json.dumps(result, ensure_ascii=True, indent=2))
