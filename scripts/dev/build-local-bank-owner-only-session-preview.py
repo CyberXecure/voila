@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +73,95 @@ def _delivery_rollup(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def polish_preview_copy(value: str, *, max_length: int = 320) -> str:
+    # Return readable owner-preview copy without common console/OCR mojibake.
+    # This polishes displayed prompt text only and never reconstructs answers.
+
+    text = str(value or "")
+
+    replacements = {
+        "╦ÿ": "a",
+        "╦å": "o",
+        "─â": "a",
+        "ΓÇÖ": "'",
+        "ΓÇ£": '"',
+        "ΓÇ¥": '"',
+        "ΓÇô": "-",
+        "ΓÇ": "",
+        "┬╕": "",
+        "∩¼ü": "fi",
+        "\\ufffd": "",
+    }
+    for broken, fixed in replacements.items():
+        text = text.replace(broken, fixed)
+
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+
+    text = text.replace("“", '"').replace("”", '"').replace("„", '"').replace("’", "'")
+    text = text.replace("ﬁ", "fi").replace("ﬂ", "fl")
+
+    text = "".join(" " if (ord(ch) < 32 and ch not in "\\n\\t") else ch for ch in text)
+    text = re.sub(r"\\s+", " ", text).strip()
+
+    match = re.fullmatch(r"Name one key point supported by the source text in '([^']+)'.", text)
+    if match:
+        topic = match.group(1).strip()
+        text = f'Mentioneaza o idee-cheie sustinuta de fragmentul "{topic}".'
+
+    text = text.replace("functiiei", "functiei")
+
+    if len(text) > max_length:
+        text = text[: max_length - 1].rstrip() + "…"
+
+    return text
+
+
+def polish_preview_copy(value: str, *, max_length: int = 320) -> str:
+    # v0.5.4 override: ASCII-safe owner-preview copy polish.
+    text = str(value or "")
+
+    import re
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.replace("'", "'").replace('"', '"')
+    text = text.encode("ascii", "ignore").decode("ascii", errors="replace")
+    text = "".join(" " if ord(ch) < 32 else ch for ch in text)
+    text = re.sub(r"\s+", " ", text).strip()
+
+    prefix = "Name one key point supported by the source text in "
+    if text.startswith(prefix):
+        topic = text[len(prefix):].strip()
+        if topic.endswith("."):
+            topic = topic[:-1].strip()
+        topic = topic.strip().strip("'").strip('"').strip()
+        text = f'Mentioneaza o idee-cheie sustinuta de fragmentul "{topic}".'
+
+    replacements = {
+        "Dac a": "Daca",
+        "exist a": "exista",
+        "dat a": "data",
+        "prim a": "prima",
+        "aplicat ie": "aplicatie",
+        "not iunii": "notiunii",
+        "limit a": "limita",
+        "existent ei": "existentei",
+        "funct ii": "functii",
+        "funct iei": "functiei",
+        "urm atoarea": "urmatoarea",
+        "definit ie": "definitie",
+    }
+    for broken, fixed in replacements.items():
+        text = text.replace(broken, fixed)
+
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > max_length:
+        text = text[: max_length - 3].rstrip() + "..."
+    return text
+
 def _session_question(question: dict[str, Any]) -> dict[str, Any]:
     return {
         "display_index": int(question.get("display_index") or 0),
@@ -78,8 +169,11 @@ def _session_question(question: dict[str, Any]) -> dict[str, Any]:
         "skill_id": str(question.get("skill_id") or ""),
         "question_type": str(question.get("question_type") or ""),
         "difficulty": str(question.get("difficulty") or ""),
-        "prompt": str(question.get("prompt") or ""),
-        "choices": question.get("choices") if isinstance(question.get("choices"), list) else [],
+        "prompt": polish_preview_copy(str(question.get("prompt") or "")),
+        "choices": [
+            polish_preview_copy(str(choice))
+            for choice in question.get("choices")
+        ] if isinstance(question.get("choices"), list) else [],
         "answer_hidden_until_submission": True,
         "explanation_hidden_until_submission": True,
         "will_save_attempt": False,
@@ -355,7 +449,7 @@ def main() -> int:
         output = work_root / DEFAULT_OUTPUT_NAME
 
     preview = build_preview(root=root, work_root=work_root, output=output)
-    print(json.dumps(preview, ensure_ascii=False, indent=2))
+    print(json.dumps(preview, ensure_ascii=True, indent=2))
 
     if args.expect_pass and preview.get("status") != "pass":
         return 2
@@ -365,4 +459,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
