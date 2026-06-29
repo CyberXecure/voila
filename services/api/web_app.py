@@ -8703,3 +8703,120 @@ def exam_prep_local_bank_first_live_trial_owner_decision_panel():
 </html>
 """
     return HTMLResponse(content=panel_html)
+
+# --- v0.5.5 owner-only hidden session preview route ---
+from fastapi import Request as _VoilaOwnerSessionPreviewRequest
+from fastapi.responses import JSONResponse as _VoilaOwnerSessionPreviewJSONResponse
+
+_VOILA_OWNER_SESSION_PREVIEW_ROUTE_VERSION = "v0.5.5"
+_VOILA_OWNER_SESSION_PREVIEW_ROUTE_FLAG = "VOILA_ENABLE_EXAM_PREP_OWNER_ONLY_SESSION_PREVIEW_ROUTE"
+_VOILA_OWNER_SESSION_PREVIEW_ROUTE_PATH = "/owner/exam-prep/session-preview.json"
+
+
+def _voila_owner_session_preview_route_flag_enabled() -> bool:
+    import os
+
+    return str(os.environ.get(_VOILA_OWNER_SESSION_PREVIEW_ROUTE_FLAG, "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _voila_owner_session_preview_is_local_request(
+    request: _VoilaOwnerSessionPreviewRequest,
+) -> bool:
+    client = getattr(request, "client", None)
+    host = str(getattr(client, "host", "") or "").strip().lower()
+    return host in {"127.0.0.1", "::1", "localhost"} or host.startswith("127.")
+
+
+def _voila_owner_session_preview_not_found() -> _VoilaOwnerSessionPreviewJSONResponse:
+    return _VoilaOwnerSessionPreviewJSONResponse(
+        status_code=404,
+        content={
+            "schema_version": "1",
+            "route_version": _VOILA_OWNER_SESSION_PREVIEW_ROUTE_VERSION,
+            "status": "not_found",
+            "route_enabled": False,
+            "owner_only": True,
+            "hidden_route": True,
+            "effective_source": "legacy_fallback",
+            "delivery_performed": False,
+            "adds_public_ui": False,
+            "persists_sessions": False,
+            "persists_attempts": False,
+            "updates_progress": False,
+            "scores_live_session": False,
+        },
+    )
+
+
+@app.get(_VOILA_OWNER_SESSION_PREVIEW_ROUTE_PATH, include_in_schema=False)
+async def voila_owner_only_session_preview_json(
+    request: _VoilaOwnerSessionPreviewRequest,
+) -> _VoilaOwnerSessionPreviewJSONResponse:
+    if not _voila_owner_session_preview_route_flag_enabled():
+        return _voila_owner_session_preview_not_found()
+
+    if not _voila_owner_session_preview_is_local_request(request):
+        return _voila_owner_session_preview_not_found()
+
+    import importlib.util
+    import shutil
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    work_root = root / ".tmp" / "v055-owner-only-session-preview-route"
+    output = work_root / "owner_only_session_preview_route.json"
+    helper_path = root / "scripts" / "dev" / "build-local-bank-owner-only-session-preview.py"
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "voila_v055_owner_only_session_preview_helper",
+            helper_path,
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError("Could not load owner-only session preview helper")
+
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+
+        preview = helper.build_preview(root=root, work_root=work_root, output=output)
+        preview["route_version"] = _VOILA_OWNER_SESSION_PREVIEW_ROUTE_VERSION
+        preview["route_path"] = _VOILA_OWNER_SESSION_PREVIEW_ROUTE_PATH
+        preview["route_flag_name"] = _VOILA_OWNER_SESSION_PREVIEW_ROUTE_FLAG
+        preview["route_enabled"] = True
+        preview["owner_only_route"] = True
+        preview["hidden_route"] = True
+        preview["adds_public_ui"] = False
+        preview["persists_sessions"] = False
+        preview["persists_attempts"] = False
+        preview["updates_progress"] = False
+        preview["scores_live_session"] = False
+        preview["requires_cloud_or_api"] = False
+
+        return _VoilaOwnerSessionPreviewJSONResponse(content=preview)
+    except Exception as exc:
+        return _VoilaOwnerSessionPreviewJSONResponse(
+            status_code=500,
+            content={
+                "schema_version": "1",
+                "route_version": _VOILA_OWNER_SESSION_PREVIEW_ROUTE_VERSION,
+                "status": "error",
+                "owner_only_route": True,
+                "hidden_route": True,
+                "error_code": "owner_session_preview_unavailable",
+                "error_message": "Owner-only session preview is unavailable.",
+                "adds_public_ui": False,
+                "persists_sessions": False,
+                "persists_attempts": False,
+                "updates_progress": False,
+                "scores_live_session": False,
+            },
+        )
+    finally:
+        if work_root.exists():
+            shutil.rmtree(work_root)
+# --- end v0.5.5 owner-only hidden session preview route ---
