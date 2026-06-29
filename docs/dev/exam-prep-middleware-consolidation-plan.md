@@ -2059,3 +2059,35 @@ Scope:
 Recommended next step:
 
 - wait for explicit owner reconfirmation before any real-delivery milestone
+
+## v0.4.91 Guarded first live trial real-delivery proposal gate
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add a proposal/reconfirmation gate after v0.4.90 before any real delivery implementation.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_real_delivery_proposal.py`
+- add `scripts/dev/check-local-bank-first-live-trial-real-delivery-proposal.ps1`
+- add `docs/dev/local-bank-first-live-trial-real-delivery-proposal.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_REAL_DELIVERY_PROPOSAL_GATE`
+- depend on v0.4.90 preflight audit
+- document exact future activation scope and rollback requirements
+- return `may_deliver_live=false`
+- return `go_for_real_delivery_now=false`
+- return `real_delivery_allowed_now=false`
+- return `delivery_performed=false`
+- keep `effective_source=legacy_fallback`
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- owner must explicitly reconfirm before any separate real-delivery implementation milestone
