@@ -2091,3 +2091,34 @@ Scope:
 Recommended next step:
 
 - owner must explicitly reconfirm before any separate real-delivery implementation milestone
+
+## v0.4.92 Guarded first live trial owner reconfirmation record
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add an owner reconfirmation record / authorization draft after v0.4.91 without making authorization effective.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_owner_reconfirmation.py`
+- add `scripts/dev/check-local-bank-first-live-trial-owner-reconfirmation.ps1`
+- add `docs/dev/local-bank-first-live-trial-owner-reconfirmation-record.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_RECONFIRMATION_RECORD`
+- depend on v0.4.91 real-delivery proposal gate
+- return `authorization_effective=false`
+- return `may_deliver_live=false`
+- return `go_for_real_delivery_now=false`
+- return `delivery_performed=false`
+- keep `effective_source=legacy_fallback`
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- stop unless owner explicitly requests a separate real-delivery implementation milestone
