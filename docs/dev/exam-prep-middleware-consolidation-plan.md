@@ -2028,3 +2028,34 @@ Scope:
 Recommended next step:
 
 - stop and review before any separate explicitly named real-delivery milestone
+
+## v0.4.90 Guarded first live trial preflight audit
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add a preflight audit and owner reconfirmation checklist before any separate real-delivery milestone.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_preflight_audit.py`
+- add `scripts/dev/check-local-bank-first-live-trial-preflight-audit.ps1`
+- add `docs/dev/local-bank-first-live-trial-preflight-audit.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_PREFLIGHT_AUDIT`
+- depend on v0.4.89 owner-ready checkpoint
+- return `preflight_audit_complete=true`
+- return `go_for_real_delivery_now=false`
+- return `real_delivery_allowed_now=false`
+- keep `effective_source=legacy_fallback`
+- require explicit owner reconfirmation before any real-delivery milestone
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- wait for explicit owner reconfirmation before any real-delivery milestone
