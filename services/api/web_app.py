@@ -2465,7 +2465,7 @@ def review_concepts(pdf: str = ""):
           </form>
 
           <details>
-            <summary>Question sample</summary>
+            <summary>Întrebarea sample</summary>
             <p><b>Q:</b> {_html_escape(sample_question)}</p>
             <p><b>A:</b> {_html_escape(sample_answer)}</p>
           </details>
@@ -7034,7 +7034,7 @@ def exam_prep_local_bank_guarded_trial_candidates_panel(
             <span class="badge">${{difficulty}}</span>
             <span class="badge">${{skill}}</span>
           </div>
-          <h3>Question ${{text(item.candidate_index)}}</h3>
+          <h3>Întrebarea ${{text(item.candidate_index)}}</h3>
           <p>${{question}}</p>
           ${{choices}}
           <p class="muted">Answers hidden: ${{text(item.answer_preview_hidden)}} · Explanations hidden: ${{text(item.explanation_preview_hidden)}}</p>
@@ -7222,7 +7222,7 @@ def exam_prep_local_bank_guarded_trial_candidates_panel_polish():
       appendBadge(badges, "explanations hidden");
       article.appendChild(badges);
 
-      appendText(article, "h3", "Question " + text(item.candidate_index));
+      appendText(article, "h3", "Întrebarea " + text(item.candidate_index));
       appendText(article, "p", item.question || "");
 
       const choices = Array.isArray(item.choices) ? item.choices : [];
@@ -7593,7 +7593,7 @@ def exam_prep_local_bank_live_consumption_shadow_panel():
       article.appendChild(badges);
 
       appendText(article, "h3", "Shadow item " + text(item.shadow_index));
-      appendText(article, "p", "Question ID: " + text(item.question_id), "muted");
+      appendText(article, "p", "Întrebarea ID: " + text(item.question_id), "muted");
       appendText(article, "p", "Dry run only: " + text(item.dry_run_only) + " · Delivered live: " + text(item.will_deliver_live), "muted");
       return article;
     }
@@ -8862,6 +8862,48 @@ def _voila_owner_session_preview_page_escape(value: object) -> str:
     return html.escape(str(value or ""), quote=True)
 
 
+def _voila_owner_session_preview_page_polish_display_copy(value: object) -> str:
+    text = str(value or "")
+    replacements = {
+        "Mentioneaza": "Menționează",
+        "sustinuta": "susținută",
+        "Daca exista": "Dacă există",
+        "LHopital": "L'Hôpital",
+        "Ce idee importanta": "Ce idee importantă",
+        "aplicatie": "aplicație",
+        "notiunii": "noțiunii",
+        "limita": "limită",
+        "existentei": "existenței",
+        "functii": "funcții",
+        "functiei": "funcției",
+        "urmatoarea": "următoarea",
+        "definitie": "definiție",
+        "incercari": "încercări",
+    }
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    return text
+
+
+def _voila_owner_session_preview_page_question_type_label(value: object) -> str:
+    labels = {
+        "short_answer": "răspuns scurt",
+        "multiple_choice": "alegere multiplă",
+    }
+    raw = str(value or "")
+    return labels.get(raw, raw)
+
+
+def _voila_owner_session_preview_page_difficulty_label(value: object) -> str:
+    labels = {
+        "easy": "ușor",
+        "medium": "mediu",
+        "hard": "dificil",
+    }
+    raw = str(value or "")
+    return labels.get(raw, raw)
+
+
 def _voila_owner_session_preview_page_html(preview: dict) -> str:
     prompts = []
     session = preview.get("session_preview") or {}
@@ -8869,16 +8911,22 @@ def _voila_owner_session_preview_page_html(preview: dict) -> str:
 
     for question in questions:
         display_index = _voila_owner_session_preview_page_escape(question.get("display_index"))
-        prompt = _voila_owner_session_preview_page_escape(question.get("prompt"))
+        prompt = _voila_owner_session_preview_page_escape(
+            _voila_owner_session_preview_page_polish_display_copy(question.get("prompt"))
+        )
         question_id = _voila_owner_session_preview_page_escape(question.get("question_id"))
-        question_type = _voila_owner_session_preview_page_escape(question.get("question_type"))
-        difficulty = _voila_owner_session_preview_page_escape(question.get("difficulty"))
+        question_type = _voila_owner_session_preview_page_escape(
+            _voila_owner_session_preview_page_question_type_label(question.get("question_type"))
+        )
+        difficulty = _voila_owner_session_preview_page_escape(
+            _voila_owner_session_preview_page_difficulty_label(question.get("difficulty"))
+        )
 
         prompts.append(
             "<article class=\"question-card\" data-question-id=\""
             + question_id
             + "\">"
-            + "<p class=\"question-meta\">Question "
+            + "<p class=\"question-meta\">Întrebarea "
             + display_index
             + " · "
             + question_type
@@ -8888,7 +8936,7 @@ def _voila_owner_session_preview_page_html(preview: dict) -> str:
             + "<h2>"
             + prompt
             + "</h2>"
-            + "<p class=\"question-policy\">Answer and explanation are hidden. This preview does not submit, save attempts, update progress, or score answers.</p>"
+            + "<p class=\"question-policy\">Răspunsul și explicația sunt ascunse. Această previzualizare nu trimite răspunsuri, nu salvează încercări, nu actualizează progresul și nu calculează scoruri.</p>"
             + "</article>"
         )
 
@@ -8914,7 +8962,7 @@ def _voila_owner_session_preview_page_html(preview: dict) -> str:
   <meta charset="utf-8">
   <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Owner Exam Prep Session Preview</title>
+  <title>Previzualizare sesiune Pregătire examene</title>
   <style>
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #0f172a; color: #e5e7eb; }
     main { max-width: 920px; margin: 0 auto; padding: 32px 20px 56px; }
@@ -8929,14 +8977,14 @@ def _voila_owner_session_preview_page_html(preview: dict) -> str:
 <body data-route-version=\"""" + route_version + """\" data-owner-only=\"true\" data-hidden-route=\"true\">
   <main>
     <span class="badge">Owner-only hidden preview · """ + route_version + """</span>
-    <h1>Exam Prep Session Preview</h1>
-    <p class="muted">This local owner preview shows five sanitized questions. It has no submit action, no attempt saving, no progress update, and no live scoring.</p>
+    <h1>Previzualizare sesiune Pregătire examene</h1>
+    <p class="muted">Această previzualizare locală owner-only afișează cinci întrebări sanitizate. Nu are trimitere răspunsuri, nu salvează încercări, nu actualizează progresul și nu calculează scoruri.</p>
 
     <section class="summary">
-      <p><strong>Selected course:</strong> <code>""" + selected_course + """</code></p>
-      <p><strong>Questions:</strong> """ + question_count + """</p>
-      <p><strong>Effective source:</strong> """ + effective_source + """</p>
-      <p><strong>Rollback source:</strong> """ + rollback_source + """</p>
+      <p><strong>Curs selectat:</strong> <code>""" + selected_course + """</code></p>
+      <p><strong>Întrebări:</strong> """ + question_count + """</p>
+      <p><strong>Sursă activă:</strong> """ + effective_source + """</p>
+      <p><strong>Sursă rollback:</strong> """ + rollback_source + """</p>
     </section>
 
     <section aria-label="Session questions">
