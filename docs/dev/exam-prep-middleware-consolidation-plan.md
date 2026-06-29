@@ -2155,3 +2155,37 @@ Scope:
 Recommended next step:
 
 - only continue to a separate real-delivery implementation milestone after explicit owner approval
+
+## v0.4.94 Guarded first live trial implementation readiness freeze
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: freeze the current first-live-trial readiness chain after v0.4.93 and stop adding more gate milestones.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_readiness_freeze.py`
+- add `scripts/dev/check-local-bank-first-live-trial-readiness-freeze.ps1`
+- add `docs/dev/local-bank-first-live-trial-readiness-freeze.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_READINESS_FREEZE`
+- depend on v0.4.93 activation/rollback playbook
+- return `implementation_readiness_frozen=true`
+- return `no_more_gate_milestones_recommended=true`
+- return `next_step_policy=STOP_OR_SEPARATE_REAL_DELIVERY_MILESTONE_ONLY`
+- return `activation_effective=false`
+- return `may_deliver_live=false`
+- return `go_for_real_delivery_now=false`
+- return `delivery_performed=false`
+- keep `effective_source=legacy_fallback`
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- STOP, or create a separate explicitly owner-approved real-delivery implementation milestone
