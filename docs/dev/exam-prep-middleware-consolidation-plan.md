@@ -2122,3 +2122,36 @@ Scope:
 Recommended next step:
 
 - stop unless owner explicitly requests a separate real-delivery implementation milestone
+
+## v0.4.93 Guarded first live trial activation rollback playbook
+
+Status: JSON-only local module; disabled by default.
+
+Purpose: add activation and rollback playbook after v0.4.92 without making activation effective.
+
+Scope:
+
+- add `services/api/exam_prep_local_bank_first_live_trial_activation_playbook.py`
+- add `scripts/dev/check-local-bank-first-live-trial-activation-playbook.ps1`
+- add `docs/dev/local-bank-first-live-trial-activation-rollback-playbook.md`
+- introduce `VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_ACTIVATION_ROLLBACK_PLAYBOOK`
+- depend on v0.4.92 owner reconfirmation record
+- return `activation_effective=false`
+- return `may_deliver_live=false`
+- return `go_for_real_delivery_now=false`
+- return `delivery_performed=false`
+- keep `effective_source=legacy_fallback`
+- document activation sequence
+- document rollback sequence
+- add no web route
+- do not patch `services/api/web_app.py`
+- do not add public UI
+- do not deliver local-bank questions live yet
+- do not consume local-bank questions live
+- do not persist progress, sessions, or attempts
+- do not score live sessions
+- do not introduce cloud/API costs
+
+Recommended next step:
+
+- only continue to a separate real-delivery implementation milestone after explicit owner approval
