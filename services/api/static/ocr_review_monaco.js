@@ -42,8 +42,6 @@
   }
 })();
 
-
-
 (function () {
   window.VOILA_MONACO_JS_LOADED = true;
   console.log("Voila Monaco OCR JS loaded - multilingual");
@@ -508,6 +506,7 @@
         lightbulb: { enabled: false },
         fixedOverflowWidgets: true
       });
+      window.voilaOcrMonacoEditor = editor;
 
       window.voilaMonaco = editor;
       window.voilaMonacoModel = model;
@@ -642,7 +641,7 @@
         } else {
           setStatus(
             "<strong>LanguageTool:</strong> " + markers.length +
-            " sugestii. Folosește panoul lateral de sugestii, fără suprapunere peste editor."
+            " sugestii · sugestii vizibile."
           );
           renderLtIssuePanel();
         }
@@ -705,7 +704,7 @@
         ltPanel.classList.add("voila-lt-side-panel");
         ltPanel.innerHTML =
           '<div class="lt-head">' +
-            '<strong>LanguageTool · panou sugestii</strong>' +
+            '<strong>LT · sugestii</strong>' +
             '<span>' + (window.voilaLtIndex + 1) + ' / ' + matches.length + '</span>' +
           '</div>' +
           '<div class="lt-message">' + escapeHtml(match.message || "Sugestie") + '</div>' +
@@ -846,4 +845,100 @@
       fallback("<strong>Editor:</strong> Monaco nu a putut fi inițializat.");
     });
   });
+})();
+
+
+/* VOILA_LT_VISIBLE_COMPACT_PANEL_CSS_V1 */
+(function installVoilaLtVisibleCompactPanelCss() {
+  function install() {
+    if (document.getElementById("voila-lt-visible-compact-panel-css")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "voila-lt-visible-compact-panel-css";
+    style.textContent = [
+      ".voila-lt-side-panel {",
+      "  max-height: 112px !important;",
+      "  min-height: 88px !important;",
+      "  overflow: hidden !important;",
+      "  padding: 8px 12px !important;",
+      "  margin: 8px 0 10px !important;",
+      "  border-radius: 12px !important;",
+      "}",
+      ".voila-lt-side-panel:hover,",
+      ".voila-lt-side-panel:focus-within {",
+      "  max-height: 156px !important;",
+      "  min-height: 88px !important;",
+      "  overflow: auto !important;",
+      "}",
+      ".voila-lt-side-panel .lt-head {",
+      "  display: flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: space-between !important;",
+      "  gap: 10px !important;",
+      "  margin: 0 0 4px !important;",
+      "  min-height: 20px !important;",
+      "  font-size: 12px !important;",
+      "  line-height: 1.1 !important;",
+      "}",
+      ".voila-lt-side-panel .lt-head strong,",
+      ".voila-lt-side-panel .lt-head span {",
+      "  font-size: 12px !important;",
+      "  line-height: 1.1 !important;",
+      "  white-space: nowrap !important;",
+      "}",
+      ".voila-lt-side-panel .lt-message {",
+      "  margin: 2px 0 3px !important;",
+      "  font-size: 12px !important;",
+      "  line-height: 1.2 !important;",
+      "  white-space: nowrap !important;",
+      "  overflow: hidden !important;",
+      "  text-overflow: ellipsis !important;",
+      "}",
+      ".voila-lt-side-panel .lt-context,",
+      ".voila-lt-side-panel .lt-text,",
+      ".voila-lt-side-panel .lt-detail {",
+      "  margin: 1px 0 4px !important;",
+      "  font-size: 11px !important;",
+      "  line-height: 1.15 !important;",
+      "  white-space: nowrap !important;",
+      "  overflow: hidden !important;",
+      "  text-overflow: ellipsis !important;",
+      "}",
+      ".voila-lt-side-panel .lt-replacements,",
+      ".voila-lt-side-panel .lt-actions,",
+      ".voila-lt-side-panel .lt-buttons {",
+      "  display: flex !important;",
+      "  flex-wrap: nowrap !important;",
+      "  gap: 6px !important;",
+      "  overflow-x: auto !important;",
+      "  overflow-y: hidden !important;",
+      "  padding: 2px 0 3px !important;",
+      "  margin: 3px 0 0 !important;",
+      "}",
+      ".voila-lt-side-panel button,",
+      ".voila-lt-side-panel .lt-replacement,",
+      ".voila-lt-side-panel .chip {",
+      "  font-size: 12px !important;",
+      "  line-height: 1.1 !important;",
+      "  padding: 5px 9px !important;",
+      "  min-height: 26px !important;",
+      "  border-radius: 999px !important;",
+      "  white-space: nowrap !important;",
+      "}",
+      ".voila-lt-side-panel::-webkit-scrollbar {",
+      "  width: 8px !important;",
+      "  height: 8px !important;",
+      "}"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", install, { once: true });
+  } else {
+    install();
+  }
 })();
