@@ -1207,6 +1207,21 @@ def generate_for_pdf(pdf_path: Path) -> Path:
     log_path = output_dir / "last_run.log"
     log_path.write_text("\n".join(log_lines), encoding="utf-8")
 
+    # VOILA_OCR_MATH_REPORT_HOOK_GENERATE_V1
+    # Owner-local diagnostic hook only. It never rewrites OCR text, course files,
+    # Study state, Progress state, build artifacts, ZIPs, releases, or delivery assets.
+    try:
+        from ocr_math_report_hook import build_ocr_math_report_if_enabled
+
+        build_ocr_math_report_if_enabled(
+            output_dir,
+            pdf_path.name,
+            reason="generate_for_pdf",
+        )
+    except Exception:
+        # Diagnostic hook must never break Generate/Regenerează.
+        pass
+
     return output_dir
 
 
