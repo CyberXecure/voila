@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -270,20 +271,219 @@ def normalize_quiz(raw: Any) -> list[dict]:
     return questions
 
 
+def _clean_romanian_ocr_display_text(value: str) -> str:
+    """Clean common Romanian OCR accent artifacts for Study display only."""
+    text = str(value or "")
+
+    replacements = {
+        "Dac˘a": "Dacă",
+        "dac˘a": "dacă",
+        "exist˘a": "există",
+        "vecin˘atate": "vecinătate",
+        "vecin˘atatea": "vecinătatea",
+        "ˆın": "în",
+        "ˆIn": "În",
+        "Hˆopital": "Hôpital",
+        "L’Hˆopital": "L’Hôpital",
+        "Funct¸iile": "Funcțiile",
+        "funct¸iile": "funcțiile",
+        "¸si": "și",
+        "s¸i": "și",
+        "t¸": "ț",
+        "¸t": "ț",
+        "˘a": "ă",
+        "˘A": "Ă",
+        "ˆa": "â",
+        "ˆA": "Â",
+        "ˆi": "î",
+        "ˆI": "Î",
+        "ˆı": "î",
+        "¸s": "ș",
+        "¸S": "Ș",
+        "s¸": "ș",
+        "S¸": "Ș",
+        "¸T": "Ț",
+        "T¸": "Ț",
+    }
+
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+
+    text = re.sub(r"(?<![A-Za-z0-9_])x\s*→\s*x[0o](?![A-Za-z0-9_])", "x → x₀", text)
+    text = re.sub(r"(?<![A-Za-z0-9_])x\s*->\s*x[0o](?![A-Za-z0-9_])", "x → x₀", text)
+    text = re.sub(r"(?<![A-Za-z0-9_])x[0o](?![A-Za-z0-9_])", "x₀", text)
+
+    return text
+
+
+def _localize_legacy_study_question(question: str) -> str:
+    """Convert old English rule-based fallback prompts to Romanian."""
+    text = _clean_romanian_ocr_display_text(question).strip()
+
+    prefix = "Name one key point supported by the source text in '"
+    if text.startswith(prefix):
+        subject = text[len(prefix):].strip()
+        if subject.endswith("'."):
+            subject = subject[:-2]
+        elif subject.endswith("'"):
+            subject = subject[:-1]
+
+        subject = _clean_romanian_ocr_display_text(subject).strip()
+        if subject and not re.fullmatch(r"L\d{3}", subject):
+            return f"Ce precizare tehnică face sursa despre „{subject}”?"
+
+        return "Ce precizare tehnică face sursa în fragmentul selectat?"
+
+    return text
+
+
+def _clean_loaded_question_item(item: dict) -> dict:
+    cleaned = dict(item)
+
+    for key in ["question", "prompt"]:
+        if key in cleaned:
+            cleaned[key] = _localize_legacy_study_question(str(cleaned.get(key) or ""))
+
+    for key in ["answer", "expected_answer", "explanation", "concept_title"]:
+        if key in cleaned:
+            cleaned[key] = _clean_romanian_ocr_display_text(str(cleaned.get(key) or ""))
+
+    return cleaned
+
+
+def _legacy_subject_from_question_or_answer(question: str, answer: str, fallback: str) -> str:
+    """Derive a human-readable Romanian concept title for legacy quiz.json items."""
+    cleaned_question = _clean_romanian_ocr_display_text(question).strip()
+    cleaned_answer = _clean_romanian_ocr_display_text(answer).strip()
+
+    prefix = "Name one key point supported by the source text in '"
+    if cleaned_question.startswith(prefix):
+        subject = cleaned_question[len(prefix):].strip()
+        if subject.endswith("'."):
+            subject = subject[:-2]
+        elif subject.endswith("'"):
+            subject = subject[:-1]
+        subject = _clean_romanian_ocr_display_text(subject).strip()
+        if subject and not re.fullmatch(r"L\d{3}", subject):
+            return subject
+
+    # If the question title collapsed to L001/L002, use the first meaningful
+    # phrase from the answer. This keeps the UI useful without inventing content.
+    answer_subject = cleaned_answer
+    for separator in [".", ";", ":", ", atunci", ", iar", "\n"]:
+        if separator in answer_subject:
+            answer_subject = answer_subject.split(separator, 1)[0]
+            break
+
+    answer_subject = answer_subject.strip(" -–—:;,.")
+    words = answer_subject.split()
+    if len(words) > 8:
+        answer_subject = " ".join(words[:8])
+
+    if answer_subject:
+        return answer_subject
+
+    return fallback
+
+
+def _legacy_questions_from_raw_list(raw: object) -> list[dict]:
+    if not isinstance(raw, list):
+        return []
+
+    legacy_questions: list[dict] = []
+
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        question = str(item.get("question") or item.get("prompt") or "").strip()
+        answer = str(
+            item.get("answer")
+            or item.get("expected_answer")
+            or item.get("explanation")
+            or ""
+        ).strip()
+
+        if not question or not answer:
+            continue
+
+        question = _localize_legacy_study_question(question)
+        answer = _clean_romanian_ocr_display_text(answer)
+
+        if not question or not answer:
+            continue
+
+        lesson_id = str(item.get("lesson_id") or f"L{index:03d}").strip()
+        concept_id = str(item.get("concept_id") or lesson_id).strip()
+        question_id = str(item.get("id") or item.get("question_id") or f"{lesson_id}.Q{index:03d}").strip()
+        concept_title = _legacy_subject_from_question_or_answer(question, answer, lesson_id)
+        source_pages = item.get("source_pdf_pages") or item.get("pages") or []
+
+        if isinstance(source_pages, (str, int)):
+            source_pages = [source_pages]
+
+        if not isinstance(source_pages, list):
+            source_pages = []
+
+        legacy_questions.append(
+            {
+                "id": question_id,
+                "question_id": question_id,
+                "lesson_id": lesson_id,
+                "concept_id": concept_id,
+                "concept_title": _clean_romanian_ocr_display_text(
+                    str(item.get("concept_title") or item.get("title") or concept_title).strip()
+                ),
+                "question": question,
+                "prompt": question,
+                "answer": answer,
+                "expected_answer": answer,
+                "explanation": answer,
+                "source_pdf_pages": source_pages,
+                "question_type": str(item.get("question_type") or "legacy_short_answer"),
+                "difficulty": str(item.get("difficulty") or "medium"),
+                "generation_method": str(item.get("generation_method") or "legacy_quiz_json_fallback"),
+            }
+        )
+
+    return legacy_questions
+
+
 def load_questions(output_dir: Path) -> list[dict]:
+    """Load usable Study questions."""
     study_quiz_path = output_dir / "quiz.study.json"
     default_quiz_path = output_dir / "quiz.json"
 
-    if study_quiz_path.exists():
-        quiz_path = study_quiz_path
-    else:
-        quiz_path = default_quiz_path
+    def _read_normalized_quiz(quiz_path: Path) -> list[dict]:
+        if not quiz_path.exists():
+            return []
 
-    if not quiz_path.exists():
+        try:
+            raw = json.loads(quiz_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+
+        if isinstance(raw, list):
+            legacy_questions = _legacy_questions_from_raw_list(raw)
+            if legacy_questions:
+                return legacy_questions
+
+        if isinstance(raw, dict) and isinstance(raw.get("questions"), list):
+            legacy_questions = _legacy_questions_from_raw_list(raw.get("questions"))
+            if legacy_questions:
+                return legacy_questions
+
+        normalized = normalize_quiz(raw)
+        if normalized:
+            return [_clean_loaded_question_item(item) for item in normalized]
+
         return []
 
-    raw = json.loads(quiz_path.read_text(encoding="utf-8"))
-    return normalize_quiz(raw)
+    study_questions = _read_normalized_quiz(study_quiz_path)
+    if study_questions:
+        return study_questions
+
+    return _read_normalized_quiz(default_quiz_path)
 
 
 def state_path(output_dir: Path) -> Path:

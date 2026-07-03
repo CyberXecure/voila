@@ -29,18 +29,18 @@ def build_nav(html_path: Path, pdf_name: str) -> str:
     app_base = "http://127.0.0.1:8787"
 
     links = [
-        f'<a href="{app_base}/">Back</a>',
+        f'<a href="{app_base}/">Înapoi</a>',
     ]
 
     if file_exists_near_course(html_path, "quiz.study.json") or file_exists_near_course(html_path, "quiz.json"):
-        links.append(f'<a class="secondary" href="{app_base}/study?pdf={encoded_pdf}">Study</a>')
-        links.append(f'<a class="secondary" href="{app_base}/progress?pdf={encoded_pdf}">Progress</a>')
+        links.append(f'<a class="secondary" href="{app_base}/study?pdf={encoded_pdf}">Studiu</a>')
+        links.append(f'<a class="secondary" href="{app_base}/progress?pdf={encoded_pdf}">Progres</a>')
 
     if file_exists_near_course(html_path, "figures_hybrid/figures_hybrid.html"):
-        links.append('<a class="secondary" href="figures_hybrid/figures_hybrid.html">Figures</a>')
+        links.append('<a class="secondary" href="figures_hybrid/figures_hybrid.html">Figuri</a>')
 
     if file_exists_near_course(html_path, "figures_hybrid/figures_manifest.hybrid.json"):
-        links.append(f'<a class="secondary" href="http://127.0.0.1:8790/?pdf={encoded_pdf}">Edit crops</a>')
+        links.append(f'<a class="secondary" href="http://127.0.0.1:8790/?pdf={encoded_pdf}">Editează decupaje</a>')
 
     links.append('<button type="button" onclick="window.scrollTo({ top: 0, behavior: \'smooth\' })">↑ Top</button>')
     links.append('<button type="button" onclick="window.scrollTo({ top: document.documentElement.scrollHeight, behavior: \'smooth\' })">↓ Bottom</button>')

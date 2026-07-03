@@ -1207,6 +1207,21 @@ def generate_for_pdf(pdf_path: Path) -> Path:
     log_path = output_dir / "last_run.log"
     log_path.write_text("\n".join(log_lines), encoding="utf-8")
 
+    # VOILA_OCR_MATH_REPORT_HOOK_GENERATE_V1
+    # Owner-local diagnostic hook only. It never rewrites OCR text, course files,
+    # Study state, Progress state, build artifacts, ZIPs, releases, or delivery assets.
+    try:
+        from ocr_math_report_hook import build_ocr_math_report_if_enabled
+
+        build_ocr_math_report_if_enabled(
+            output_dir,
+            pdf_path.name,
+            reason="generate_for_pdf",
+        )
+    except Exception:
+        # Diagnostic hook must never break Generate/Regenerează.
+        pass
+
     return output_dir
 
 
@@ -3221,20 +3236,32 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     }}
   
 
-    /* VS Code style OCR autocomplete */
+    /* OCR suggestions panel: static, non-overlapping, below the editor. */
     .ocr-suggestions {{
-      position: fixed !important;
-      z-index: 3000 !important;
+      position: static !important;
+      z-index: auto !important;
       display: block !important;
-      min-width: 280px;
-      max-width: min(520px, calc(100vw - 24px));
-      max-height: 280px;
-      overflow-y: auto;
-      padding: 6px;
-      background: #1b2529;
-      border: 1px solid var(--line);
+      width: 100%;
+      max-width: none;
+      max-height: 260px;
+      overflow: auto;
+      margin-top: 12px;
+      background: #0f1a20;
+      border: 1px solid rgba(255,255,255,0.16);
       border-radius: 12px;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.45);
+      padding: 8px;
+      box-shadow: none;
+    }}
+
+    .ocr-suggestions::before {{
+      content: "Sugestii OCR / corectură";
+      display: block;
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }}
 
     .ocr-suggestions[hidden] {{
@@ -3250,8 +3277,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
       background: transparent;
       color: var(--text);
       text-align: left;
-      font-weight: 800;
-      font-size: 15px;
+      font-weight: 850;
       cursor: pointer;
       font-family: system-ui, -apple-system, Segoe UI, sans-serif;
     }}
@@ -3306,7 +3332,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
           <input type="hidden" name="page" value="{page}">
           <textarea id="ocrTextArea" name="text" autocomplete="off" spellcheck="false">{_html_escape(current_text)}</textarea>
           <div id="ocrSuggestions" class="ocr-suggestions" hidden></div>
-          <p class="meta small-tip">Tip: sugestiile apar lângă cursor. ↑/↓ navighează · Enter/Tab acceptă · Esc închide · Ctrl+Space afișează sugestii.</p>
+          <p class="meta small-tip">Tip: sugestiile apar în panoul de sub editor, fără suprapunere peste text. ↑/↓ navighează · Enter/Tab acceptă · Esc închide · Ctrl+Space afișează sugestii.</p>
           <div class="actions">
             <button type="submit">{_ut("ui.button.save_page_correction", "Save page correction")}</button>
             <a href="/review-ocr-corrected?pdf={quote(pdf_name)}&page={page}">{_ut("ui.link.reload", "Reload")}</a>
@@ -3564,39 +3590,16 @@ def review_ocr_text(pdf: str = "", page: int = 1):
     }}
 
     function positionOcrSuggestions() {{
-      const textarea = document.getElementById("ocrTextArea");
       const box = getOcrSuggestionBox();
 
-      if (!textarea || !box || box.hidden) {{
+      if (!box || box.hidden) {{
         return;
       }}
 
-      const pos = getTextareaCaretViewportPosition(textarea);
-
-      const boxWidth = Math.min(520, Math.max(280, box.offsetWidth || 320));
-      const boxHeight = Math.min(280, box.offsetHeight || 220);
-
-      let left = pos.left;
-      let top = pos.top;
-
-      if (left + boxWidth > window.innerWidth - 12) {{
-        left = window.innerWidth - boxWidth - 12;
-      }}
-
-      if (left < 12) {{
-        left = 12;
-      }}
-
-      if (top + boxHeight > window.innerHeight - 12) {{
-        top = pos.top - boxHeight - 30;
-      }}
-
-      if (top < 12) {{
-        top = 12;
-      }}
-
-      box.style.left = left + "px";
-      box.style.top = top + "px";
+      // Suggestions are intentionally kept in document flow below the editor.
+      // Do not position them over the textarea/editor.
+      box.style.left = "";
+      box.style.top = "";
     }}
 
     function renderOcrSuggestions(suggestions) {{
