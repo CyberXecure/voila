@@ -1426,9 +1426,9 @@ async def _voila_owner_ocr_math_report_markdown(course_id: str):
 
 def _voila_ocr_math_report_ui_script_html() -> str:
     return """
-<script id="voila-ocr-math-report-ui-link-v071">
+<script id="voila-ocr-math-report-ui-link-v072">
 (function () {
-  var rootMarker = "data-voila-ocr-math-report-ui-link-v071";
+  var rootMarker = "data-voila-ocr-math-report-ui-link-v072";
   if (document.documentElement.hasAttribute(rootMarker)) return;
   document.documentElement.setAttribute(rootMarker, "1");
 
@@ -1450,8 +1450,8 @@ def _voila_ocr_math_report_ui_script_html() -> str:
     try {
       var url = new URL(href, window.location.origin);
       [
-        /\\/(?:course|courses|library|document|documents|ocr-review|review-ocr|study|progress)\\/([^\\/?#]+)/i,
-        /\\/owner\\/(?:course|courses|library|document|documents|ocr-review|review-ocr)\\/([^\\/?#]+)/i
+        /\/(?:course|courses|library|document|documents|ocr-review|review-ocr|study|progress)\/([^\/?#]+)/i,
+        /\/owner\/(?:course|courses|library|document|documents|ocr-review|review-ocr)\/([^\/?#]+)/i
       ].forEach(function (pattern) {
         var match = url.pathname.match(pattern);
         if (match && match[1]) ids.push(decodeURIComponent(match[1]));
@@ -1463,6 +1463,11 @@ def _voila_ocr_math_report_ui_script_html() -> str:
       });
     } catch (error) {}
     return unique(ids);
+  }
+
+  function formatCount(value) {
+    if (value === null || value === undefined || value === "") return "n/a";
+    return String(value);
   }
 
   function reportHref(id) {
@@ -1478,30 +1483,90 @@ def _voila_ocr_math_report_ui_script_html() -> str:
     );
   }
 
+  function createMetric(label, value) {
+    var item = document.createElement("span");
+    item.style.cssText = "display:inline-flex;gap:4px;align-items:baseline;margin:4px 10px 0 0;white-space:nowrap;";
+
+    var name = document.createElement("span");
+    name.textContent = label + ":";
+    name.style.cssText = "opacity:0.78;";
+
+    var count = document.createElement("strong");
+    count.textContent = formatCount(value);
+
+    item.appendChild(name);
+    item.appendChild(count);
+    return item;
+  }
+
   function renderReportBox(container, id, summary, compact) {
     if (!container || hasReportBox(container, id)) return;
 
-    var box = document.createElement("div");
+    var box = document.createElement("section");
     box.setAttribute("data-voila-ocr-math-report-id", id);
-    box.style.cssText = "margin:12px 0;padding:12px;border:1px solid currentColor;border-radius:12px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;";
+    box.setAttribute("aria-label", "Raport diagnostic OCR Math disponibil");
+    box.style.cssText = [
+      "margin:12px 0",
+      "padding:14px",
+      "border:1px solid rgba(31,78,121,0.35)",
+      "border-radius:14px",
+      "background:rgba(31,78,121,0.06)",
+      "display:flex",
+      "gap:12px",
+      "align-items:flex-start",
+      "justify-content:space-between",
+      "flex-wrap:wrap"
+    ].join(";");
 
-    var text = document.createElement("div");
+    var content = document.createElement("div");
+    content.style.cssText = "min-width:220px;flex:1 1 260px;";
+
+    var topRow = document.createElement("div");
+    topRow.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;";
+
     var title = document.createElement("strong");
-    title.textContent = "Raport diagnostic OCR Math";
-    text.appendChild(title);
+    title.textContent = "Raport diagnostic OCR Math disponibil";
 
-    var meta = document.createElement("div");
-    meta.style.cssText = "font-size:0.92em;opacity:0.82;margin-top:4px;";
-    meta.textContent =
-      "total_suggestions: " + (summary.total_suggestions ?? "n/a") +
-      " · changed_line_count: " + (summary.changed_line_count ?? "n/a");
-    text.appendChild(meta);
+    var badge = document.createElement("span");
+    badge.textContent = "Diagnostic local";
+    badge.style.cssText = [
+      "font-size:0.78em",
+      "line-height:1",
+      "padding:4px 7px",
+      "border:1px solid rgba(31,78,121,0.35)",
+      "border-radius:999px",
+      "opacity:0.86"
+    ].join(";");
+
+    topRow.appendChild(title);
+    topRow.appendChild(badge);
+    content.appendChild(topRow);
+
+    var helper = document.createElement("div");
+    helper.textContent = "Raportul este doar informativ. Nu modifică OCR-ul, cursul, Study sau Progress.";
+    helper.style.cssText = "font-size:0.9em;opacity:0.78;margin-top:5px;";
+    content.appendChild(helper);
+
+    var metrics = document.createElement("div");
+    metrics.style.cssText = "font-size:0.92em;margin-top:7px;";
+    metrics.appendChild(createMetric("Sugestii detectate", summary.total_suggestions));
+    metrics.appendChild(createMetric("Linii posibil afectate", summary.changed_line_count));
+    content.appendChild(metrics);
 
     var link = document.createElement("a");
     link.href = reportHref(id);
-    link.textContent = compact ? "ocr_math_report.md" : "Deschide ocr_math_report.md";
+    link.textContent = compact ? "Deschide raportul" : "Deschide ocr_math_report.md";
+    link.style.cssText = [
+      "align-self:center",
+      "padding:8px 11px",
+      "border:1px solid currentColor",
+      "border-radius:10px",
+      "text-decoration:none",
+      "font-weight:600",
+      "white-space:nowrap"
+    ].join(";");
 
-    box.appendChild(text);
+    box.appendChild(content);
     box.appendChild(link);
     container.appendChild(box);
   }
@@ -1578,7 +1643,6 @@ def _voila_ocr_math_report_ui_script_html() -> str:
 </script>
 """
 
-
 @app.middleware("http")
 async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
     response = await call_next(request)
@@ -1612,6 +1676,7 @@ async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
     return HTMLResponse(content=html, status_code=response.status_code, headers=headers)
 
 # VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_END
+# VOILA_V0_7_2_OWNER_LOCAL_OCR_MATH_REPORT_UX_POLISH_APPLIED
 
 
 @app.get("/exam-prep", response_class=HTMLResponse)
