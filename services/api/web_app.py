@@ -1424,6 +1424,249 @@ async def _voila_owner_ocr_math_report_markdown(course_id: str):
     )
 
 
+
+def _voila_ocr_math_report_markdown_to_html(markdown_text: str) -> str:
+    """Render a small, safe, dependency-free subset of Markdown for owner-local reports."""
+    parts: list[str] = []
+    in_list = False
+    in_code = False
+    code_lines: list[str] = []
+
+    def close_list() -> None:
+        nonlocal in_list
+        if in_list:
+            parts.append("</ul>")
+            in_list = False
+
+    for raw_line in markdown_text.splitlines():
+        line = raw_line.rstrip("\n")
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            if in_code:
+                parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
+                code_lines = []
+                in_code = False
+            else:
+                close_list()
+                in_code = True
+            continue
+
+        if in_code:
+            code_lines.append(line)
+            continue
+
+        if not stripped:
+            close_list()
+            parts.append("<br>")
+            continue
+
+        if stripped.startswith("#"):
+            close_list()
+            level = min(len(stripped) - len(stripped.lstrip("#")), 4)
+            content = stripped[level:].strip() or stripped
+            parts.append(f"<h{level}>{html.escape(content)}</h{level}>")
+            continue
+
+        if stripped.startswith(("- ", "* ")):
+            if not in_list:
+                parts.append("<ul>")
+                in_list = True
+            parts.append("<li>" + html.escape(stripped[2:].strip()) + "</li>")
+            continue
+
+        close_list()
+        parts.append("<p>" + html.escape(line) + "</p>")
+
+    if in_code:
+        parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
+
+    close_list()
+    return "\n".join(parts)
+
+
+@app.get("/owner/ocr-math-report/{course_id}/view", include_in_schema=False)
+async def _voila_owner_ocr_math_report_viewer(course_id: str):
+    md_path, json_path = _voila_ocr_math_report_paths(course_id)
+    if not md_path or not md_path.is_file():
+        return HTMLResponse(
+            """
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Raport diagnostic OCR Math indisponibil</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; line-height: 1.5; }
+    .card { max-width: 920px; border: 1px solid rgba(31,78,121,0.3); border-radius: 16px; padding: 20px; }
+    .muted { opacity: 0.76; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Raport diagnostic OCR Math indisponibil</h1>
+    <p class="muted">Nu există încă un <code>ocr_math_report.md</code> pentru acest document local.</p>
+    <p class="muted">Această pagină este read-only și nu modifică OCR-ul, cursul, Study sau Progress.</p>
+  </main>
+</body>
+</html>
+""",
+            status_code=404,
+        )
+
+    summary = _voila_ocr_math_report_summary(md_path, json_path)
+    markdown_text = md_path.read_text(encoding="utf-8", errors="replace")
+    rendered_report = _voila_ocr_math_report_markdown_to_html(markdown_text)
+
+    safe_course_id = html.escape(str(course_id), quote=True)
+    safe_raw_href = "/owner/ocr-math-report/" + quote(str(course_id), safe="") + "/ocr_math_report.md"
+    total_suggestions = html.escape(str(summary.get("total_suggestions", "n/a")))
+    changed_line_count = html.escape(str(summary.get("changed_line_count", "n/a")))
+    size_bytes = html.escape(str(summary.get("report_size_bytes", "n/a")))
+
+    page = f"""
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Raport diagnostic OCR Math</title>
+  <style>
+    :root {{
+      color-scheme: light dark;
+      --voila-blue: #1F4E79;
+      --voila-border: rgba(31,78,121,0.32);
+      --voila-soft: rgba(31,78,121,0.07);
+    }}
+    body {{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      line-height: 1.55;
+    }}
+    main {{
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px 20px 44px;
+    }}
+    .topbar {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      border: 1px solid var(--voila-border);
+      border-radius: 18px;
+      padding: 18px;
+      background: var(--voila-soft);
+      margin-bottom: 20px;
+    }}
+    h1 {{
+      margin: 0 0 6px;
+      font-size: clamp(1.6rem, 3vw, 2.25rem);
+    }}
+    .muted {{
+      opacity: 0.76;
+    }}
+    .badge {{
+      display: inline-flex;
+      border: 1px solid var(--voila-border);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.82rem;
+      margin-top: 4px;
+    }}
+    .metrics {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }}
+    .metric {{
+      border: 1px solid var(--voila-border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 150px;
+      background: rgba(255,255,255,0.05);
+    }}
+    .metric span {{
+      display: block;
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }}
+    .metric strong {{
+      display: block;
+      font-size: 1.35rem;
+      margin-top: 2px;
+    }}
+    .actions {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }}
+    a.button {{
+      display: inline-flex;
+      border: 1px solid currentColor;
+      border-radius: 12px;
+      padding: 9px 12px;
+      text-decoration: none;
+      font-weight: 650;
+    }}
+    .report {{
+      border: 1px solid var(--voila-border);
+      border-radius: 18px;
+      padding: 22px;
+      overflow-wrap: anywhere;
+    }}
+    .report h1, .report h2, .report h3, .report h4 {{
+      color: var(--voila-blue);
+      margin-top: 1.3em;
+    }}
+    .report h1:first-child, .report h2:first-child, .report h3:first-child {{
+      margin-top: 0;
+    }}
+    .report p {{
+      margin: 0.55em 0;
+    }}
+    .report pre {{
+      overflow: auto;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--voila-border);
+    }}
+    code {{
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95em;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="topbar" aria-label="Sumar raport diagnostic OCR Math">
+      <div>
+        <h1>Raport diagnostic OCR Math</h1>
+        <div class="badge">Diagnostic local · read-only</div>
+        <p class="muted">Document local: <code>{safe_course_id}</code></p>
+        <p class="muted">Această pagină este doar pentru citire. Nu modifică OCR-ul, cursul, Study sau Progress.</p>
+        <div class="metrics">
+          <div class="metric"><span>Sugestii detectate</span><strong>{total_suggestions}</strong></div>
+          <div class="metric"><span>Linii posibil afectate</span><strong>{changed_line_count}</strong></div>
+          <div class="metric"><span>Mărime raport</span><strong>{size_bytes}</strong></div>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button" href="{safe_raw_href}">Deschide raw .md</a>
+      </div>
+    </section>
+
+    <article class="report" aria-label="Conținut raport OCR Math">
+      {rendered_report}
+    </article>
+  </main>
+</body>
+</html>
+"""
+    return HTMLResponse(content=page)
+
 def _voila_ocr_math_report_ui_script_html() -> str:
     return """
 <script id="voila-ocr-math-report-ui-link-v072">
@@ -1471,7 +1714,7 @@ def _voila_ocr_math_report_ui_script_html() -> str:
   }
 
   function reportHref(id) {
-    return "/owner/ocr-math-report/" + encodeURIComponent(id) + "/ocr_math_report.md";
+    return "/owner/ocr-math-report/" + encodeURIComponent(id) + "/view";
   }
 
   function hasReportBox(container, id) {
@@ -1555,7 +1798,7 @@ def _voila_ocr_math_report_ui_script_html() -> str:
 
     var link = document.createElement("a");
     link.href = reportHref(id);
-    link.textContent = compact ? "Deschide raportul" : "Deschide ocr_math_report.md";
+    link.textContent = compact ? "Deschide raportul" : "Deschide raportul OCR Math";
     link.style.cssText = [
       "align-self:center",
       "padding:8px 11px",
@@ -1677,6 +1920,7 @@ async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
 
 # VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_END
 # VOILA_V0_7_2_OWNER_LOCAL_OCR_MATH_REPORT_UX_POLISH_APPLIED
+# VOILA_V0_7_3_OWNER_LOCAL_OCR_MATH_REPORT_VIEWER_PAGE_APPLIED
 
 
 @app.get("/exam-prep", response_class=HTMLResponse)
@@ -6220,7 +6464,7 @@ async def _v411_exam_prep_dashboard_skill_cards(request, call_next):
 
 # --- v0.4.15 related Modul Studiu questions response guard ---
 from fastapi.responses import HTMLResponse as _V415HTMLResponse
-from urllib.parse import unquote as _v415_unquote
+from urllib.parse import quote, unquote as _v415_unquote
 
 
 def _v415_related_questions_html_for_path(path: str) -> str:
@@ -6283,7 +6527,7 @@ async def _v415_exam_prep_related_questions_response_guard(request, call_next):
 
 # --- v0.4.16 next recommended action response guard ---
 from fastapi.responses import HTMLResponse as _V416HTMLResponse
-from urllib.parse import unquote as _v416_unquote
+from urllib.parse import quote, unquote as _v416_unquote
 
 
 def _v416_next_action_html_for_path(path: str) -> str:
@@ -6704,7 +6948,7 @@ async def _v422_exam_prep_dashboard_rendering_consolidation(request, call_next):
 
 # --- v0.4.23 consolidated Exam Prep skill detail rendering middleware ---
 from fastapi.responses import HTMLResponse as _V423HTMLResponse
-from urllib.parse import unquote as _v423_unquote
+from urllib.parse import quote, unquote as _v423_unquote
 
 
 def _v423_consolidated_skill_detail_sections_html(path: str) -> str:
