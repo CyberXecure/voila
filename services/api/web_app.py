@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import html
-import json
 import shutil
 import datetime as dt
 import re
 import subprocess
 import sys
 from datetime import datetime
-from pathlib import Path
-from urllib.parse import quote
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
@@ -17,8 +13,12 @@ from fastapi.staticfiles import StaticFiles
 
 from study_engine import get_study_view, record_answer, reset_study_state
 import exam_prep
-
-
+import html
+import json
+import os
+from pathlib import Path
+from urllib.parse import quote, unquote
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_DIR = PROJECT_ROOT / "data" / "input"
 VOILA_LIMITED_TESTER_DEMO = True
@@ -26,8 +26,6 @@ VOILA_TESTER_DEMO_MAX_PAGES = 12
 OUTPUT_DIR = PROJECT_ROOT / "data" / "output"
 
 APP_TITLE = "Voila! Local"
-
-
 
 
 def crop_editor_is_running() -> bool:
@@ -74,6 +72,699 @@ def ensure_crop_editor_running() -> None:
 
 
 app = FastAPI(title=APP_TITLE)
+
+# VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_START
+# Owner-local UI link/viewer only for OCR Math diagnostic reports.
+# Policy: read-only diagnostics; no auto-correction, no Formula OCR, no build, no ZIP, no delivery, no distribution.
+
+def _voila_ocr_math_report_candidate_roots() -> list[Path]:
+    roots: list[Path] = []
+
+    for env_name in (
+        "VOILA_DATA_DIR",
+        "VOILA_LIBRARY_DIR",
+        "VOILA_OWNER_LIBRARY_DIR",
+        "VOILA_STORAGE_DIR",
+    ):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            roots.append(Path(env_value))
+
+    here = Path(__file__).resolve()
+    repo_candidates = [Path.cwd()]
+    for parent in here.parents:
+        repo_candidates.append(parent)
+
+    for base in repo_candidates:
+        roots.extend(
+            [
+                base,
+                base / "data",
+                base / "library",
+                base / "uploads",
+                base / "courses",
+                base / "services" / "api" / "data",
+                base / "services" / "api" / "library",
+            ]
+        )
+
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        try:
+            resolved = root.resolve()
+        except Exception:
+            resolved = root
+        key = str(resolved).lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(resolved)
+    return unique
+
+
+def _voila_ocr_math_report_is_excluded(path: Path) -> bool:
+    excluded = {
+        ".git",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".release-cache",
+        "release-assets",
+        "dist",
+        "build",
+    }
+    return any(part in excluded for part in path.parts)
+
+
+def _voila_ocr_math_report_paths(course_id: str) -> tuple[Path | None, Path | None]:
+    safe_id = unquote(str(course_id or "")).strip().strip("/")
+    if not safe_id:
+        return None, None
+    if ".." in safe_id or "\\" in safe_id or ":" in safe_id:
+        return None, None
+
+    lowered = safe_id.lower()
+    matches: list[Path] = []
+
+    for root in _voila_ocr_math_report_candidate_roots():
+        if not root.exists() or _voila_ocr_math_report_is_excluded(root):
+            continue
+
+        direct_dirs = [
+            root / safe_id,
+            root / "library" / safe_id,
+            root / "uploads" / safe_id,
+            root / "courses" / safe_id,
+            root / "data" / safe_id,
+        ]
+        for directory in direct_dirs:
+            md = directory / "ocr_math_report.md"
+            if md.is_file():
+                return md, directory / "ocr_math_report.json"
+
+        try:
+            iterator = root.rglob("ocr_math_report.md")
+            for md in iterator:
+                if _voila_ocr_math_report_is_excluded(md):
+                    continue
+                parent = md.parent
+                parts = {part.lower() for part in parent.parts}
+                parent_posix = parent.as_posix().lower()
+                if lowered in parts or f"/{lowered}/" in f"/{parent_posix}/":
+                    matches.append(md)
+        except Exception:
+            continue
+
+    if not matches:
+        return None, None
+
+    md = sorted(matches, key=lambda p: len(str(p)))[0]
+    return md, md.parent / "ocr_math_report.json"
+
+
+def _voila_ocr_math_report_nested_value(data: dict, keys: tuple[str, ...]):
+    for key in keys:
+        if key in data:
+            return data.get(key)
+
+    for container_key in ("summary", "stats", "diagnostics", "report"):
+        nested = data.get(container_key)
+        if isinstance(nested, dict):
+            for key in keys:
+                if key in nested:
+                    return nested.get(key)
+
+    return None
+
+
+def _voila_ocr_math_report_summary(md_path: Path, json_path: Path | None) -> dict:
+    data = {}
+    if json_path and json_path.is_file():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+
+    total_suggestions = None
+    changed_line_count = None
+
+    if isinstance(data, dict):
+        total_suggestions = _voila_ocr_math_report_nested_value(
+            data,
+            ("total_suggestions", "suggestion_count", "suggestions_count"),
+        )
+        changed_line_count = _voila_ocr_math_report_nested_value(
+            data,
+            ("changed_line_count", "changed_lines_count"),
+        )
+
+        suggestions = data.get("suggestions")
+        if total_suggestions is None and isinstance(suggestions, list):
+            total_suggestions = len(suggestions)
+
+        changed_lines = data.get("changed_lines")
+        if changed_line_count is None and isinstance(changed_lines, list):
+            changed_line_count = len(changed_lines)
+
+    return {
+        "exists": True,
+        "report_md": "ocr_math_report.md",
+        "total_suggestions": total_suggestions,
+        "changed_line_count": changed_line_count,
+        "report_size_bytes": md_path.stat().st_size,
+    }
+
+
+def _voila_ocr_math_report_display_value(value) -> str:
+    if value is None or value == "":
+        return "n/a"
+    return str(value)
+
+
+@app.get("/owner/ocr-math-report/{course_id}/summary.json", include_in_schema=False)
+async def _voila_owner_ocr_math_report_summary(course_id: str):
+    md_path, json_path = _voila_ocr_math_report_paths(course_id)
+    if not md_path or not md_path.is_file():
+        return JSONResponse(
+            {
+                "exists": False,
+                "report_md": "ocr_math_report.md",
+                "total_suggestions": None,
+                "changed_line_count": None,
+            },
+            status_code=404,
+        )
+
+    return JSONResponse(_voila_ocr_math_report_summary(md_path, json_path))
+
+
+@app.get("/owner/ocr-math-report/{course_id}/ocr_math_report.md", include_in_schema=False)
+async def _voila_owner_ocr_math_report_markdown(course_id: str):
+    md_path, _json_path = _voila_ocr_math_report_paths(course_id)
+    if not md_path or not md_path.is_file():
+        return PlainTextResponse(
+            "ocr_math_report.md was not found for this local course/document.",
+            status_code=404,
+        )
+
+    return PlainTextResponse(
+        md_path.read_text(encoding="utf-8", errors="replace"),
+        media_type="text/markdown; charset=utf-8",
+    )
+
+
+def _voila_ocr_math_report_markdown_to_html(markdown_text: str) -> str:
+    """Render a small, safe, dependency-free subset of Markdown for owner-local reports."""
+    parts: list[str] = []
+    in_list = False
+    in_code = False
+    code_lines: list[str] = []
+
+    def close_list() -> None:
+        nonlocal in_list
+        if in_list:
+            parts.append("</ul>")
+            in_list = False
+
+    for raw_line in markdown_text.splitlines():
+        line = raw_line.rstrip("\n")
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            if in_code:
+                parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
+                code_lines = []
+                in_code = False
+            else:
+                close_list()
+                in_code = True
+            continue
+
+        if in_code:
+            code_lines.append(line)
+            continue
+
+        if not stripped:
+            close_list()
+            parts.append("<br>")
+            continue
+
+        if stripped.startswith("#"):
+            close_list()
+            level = min(len(stripped) - len(stripped.lstrip("#")), 4)
+            content = stripped[level:].strip() or stripped
+            parts.append(f"<h{level}>{html.escape(content)}</h{level}>")
+            continue
+
+        if stripped.startswith(("- ", "* ")):
+            if not in_list:
+                parts.append("<ul>")
+                in_list = True
+            parts.append("<li>" + html.escape(stripped[2:].strip()) + "</li>")
+            continue
+
+        close_list()
+        parts.append("<p>" + html.escape(line) + "</p>")
+
+    if in_code:
+        parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
+
+    close_list()
+    return "\n".join(parts)
+
+
+@app.get("/owner/ocr-math-report/{course_id}/view", include_in_schema=False)
+async def _voila_owner_ocr_math_report_viewer(course_id: str):
+    md_path, json_path = _voila_ocr_math_report_paths(course_id)
+    if not md_path or not md_path.is_file():
+        return HTMLResponse(
+            """
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Raport diagnostic OCR Math indisponibil</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; line-height: 1.5; }
+    .card { max-width: 920px; border: 1px solid rgba(31,78,121,0.3); border-radius: 16px; padding: 20px; }
+    .muted { opacity: 0.76; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Raport diagnostic OCR Math indisponibil</h1>
+    <p class="muted">Nu există încă un <code>ocr_math_report.md</code> pentru acest document local.</p>
+    <p class="muted">Această pagină este read-only și nu modifică OCR-ul, cursul, Study sau Progress.</p>
+  </main>
+</body>
+</html>
+""",
+            status_code=404,
+        )
+
+    summary = _voila_ocr_math_report_summary(md_path, json_path)
+    markdown_text = md_path.read_text(encoding="utf-8", errors="replace")
+    rendered_report = _voila_ocr_math_report_markdown_to_html(markdown_text)
+
+    safe_course_id = html.escape(str(course_id), quote=True)
+    safe_raw_href = "/owner/ocr-math-report/" + quote(str(course_id), safe="") + "/ocr_math_report.md"
+    total_suggestions = html.escape(_voila_ocr_math_report_display_value(summary.get("total_suggestions")))
+    changed_line_count = html.escape(_voila_ocr_math_report_display_value(summary.get("changed_line_count")))
+    size_bytes = html.escape(_voila_ocr_math_report_display_value(summary.get("report_size_bytes")))
+
+    page = f"""
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Raport diagnostic OCR Math</title>
+  <style>
+    :root {{
+      color-scheme: light dark;
+      --voila-blue: #1F4E79;
+      --voila-border: rgba(31,78,121,0.32);
+      --voila-soft: rgba(31,78,121,0.07);
+    }}
+    body {{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      line-height: 1.55;
+    }}
+    main {{
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px 20px 44px;
+    }}
+    .topbar {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      border: 1px solid var(--voila-border);
+      border-radius: 18px;
+      padding: 18px;
+      background: var(--voila-soft);
+      margin-bottom: 20px;
+    }}
+    h1 {{
+      margin: 0 0 6px;
+      font-size: clamp(1.6rem, 3vw, 2.25rem);
+    }}
+    .muted {{ opacity: 0.76; }}
+    .badge {{
+      display: inline-flex;
+      border: 1px solid var(--voila-border);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.82rem;
+      margin-top: 4px;
+    }}
+    .metrics {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }}
+    .metric {{
+      border: 1px solid var(--voila-border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 150px;
+      background: rgba(255,255,255,0.05);
+    }}
+    .metric span {{
+      display: block;
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }}
+    .metric strong {{
+      display: block;
+      font-size: 1.35rem;
+      margin-top: 2px;
+    }}
+    .actions {{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }}
+    a.button {{
+      display: inline-flex;
+      border: 1px solid currentColor;
+      border-radius: 12px;
+      padding: 9px 12px;
+      text-decoration: none;
+      font-weight: 650;
+    }}
+    .report {{
+      border: 1px solid var(--voila-border);
+      border-radius: 18px;
+      padding: 22px;
+      overflow-wrap: anywhere;
+    }}
+    .report h1, .report h2, .report h3, .report h4 {{
+      color: var(--voila-blue);
+      margin-top: 1.3em;
+    }}
+    .report h1:first-child, .report h2:first-child, .report h3:first-child {{ margin-top: 0; }}
+    .report p {{ margin: 0.55em 0; }}
+    .report pre {{
+      overflow: auto;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--voila-border);
+    }}
+    code {{
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95em;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="topbar" aria-label="Sumar raport diagnostic OCR Math">
+      <div>
+        <h1>Raport diagnostic OCR Math</h1>
+        <div class="badge">Diagnostic local · read-only</div>
+        <p class="muted">Document local: <code>{safe_course_id}</code></p>
+        <p class="muted">Această pagină este doar pentru citire. Nu modifică OCR-ul, cursul, Study sau Progress.</p>
+        <div class="metrics">
+          <div class="metric"><span>Sugestii detectate</span><strong>{total_suggestions}</strong></div>
+          <div class="metric"><span>Linii posibil afectate</span><strong>{changed_line_count}</strong></div>
+          <div class="metric"><span>Mărime raport</span><strong>{size_bytes}</strong></div>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button" href="{safe_raw_href}">Deschide raw .md</a>
+      </div>
+    </section>
+
+    <article class="report" aria-label="Conținut raport OCR Math">
+      {rendered_report}
+    </article>
+  </main>
+</body>
+</html>
+"""
+    return HTMLResponse(content=page)
+
+
+def _voila_ocr_math_report_ui_script_html() -> str:
+    return r"""
+<script id="voila-ocr-math-report-ui-link-v072">
+(function () {
+  var rootMarker = "data-voila-ocr-math-report-ui-link-v072";
+  if (document.documentElement.hasAttribute(rootMarker)) return;
+  document.documentElement.setAttribute(rootMarker, "1");
+
+  function unique(values) {
+    var seen = {};
+    var out = [];
+    values.forEach(function (value) {
+      if (!value) return;
+      value = String(value).trim();
+      if (!value || seen[value]) return;
+      seen[value] = true;
+      out.push(value);
+    });
+    return out;
+  }
+
+  function idsFromUrl(href) {
+    var ids = [];
+    try {
+      var url = new URL(href, window.location.origin);
+      [
+        /\/(?:course|courses|library|document|documents|ocr-review|review-ocr|study|progress)\/([^\/?#]+)/i,
+        /\/owner\/(?:course|courses|library|document|documents|ocr-review|review-ocr)\/([^\/?#]+)/i
+      ].forEach(function (pattern) {
+        var match = url.pathname.match(pattern);
+        if (match && match[1]) ids.push(decodeURIComponent(match[1]));
+      });
+
+      ["course_id", "course", "doc_id", "document_id", "item_id", "id"].forEach(function (key) {
+        var value = url.searchParams.get(key);
+        if (value) ids.push(value);
+      });
+    } catch (error) {}
+    return unique(ids);
+  }
+
+  function formatCount(value) {
+    if (value === null || value === undefined || value === "") return "n/a";
+    return String(value);
+  }
+
+  function reportHref(id) {
+    return "/owner/ocr-math-report/" + encodeURIComponent(id) + "/view";
+  }
+
+  function hasReportBox(container, id) {
+    return Array.prototype.some.call(
+      container.querySelectorAll("[data-voila-ocr-math-report-id]"),
+      function (node) {
+        return node.getAttribute("data-voila-ocr-math-report-id") === id;
+      }
+    );
+  }
+
+  function createMetric(label, value) {
+    var item = document.createElement("span");
+    item.style.cssText = "display:inline-flex;gap:4px;align-items:baseline;margin:4px 10px 0 0;white-space:nowrap;";
+    var name = document.createElement("span");
+    name.textContent = label + ":";
+    name.style.cssText = "opacity:0.78;";
+    var count = document.createElement("strong");
+    count.textContent = formatCount(value);
+    item.appendChild(name);
+    item.appendChild(count);
+    return item;
+  }
+
+  function renderReportBox(container, id, summary, compact) {
+    if (!container || hasReportBox(container, id)) return;
+
+    var box = document.createElement("section");
+    box.setAttribute("data-voila-ocr-math-report-id", id);
+    box.setAttribute("aria-label", "Raport diagnostic OCR Math disponibil");
+    box.style.cssText = [
+      "margin:12px 0",
+      "padding:14px",
+      "border:1px solid rgba(31,78,121,0.35)",
+      "border-radius:14px",
+      "background:rgba(31,78,121,0.06)",
+      "display:flex",
+      "gap:12px",
+      "align-items:flex-start",
+      "justify-content:space-between",
+      "flex-wrap:wrap"
+    ].join(";");
+
+    var content = document.createElement("div");
+    content.style.cssText = "min-width:220px;flex:1 1 260px;";
+
+    var topRow = document.createElement("div");
+    topRow.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;";
+
+    var title = document.createElement("strong");
+    title.textContent = "Raport diagnostic OCR Math disponibil";
+
+    var badge = document.createElement("span");
+    badge.textContent = "Diagnostic local";
+    badge.style.cssText = [
+      "font-size:0.78em",
+      "line-height:1",
+      "padding:4px 7px",
+      "border:1px solid rgba(31,78,121,0.35)",
+      "border-radius:999px",
+      "opacity:0.86"
+    ].join(";");
+
+    topRow.appendChild(title);
+    topRow.appendChild(badge);
+    content.appendChild(topRow);
+
+    var helper = document.createElement("div");
+    helper.textContent = "Raportul este doar informativ. Nu modifică OCR-ul, cursul, Study sau Progress.";
+    helper.style.cssText = "font-size:0.9em;opacity:0.78;margin-top:5px;";
+    content.appendChild(helper);
+
+    var metrics = document.createElement("div");
+    metrics.style.cssText = "font-size:0.92em;margin-top:7px;";
+    metrics.appendChild(createMetric("Sugestii detectate", summary.total_suggestions));
+    metrics.appendChild(createMetric("Linii posibil afectate", summary.changed_line_count));
+    content.appendChild(metrics);
+
+    var link = document.createElement("a");
+    link.href = reportHref(id);
+    link.textContent = compact ? "Deschide raportul" : "Deschide raportul OCR Math";
+    link.style.cssText = [
+      "align-self:center",
+      "padding:8px 11px",
+      "border:1px solid currentColor",
+      "border-radius:10px",
+      "text-decoration:none",
+      "font-weight:600",
+      "white-space:nowrap"
+    ].join(";");
+
+    box.appendChild(content);
+    box.appendChild(link);
+    container.appendChild(box);
+  }
+
+  async function fetchSummary(id) {
+    try {
+      var response = await fetch(
+        "/owner/ocr-math-report/" + encodeURIComponent(id) + "/summary.json",
+        { headers: { "Accept": "application/json" } }
+      );
+      if (!response.ok) return null;
+      var summary = await response.json();
+      return summary && summary.exists ? summary : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function addForCurrentPage() {
+    var ids = idsFromUrl(window.location.href).slice(0, 3);
+    if (!ids.length) return;
+    var target =
+      document.querySelector(".course-tools, [data-testid='course-tools'], .ocr-review, [data-testid='ocr-review']") ||
+      document.querySelector("main") ||
+      document.body;
+
+    for (var i = 0; i < ids.length; i++) {
+      var summary = await fetchSummary(ids[i]);
+      if (summary) renderReportBox(target, ids[i], summary, false);
+    }
+  }
+
+  async function addForCards() {
+    var pairs = [];
+    Array.prototype.forEach.call(document.querySelectorAll("[data-course-id], [data-document-id], [data-doc-id]"), function (node) {
+      var id = node.getAttribute("data-course-id") || node.getAttribute("data-document-id") || node.getAttribute("data-doc-id");
+      if (id) pairs.push({ id: id, host: node });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("a[href]"), function (link) {
+      idsFromUrl(link.href).forEach(function (id) {
+        var host = link.closest("article, .card, .course-card, .library-card, li, section") || link.parentElement;
+        pairs.push({ id: id, host: host });
+      });
+    });
+
+    var seen = {};
+    pairs = pairs.filter(function (pair) {
+      var key = pair.id + "::" + (pair.host ? Array.prototype.indexOf.call(document.querySelectorAll("*"), pair.host) : "none");
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).slice(0, 20);
+
+    for (var i = 0; i < pairs.length; i++) {
+      var summary = await fetchSummary(pairs[i].id);
+      if (summary) renderReportBox(pairs[i].host, pairs[i].id, summary, true);
+    }
+  }
+
+  function run() {
+    addForCurrentPage();
+    addForCards();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();
+</script>
+"""
+
+
+@app.middleware("http")
+async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "").lower()
+    if "text/html" not in content_type:
+        return response
+
+    body_chunks = []
+    async for chunk in response.body_iterator:
+        body_chunks.append(chunk)
+    body = b"".join(body_chunks)
+
+    try:
+        html_text = body.decode("utf-8")
+    except UnicodeDecodeError:
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+        return Response(content=body, status_code=response.status_code, headers=headers, media_type=response.media_type)
+
+    marker = "voila-ocr-math-report-ui-link-v072"
+    if marker not in html_text:
+        script = _voila_ocr_math_report_ui_script_html()
+        if "</body>" in html_text:
+            html_text = html_text.replace("</body>", script + "\n</body>", 1)
+        else:
+            html_text = html_text + script
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    headers.pop("content-encoding", None)
+    return HTMLResponse(content=html_text, status_code=response.status_code, headers=headers)
+
+# VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_END
+# VOILA_V0_7_2_OWNER_LOCAL_OCR_MATH_REPORT_UX_POLISH_APPLIED
+# VOILA_V0_7_3_OWNER_LOCAL_OCR_MATH_REPORT_VIEWER_PAGE_APPLIED
+# VOILA_V0_7_5_OWNER_LOCAL_OCR_MATH_REPORT_SYNTAX_AND_SMOKE_IMPORT_MOVE_APPLIED
+
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -248,7 +939,6 @@ def _study_recommendation_reason_label(value: str) -> str:
     qtype_label = type_labels[labels_lang].get(qtype, qtype.replace("_", " "))
 
     return f"{reason} · {qtype_label}"
-
 
 
 def page(title: str, body: str) -> HTMLResponse:
@@ -1068,7 +1758,6 @@ def run_step(label: str, args: list[str], log_lines: list[str], optional: bool =
         raise RuntimeError(message)
 
 
-
 def study_min_page_for_pdf(pdf_path: Path) -> int:
     config_path = PROJECT_ROOT / "data" / "study_config.json"
 
@@ -1087,842 +1776,6 @@ def study_min_page_for_pdf(pdf_path: Path) -> int:
         return max(1, min_page)
     except Exception:
         return 1
-
-
-def generate_for_pdf(pdf_path: Path) -> Path:
-    output_dir = OUTPUT_DIR / pdf_path.stem
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    log_lines: list[str] = []
-    log_lines.append(f"Voila! local generation")
-    log_lines.append(f"Input PDF: {pdf_path}")
-
-    pages_json = output_dir / "pages.json"
-    outline_json = output_dir / "course_outline.json"
-    normalized_json = output_dir / "course_outline.normalized.json"
-    course_cleaned = output_dir / "course.cleaned.md"
-
-    run_step(
-        "1. PDF extract",
-        [
-            str(PROJECT_ROOT / "services" / "api" / "pdf_extract.py"),
-            str(pdf_path),
-            "--output-dir",
-            str(OUTPUT_DIR),
-        ],
-        log_lines,
-    )
-
-    run_step(
-        "2. OCR report",
-        [str(PROJECT_ROOT / "services" / "api" / "ocr_report.py"), str(pages_json)],
-        log_lines,
-    )
-
-    run_step(
-        "3. Course outline",
-        [str(PROJECT_ROOT / "services" / "api" / "outline_builder.py"), str(pages_json)],
-        log_lines,
-    )
-
-    run_step(
-        "4. Normalize outline",
-        [str(PROJECT_ROOT / "services" / "api" / "normalize_outline.py"), str(outline_json)],
-        log_lines,
-    )
-
-    run_step(
-        "5. Generate course files",
-        [str(PROJECT_ROOT / "services" / "api" / "course_generator.py"), str(normalized_json)],
-        log_lines,
-    )
-
-    run_step(
-        "6. Polish course",
-        [str(PROJECT_ROOT / "services" / "api" / "course_polisher.py"), str(normalized_json)],
-        log_lines,
-    )
-
-    run_step(
-        "7. Final cleanup",
-        [str(PROJECT_ROOT / "services" / "api" / "course_cleaned_finalizer.py"), str(course_cleaned)],
-        log_lines,
-    )
-
-    study_min_page = study_min_page_for_pdf(pdf_path)
-
-    run_step(
-        "8. Build study quiz",
-        [
-            str(PROJECT_ROOT / "services" / "api" / "study_quiz_builder.py"),
-            str(output_dir),
-            "--min-page",
-            str(study_min_page),
-            "--max-per-lesson",
-            "4",
-            "--max-total",
-            "350",
-        ],
-        log_lines,
-    )
-
-    run_step(
-        "9. Export figures",
-        [str(PROJECT_ROOT / "services" / "api" / "figure_exporter_smart.py"), str(pdf_path)],
-        log_lines,
-        optional=True,
-    )
-
-    run_step(
-        "10. Export HTML course",
-        [str(PROJECT_ROOT / "services" / "api" / "html_exporter.py"), str(course_cleaned)],
-        log_lines,
-    )
-
-    run_step(
-        "10b. Scanned PDF fallback",
-        [
-            str(PROJECT_ROOT / "services" / "api" / "scanned_course_fallback.py"),
-            str(pdf_path),
-            str(output_dir),
-            "--zoom",
-            "1.45",
-        ],
-        log_lines,
-        optional=True,
-    )
-
-    course_html = output_dir / "course.cleaned.html"
-
-    run_step(
-        "11. Inject course navigation",
-        [
-            str(PROJECT_ROOT / "services" / "api" / "course_nav_injector.py"),
-            str(course_html),
-            pdf_path.name,
-        ],
-        log_lines,
-    )
-
-    log_path = output_dir / "last_run.log"
-    log_path.write_text("\n".join(log_lines), encoding="utf-8")
-
-    # VOILA_OCR_MATH_REPORT_HOOK_GENERATE_V1
-    # Owner-local diagnostic hook only. It never rewrites OCR text, course files,
-    # Study state, Progress state, build artifacts, ZIPs, releases, or delivery assets.
-    try:
-        from ocr_math_report_hook import build_ocr_math_report_if_enabled
-
-        build_ocr_math_report_if_enabled(
-            output_dir,
-            pdf_path.name,
-            reason="generate_for_pdf",
-        )
-    except Exception:
-        # Diagnostic hook must never break Generate/Regenerează.
-        pass
-
-    return output_dir
-
-
-
-
-# VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_START
-# Owner-local UI link only for OCR Math diagnostic reports.
-# Policy: no auto-correction, no Formula OCR, no build, no ZIP, no delivery, no distribution.
-
-def _voila_ocr_math_report_candidate_roots() -> list[Path]:
-    roots: list[Path] = []
-
-    for env_name in (
-        "VOILA_DATA_DIR",
-        "VOILA_LIBRARY_DIR",
-        "VOILA_OWNER_LIBRARY_DIR",
-        "VOILA_STORAGE_DIR",
-    ):
-        env_value = os.environ.get(env_name)
-        if env_value:
-            roots.append(Path(env_value))
-
-    here = Path(__file__).resolve()
-    repo_candidates = [Path.cwd()]
-    for parent in here.parents:
-        repo_candidates.append(parent)
-
-    for base in repo_candidates:
-        roots.extend(
-            [
-                base,
-                base / "data",
-                base / "library",
-                base / "uploads",
-                base / "courses",
-                base / "services" / "api" / "data",
-                base / "services" / "api" / "library",
-            ]
-        )
-
-    unique: list[Path] = []
-    seen: set[str] = set()
-    for root in roots:
-        try:
-            resolved = root.resolve()
-        except Exception:
-            resolved = root
-        key = str(resolved).lower()
-        if key not in seen:
-            seen.add(key)
-            unique.append(resolved)
-    return unique
-
-
-def _voila_ocr_math_report_is_excluded(path: Path) -> bool:
-    excluded = {
-        ".git",
-        ".venv",
-        "venv",
-        "node_modules",
-        "__pycache__",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".release-cache",
-        "release-assets",
-        "dist",
-        "build",
-    }
-    return any(part in excluded for part in path.parts)
-
-
-def _voila_ocr_math_report_paths(course_id: str) -> tuple[Path | None, Path | None]:
-    safe_id = unquote(str(course_id or "")).strip().strip("/")
-    if not safe_id:
-        return None, None
-    if ".." in safe_id or "\\" in safe_id or ":" in safe_id:
-        return None, None
-
-    lowered = safe_id.lower()
-    matches: list[Path] = []
-
-    for root in _voila_ocr_math_report_candidate_roots():
-        if not root.exists() or _voila_ocr_math_report_is_excluded(root):
-            continue
-
-        direct_dirs = [
-            root / safe_id,
-            root / "library" / safe_id,
-            root / "uploads" / safe_id,
-            root / "courses" / safe_id,
-            root / "data" / safe_id,
-        ]
-        for directory in direct_dirs:
-            md = directory / "ocr_math_report.md"
-            if md.is_file():
-                return md, directory / "ocr_math_report.json"
-
-        try:
-            iterator = root.rglob("ocr_math_report.md")
-            for md in iterator:
-                if _voila_ocr_math_report_is_excluded(md):
-                    continue
-                parent = md.parent
-                parts = {part.lower() for part in parent.parts}
-                parent_posix = parent.as_posix().lower()
-                if lowered in parts or f"/{lowered}/" in f"/{parent_posix}/":
-                    matches.append(md)
-        except Exception:
-            continue
-
-    if not matches:
-        return None, None
-
-    md = sorted(matches, key=lambda p: len(str(p)))[0]
-    return md, md.parent / "ocr_math_report.json"
-
-
-def _voila_ocr_math_report_nested_value(data: dict, keys: tuple[str, ...]):
-    for key in keys:
-        if key in data:
-            return data.get(key)
-
-    for container_key in ("summary", "stats", "diagnostics", "report"):
-        nested = data.get(container_key)
-        if isinstance(nested, dict):
-            for key in keys:
-                if key in nested:
-                    return nested.get(key)
-
-    return None
-
-
-def _voila_ocr_math_report_summary(md_path: Path, json_path: Path | None) -> dict:
-    data = {}
-    if json_path and json_path.is_file():
-        try:
-            data = json.loads(json_path.read_text(encoding="utf-8"))
-        except Exception:
-            data = {}
-
-    total_suggestions = None
-    changed_line_count = None
-
-    if isinstance(data, dict):
-        total_suggestions = _voila_ocr_math_report_nested_value(
-            data,
-            ("total_suggestions", "suggestion_count", "suggestions_count"),
-        )
-        changed_line_count = _voila_ocr_math_report_nested_value(
-            data,
-            ("changed_line_count", "changed_lines_count"),
-        )
-
-        suggestions = data.get("suggestions")
-        if total_suggestions is None and isinstance(suggestions, list):
-            total_suggestions = len(suggestions)
-
-        changed_lines = data.get("changed_lines")
-        if changed_line_count is None and isinstance(changed_lines, list):
-            changed_line_count = len(changed_lines)
-
-    return {
-        "exists": True,
-        "report_md": "ocr_math_report.md",
-        "total_suggestions": total_suggestions,
-        "changed_line_count": changed_line_count,
-        "report_size_bytes": md_path.stat().st_size,
-    }
-
-
-@app.get("/owner/ocr-math-report/{course_id}/summary.json", include_in_schema=False)
-async def _voila_owner_ocr_math_report_summary(course_id: str):
-    md_path, json_path = _voila_ocr_math_report_paths(course_id)
-    if not md_path or not md_path.is_file():
-        return JSONResponse(
-            {
-                "exists": False,
-                "report_md": "ocr_math_report.md",
-                "total_suggestions": None,
-                "changed_line_count": None,
-            },
-            status_code=404,
-        )
-
-    return JSONResponse(_voila_ocr_math_report_summary(md_path, json_path))
-
-
-@app.get("/owner/ocr-math-report/{course_id}/ocr_math_report.md", include_in_schema=False)
-async def _voila_owner_ocr_math_report_markdown(course_id: str):
-    md_path, _json_path = _voila_ocr_math_report_paths(course_id)
-    if not md_path or not md_path.is_file():
-        return PlainTextResponse(
-            "ocr_math_report.md was not found for this local course/document.",
-            status_code=404,
-        )
-
-    return PlainTextResponse(
-        md_path.read_text(encoding="utf-8", errors="replace"),
-        media_type="text/markdown; charset=utf-8",
-    )
-
-
-
-def _voila_ocr_math_report_markdown_to_html(markdown_text: str) -> str:
-    """Render a small, safe, dependency-free subset of Markdown for owner-local reports."""
-    parts: list[str] = []
-    in_list = False
-    in_code = False
-    code_lines: list[str] = []
-
-    def close_list() -> None:
-        nonlocal in_list
-        if in_list:
-            parts.append("</ul>")
-            in_list = False
-
-    for raw_line in markdown_text.splitlines():
-        line = raw_line.rstrip("\n")
-        stripped = line.strip()
-
-        if stripped.startswith("```"):
-            if in_code:
-                parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
-                code_lines = []
-                in_code = False
-            else:
-                close_list()
-                in_code = True
-            continue
-
-        if in_code:
-            code_lines.append(line)
-            continue
-
-        if not stripped:
-            close_list()
-            parts.append("<br>")
-            continue
-
-        if stripped.startswith("#"):
-            close_list()
-            level = min(len(stripped) - len(stripped.lstrip("#")), 4)
-            content = stripped[level:].strip() or stripped
-            parts.append(f"<h{level}>{html.escape(content)}</h{level}>")
-            continue
-
-        if stripped.startswith(("- ", "* ")):
-            if not in_list:
-                parts.append("<ul>")
-                in_list = True
-            parts.append("<li>" + html.escape(stripped[2:].strip()) + "</li>")
-            continue
-
-        close_list()
-        parts.append("<p>" + html.escape(line) + "</p>")
-
-    if in_code:
-        parts.append("<pre><code>" + html.escape("\n".join(code_lines)) + "</code></pre>")
-
-    close_list()
-    return "\n".join(parts)
-
-
-@app.get("/owner/ocr-math-report/{course_id}/view", include_in_schema=False)
-async def _voila_owner_ocr_math_report_viewer(course_id: str):
-    md_path, json_path = _voila_ocr_math_report_paths(course_id)
-    if not md_path or not md_path.is_file():
-        return HTMLResponse(
-            """
-<!doctype html>
-<html lang="ro">
-<head>
-  <meta charset="utf-8">
-  <title>Raport diagnostic OCR Math indisponibil</title>
-  <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; line-height: 1.5; }
-    .card { max-width: 920px; border: 1px solid rgba(31,78,121,0.3); border-radius: 16px; padding: 20px; }
-    .muted { opacity: 0.76; }
-  </style>
-</head>
-<body>
-  <main class="card">
-    <h1>Raport diagnostic OCR Math indisponibil</h1>
-    <p class="muted">Nu există încă un <code>ocr_math_report.md</code> pentru acest document local.</p>
-    <p class="muted">Această pagină este read-only și nu modifică OCR-ul, cursul, Study sau Progress.</p>
-  </main>
-</body>
-</html>
-""",
-            status_code=404,
-        )
-
-    summary = _voila_ocr_math_report_summary(md_path, json_path)
-    markdown_text = md_path.read_text(encoding="utf-8", errors="replace")
-    rendered_report = _voila_ocr_math_report_markdown_to_html(markdown_text)
-
-    safe_course_id = html.escape(str(course_id), quote=True)
-    safe_raw_href = "/owner/ocr-math-report/" + quote(str(course_id), safe="") + "/ocr_math_report.md"
-    total_suggestions = html.escape(str(summary.get("total_suggestions", "n/a")))
-    changed_line_count = html.escape(str(summary.get("changed_line_count", "n/a")))
-    size_bytes = html.escape(str(summary.get("report_size_bytes", "n/a")))
-
-    page = f"""
-<!doctype html>
-<html lang="ro">
-<head>
-  <meta charset="utf-8">
-  <title>Raport diagnostic OCR Math</title>
-  <style>
-    :root {{
-      color-scheme: light dark;
-      --voila-blue: #1F4E79;
-      --voila-border: rgba(31,78,121,0.32);
-      --voila-soft: rgba(31,78,121,0.07);
-    }}
-    body {{
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      line-height: 1.55;
-    }}
-    main {{
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 28px 20px 44px;
-    }}
-    .topbar {{
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      border: 1px solid var(--voila-border);
-      border-radius: 18px;
-      padding: 18px;
-      background: var(--voila-soft);
-      margin-bottom: 20px;
-    }}
-    h1 {{
-      margin: 0 0 6px;
-      font-size: clamp(1.6rem, 3vw, 2.25rem);
-    }}
-    .muted {{
-      opacity: 0.76;
-    }}
-    .badge {{
-      display: inline-flex;
-      border: 1px solid var(--voila-border);
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 0.82rem;
-      margin-top: 4px;
-    }}
-    .metrics {{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }}
-    .metric {{
-      border: 1px solid var(--voila-border);
-      border-radius: 14px;
-      padding: 10px 12px;
-      min-width: 150px;
-      background: rgba(255,255,255,0.05);
-    }}
-    .metric span {{
-      display: block;
-      font-size: 0.82rem;
-      opacity: 0.75;
-    }}
-    .metric strong {{
-      display: block;
-      font-size: 1.35rem;
-      margin-top: 2px;
-    }}
-    .actions {{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }}
-    a.button {{
-      display: inline-flex;
-      border: 1px solid currentColor;
-      border-radius: 12px;
-      padding: 9px 12px;
-      text-decoration: none;
-      font-weight: 650;
-    }}
-    .report {{
-      border: 1px solid var(--voila-border);
-      border-radius: 18px;
-      padding: 22px;
-      overflow-wrap: anywhere;
-    }}
-    .report h1, .report h2, .report h3, .report h4 {{
-      color: var(--voila-blue);
-      margin-top: 1.3em;
-    }}
-    .report h1:first-child, .report h2:first-child, .report h3:first-child {{
-      margin-top: 0;
-    }}
-    .report p {{
-      margin: 0.55em 0;
-    }}
-    .report pre {{
-      overflow: auto;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid var(--voila-border);
-    }}
-    code {{
-      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-      font-size: 0.95em;
-    }}
-  </style>
-</head>
-<body>
-  <main>
-    <section class="topbar" aria-label="Sumar raport diagnostic OCR Math">
-      <div>
-        <h1>Raport diagnostic OCR Math</h1>
-        <div class="badge">Diagnostic local · read-only</div>
-        <p class="muted">Document local: <code>{safe_course_id}</code></p>
-        <p class="muted">Această pagină este doar pentru citire. Nu modifică OCR-ul, cursul, Study sau Progress.</p>
-        <div class="metrics">
-          <div class="metric"><span>Sugestii detectate</span><strong>{total_suggestions}</strong></div>
-          <div class="metric"><span>Linii posibil afectate</span><strong>{changed_line_count}</strong></div>
-          <div class="metric"><span>Mărime raport</span><strong>{size_bytes}</strong></div>
-        </div>
-      </div>
-      <div class="actions">
-        <a class="button" href="{safe_raw_href}">Deschide raw .md</a>
-      </div>
-    </section>
-
-    <article class="report" aria-label="Conținut raport OCR Math">
-      {rendered_report}
-    </article>
-  </main>
-</body>
-</html>
-"""
-    return HTMLResponse(content=page)
-
-def _voila_ocr_math_report_ui_script_html() -> str:
-    return """
-<script id="voila-ocr-math-report-ui-link-v072">
-(function () {
-  var rootMarker = "data-voila-ocr-math-report-ui-link-v072";
-  if (document.documentElement.hasAttribute(rootMarker)) return;
-  document.documentElement.setAttribute(rootMarker, "1");
-
-  function unique(values) {
-    var seen = {};
-    var out = [];
-    values.forEach(function (value) {
-      if (!value) return;
-      value = String(value).trim();
-      if (!value || seen[value]) return;
-      seen[value] = true;
-      out.push(value);
-    });
-    return out;
-  }
-
-  function idsFromUrl(href) {
-    var ids = [];
-    try {
-      var url = new URL(href, window.location.origin);
-      [
-        /\/(?:course|courses|library|document|documents|ocr-review|review-ocr|study|progress)\/([^\/?#]+)/i,
-        /\/owner\/(?:course|courses|library|document|documents|ocr-review|review-ocr)\/([^\/?#]+)/i
-      ].forEach(function (pattern) {
-        var match = url.pathname.match(pattern);
-        if (match && match[1]) ids.push(decodeURIComponent(match[1]));
-      });
-
-      ["course_id", "course", "doc_id", "document_id", "item_id", "id"].forEach(function (key) {
-        var value = url.searchParams.get(key);
-        if (value) ids.push(value);
-      });
-    } catch (error) {}
-    return unique(ids);
-  }
-
-  function formatCount(value) {
-    if (value === null || value === undefined || value === "") return "n/a";
-    return String(value);
-  }
-
-  function reportHref(id) {
-    return "/owner/ocr-math-report/" + encodeURIComponent(id) + "/view";
-  }
-
-  function hasReportBox(container, id) {
-    return Array.prototype.some.call(
-      container.querySelectorAll("[data-voila-ocr-math-report-id]"),
-      function (node) {
-        return node.getAttribute("data-voila-ocr-math-report-id") === id;
-      }
-    );
-  }
-
-  function createMetric(label, value) {
-    var item = document.createElement("span");
-    item.style.cssText = "display:inline-flex;gap:4px;align-items:baseline;margin:4px 10px 0 0;white-space:nowrap;";
-
-    var name = document.createElement("span");
-    name.textContent = label + ":";
-    name.style.cssText = "opacity:0.78;";
-
-    var count = document.createElement("strong");
-    count.textContent = formatCount(value);
-
-    item.appendChild(name);
-    item.appendChild(count);
-    return item;
-  }
-
-  function renderReportBox(container, id, summary, compact) {
-    if (!container || hasReportBox(container, id)) return;
-
-    var box = document.createElement("section");
-    box.setAttribute("data-voila-ocr-math-report-id", id);
-    box.setAttribute("aria-label", "Raport diagnostic OCR Math disponibil");
-    box.style.cssText = [
-      "margin:12px 0",
-      "padding:14px",
-      "border:1px solid rgba(31,78,121,0.35)",
-      "border-radius:14px",
-      "background:rgba(31,78,121,0.06)",
-      "display:flex",
-      "gap:12px",
-      "align-items:flex-start",
-      "justify-content:space-between",
-      "flex-wrap:wrap"
-    ].join(";");
-
-    var content = document.createElement("div");
-    content.style.cssText = "min-width:220px;flex:1 1 260px;";
-
-    var topRow = document.createElement("div");
-    topRow.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;";
-
-    var title = document.createElement("strong");
-    title.textContent = "Raport diagnostic OCR Math disponibil";
-
-    var badge = document.createElement("span");
-    badge.textContent = "Diagnostic local";
-    badge.style.cssText = [
-      "font-size:0.78em",
-      "line-height:1",
-      "padding:4px 7px",
-      "border:1px solid rgba(31,78,121,0.35)",
-      "border-radius:999px",
-      "opacity:0.86"
-    ].join(";");
-
-    topRow.appendChild(title);
-    topRow.appendChild(badge);
-    content.appendChild(topRow);
-
-    var helper = document.createElement("div");
-    helper.textContent = "Raportul este doar informativ. Nu modifică OCR-ul, cursul, Study sau Progress.";
-    helper.style.cssText = "font-size:0.9em;opacity:0.78;margin-top:5px;";
-    content.appendChild(helper);
-
-    var metrics = document.createElement("div");
-    metrics.style.cssText = "font-size:0.92em;margin-top:7px;";
-    metrics.appendChild(createMetric("Sugestii detectate", summary.total_suggestions));
-    metrics.appendChild(createMetric("Linii posibil afectate", summary.changed_line_count));
-    content.appendChild(metrics);
-
-    var link = document.createElement("a");
-    link.href = reportHref(id);
-    link.textContent = compact ? "Deschide raportul" : "Deschide raportul OCR Math";
-    link.style.cssText = [
-      "align-self:center",
-      "padding:8px 11px",
-      "border:1px solid currentColor",
-      "border-radius:10px",
-      "text-decoration:none",
-      "font-weight:600",
-      "white-space:nowrap"
-    ].join(";");
-
-    box.appendChild(content);
-    box.appendChild(link);
-    container.appendChild(box);
-  }
-
-  async function fetchSummary(id) {
-    try {
-      var response = await fetch(
-        "/owner/ocr-math-report/" + encodeURIComponent(id) + "/summary.json",
-        { headers: { "Accept": "application/json" } }
-      );
-      if (!response.ok) return null;
-      var summary = await response.json();
-      return summary && summary.exists ? summary : null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async function addForCurrentPage() {
-    var ids = idsFromUrl(window.location.href).slice(0, 3);
-    if (!ids.length) return;
-
-    var target =
-      document.querySelector(".course-tools, [data-testid='course-tools'], .ocr-review, [data-testid='ocr-review']") ||
-      document.querySelector("main") ||
-      document.body;
-
-    for (var i = 0; i < ids.length; i++) {
-      var summary = await fetchSummary(ids[i]);
-      if (summary) renderReportBox(target, ids[i], summary, false);
-    }
-  }
-
-  async function addForCards() {
-    var pairs = [];
-
-    Array.prototype.forEach.call(document.querySelectorAll("[data-course-id], [data-document-id], [data-doc-id]"), function (node) {
-      var id = node.getAttribute("data-course-id") || node.getAttribute("data-document-id") || node.getAttribute("data-doc-id");
-      if (id) pairs.push({ id: id, host: node });
-    });
-
-    Array.prototype.forEach.call(document.querySelectorAll("a[href]"), function (link) {
-      idsFromUrl(link.href).forEach(function (id) {
-        var host = link.closest("article, .card, .course-card, .library-card, li, section") || link.parentElement;
-        pairs.push({ id: id, host: host });
-      });
-    });
-
-    var seen = {};
-    pairs = pairs.filter(function (pair) {
-      var key = pair.id + "::" + (pair.host ? Array.prototype.indexOf.call(document.querySelectorAll("*"), pair.host) : "none");
-      if (seen[key]) return false;
-      seen[key] = true;
-      return true;
-    }).slice(0, 20);
-
-    for (var i = 0; i < pairs.length; i++) {
-      var summary = await fetchSummary(pairs[i].id);
-      if (summary) renderReportBox(pairs[i].host, pairs[i].id, summary, true);
-    }
-  }
-
-  function run() {
-    addForCurrentPage();
-    addForCards();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run);
-  } else {
-    run();
-  }
-})();
-</script>
-"""
-
-@app.middleware("http")
-async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
-    response = await call_next(request)
-    content_type = response.headers.get("content-type", "").lower()
-    if "text/html" not in content_type:
-        return response
-
-    body_chunks = []
-    async for chunk in response.body_iterator:
-        body_chunks.append(chunk)
-    body = b"".join(body_chunks)
-
-    try:
-        html = body.decode("utf-8")
-    except UnicodeDecodeError:
-        headers = dict(response.headers)
-        headers.pop("content-length", None)
-        return Response(content=body, status_code=response.status_code, headers=headers, media_type=response.media_type)
-
-    marker = "voila-ocr-math-report-ui-link-v071"
-    if marker not in html:
-        script = _voila_ocr_math_report_ui_script_html()
-        if "</body>" in html:
-            html = html.replace("</body>", script + "\n</body>", 1)
-        else:
-            html = html + script
-
-    headers = dict(response.headers)
-    headers.pop("content-length", None)
-    headers.pop("content-encoding", None)
-    return HTMLResponse(content=html, status_code=response.status_code, headers=headers)
-
-# VOILA_V0_7_1_OWNER_LOCAL_OCR_MATH_REPORT_UI_LINK_END
-# VOILA_V0_7_2_OWNER_LOCAL_OCR_MATH_REPORT_UX_POLISH_APPLIED
-# VOILA_V0_7_3_OWNER_LOCAL_OCR_MATH_REPORT_VIEWER_PAGE_APPLIED
-
-
 @app.get("/exam-prep", response_class=HTMLResponse)
 def exam_prep_home() -> HTMLResponse:
     dashboard = exam_prep.bac_matematica_m1_dashboard()
@@ -2163,9 +2016,6 @@ async def upload_pdf(file: UploadFile = File(...)):
     )
 
 
-
-
-
 def trash_course_output(output_dir: Path) -> Path | None:
     if not output_dir.exists():
         return None
@@ -2179,7 +2029,6 @@ def trash_course_output(output_dir: Path) -> Path | None:
     shutil.move(str(output_dir), str(target))
 
     return target
-
 
 
 def trash_input_pdf(pdf_path: Path) -> Path | None:
@@ -2209,7 +2058,6 @@ def delete_course(pdf_name: str = Form(...)) -> RedirectResponse:
         url="/",
         status_code=303,
     )
-
 
 
 def move_to_trash(source: Path, trash_subdir: str) -> Path | None:
@@ -2243,7 +2091,6 @@ def delete_from_library(pdf_name: str = Form(...)) -> RedirectResponse:
         url="/",
         status_code=303,
     )
-
 
 
 def choose_review_question_from_view(view: dict) -> dict | None:
@@ -3006,16 +2853,9 @@ def log(pdf: str = Query(...)) -> PlainTextResponse:
     return PlainTextResponse(log_path.read_text(encoding="utf-8"))
 
 
-
-
-
-
-
-
 @app.get("/edit-crops")
 def edit_crops(pdf: str = ""):
     from fastapi.responses import HTMLResponse, RedirectResponse
-    from urllib.parse import quote
 
     ensure_crop_editor_running()
 
@@ -3033,7 +2873,6 @@ def edit_crops(pdf: str = ""):
         return RedirectResponse("http://127.0.0.1:8790/?pdf=" + quote(pdf))
 
     return RedirectResponse("http://127.0.0.1:8790/")
-
 
 
 def _safe_pdf_name(value: str) -> str:
@@ -3064,7 +2903,6 @@ def _save_json_file(path: Path, payload) -> None:
 
 
 def _html_escape(value: str) -> str:
-    import html
     return html.escape(str(value or ""), quote=True)
 
 
@@ -3099,7 +2937,6 @@ def _is_suspicious_concept_title(title: str) -> bool:
 @app.get("/review-concepts")
 def review_concepts(pdf: str = ""):
     from fastapi.responses import HTMLResponse
-    from urllib.parse import quote
 
     pdf_name = _safe_pdf_name(pdf)
 
@@ -3399,7 +3236,6 @@ def review_concepts(pdf: str = ""):
     return HTMLResponse(html_doc)
 
 
-
 @app.post("/review-concepts/save")
 def save_review_concept(
     pdf: str = Form(...),
@@ -3408,7 +3244,6 @@ def save_review_concept(
 ):
     from datetime import datetime, timezone
     from fastapi.responses import HTMLResponse, RedirectResponse
-    from urllib.parse import quote
     import traceback
 
     try:
@@ -3593,7 +3428,6 @@ def _detect_suspicious_ocr_text(text: str) -> bool:
 @app.get("/review-ocr-text")
 def review_ocr_text(pdf: str = "", page: int = 1):
     from fastapi.responses import HTMLResponse
-    from urllib.parse import quote
 
     pdf_name = _safe_pdf_name(pdf)
 
@@ -4513,7 +4347,6 @@ def save_ocr_text_page(
 ):
     from datetime import datetime, timezone
     from fastapi.responses import HTMLResponse, RedirectResponse
-    from urllib.parse import quote
     import traceback
 
     try:
@@ -4576,7 +4409,6 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
     import subprocess
     import sys
     import traceback
-    from urllib.parse import quote
 
     try:
         pdf_name = _safe_pdf_name(pdf)
@@ -4681,8 +4513,6 @@ def rebuild_after_ocr_text_review(pdf: str = ""):
         )
 
 
-
-
 @app.get("/review-ocr-text/suggestions")
 def review_ocr_text_suggestions(pdf: str = "", q: str = "", limit: int = 12):
     from fastapi.responses import JSONResponse
@@ -4747,32 +4577,23 @@ def review_ocr_text_suggestions(pdf: str = "", q: str = "", limit: int = 12):
     return JSONResponse({"suggestions": suggestions})
 
 
-
-
 def _nav_safe_pdf_name(value: str) -> str:
-    from pathlib import Path
     return Path(str(value or "")).name
 
 
 def _nav_output_dir(pdf_name: str) -> Path:
-    from pathlib import Path
     return PROJECT_ROOT / "data" / "output" / Path(pdf_name).stem
 
 
 def _nav_quote(value: str) -> str:
-    from urllib.parse import quote
     return quote(str(value or ""))
 
 
 def _nav_escape(value: str) -> str:
-    import html
     return html.escape(str(value or ""), quote=True)
 
 
-
-
 def _course_tools_button_html(pdf_name: str) -> str:
-    from urllib.parse import quote
     safe = Path(str(pdf_name or "")).name
     q = quote(safe)
     return f'<a class="tool-link primary-tool" href="/course-tools?pdf={q}">{_ut("ui.course_tools", "Course Tools")}</a>'
@@ -5069,12 +4890,9 @@ def view_figures(pdf: str = ""):
     return HTMLResponse(html_doc)
 
 
-
-
 @app.get("/quick-tools")
 def quick_tools():
     from fastapi.responses import HTMLResponse
-    from urllib.parse import quote
     import i18n
 
     ui_state = i18n.get_ui_language(PROJECT_ROOT)
@@ -5249,7 +5067,6 @@ def quick_tools():
     return HTMLResponse(html_doc)
 
 
-
 # VOILA_OCR_CORRECTION_ROUTES_V1
 
 from fastapi import Request as _VoilaRequest
@@ -5312,8 +5129,6 @@ def voila_ocr_page_image(pdf: str = "", page: int = 1, zoom: float = 2.2):
 
 @app.get("/review-ocr-corrected")
 def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, applied: int = 0):
-    import html
-    from urllib.parse import quote
     import ocr_page_corrections as oc
 
     safe_pdf = _voila_safe_pdf_name(pdf)
@@ -5659,7 +5474,6 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
 @app.post("/save-ocr-correction")
 async def voila_save_ocr_correction(request: _VoilaRequest):
     import ocr_page_corrections as oc
-    from urllib.parse import quote
 
     form = await request.form()
 
@@ -5686,7 +5500,6 @@ async def voila_save_ocr_correction(request: _VoilaRequest):
 @app.post("/apply-corrected-ocr")
 async def voila_apply_corrected_ocr(request: _VoilaRequest):
     import ocr_page_corrections as oc
-    from urllib.parse import quote
 
     form = await request.form()
 
@@ -5699,7 +5512,6 @@ async def voila_apply_corrected_ocr(request: _VoilaRequest):
         url=f"/review-ocr-corrected?pdf={quote(pdf)}&page=1&applied=1",
         status_code=303,
     )
-
 
 
 @app.get("/voila-static/{filename}")
@@ -5725,9 +5537,6 @@ def voila_static_file(filename: str):
         static_path.read_text(encoding="utf-8"),
         media_type=media_type,
     )
-
-
-
 
 
 @app.post("/check-ocr-languagetool")
@@ -5757,7 +5566,6 @@ async def voila_check_ocr_languagetool(request: _VoilaRequest):
     return JSONResponse(result)
 
 
-
 @app.get("/document-language")
 def voila_get_document_language(pdf: str = ""):
     from fastapi.responses import JSONResponse
@@ -5784,7 +5592,6 @@ async def voila_set_document_language(request: _VoilaRequest):
     return JSONResponse(
         dl.set_document_language(PROJECT_ROOT, pdf, language)
     )
-
 
 
 @app.post("/run-ocr-page")
@@ -5884,7 +5691,6 @@ async def voila_run_ocr_page(request: _VoilaRequest):
     )
 
 
-
 @app.post("/ui-language-form")
 def voila_set_ui_language_form(
     language: str = Form(...),
@@ -5923,13 +5729,10 @@ async def voila_set_ui_language(request: _VoilaRequest):
     )
 
 
-
 # VOILA_LESSONS_ROUTES_V1
 
 @app.get("/lessons", response_class=HTMLResponse)
 def voila_lessons(pdf: str = Query(...)) -> HTMLResponse:
-    import html
-    from urllib.parse import quote
     import lesson_tools
 
     pdf_path = validate_pdf_name(pdf)
@@ -5991,8 +5794,6 @@ def voila_lessons(pdf: str = Query(...)) -> HTMLResponse:
 
 @app.get("/lesson", response_class=HTMLResponse)
 def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResponse:
-    import html
-    from urllib.parse import quote
     import lesson_tools
 
     pdf_path = validate_pdf_name(pdf)
@@ -6050,8 +5851,6 @@ def voila_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResp
 
 @app.get("/study-lesson", response_class=HTMLResponse)
 def voila_study_lesson(pdf: str = Query(...), lesson_id: str = Query(...)) -> HTMLResponse:
-    import html
-    from urllib.parse import quote
     import lesson_tools
     import study_questions
     from study_engine import load_state, choose_next_question
@@ -6139,7 +5938,6 @@ def voila_study_lesson_answer(
     question_id: str = Form(...),
     correct: bool = Form(...),
 ) -> RedirectResponse:
-    from urllib.parse import quote
     from study_engine import record_answer
 
     pdf_path = validate_pdf_name(pdf_name)
@@ -7087,7 +6885,6 @@ def exam_prep_local_bank_study_preview_route(
     replace live study sessions, or change weak review behavior.
     """
 
-    import os
 
     enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_PREVIEW_ROUTE",
@@ -7163,7 +6960,6 @@ def exam_prep_local_bank_study_preview_internal_panel(
     replace live study sessions, or change weak review behavior.
     """
 
-    import os
     import tempfile
 
     enabled = os.environ.get(
@@ -7252,7 +7048,6 @@ def exam_prep_local_bank_guarded_trial_smoke(
     score live sessions, or modify the Exam Prep UI.
     """
 
-    import os
 
     smoke_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_SMOKE_ROUTE",
@@ -7330,7 +7125,6 @@ def exam_prep_local_bank_guarded_trial_diagnostics(
     score live sessions, or modify the Exam Prep UI.
     """
 
-    import os
 
     diagnostics_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_DIAGNOSTICS_ROUTE",
@@ -7449,7 +7243,6 @@ def exam_prep_local_bank_guarded_trial_candidates(
     filesystem root and does not expose answer previews.
     """
 
-    import os
 
     candidates_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_GUARDED_TRIAL_CANDIDATES_ROUTE",
@@ -7608,8 +7401,6 @@ def exam_prep_local_bank_guarded_trial_candidates_panel(
     sessions, or modify the Exam Prep UI navigation.
     """
 
-    import html
-    import os
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -7765,7 +7556,6 @@ def exam_prep_local_bank_guarded_trial_candidates_panel(
 def exam_prep_local_bank_guarded_trial_candidates_panel_polish():
     """Hidden/internal polished owner-smoke panel for guarded local-bank candidates."""
 
-    import os
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -7979,7 +7769,6 @@ def exam_prep_local_bank_live_consumption_shadow_report() -> dict:
     correct_answer_preview, or explanation_preview fields.
     """
 
-    import os
 
     route_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_SHADOW_REPORT_ROUTE",
@@ -8113,7 +7902,6 @@ def exam_prep_local_bank_live_consumption_shadow_panel():
     live.
     """
 
-    import os
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -8345,7 +8133,6 @@ def exam_prep_local_bank_first_live_trial_contract_report() -> dict:
     consumption, persistence, progress updates, scoring, or public UI changes.
     """
 
-    import os
 
     route_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_CONTRACT_REPORT_ROUTE",
@@ -8478,7 +8265,6 @@ def exam_prep_local_bank_first_live_trial_contract_panel():
     enable live consumption, persistence, progress updates, scoring, or public UI.
     """
 
-    import os
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -8695,7 +8481,6 @@ def exam_prep_local_bank_first_live_trial_delivery_noop() -> dict:
     sessions, progress, or scoring.
     """
 
-    import os
 
     route_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_NO_PERSISTENCE_DELIVERY_ROUTE",
@@ -8839,7 +8624,6 @@ def exam_prep_local_bank_first_live_trial_owner_smoke() -> dict:
     does not persist attempts, sessions, progress, or scoring.
     """
 
-    import os
 
     route_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_SMOKE_ROUTE",
@@ -9008,7 +8792,6 @@ def exam_prep_local_bank_first_live_trial_owner_decision_report() -> dict:
     sessions, progress, or scoring.
     """
 
-    import os
 
     route_enabled = os.environ.get(
         "VOILA_ENABLE_EXAM_PREP_LOCAL_BANK_FIRST_LIVE_TRIAL_OWNER_DECISION_REPORT_ROUTE",
@@ -9186,7 +8969,6 @@ def exam_prep_local_bank_first_live_trial_owner_decision_panel():
     enable live delivery, persistence, progress updates, scoring, or public UI.
     """
 
-    import os
     from fastapi.responses import HTMLResponse
 
     panel_enabled = os.environ.get(
@@ -9414,7 +9196,6 @@ _VOILA_OWNER_SESSION_PREVIEW_ROUTE_PATH = "/owner/exam-prep/session-preview.json
 
 
 def _voila_owner_session_preview_route_flag_enabled() -> bool:
-    import os
 
     return str(os.environ.get(_VOILA_OWNER_SESSION_PREVIEW_ROUTE_FLAG, "")).strip().lower() in {
         "1",
@@ -9465,7 +9246,6 @@ async def voila_owner_only_session_preview_json(
 
     import importlib.util
     import shutil
-    from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
     work_root = root / ".tmp" / "v055-owner-only-session-preview-route"
@@ -9531,7 +9311,6 @@ _VOILA_OWNER_SESSION_PREVIEW_PAGE_PATH = "/owner/exam-prep/session-preview"
 
 
 def _voila_owner_session_preview_page_flag_enabled() -> bool:
-    import os
 
     return str(os.environ.get(_VOILA_OWNER_SESSION_PREVIEW_PAGE_FLAG, "")).strip().lower() in {
         "1",
@@ -9557,7 +9336,6 @@ def _voila_owner_session_preview_page_not_found() -> _VoilaOwnerSessionPreviewHT
 
 
 def _voila_owner_session_preview_page_escape(value: object) -> str:
-    import html
 
     return html.escape(str(value or ""), quote=True)
 
@@ -9707,8 +9485,6 @@ async def voila_owner_only_session_preview_page(
 
     import importlib.util
     import shutil
-    from pathlib import Path
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 
     root = Path(__file__).resolve().parents[2]
     work_root = root / ".tmp" / "v056-owner-only-session-preview-page"
