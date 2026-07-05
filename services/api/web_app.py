@@ -1973,6 +1973,100 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
     return page(APP_TITLE, body)
 
 
+
+# VOILA_V0_7_17C_GENERATE_FOR_PDF_ENTRYPOINT
+def generate_for_pdf(pdf_path: Path) -> Path:
+    """Run the existing local PDF-to-course pipeline used by /generate.
+
+    This restores the entrypoint that the existing /generate route already calls.
+    It intentionally runs the concrete local scripts that are already present in
+    services/api instead of using a generic dynamic shim.
+    """
+
+    import subprocess
+    import sys
+    from pathlib import Path as _VoilaPath
+
+    source_pdf = _VoilaPath(pdf_path)
+    if not source_pdf.exists():
+        raise FileNotFoundError(f"PDF not found: {source_pdf}")
+
+    api_dir = _VoilaPath(__file__).resolve().parent
+    output_root = OUTPUT_DIR
+    output_dir = output_root / source_pdf.stem
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    steps = [
+        (
+            "extract pages",
+            [
+                sys.executable,
+                str(api_dir / "pdf_extract.py"),
+                str(source_pdf),
+                "--output-dir",
+                str(output_root),
+            ],
+        ),
+        (
+            "build outline",
+            [
+                sys.executable,
+                str(api_dir / "outline_builder.py"),
+                str(output_dir / "pages.json"),
+            ],
+        ),
+        (
+            "normalize outline",
+            [
+                sys.executable,
+                str(api_dir / "normalize_outline.py"),
+                str(output_dir / "course_outline.json"),
+            ],
+        ),
+        (
+            "generate course assets",
+            [
+                sys.executable,
+                str(api_dir / "course_generator.py"),
+                str(output_dir / "course_outline.normalized.json"),
+            ],
+        ),
+        (
+            "polish course",
+            [
+                sys.executable,
+                str(api_dir / "course_polisher.py"),
+                str(output_dir / "course_outline.normalized.json"),
+            ],
+        ),
+    ]
+
+    for label, command in steps:
+        completed = subprocess.run(
+            command,
+            cwd=str(api_dir),
+            text=True,
+            capture_output=True,
+        )
+
+        if completed.returncode != 0:
+            stdout = (completed.stdout or "").strip()
+            stderr = (completed.stderr or "").strip()
+            detail = "\n".join(
+                part
+                for part in [
+                    f"Voila generate step failed: {label}",
+                    f"Command: {' '.join(command)}",
+                    f"Exit code: {completed.returncode}",
+                    f"stdout:\n{stdout}" if stdout else "",
+                    f"stderr:\n{stderr}" if stderr else "",
+                ]
+                if part
+            )
+            raise RuntimeError(detail)
+
+    return output_dir
+
 @app.post("/generate")
 def generate(pdf_name: str = Form(...)):
     pdf_path = validate_pdf_name(pdf_name)
@@ -9528,3 +9622,4 @@ async def voila_owner_only_session_preview_page(
         if work_root.exists():
             shutil.rmtree(work_root)
 # --- end v0.5.6 owner-only hidden session preview page ---
+
