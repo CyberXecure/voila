@@ -155,6 +155,8 @@ def _voila_ocr_math_report_paths(course_id: str) -> tuple[Path | None, Path | No
 
         direct_dirs = [
             root / safe_id,
+            root / "output" / safe_id,
+            root / "data" / "output" / safe_id,
             root / "library" / safe_id,
             root / "uploads" / safe_id,
             root / "courses" / safe_id,
@@ -9622,4 +9624,5 @@ async def voila_owner_only_session_preview_page(
         if work_root.exists():
             shutil.rmtree(work_root)
 # --- end v0.5.6 owner-only hidden session preview page ---
+
 
