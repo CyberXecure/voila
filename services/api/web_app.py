@@ -730,6 +730,132 @@ def _voila_ocr_math_report_ui_script_html() -> str:
 """
 
 
+
+def _voila_tester_flow_bottom_nav_html() -> str:
+    return r"""
+<style id="voila-tester-flow-bottom-nav-v0724-style">
+  .voila-tester-flow-bottom-nav {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 99999;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: min(980px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 22px;
+    border: 1px solid rgba(31, 78, 121, 0.35);
+    background: rgba(245, 236, 217, 0.94);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(12px);
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  .voila-tester-flow-bottom-nav a,
+  .voila-tester-flow-bottom-nav button {
+    border: 1px solid rgba(31, 78, 121, 0.42);
+    background: rgba(255, 255, 255, 0.64);
+    color: #1F4E79;
+    border-radius: 999px;
+    padding: 8px 11px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+  .voila-tester-flow-bottom-nav a.primary {
+    background: #1F4E79;
+    color: #fff;
+  }
+  body.voila-has-tester-flow-bottom-nav {
+    padding-bottom: 104px !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    .voila-tester-flow-bottom-nav {
+      background: rgba(24, 32, 36, 0.94);
+      border-color: rgba(215, 168, 110, 0.34);
+    }
+    .voila-tester-flow-bottom-nav a,
+    .voila-tester-flow-bottom-nav button {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f0c98d;
+      border-color: rgba(240, 201, 141, 0.32);
+    }
+    .voila-tester-flow-bottom-nav a.primary {
+      background: #d7a86e;
+      color: #141414;
+    }
+  }
+</style>
+<script id="voila-tester-flow-bottom-nav-v0724">
+(function () {
+  if (document.getElementById("voilaTesterFlowBottomNav")) return;
+
+  var params = new URLSearchParams(window.location.search);
+  var pdf = params.get("pdf") || "";
+  var outputMatch = window.location.pathname.match(/\/output\/([^\/]+)\/course\.cleaned\.html/i);
+
+  if (!pdf && outputMatch && outputMatch[1]) {
+    try {
+      pdf = decodeURIComponent(outputMatch[1]) + ".pdf";
+    } catch (_) {
+      pdf = outputMatch[1] + ".pdf";
+    }
+  }
+
+  function enc(value) {
+    return encodeURIComponent(value || "");
+  }
+
+  function addLink(nav, label, href, primary) {
+    if (!href) return;
+    var a = document.createElement("a");
+    a.textContent = label;
+    a.href = href;
+    if (primary) a.className = "primary";
+    nav.appendChild(a);
+  }
+
+  var nav = document.createElement("nav");
+  nav.id = "voilaTesterFlowBottomNav";
+  nav.className = "voila-tester-flow-bottom-nav";
+  nav.setAttribute("aria-label", "Voila tester flow bottom navigation");
+
+  addLink(nav, "Bibliotecă", "/", true);
+
+  if (pdf) {
+    var q = enc(pdf);
+    addLink(nav, "Instrumente curs", "/course-tools?pdf=" + q, false);
+    addLink(nav, "Deschide cursul", "/course-open?pdf=" + q, false);
+    addLink(nav, "Studiu", "/study?pdf=" + q, false);
+    addLink(nav, "Progres", "/progress?pdf=" + q, false);
+    addLink(nav, "OCR Review", "/review-ocr-corrected?pdf=" + q + "&page=1", false);
+
+    var courseId = pdf.replace(/\.pdf$/i, "");
+    addLink(nav, "OCR Math", "/owner/ocr-math-report/" + enc(courseId) + "/view", false);
+  }
+
+  addLink(nav, "Exam Prep", "/exam-prep", false);
+
+  var topButton = document.createElement("button");
+  topButton.type = "button";
+  topButton.textContent = "↑ Sus";
+  topButton.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  nav.appendChild(topButton);
+
+  document.body.appendChild(nav);
+  document.body.classList.add("voila-has-tester-flow-bottom-nav");
+})();
+</script>
+"""
+
+
 @app.middleware("http")
 async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
     response = await call_next(request)
@@ -756,6 +882,14 @@ async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
             html_text = html_text.replace("</body>", script + "\n</body>", 1)
         else:
             html_text = html_text + script
+
+    bottom_nav_marker = "voila-tester-flow-bottom-nav-v0724"
+    if bottom_nav_marker not in html_text and "appFixedNav" not in html_text:
+        bottom_nav = _voila_tester_flow_bottom_nav_html()
+        if "</body>" in html_text:
+            html_text = html_text.replace("</body>", bottom_nav + "\n</body>", 1)
+        else:
+            html_text = html_text + bottom_nav
 
     headers = dict(response.headers)
     headers.pop("content-length", None)
@@ -1447,10 +1581,14 @@ def page(title: str, body: str) -> HTMLResponse:
   </script>
 
     <nav id="appFixedNav" class="app-fixed-nav" aria-label="Voila quick navigation">
-      <a class="primary" href="/">{_ut("ui.link.back", "Back")}</a>
+      <a class="primary" href="/">{_ut("ui.library", _ut("library", "Library"))}</a>
+      <a id="fixedCourseToolsLink" href="/" hidden>{_ut("ui.course_tools", "Course Tools")}</a>
+      <a id="fixedCourseOpenLink" href="/" hidden>{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>
       <a id="fixedStudyLink" href="/" hidden>{_ut("ui.study", _ut("study", "Study"))}</a>
       <a id="fixedReviewLink" href="/" hidden>{_ut("ui.review_weak", "Review due")}</a>
+      <a id="fixedOcrReviewLink" href="/" hidden>{_ut("ui.review_ocr_text", "OCR Review")}</a>
       <a id="fixedProgressLink" href="/" hidden>{_ut("ui.progress", _ut("progress", "Progress"))}</a>
+      <a id="fixedExamPrepLink" href="/exam-prep">{_ut("ui.exam_prep", "Exam Prep")}</a>
       <button type="button" onclick="window.scrollTo({{ top: 0, behavior: 'smooth' }})">↑ {_ut("top", "Top")}</button>
       <button type="button" onclick="window.scrollTo({{ top: document.documentElement.scrollHeight, behavior: 'smooth' }})">↓ {_ut("bottom", "Bottom")}</button>
       <button id="fixedResetButton" class="danger" type="button" hidden>{_ut("reset", "Reset")}</button>
@@ -1470,10 +1608,29 @@ def page(title: str, body: str) -> HTMLResponse:
         const studyLink = document.getElementById("fixedStudyLink");
         const reviewLink = document.getElementById("fixedReviewLink");
         const progressLink = document.getElementById("fixedProgressLink");
+        const courseToolsLink = document.getElementById("fixedCourseToolsLink");
+        const courseOpenLink = document.getElementById("fixedCourseOpenLink");
+        const ocrReviewLink = document.getElementById("fixedOcrReviewLink");
         const resetButton = document.getElementById("fixedResetButton");
 
         if (pdf) {{
           const encodedPdf = encodeURIComponent(pdf);
+
+          if (courseToolsLink && path !== "/course-tools") {{
+            courseToolsLink.href = "/course-tools?pdf=" + encodedPdf;
+            courseToolsLink.hidden = false;
+          }}
+
+          if (courseOpenLink && path !== "/course-open") {{
+            courseOpenLink.href = "/course-open?pdf=" + encodedPdf;
+            courseOpenLink.hidden = false;
+          }}
+
+          if (ocrReviewLink && path !== "/review-ocr-corrected") {{
+            ocrReviewLink.href = "/review-ocr-corrected?pdf=" + encodedPdf + "&page=1";
+            ocrReviewLink.hidden = false;
+          }}
+
 
           if (studyLink && path !== "/study") {{
             studyLink.href = "/study?pdf=" + encodedPdf;
@@ -1861,6 +2018,9 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
     for pdf in pdfs():
         out_dir = OUTPUT_DIR / pdf.stem
         course_html = out_dir / "course.cleaned.html"
+        course_md = out_dir / "course.cleaned.md"
+        course_generated = course_html.exists() or course_md.exists()
+        course_html_pending = course_md.exists() and not course_html.exists()
         figures_html = out_dir / "figures" / "figures.html"
         hybrid_figures_html = out_dir / "figures_hybrid" / "figures_hybrid.html"
         hybrid_manifest = out_dir / "figures_hybrid" / "figures_manifest.hybrid.json"
@@ -1869,14 +2029,16 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
         size_mb = pdf.stat().st_size / (1024 * 1024)
 
-        status = (
-            f'<span class="status">{_ut("ui.generated", "Generated")}</span>'
-            if course_html.exists()
-            else f'<span class="status missing">{_ut("status.not_generated_yet", "Not generated yet")}</span>'
-        )
+        if course_html.exists():
+            status = f'<span class="status">{_ut("ui.generated", "Generated")}</span>'
+        elif course_md.exists():
+            status = f'<span class="status">{_ut("ui.generated_markdown_html_pending", "Generated · HTML pending")}</span>'
+        else:
+            status = f'<span class="status missing">{_ut("status.not_generated_yet", "Not generated yet")}</span>'
+
         generate_label = (
             _ut("ui.regenerate_course", "Regenerate course")
-            if course_html.exists()
+            if course_generated
             else _ut("ui.generate_course", "Generate course")
         )
         actions = [
@@ -1888,10 +2050,17 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
             """
         ]
 
-        if course_html.exists():
+        if course_generated:
             actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "course.cleaned.html")}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>'
+                f'<a class="btn" href="/course-open?pdf={quote(pdf.name)}">{_ut("ui.open_course", _ut("open_course", "Open course"))}</a>'
             )
+            actions.append(
+                f'<a class="btn" href="/course-tools?pdf={quote(pdf.name)}">{_ut("ui.course_tools", "Course Tools")}</a>'
+            )
+            if course_html_pending:
+                actions.append(
+                    f'<span class="meta">{_ut("ui.html_will_be_rebuilt_on_open", "HTML will be rebuilt automatically when opened.")}</span>'
+                )
 
         if hybrid_figures_html.exists():
             actions.append(
@@ -2067,7 +2236,80 @@ def generate_for_pdf(pdf_path: Path) -> Path:
             )
             raise RuntimeError(detail)
 
+    ensure_course_html_for_pdf(source_pdf)
+
     return output_dir
+
+
+def ensure_course_html_for_pdf(pdf_path: Path) -> Path:
+    """Ensure a generated course has course.cleaned.html.
+
+    v0.7.24 tester UI reality fix:
+    - /generate must not stop at course.cleaned.md only.
+    - Existing extracted-package courses with course.cleaned.md can be opened safely.
+    - HTML export/navigation failures are surfaced instead of hidden.
+    """
+
+    source_pdf = Path(pdf_path)
+    output_dir = OUTPUT_DIR / source_pdf.stem
+    course_md = output_dir / "course.cleaned.md"
+    course_html = output_dir / "course.cleaned.html"
+
+    if course_html.exists():
+        return course_html
+
+    if not course_md.exists():
+        raise FileNotFoundError(f"course.cleaned.md not found: {course_md}")
+
+    api_dir = Path(__file__).resolve().parent
+    steps = [
+        (
+            "export course html",
+            [
+                sys.executable,
+                str(api_dir / "html_exporter.py"),
+                str(course_md),
+            ],
+        ),
+        (
+            "inject course navigation",
+            [
+                sys.executable,
+                str(api_dir / "course_nav_injector.py"),
+                str(course_html),
+                source_pdf.name,
+            ],
+        ),
+    ]
+
+    for label, command in steps:
+        completed = subprocess.run(
+            command,
+            cwd=str(api_dir),
+            text=True,
+            capture_output=True,
+        )
+
+        if completed.returncode != 0:
+            stdout = (completed.stdout or "").strip()
+            stderr = (completed.stderr or "").strip()
+            detail = "\n".join(
+                part
+                for part in [
+                    f"Voila course HTML step failed: {label}",
+                    f"Command: {' '.join(command)}",
+                    f"Exit code: {completed.returncode}",
+                    f"stdout:\n{stdout}" if stdout else "",
+                    f"stderr:\n{stderr}" if stderr else "",
+                ]
+                if part
+            )
+            raise RuntimeError(detail)
+
+    if not course_html.exists():
+        raise RuntimeError(f"course.cleaned.html was not created: {course_html}")
+
+    return course_html
 
 @app.post("/generate")
 def generate(pdf_name: str = Form(...)):
@@ -2080,6 +2322,33 @@ def generate(pdf_name: str = Form(...)):
 
     return RedirectResponse(
         url="/?generated=" + quote(pdf_name),
+        status_code=303,
+    )
+
+
+@app.get("/course-open")
+def course_open(pdf: str = Query(...)):
+    pdf_path = validate_pdf_name(pdf)
+
+    try:
+        ensure_course_html_for_pdf(pdf_path)
+    except Exception as exc:
+        body = f"""
+        <h1>{_ut("ui.course_unavailable", "Course unavailable")}</h1>
+        <div class="notice">
+          {_ut("ui.course_html_rebuild_failed", "The course Markdown exists, but Voila could not rebuild/open the HTML course.")}
+        </div>
+        <p>PDF: <strong>{html.escape(pdf_path.name)}</strong></p>
+        <p>Error: <code>{html.escape(str(exc))}</code></p>
+        <div class="actions">
+          <a class="btn" href="/">{_ut("ui.library", _ut("library", "Library"))}</a>
+          <a class="btn" href="/course-tools?pdf={quote(pdf_path.name)}">{_ut("ui.course_tools", "Course Tools")}</a>
+        </div>
+        """
+        return page("Voila! Course unavailable", body)
+
+    return RedirectResponse(
+        url=output_url(pdf_path.stem, "course.cleaned.html"),
         status_code=303,
     )
 
@@ -4698,16 +4967,19 @@ def _course_tools_button_html(pdf_name: str) -> str:
 def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
     q = _nav_quote(pdf_name)
 
+    course_id = str(pdf_name or "").replace(".pdf", "")
     links = [
-        ("Tools", f"/course-tools?pdf={q}", "tools"),
-        ("Course", f"/view-course?pdf={q}", "course"),
+        (_ut("ui.course_tools", "Course Tools"), f"/course-tools?pdf={q}", "tools"),
+        (_ut("ui.open_course", _ut("open_course", "Open course")), f"/course-open?pdf={q}", "course"),
         ("Lessons", f"/lessons?pdf={q}", "lessons"),
         (_ut("ui.study", _ut("study", "Study")), f"/study?pdf={q}", "study"),
+        (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
         (_ut("ui.review_ocr_text", "Review OCR Text"), f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
         (_ut("ui.review_concepts", "Review Concepts"), f"/review-concepts?pdf={q}", "concepts"),
         (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
         (_ut("ui.edit_crops", "Edit crops"), f"/edit-crops?pdf={q}", "crops"),
-        (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
+        ("OCR Math", f"/owner/ocr-math-report/{_nav_quote(course_id)}/view", "ocr_math"),
+        (_ut("ui.exam_prep", "Exam Prep"), "/exam-prep", "exam_prep"),
         (_ut("ui.library", _ut("library", "Library")), "/", "library"),
     ]
 
@@ -4784,159 +5056,330 @@ def _inject_voila_tools_bar(html_doc: str, pdf_name: str, active: str = "") -> s
 
 
 @app.get("/course-tools")
-def course_tools(pdf: str = ""):
-    from fastapi.responses import HTMLResponse
-
-    pdf_name = _nav_safe_pdf_name(pdf)
+def course_tools(pdf: str = Query("")):
+    pdf_name = str(pdf or "").strip()
 
     if not pdf_name:
         return HTMLResponse("<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>", status_code=400)
 
-    output_dir = _nav_output_dir(pdf_name)
-    q = _nav_quote(pdf_name)
+    try:
+        pdf_path = validate_pdf_name(pdf_name)
+    except Exception as exc:
+        return HTMLResponse(
+            "<h1>" + _ut("error.missing_pdf_name", "Missing PDF name") + "</h1>"
+            + f"<p><code>{html.escape(str(exc))}</code></p>",
+            status_code=400,
+        )
 
-    checks = {
-        "course": (output_dir / "course.cleaned.html").exists(),
-        "study": (output_dir / "quiz.study.json").exists(),
-        "figures": (output_dir / "figures_hybrid" / "figures_hybrid.html").exists(),
-        "ocr": (output_dir / "ocr_pages.json").exists() or (output_dir / "pages.json").exists(),
-        "concepts": (output_dir / "quiz.study.json").exists(),
-    }
+    output_dir = OUTPUT_DIR / pdf_path.stem
+    q = quote(pdf_path.name)
 
-    def card(title: str, description: str, href: str, enabled: bool = True) -> str:
-        cls = "" if enabled else "disabled"
-        suffix = "" if enabled else f'<span>{_ut("status.not_generated_yet", "Not generated yet")}</span>'
-        safe_href = href if enabled else "#"
+    course_md = output_dir / "course.cleaned.md"
+    course_html = output_dir / "course.cleaned.html"
+    quiz_json = output_dir / "quiz.json"
+    quiz_study_json = output_dir / "quiz.study.json"
+    flashcards_json = output_dir / "flashcards.json"
+    glossary_json = output_dir / "glossary.json"
+    pages_json = output_dir / "pages.json"
+    ocr_pages_json = output_dir / "ocr_pages.json"
+    figures_hybrid_html = output_dir / "figures_hybrid" / "figures_hybrid.html"
+    figures_html = output_dir / "figures" / "figures.html"
+    hybrid_manifest = output_dir / "figures_hybrid" / "figures_manifest.hybrid.json"
+
+    course_available = course_html.exists() or course_md.exists()
+    study_available = quiz_json.exists() or quiz_study_json.exists()
+    ocr_available = pages_json.exists() or ocr_pages_json.exists()
+    figures_available = figures_hybrid_html.exists() or figures_html.exists()
+    crops_available = hybrid_manifest.exists()
+
+    ocr_math_md, ocr_math_json = _voila_ocr_math_report_paths(pdf_path.stem)
+    ocr_math_available = bool(ocr_math_md and ocr_math_md.is_file())
+    ocr_math_description = (
+        "Raport diagnostic local OCR Math disponibil. Read-only: nu modifică OCR-ul, cursul, Study sau Progress."
+        if ocr_math_available
+        else "Raportul OCR Math nu există încă. Lipsește ocr_math_report.md/json; raportul se creează doar când hook-ul local OCR Math este activ."
+    )
+
+    if ocr_math_available:
+        try:
+            ocr_math_summary = _voila_ocr_math_report_summary(ocr_math_md, ocr_math_json)
+            ocr_math_description += (
+                " Sugestii detectate: "
+                + html.escape(_voila_ocr_math_report_display_value(ocr_math_summary.get("total_suggestions")))
+                + "."
+            )
+        except Exception:
+            pass
+
+    def card(title: str, description: str, href: str, available: bool, missing: str = "") -> str:
+        title_html = html.escape(str(title))
+        description_html = html.escape(str(description))
+        status_label = _ut("ui.available", "Available") if available else _ut("ui.unavailable", "Unavailable")
+        status_class = "ok" if available else "missing"
+
+        if available:
+            action = f'<a class="btn primary" href="{href}">{_ut("ui.open", "Open")}</a>'
+        else:
+            action = f'<span class="btn disabled">{_ut("ui.unavailable", "Unavailable")}</span>'
+
+        missing_html = ""
+        if missing and not available:
+            missing_html = f'<p class="missing-note">{html.escape(missing)}</p>'
 
         return f"""
-        <a class="card {cls}" href="{safe_href}">
-          <h2>{_nav_escape(title)}</h2>
-          <p>{_nav_escape(description)}</p>
-          {suffix}
-        </a>
+        <article class="tool-card {status_class}">
+          <div class="tool-card-head">
+            <h2>{title_html}</h2>
+            <span class="tool-status {status_class}">{html.escape(status_label)}</span>
+          </div>
+          <p>{description_html}</p>
+          {missing_html}
+          <div class="actions">{action}</div>
+        </article>
         """
 
     cards = [
-        card(_ut("ui.open_course", _ut("open_course", "Open course")), _ut("message.open_course_description", "Read the generated course with navigation."), f"/view-course?pdf={q}", checks["course"]),
-        card(_ut("ui.lessons", _ut("lessons", "Lessons")), _ut("message.lessons_description", "Choose a lesson, read it, then study only that lesson."), f"/lessons?pdf={q}", checks["study"]),
-        card(_ut("ui.study_mode", "Study mode"), _ut("message.study_mode_description", "Practice questions generated from the course."), f"/study?pdf={q}", checks["study"]),
-        card(_ut("ui.review_ocr_text", "Review OCR Text"), _ut("message.review_ocr_text_description", "Correct OCR text page by page."), f"/review-ocr-corrected?pdf={q}&page=1", checks["ocr"]),
-        card(_ut("ui.review_study_concepts", "Review Study Concepts"), _ut("message.review_concepts_description", "Correct lesson and concept titles."), f"/review-concepts?pdf={q}", checks["concepts"]),
-        card(_ut("ui.figures", "Figures"), _ut("message.figures_description", "View extracted figures."), f"/view-figures?pdf={q}", checks["figures"]),
-        card(_ut("ui.edit_crops", "Edit crops"), _ut("message.edit_crops_description", "Manually edit figure crops."), f"/edit-crops?pdf={q}", checks["figures"]),
-        card(_ut("ui.progress", _ut("progress", "Progress")), _ut("message.progress_description", "View study progress."), f"/progress?pdf={q}", checks["study"]),
-        card(_ut("ui.exam_prep", "Exam Prep"), _ut("exam_prep.foundation_description", "Foundation dashboard for skill-based exam preparation. Progress is updated from Study Mode."), "/exam-prep", checks["study"]),
-        card(_ut("ui.library", _ut("library", "Library")), _ut("message.return_to_library_description", "Return to the main course library."), "/", True),
+        card(
+            _ut("ui.open_course", _ut("open_course", "Open course")),
+            "Deschide cursul generat. Dacă există doar course.cleaned.md, Voila reconstruiește automat course.cleaned.html.",
+            f"/course-open?pdf={q}",
+            course_available,
+            "Lipsește course.cleaned.md. Rulează Generate pentru acest PDF.",
+        ),
+        card(
+            _ut("ui.study", _ut("study", "Study")),
+            "Întrebări de studiu din quiz.json / quiz.study.json.",
+            f"/study?pdf={q}",
+            study_available,
+            "Lipsește quiz.json sau quiz.study.json. Rulează Generate pentru acest PDF.",
+        ),
+        card(
+            _ut("ui.progress", _ut("progress", "Progress")),
+            "Dashboard de progres pentru întrebările de studiu.",
+            f"/progress?pdf={q}",
+            study_available,
+            "Progress are nevoie de quiz.json / quiz.study.json.",
+        ),
+        card(
+            _ut("ui.review_ocr_text", "OCR Review"),
+            "Revizuiește textul OCR extras din pages.json / ocr_pages.json.",
+            f"/review-ocr-corrected?pdf={q}&page=1",
+            ocr_available,
+            "Lipsește pages.json sau ocr_pages.json. Rulează Generate/OCR pentru acest PDF.",
+        ),
+        card(
+            _ut("ui.exam_prep", "Exam Prep"),
+            "Dashboard pentru pregătire examen; disponibil ca flux separat.",
+            "/exam-prep",
+            True,
+        ),
+        card(
+            "OCR Math Diagnostic",
+            ocr_math_description,
+            f"/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view",
+            ocr_math_available,
+            "Lipsește ocr_math_report.md/json. Activează hook-ul local OCR Math și regenerează dacă vrei diagnostic.",
+        ),
+        card(
+            _ut("ui.figures", "Figures"),
+            "Galerie figuri extrase din document.",
+            f"/view-figures?pdf={q}",
+            figures_available,
+            "Lipsește figures_hybrid.html sau figures.html.",
+        ),
+        card(
+            _ut("ui.edit_crops", "Edit crops"),
+            "Editor local pentru crop-uri de figuri.",
+            f"/edit-crops?pdf={q}",
+            crops_available,
+            "Lipsește figures_manifest.hybrid.json.",
+        ),
+        card(
+            "Quiz JSON",
+            "Deschide quiz.json ca artefact local.",
+            output_url(pdf_path.stem, "quiz.json"),
+            quiz_json.exists(),
+            "Lipsește quiz.json.",
+        ),
+        card(
+            "Flashcards JSON",
+            "Deschide flashcards.json ca artefact local.",
+            output_url(pdf_path.stem, "flashcards.json"),
+            flashcards_json.exists(),
+            "Lipsește flashcards.json.",
+        ),
+        card(
+            "Glossary JSON",
+            "Deschide glossary.json ca artefact local.",
+            output_url(pdf_path.stem, "glossary.json"),
+            glossary_json.exists(),
+            "Lipsește glossary.json.",
+        ),
+        card(
+            _ut("ui.library", _ut("library", "Library")),
+            "Înapoi la biblioteca principală.",
+            "/",
+            True,
+        ),
     ]
 
     css = """
 <style>
   :root {
-    --bg: #101819;
-    --panel: #202d31;
-    --panel2: #26363b;
-    --text: #f6ead7;
-    --muted: #c7ad94;
-    --line: #3b4b50;
-    --accent: #e0ad68;
+    color-scheme: light dark;
+    --bg: #efe3cc;
+    --panel: #f8eedc;
+    --text: #2f2a24;
+    --muted: #75695c;
+    --accent: #1F4E79;
+    --border: rgba(31, 78, 121, 0.24);
+    --ok: #2f6f6d;
+    --missing: #9a5a2f;
   }
-
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12191d;
+      --panel: #20272b;
+      --text: #f1e7d8;
+      --muted: #b8afa3;
+      --accent: #d7a86e;
+      --border: rgba(215, 168, 110, 0.28);
+      --ok: #72b8b2;
+      --missing: #f0c98d;
+    }
+  }
   * { box-sizing: border-box; }
-
   body {
     margin: 0;
+    padding: 28px 18px 118px;
     background: var(--bg);
     color: var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-    padding: 28px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    line-height: 1.55;
   }
-
-  .wrap {
-    max-width: 1300px;
-    margin: 0 auto;
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  .topbar, .bottom-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 0 0 18px;
   }
-
-  h1 {
-    margin: 0 0 8px;
-    font-size: clamp(36px, 6vw, 72px);
-    line-height: 1.05;
+  .tools-nav, .bottom-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
-
-  .muted {
-    color: var(--muted);
-    font-size: 18px;
-    margin-bottom: 28px;
+  .tools-nav a, .bottom-actions a, .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 9px 12px;
+    text-decoration: none;
+    color: var(--accent);
+    background: rgba(255,255,255,0.38);
+    font-weight: 750;
   }
-
+  .btn.primary, .tools-nav a.active, .bottom-actions a.primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn.disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+  }
+  .muted { color: var(--muted); }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
   }
-
-  .card {
-    display: block;
-    min-height: 170px;
-    padding: 24px;
-    border-radius: 24px;
+  .tool-card {
     background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--text);
-    text-decoration: none;
-    box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
   }
-
-  .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
+  .tool-card.missing { opacity: 0.88; }
+  .tool-card h2 { margin: 0; font-size: 18px; }
+  .tool-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
   }
-
-  .card h2 {
-    margin: 0 0 10px;
-    font-size: 26px;
-  }
-
-  .card p {
-    color: var(--muted);
-    font-size: 17px;
-    line-height: 1.45;
-  }
-
-  .card.disabled {
-    opacity: 0.45;
-    pointer-events: none;
-  }
-
-  .card span {
-    display: inline-block;
-    margin-top: 10px;
-    color: var(--muted);
+  .tool-status {
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 12px;
     font-weight: 800;
   }
+  .tool-status.ok { background: rgba(47, 111, 109, 0.16); color: var(--ok); }
+  .tool-status.missing { background: rgba(154, 90, 47, 0.16); color: var(--missing); }
+  .missing-note {
+    border-left: 3px solid var(--missing);
+    padding-left: 10px;
+    color: var(--muted);
+  }
+  .actions { margin-top: 12px; }
 </style>
 """
 
-    html_doc = f"""
-<!doctype html>
+    bottom_nav = f"""
+    <nav class="bottom-actions" aria-label="Voila tester bottom navigation">
+      <a class="primary" href="/">Bibliotecă</a>
+      <a href="/course-tools?pdf={q}">Instrumente curs</a>
+      <a href="/course-open?pdf={q}">Deschide cursul</a>
+      <a href="/study?pdf={q}">Studiu</a>
+      <a href="/progress?pdf={q}">Progres</a>
+      <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
+      <a href="/exam-prep">Exam Prep</a>
+      <a href="/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view">OCR Math</a>
+    </nav>
+    """
+
+    page_html = f"""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{_ut("ui.course_tools", "Course Tools")} · Voila!</title>
   {css}
 </head>
 <body>
-  <div class="wrap">
-    <h1>{_ut("ui.course_tools", "Course Tools")}</h1>
-    <div class="muted">PDF: <b>{_nav_escape(pdf_name)}</b></div>
-    <div class="grid">
-      {''.join(cards)}
-    </div>
-  </div>
-</body>
-</html>
-"""
+  <main class="wrap course-tools" data-testid="course-tools">
+    <section class="topbar">
+      <div>
+        <h1>{_ut("ui.course_tools", "Course Tools")}</h1>
+        <div class="muted">PDF: <b>{html.escape(pdf_path.name)}</b></div>
+        <div class="muted">Status curs: <b>{html.escape("HTML + Markdown" if course_html.exists() else "Markdown generated · HTML pending" if course_md.exists() else "Negenerat")}</b></div>
+      </div>
+      <nav class="tools-nav" aria-label="Voila tester top navigation">
+        <a class="active" href="/course-tools?pdf={q}">Instrumente curs</a>
+        <a href="/course-open?pdf={q}">Deschide cursul</a>
+        <a href="/study?pdf={q}">Studiu</a>
+        <a href="/progress?pdf={q}">Progres</a>
+        <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
+        <a href="/exam-prep">Exam Prep</a>
+        <a href="/">Bibliotecă</a>
+      </nav>
+    </section>
 
-    return HTMLResponse(html_doc)
+    <section class="grid">
+      {''.join(cards)}
+    </section>
+
+    {bottom_nav}
+  </main>
+</body>
+</html>"""
+
+    return HTMLResponse(page_html)
 
 
 @app.get("/view-course")
@@ -4951,8 +5394,24 @@ def view_course(pdf: str = ""):
     output_dir = _nav_output_dir(pdf_name)
     course_html = output_dir / "course.cleaned.html"
 
+    if not course_html.exists() and (output_dir / "course.cleaned.md").exists():
+        try:
+            course_html = ensure_course_html_for_pdf(PROJECT_ROOT / "data" / "input" / pdf_name)
+        except Exception as exc:
+            return HTMLResponse(
+                "<h1>" + _ut("error.course_html_not_found", "Course HTML not found") + "</h1>"
+                + f"<p>{_ut('ui.course_html_rebuild_failed', 'The course Markdown exists, but Voila could not rebuild/open the HTML course.')}</p>"
+                + f"<p><code>{html.escape(str(exc))}</code></p>"
+                + f'<p><a href="/course-tools?pdf={quote(pdf_name)}">{_ut("ui.course_tools", "Course Tools")}</a></p>',
+                status_code=500,
+            )
+
     if not course_html.exists():
-        return HTMLResponse("<h1>" + _ut("error.course_html_not_found", "Course HTML not found") + "</h1>", status_code=404)
+        return HTMLResponse(
+            "<h1>" + _ut("error.course_html_not_found", "Course HTML not found") + "</h1>"
+            + f'<p><a href="/course-tools?pdf={quote(pdf_name)}">{_ut("ui.course_tools", "Course Tools")}</a></p>',
+            status_code=404,
+        )
 
     html_doc = course_html.read_text(encoding="utf-8", errors="ignore")
     html_doc = _inject_voila_tools_bar(html_doc, pdf_name, "course")
