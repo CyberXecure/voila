@@ -10084,4 +10084,163 @@ async def voila_owner_only_session_preview_page(
             shutil.rmtree(work_root)
 # --- end v0.5.6 owner-only hidden session preview page ---
 
+# v0.7.27 generated Romanian diacritics / responsiveness display guard.
+#
+# This is intentionally display-layer only. It does not rewrite OCR source files,
+# course markdown, or user data. It repairs common OCR/encoding artifacts in
+# generated HTML responses and prevents the tester-flow bottom navigation from
+# becoming visually heavy or duplicated.
+def _voila_v0727_normalize_romanian_ocr_display_text(value: str) -> str:
+    if not isinstance(value, str) or not value:
+        return value
+
+    replacements = (
+        ("ǎ", "ă"),
+        ("Ǎ", "Ă"),
+        ("˘a", "ă"),
+        ("a˘", "ă"),
+        ("˘A", "Ă"),
+        ("A˘", "Ă"),
+        ("s¸", "ș"),
+        ("S¸", "Ș"),
+        ("t¸", "ț"),
+        ("T¸", "Ț"),
+        ("¸s", "ș"),
+        ("¸S", "Ș"),
+        ("¸t", "ț"),
+        ("¸T", "Ț"),
+        ("ş", "ș"),
+        ("Ş", "Ș"),
+        ("ţ", "ț"),
+        ("Ţ", "Ț"),
+        ("ş", "ș"),
+        ("Ş", "Ș"),
+        ("ţ", "ț"),
+        ("Ţ", "Ț"),
+    )
+
+    for bad, good in replacements:
+        value = value.replace(bad, good)
+
+    return value
+
+
+def _voila_v0727_inject_bottom_nav_css_once(value: str) -> str:
+    if not isinstance(value, str) or not value:
+        return value
+
+    css_id = "voila-v0727-bottom-nav-polish"
+    if css_id in value:
+        return value
+
+    css = "\n".join([
+        '<style id="voila-v0727-bottom-nav-polish">',
+        '.voila-tester-flow-bottom-nav-v0724,',
+        '#voila-tester-flow-bottom-nav-v0724 {',
+        '  position: static !important;',
+        '  left: auto !important;',
+        '  right: auto !important;',
+        '  bottom: auto !important;',
+        '  z-index: auto !important;',
+        '  display: flex !important;',
+        '  flex-wrap: wrap !important;',
+        '  gap: 0.5rem !important;',
+        '  align-items: center !important;',
+        '  justify-content: flex-start !important;',
+        '  max-width: 100% !important;',
+        '  margin: 2rem 0 0 !important;',
+        '  padding: 0.75rem 0 !important;',
+        '  background: transparent !important;',
+        '  box-shadow: none !important;',
+        '}',
+        '.voila-tester-flow-bottom-nav-v0724 a,',
+        '#voila-tester-flow-bottom-nav-v0724 a {',
+        '  white-space: normal !important;',
+        '  line-height: 1.25 !important;',
+        '}',
+        '</style>',
+    ])
+
+    if "</head>" in value:
+        return value.replace("</head>", css + "\n</head>", 1)
+
+    return css + value
+
+
+def _voila_v0727_remove_duplicate_bottom_nav_blocks(value: str) -> str:
+    if not isinstance(value, str) or not value:
+        return value
+
+    marker = "voila-tester-flow-bottom-nav-v0724"
+    if value.count(marker) <= 1:
+        return value
+
+    # Keep the last bottom navigation block. The visible problem observed in
+    # v0.7.26 was navigation becoming heavy/overlapping in generated course view.
+    import re as _voila_v0727_re
+
+    pattern = _voila_v0727_re.compile(
+        r"<(?P<tag>nav|div|section)(?P<attrs>[^>]*?(?:id|class)=[\"'][^\"']*"
+        + _voila_v0727_re.escape(marker)
+        + r"[^\"']*[\"'][^>]*)>.*?</(?P=tag)>",
+        _voila_v0727_re.IGNORECASE | _voila_v0727_re.DOTALL,
+    )
+    matches = list(pattern.finditer(value))
+    if len(matches) <= 1:
+        return value
+
+    keep_start, keep_end = matches[-1].span()
+    chunks = []
+    cursor = 0
+    for match in matches:
+        start, end = match.span()
+        if start == keep_start and end == keep_end:
+            chunks.append(value[cursor:end])
+            cursor = end
+        else:
+            chunks.append(value[cursor:start])
+            cursor = end
+    chunks.append(value[cursor:])
+    return "".join(chunks)
+
+
+def _voila_v0727_polish_html_response_text(value: str) -> str:
+    value = _voila_v0727_normalize_romanian_ocr_display_text(value)
+    value = _voila_v0727_remove_duplicate_bottom_nav_blocks(value)
+    value = _voila_v0727_inject_bottom_nav_css_once(value)
+    return value
+
+
+@app.middleware("http")
+async def _voila_v0727_html_response_polish_middleware(request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    if not hasattr(response, "body_iterator"):
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    try:
+        text = body.decode("utf-8")
+    except UnicodeDecodeError:
+        text = body.decode("utf-8", errors="replace")
+
+    polished = _voila_v0727_polish_html_response_text(text)
+
+    headers = dict(response.headers)
+    for header in ("content-length", "content-type", "content-encoding", "transfer-encoding"):
+        headers.pop(header, None)
+
+    from fastapi.responses import HTMLResponse as _VoilaV0727HTMLResponse
+
+    return _VoilaV0727HTMLResponse(
+        content=polished,
+        status_code=response.status_code,
+        headers=headers,
+    )
 
