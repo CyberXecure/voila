@@ -644,6 +644,16 @@
             " sugestii · sugestii vizibile."
           );
           renderLtIssuePanel();
+
+          // VOILA_V0_7_32_OCR_REVIEW_SCROLL_ONLY_START
+          // After a LanguageTool check, jump to the first detected issue automatically.
+          // The existing navigation function already selects and centers the issue in Monaco.
+          if (typeof window.voilaGoToLanguageToolIssue === "function") {
+            window.setTimeout(function () {
+              window.voilaGoToLanguageToolIssue(0);
+            }, 0);
+          }
+          // VOILA_V0_7_32_OCR_REVIEW_SCROLL_ONLY_END
         }
       };
 
