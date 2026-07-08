@@ -1984,7 +1984,8 @@ def exam_prep_home() -> HTMLResponse:
         )
 
     body = f"""
-    <h1>{_ut("ui.exam_prep_title", "Voila! Exam Prep")}</h1>
+    <style id="voila-v0735-exam-prep-contrast-only">.exam-prep-contrast-v0735 .card{background:rgba(255,255,255,.96)!important;color:#172033!important;border-color:rgba(23,32,51,.18)!important;box-shadow:0 12px 34px rgba(23,32,51,.10)!important}.exam-prep-contrast-v0735 .card h2,.exam-prep-contrast-v0735 .card p,.exam-prep-contrast-v0735 .card .meta,.exam-prep-contrast-v0735 .card strong{color:#172033!important}.exam-prep-contrast-v0735 .notice{background:rgba(255,255,255,.94)!important;color:#172033!important;border-color:rgba(23,32,51,.16)!important}</style>
+    <section class="exam-prep-contrast-v0735"><h1>{_ut("ui.exam_prep_title", "Voila! Exam Prep")}</h1>
 
     <div class="notice">
       <strong>{_ut("exam_prep.bac_matematica_m1", "Baccalaureate → Mathematics M1")}</strong><br>
@@ -1993,6 +1994,8 @@ def exam_prep_home() -> HTMLResponse:
 
     <section class="grid">
       {''.join(rows)}
+    </section>
+
     </section>
 
     <div class="actions" style="margin-top: 24px;">
