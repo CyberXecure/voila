@@ -1868,22 +1868,32 @@ def enforce_limited_tester_demo_pdf_limit(pdf_path: Path) -> None:
         )
 
 
-def safe_upload_name(filename: str) -> str:
-    name = Path(filename or "").name
-    suffix = Path(name).suffix.lower()
+# VOILA_V0_7_31_SAFE_UPLOAD_NAME_ONLY_START
+def safe_upload_name(name: str) -> str:
+    # Return a stable local PDF filename without fragile regex ranges.
+    import re as _voila_v0731_re
+    import unicodedata as _voila_v0731_unicodedata
+    from pathlib import Path as _VoilaV0731Path
+
+    raw = str(name or "document.pdf").replace("\\", "/").rsplit("/", 1)[-1]
+    parsed = _VoilaV0731Path(raw)
+    stem = parsed.stem or "document"
+    suffix = parsed.suffix.lower()
 
     if suffix != ".pdf":
-        raise HTTPException(status_code=400, detail=_ut("error.only_pdf_files_supported", "Only PDF files are supported."))
+        suffix = ".pdf"
 
-    stem = Path(name).stem
-    stem = re.sub(r"[^A-Za-z0-9._ -]+", "_", stem).strip(" ._")
+    folded = _voila_v0731_unicodedata.normalize("NFKD", stem)
+    folded = folded.encode("ascii", "ignore").decode("ascii")
+    folded = _voila_v0731_re.sub(r"[^A-Za-z0-9._ -]+", "_", folded)
+    folded = _voila_v0731_re.sub(r"\s+", " ", folded).strip(" ._")
+    folded = _voila_v0731_re.sub(r"_+", "_", folded)
 
-    if not stem:
-        stem = "document"
+    if not folded:
+        folded = "document"
 
-    return stem + ".pdf"
-
-
+    return folded[:120] + suffix
+# VOILA_V0_7_31_SAFE_UPLOAD_NAME_ONLY_END
 def run_step(label: str, args: list[str], log_lines: list[str], optional: bool = False) -> None:
     cmd = [sys.executable, *args]
 
