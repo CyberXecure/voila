@@ -5103,12 +5103,17 @@ def course_tools(pdf: str = Query("")):
     crops_available = hybrid_manifest.exists()
 
     ocr_math_md, ocr_math_json = _voila_ocr_math_report_paths(pdf_path.stem)
+    # VOILA_V0_7_34_OCR_MATH_CARD_AVAILABILITY_ONLY_START
     ocr_math_available = bool(ocr_math_md and ocr_math_md.is_file())
+    ocr_math_summary_available = bool(ocr_math_json and ocr_math_json.is_file())
     ocr_math_description = (
         "Raport diagnostic local OCR Math disponibil. Read-only: nu modifică OCR-ul, cursul, Study sau Progress."
         if ocr_math_available
-        else "Raportul OCR Math nu există încă. Lipsește ocr_math_report.md/json; raportul se creează doar când hook-ul local OCR Math este activ."
+        else "Raportul OCR Math nu există încă. Lipsește ocr_math_report.md; raportul se creează doar când hook-ul local OCR Math este activ."
     )
+    if ocr_math_available and not ocr_math_summary_available:
+        ocr_math_description += " Sumarul JSON este opțional și lipsește momentan."
+    # VOILA_V0_7_34_OCR_MATH_CARD_AVAILABILITY_ONLY_END
 
     if ocr_math_available:
         try:
@@ -5188,7 +5193,7 @@ def course_tools(pdf: str = Query("")):
             ocr_math_description,
             f"/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view",
             ocr_math_available,
-            "Lipsește ocr_math_report.md/json. Activează hook-ul local OCR Math și regenerează dacă vrei diagnostic.",
+            "Lipsește ocr_math_report.md. Activează hook-ul local OCR Math și regenerează dacă vrei diagnostic.",
         ),
         card(
             _ut("ui.figures", "Figures"),
