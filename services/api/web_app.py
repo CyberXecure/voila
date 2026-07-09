@@ -883,8 +883,17 @@ async def _voila_ocr_math_report_ui_link_middleware(request, call_next):
         else:
             html_text = html_text + script
 
+    path_lower = str(getattr(request.url, "path", "") or "").lower()
+    skip_tester_flow_bottom_nav = path_lower in {
+        "/review-ocr-corrected",
+        "/review-ocr-text",
+    }
     bottom_nav_marker = "voila-tester-flow-bottom-nav-v0724"
-    if bottom_nav_marker not in html_text and "appFixedNav" not in html_text:
+    if (
+        not skip_tester_flow_bottom_nav
+        and bottom_nav_marker not in html_text
+        and "appFixedNav" not in html_text
+    ):
         bottom_nav = _voila_tester_flow_bottom_nav_html()
         if "</body>" in html_text:
             html_text = html_text.replace("</body>", bottom_nav + "\n</body>", 1)
@@ -5921,7 +5930,6 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
   <meta charset="utf-8">
   <title>{_ut("ui.title.correct_ocr", "Correct OCR · Voila!")}</title>
   <style>{css}</style>
-  <link rel="stylesheet" href="/voila-static/ocr_review_monaco.css?v=1778302140">
 </head>
 <body>
   <header>
@@ -6036,7 +6044,7 @@ def voila_review_ocr_corrected(pdf: str = "", page: int = 1, saved: int = 0, app
       box.scrollTop = scrollTop - (y - startY);
     }});
   </script>
-  <script src="/voila-static/ocr_review_monaco.js?v=1778302140"></script>
+  <script src="/voila-static/ocr_review_monaco.js?v=1783592400"></script>
 </body>
 </html>
 """
@@ -10261,4 +10269,3 @@ async def _voila_v0727_html_response_polish_middleware(request, call_next):
         status_code=response.status_code,
         headers=headers,
     )
-
