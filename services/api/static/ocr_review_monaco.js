@@ -1,50 +1,19 @@
-/* VOILA_MONACO_PANEL_ONLY_CSS_V1 */
-(function installVoilaMonacoPanelOnlyCss() {
-  function install() {
-    if (document.getElementById("voila-monaco-panel-only-css")) {
-      return;
-    }
-
-    const style = document.createElement("style");
-    style.id = "voila-monaco-panel-only-css";
-    style.textContent = [
-      ".monaco-hover,",
-      ".monaco-editor-hover,",
-      ".monaco-editor .monaco-hover,",
-      ".monaco-editor .monaco-editor-hover,",
-      ".monaco-editor .monaco-hover-content,",
-      ".monaco-editor .hover-row,",
-      ".monaco-editor .hover-contents {",
-      "  display: none !important;",
-      "  visibility: hidden !important;",
-      "  opacity: 0 !important;",
-      "  pointer-events: none !important;",
-      "}",
-      ".monaco-editor .lightbulb-glyph,",
-      ".monaco-editor .codicon-lightbulb,",
-      ".monaco-editor .codicon-light-bulb,",
-      ".monaco-editor .glyph-margin-widgets .codicon-light-bulb,",
-      ".monaco-editor .contentWidgets .codicon-light-bulb {",
-      "  display: none !important;",
-      "  visibility: hidden !important;",
-      "  opacity: 0 !important;",
-      "  pointer-events: none !important;",
-      "}"
-    ].join("\n");
-
-    document.head.appendChild(style);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install, { once: true });
-  } else {
-    install();
-  }
-})();
-
+/* VOILA_V0_7_40_NATIVE_OCR_REVIEW_TOOLS_NO_MONACO */
 (function () {
-  window.VOILA_MONACO_JS_LOADED = true;
-  console.log("Voila Monaco OCR JS loaded - multilingual");
+  if (window.voilaNativeOcrReviewToolsNoMonaco) return;
+  window.voilaNativeOcrReviewToolsNoMonaco = true;
+
+  const LT_LANG = {
+    auto: "ro-RO",
+    ro: "ro-RO",
+    en: "en-US",
+    fr: "fr-FR",
+    de: "de-DE",
+    it: "it-IT",
+    es: "es-ES",
+    pt: "pt-PT",
+    ru: "ru-RU"
+  };
 
   const LANGUAGE_LABELS = {
     auto: "Auto",
@@ -52,107 +21,22 @@
     en: "English",
     fr: "Français",
     de: "Deutsch",
-    ru: "Русский",
     it: "Italiano",
     es: "Español",
-    pt: "Português"
+    pt: "Português",
+    ru: "Русский"
   };
-
-  const LT_LANG = {
-    ro: "ro-RO",
-    en: "en-US",
-    fr: "fr",
-    de: "de-DE",
-    ru: "ru-RU",
-    it: "it",
-    es: "es",
-    pt: "pt"
-  };
-
-  const UI_LABELS = {
-    ro: "Română",
-    en: "English",
-    fr: "Français",
-    de: "Deutsch",
-    ru: "Русский",
-    it: "Italiano",
-    es: "Español",
-    pt: "Português"
-  };
-
-  let UI_TEXT = {
-    ui_language: "Limba interfeței",
-    document_language: "Limba documentului",
-    run_ocr_page: "Rulează OCR pagină",
-    check_text: "Verifică text",
-    save: "Salvează",
-    prev_issue: "← problemă",
-    next_issue: "problemă →",
-    ocr_normal: "OCR normal",
-    ocr_2_columns: "OCR 2 coloane",
-    ocr_3_columns: "OCR 3 coloane",
-    editor_loading: "Editor: se încarcă Monaco...",
-    editor_ready: "Editor: Monaco activ.",
-    lt_checking: "LanguageTool: verific textul...",
-    lt_no_issues: "LanguageTool: 0 probleme evidente.",
-    lt_apply_again: "LanguageTool: sugestie aplicată. Rulează din nou „Verifică text” pentru lista actualizată."
-  };
-
-  function applyLanguagePackUiAliases(translations) {
-    translations = translations || {};
-
-    const aliases = {
-      "ui.language": "ui_language",
-      "document.language": "document_language",
-      "button.run_ocr_page": "run_ocr_page",
-      "button.check_text": "check_text",
-      "button.save": "save",
-      "button.prev_issue": "prev_issue",
-      "button.next_issue": "next_issue",
-      "status.editor_loading": "editor_loading",
-      "status.editor_ready": "editor_ready",
-      "status.lt_checking": "lt_checking",
-      "status.lt_no_issues": "lt_no_issues",
-      "message.lt_apply_again": "lt_apply_again",
-      "tooltip.run_ocr_page": "run_ocr_page_title",
-      "tooltip.check_text": "check_text_title",
-      "tooltip.save": "save_title"
-    };
-
-    Object.keys(aliases).forEach(function (newKey) {
-      const oldKey = aliases[newKey];
-      if (!translations[newKey] && translations[oldKey]) {
-        translations[newKey] = translations[oldKey];
-      }
-    });
-
-    return translations;
-  }
-
-  UI_TEXT = applyLanguagePackUiAliases(UI_TEXT);
-
-  function tr(key, fallbackKey) {
-    return UI_TEXT[key] || (fallbackKey ? UI_TEXT[fallbackKey] : "") || key;
-  }
 
   function ready(fn) {
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", fn);
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
     } else {
       fn();
     }
   }
 
-  function loadScript(src) {
-    return new Promise(function (resolve, reject) {
-      if (window.require) return resolve();
-
-      const script = document.createElement("script");
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
+  function enc(value) {
+    return encodeURIComponent(value || "");
   }
 
   function findOcrTextarea() {
@@ -175,780 +59,403 @@
     return url.searchParams.get("pdf") || document.body.dataset.pdfName || "";
   }
 
+  function getPageNumber() {
+    const url = new URL(window.location.href);
+    return Number(url.searchParams.get("page") || "1");
+  }
+
   function detectLanguageFromText(value) {
     const text = String(value || "").toLowerCase();
-
     if (/[а-яё]/i.test(text)) return "ru";
 
     const scores = { ro: 0, en: 0, fr: 0, de: 0, it: 0, es: 0, pt: 0 };
+    ["ă","â","î","ș","ţ","ț"].forEach(function (ch) { if (text.includes(ch)) scores.ro += 3; });
+    [" the "," and "," of "," to "," is "].forEach(function (w) { if (text.includes(w)) scores.en += 1; });
+    [" le "," la "," les "," des "," une "].forEach(function (w) { if (text.includes(w)) scores.fr += 1; });
+    [" der "," die "," und "," ist "," nicht "].forEach(function (w) { if (text.includes(w)) scores.de += 1; });
+    [" il "," che "," una "," con "," per "].forEach(function (w) { if (text.includes(w)) scores.it += 1; });
+    [" el "," que "," una "," con "," para "].forEach(function (w) { if (text.includes(w)) scores.es += 1; });
+    [" que "," uma "," com "," para "," não "].forEach(function (w) { if (text.includes(w)) scores.pt += 1; });
 
-    if (/[ăâîșşțţ]/i.test(text)) scores.ro += 5;
-    if (/[éèêëàâîïôùûçœ]/i.test(text)) scores.fr += 4;
-    if (/[äöüß]/i.test(text)) scores.de += 4;
-    if (/[àèéìíîòóùú]/i.test(text)) scores.it += 3;
-    if (/[áéíóúñü¿¡]/i.test(text)) scores.es += 3;
-    if (/[ãõçáàâéêíóôú]/i.test(text)) scores.pt += 3;
-
-    const markers = {
-      ro: ["pentru", "este", "sunt", "care", "prin", "din", "funcție", "capitolul", "figura"],
-      en: ["the", "and", "with", "from", "figure", "chapter", "system", "pressure", "temperature"],
-      fr: ["pour", "avec", "dans", "figure", "chapitre", "pression", "température", "système"],
-      de: ["und", "mit", "der", "die", "das", "abbildung", "kapitel", "druck", "temperatur", "system"],
-      it: ["per", "con", "della", "delle", "figura", "capitolo", "pressione", "temperatura", "sistema"],
-      es: ["para", "con", "del", "de la", "figura", "capítulo", "presión", "temperatura", "sistema"],
-      pt: ["para", "com", "do", "da", "figura", "capítulo", "pressão", "temperatura", "sistema"]
-    };
-
-    Object.keys(markers).forEach(function (lang) {
-      markers[lang].forEach(function (word) {
-        if (text.includes(word)) scores[lang] += 1;
-      });
-    });
-
-    let best = "en";
-    Object.keys(scores).forEach(function (lang) {
-      if (scores[lang] > scores[best]) best = lang;
-    });
-
-    return best;
+    return Object.keys(scores).sort(function (a, b) { return scores[b] - scores[a]; })[0] || "ro";
   }
 
-  function normalizeLanguage(value) {
-    value = String(value || "auto").toLowerCase();
-
-    const aliases = {
-      "ro-ro": "ro",
-      "ron": "ro",
-      "romana": "ro",
-      "română": "ro",
-      "en-us": "en",
-      "en-gb": "en",
-      "eng": "en",
-      "fr-fr": "fr",
-      "fra": "fr",
-      "de-de": "de",
-      "deu": "de",
-      "ru-ru": "ru",
-      "rus": "ru",
-      "it-it": "it",
-      "ita": "it",
-      "es-es": "es",
-      "spa": "es",
-      "pt-pt": "pt",
-      "pt-br": "pt",
-      "por": "pt"
-    };
-
-    value = aliases[value] || value;
-
-    if (!LANGUAGE_LABELS[value]) return "auto";
-
-    return value;
+  function effectiveLanguage(selected, text) {
+    return selected === "auto" ? detectLanguageFromText(text) : selected;
   }
 
-  function getEffectiveLanguage(selectedLanguage, text) {
-    selectedLanguage = normalizeLanguage(selectedLanguage);
-
-    if (selectedLanguage === "auto") {
-      return detectLanguageFromText(text);
-    }
-
-    return selectedLanguage;
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
   }
 
-  async function loadDocumentLanguage(pdfName) {
-    try {
-      const response = await fetch("/document-language?pdf=" + encodeURIComponent(pdfName));
-      const data = await response.json();
+  function installStyle() {
+    if (document.getElementById("voila-native-ocr-review-tools-css")) return;
 
-      if (data && data.ok) {
-        return normalizeLanguage(data.document_language || "auto");
-      }
-    } catch (_) {}
+    const style = document.createElement("style");
+    style.id = "voila-native-ocr-review-tools-css";
+    style.textContent = [
+      "#voilaOcrReviewToolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 12px}",
+      "#voilaOcrReviewToolbar button,#voilaOcrReviewToolbar select{border-radius:999px;padding:8px 12px;font-weight:800}",
+      "#voilaOcrReviewToolbar button.primary{background:#e6ad62;color:#101819;border-color:transparent}",
+      "#voilaOcrReviewStatus{font-size:13px;line-height:1.2;margin:6px 0 6px;color:#e9c39b}",
+      "#voilaOcrReviewStatus strong{color:#f3b765}",
+      "#voilaLtPanel{border:1px solid rgba(230,173,98,.25);border-radius:12px;padding:7px 9px;margin:6px 0;background:rgba(255,255,255,.035)}",
+      "#voilaLtPanel[hidden]{display:none!important}",
+      "#voilaLtPanel .lt-compact{display:flex;gap:6px;align-items:center;flex-wrap:wrap}",
+      "#voilaLtPanel .lt-actions-only{padding:0;margin:0}",
+      "#voilaLtPanel button{border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800}",
+      "[data-voila-hidden-native-ocr-submit='1']{display:none!important;visibility:hidden!important;pointer-events:none!important}",
+      "textarea#ocrText, textarea[name='text'], textarea[name='corrected_text']{display:block!important;width:100%;min-height:260px;font-family:Consolas,'Cascadia Mono','Courier New',monospace;font-size:18px;line-height:1.55}"
+    ].join("\\n");
 
-    return "auto";
+    document.head.appendChild(style);
   }
 
-  async function saveDocumentLanguage(pdfName, language) {
-    try {
-      await fetch("/document-language", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pdf: pdfName,
-          language: normalizeLanguage(language)
-        })
-      });
-    } catch (_) {}
-  }
+  ready(function () {
+    installStyle();
 
-  async function loadUiLanguage() {
-    try {
-      const response = await fetch("/ui-language");
-      const data = await response.json();
-
-      if (data && data.ok) {
-        UI_TEXT = applyLanguagePackUiAliases(data.translations || UI_TEXT);
-        return normalizeLanguage(data.ui_language || "ro");
-      }
-    } catch (_) {}
-
-    return "ro";
-  }
-
-  async function saveUiLanguage(language) {
-    try {
-      const response = await fetch("/ui-language", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: normalizeLanguage(language)
-        })
-      });
-
-      const data = await response.json();
-
-      if (data && data.ok) {
-        UI_TEXT = applyLanguagePackUiAliases(data.translations || UI_TEXT);
-      }
-    } catch (_) {}
-  }
-
-  ready(async function () {
     const textarea = findOcrTextarea();
-
     if (!textarea) {
-      console.warn("Voila Monaco: no textarea found.");
+      console.warn("Voila OCR Review: no textarea found.");
       return;
     }
 
-    if (!textarea.id) {
-      textarea.id = "ocrText";
-    }
-
-    const pdfName = getPdfName();
-    let selectedDocumentLanguage = await loadDocumentLanguage(pdfName);
-    let selectedUiLanguage = await loadUiLanguage();
+    if (!textarea.id) textarea.id = "ocrText";
 
     const form = textarea.closest("form");
+    const pdfName = getPdfName();
+
+    let ltMatches = [];
+    let ltIndex = 0;
 
     const toolbar = document.createElement("div");
-    toolbar.id = "voilaMonacoToolbar";
+    toolbar.id = "voilaOcrReviewToolbar";
 
     const uiLangSelect = document.createElement("select");
-    uiLangSelect.id = "voilaUiLanguage";
-    uiLangSelect.title = tr("ui.language", "ui_language");
-
-    Object.keys(UI_LABELS).forEach(function (lang) {
-      const option = document.createElement("option");
-      option.value = lang;
-      option.textContent = UI_LABELS[lang];
-      uiLangSelect.appendChild(option);
-    });
-
-    uiLangSelect.value = selectedUiLanguage;
+    uiLangSelect.innerHTML = '<option value="ro">Română</option><option value="en">English</option>';
+    uiLangSelect.value = "ro";
+    uiLangSelect.title = "Limba interfeței";
 
     const langSelect = document.createElement("select");
-    langSelect.id = "voilaDocumentLanguage";
-    langSelect.title = tr("document.language", "document_language");
-
-    Object.keys(LANGUAGE_LABELS).forEach(function (lang) {
+    ["ro","en","fr","de","it","es","pt","ru"].forEach(function (lang) {
       const option = document.createElement("option");
       option.value = lang;
-      option.textContent = LANGUAGE_LABELS[lang];
+      option.textContent = LANGUAGE_LABELS[lang] || lang;
       langSelect.appendChild(option);
     });
+    langSelect.value = "ro";
+    langSelect.title = "Limba documentului";
 
-    langSelect.value = selectedDocumentLanguage;
+    const columnsSelect = document.createElement("select");
+    columnsSelect.innerHTML =
+      '<option value="0">OCR normal</option>' +
+      '<option value="2">OCR 2 coloane</option>' +
+      '<option value="3">OCR 3 coloane</option>';
+    columnsSelect.value = "3";
 
-    const ocrColumnsSelect = document.createElement("select");
-    ocrColumnsSelect.id = "voilaOcrColumns";
-    ocrColumnsSelect.title = "Mod OCR pentru pagina curentă";
+    function button(label, className) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      if (className) b.className = className;
+      return b;
+    }
 
-    [
-      ["0", tr("ocr_normal")],
-      ["2", tr("ocr_2_columns")],
-      ["3", tr("ocr_3_columns")]
-    ].forEach(function (item) {
-      const option = document.createElement("option");
-      option.value = item[0];
-      option.textContent = item[1];
-      ocrColumnsSelect.appendChild(option);
-    });
+    const runOcrButton = button("Rulează OCR pagină", "primary");
+    const checkButton = button("Verifică text");
+    const saveButton = button("Salvează", "primary");
+    const prevIssueButton = button("← problemă");
+    const nextIssueButton = button("problemă →");
 
-    ocrColumnsSelect.value = "3";
-
-    const runOcrPageButton = document.createElement("button");
-    runOcrPageButton.type = "button";
-    runOcrPageButton.id = "runOcrPageButton";
-    runOcrPageButton.className = "voila-primary";
-    runOcrPageButton.textContent = tr("button.run_ocr_page", "run_ocr_page");
-    runOcrPageButton.title = tr("tooltip.run_ocr_page", "run_ocr_page_title");
-
-    const checkButton = document.createElement("button");
-    checkButton.type = "button";
-    checkButton.id = "checkOcrButton";
-    checkButton.textContent = tr("button.check_text", "check_text");
-    checkButton.title = tr("tooltip.check_text", "check_text_title");
-
-    const saveButton = document.createElement("button");
-    saveButton.type = "button";
-    saveButton.className = "voila-primary";
-    saveButton.textContent = tr("button.save", "save");
-    saveButton.title = tr("tooltip.save", "save_title");
-
-    const prevButton = document.createElement("button");
-    prevButton.type = "button";
-    prevButton.textContent = tr("button.prev_issue", "prev_issue");
-
-    const nextButton = document.createElement("button");
-    nextButton.type = "button";
-    nextButton.textContent = tr("button.next_issue", "next_issue");
-
-    toolbar.appendChild(uiLangSelect);
-    toolbar.appendChild(langSelect);
-    toolbar.appendChild(ocrColumnsSelect);
-    toolbar.appendChild(runOcrPageButton);
-    toolbar.appendChild(checkButton);
-    toolbar.appendChild(saveButton);
-    toolbar.appendChild(prevButton);
-    toolbar.appendChild(nextButton);
-
-    const host = document.createElement("div");
-    host.id = "voilaMonacoEditor";
+    [uiLangSelect, langSelect, columnsSelect, runOcrButton, checkButton, saveButton, prevIssueButton, nextIssueButton]
+      .forEach(function (el) { toolbar.appendChild(el); });
 
     const status = document.createElement("div");
-    status.id = "voilaMonacoStatus";
-    status.innerHTML = "<strong>" + tr("editor_loading") + "</strong>";
+    status.id = "voilaOcrReviewStatus";
+    status.innerHTML = "";
 
     const ltPanel = document.createElement("div");
     ltPanel.id = "voilaLtPanel";
     ltPanel.hidden = true;
 
-    textarea.classList.add("voila-monaco-hidden");
-    textarea.insertAdjacentElement("afterend", status);
-    textarea.insertAdjacentElement("afterend", host);
-    textarea.insertAdjacentElement("afterend", ltPanel);
-    textarea.insertAdjacentElement("afterend", toolbar);
+    textarea.insertAdjacentElement("beforebegin", toolbar);
+    toolbar.insertAdjacentElement("afterend", status);
+    status.insertAdjacentElement("afterend", ltPanel);
 
     function setStatus(message) {
       status.innerHTML = message || "";
     }
 
-    function fallback(message) {
-      textarea.classList.remove("voila-monaco-hidden");
-      host.style.display = "none";
-      toolbar.style.display = "none";
-      setStatus(message || "<strong>Editor:</strong> Monaco nu a putut fi încărcat.");
+    function flashStatus() {
+      status.style.outline = "2px solid rgba(230,173,98,.85)";
+      status.style.borderRadius = "10px";
+      status.style.padding = "8px 10px";
+      window.setTimeout(function () {
+        status.style.outline = "";
+      }, 1200);
     }
 
-    uiLangSelect.addEventListener("change", async function () {
-      selectedUiLanguage = normalizeLanguage(uiLangSelect.value);
-      await saveUiLanguage(selectedUiLanguage);
+    function hideNativeOcrReviewSubmitButtons() {
+      const selector = 'button, a, input[type="submit"], input[type="button"]';
+      Array.from(document.querySelectorAll(selector)).forEach(function (el) {
+        const label = labelOf(el);
+        if (
+          label.includes("apply corrected ocr") ||
+          label.includes("pages.json") ||
+          label.includes("save reviewed page") ||
+          label.includes("save as needs review")
+        ) {
+          el.dataset.voilaHiddenNativeOcrSubmit = "1";
+          el.style.setProperty("display", "none", "important");
+          el.style.setProperty("visibility", "hidden", "important");
+          el.style.setProperty("pointer-events", "none", "important");
+        }
+      });
+    }
 
-      window.location.href = window.location.href.replace(/([?&])ui=[^&]*/, "$1ui=" + selectedUiLanguage);
+    hideNativeOcrReviewSubmitButtons();
+    window.setTimeout(hideNativeOcrReviewSubmitButtons, 250);
+    window.setTimeout(hideNativeOcrReviewSubmitButtons, 1000);
 
-      if (!window.location.href.includes("ui=")) {
-        window.location.href += (window.location.href.includes("?") ? "&" : "?") + "ui=" + selectedUiLanguage;
-      }
-    });
+    function scrollTextareaToOffset(offset) {
+      const safeOffset = Math.max(0, Number(offset || 0));
+      const before = textarea.value.slice(0, safeOffset);
+      const lineIndex = before.split(/\r\n|\r|\n/).length - 1;
+      const computed = window.getComputedStyle(textarea);
+      const lineHeight = parseFloat(computed.lineHeight) || 26;
+      const targetTop = Math.max(0, (lineIndex * lineHeight) - (textarea.clientHeight * 0.35));
+      textarea.scrollTop = targetTop;
+    }
 
-    langSelect.addEventListener("change", async function () {
-      selectedDocumentLanguage = normalizeLanguage(langSelect.value);
-      await saveDocumentLanguage(pdfName, selectedDocumentLanguage);
-
-      const effective = getEffectiveLanguage(selectedDocumentLanguage, textarea.value || "");
-      setStatus(
-        "<strong>Limba documentului:</strong> " +
-        LANGUAGE_LABELS[selectedDocumentLanguage] +
-        " · LanguageTool: " +
-        (LT_LANG[effective] || "en-US")
+    function findReviewedSubmitButton() {
+      if (!form) return null;
+      const buttons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+      return (
+        buttons.find(function (btn) {
+          const label = labelOf(btn);
+          return (label.includes("reviewed") || label.includes("salvează")) &&
+                 !label.includes("needs") &&
+                 !label.includes("mai târziu");
+        }) ||
+        buttons[0] ||
+        null
       );
-    });
-
-    try {
-      await loadScript("https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js");
-    } catch (err) {
-      fallback("<strong>Editor:</strong> Monaco CDN nu s-a încărcat. Folosesc editorul simplu.");
-      return;
     }
 
-    if (!window.require) {
-      fallback("<strong>Editor:</strong> Monaco loader indisponibil.");
-      return;
+    function renderLtPanel() {
+      if (!ltMatches.length) {
+        ltPanel.hidden = true;
+        return;
+      }
+
+      if (ltIndex < 0) ltIndex = 0;
+      if (ltIndex >= ltMatches.length) ltIndex = ltMatches.length - 1;
+
+      const match = ltMatches[ltIndex] || {};
+      const replacements = match.replacements || [];
+
+      const buttons = replacements.slice(0, 6).map(function (replacement, index) {
+        const text = String(replacement.value || replacement || "");
+        return '<button type="button" class="lt-replace" data-index="' + index + '">' +
+          escapeHtml(text) +
+          '</button>';
+      }).join("");
+
+      ltPanel.hidden = false;
+      ltPanel.innerHTML =
+        '<div class="lt-compact lt-actions-only">' +
+          buttons +
+        '</div>';
+
+      Array.from(ltPanel.querySelectorAll(".lt-replace")).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const replacement = replacements[Number(btn.dataset.index || "0")] || "";
+          const replacementText = String(replacement.value || replacement || "");
+          const start = Math.max(0, Number(match.offset || 0));
+          const len = Math.max(1, Number(match.length || 1));
+          const before = textarea.value.slice(0, start);
+          const after = textarea.value.slice(start + len);
+          textarea.value = before + replacementText + after;
+          ltMatches.splice(ltIndex, 1);
+          setStatus("");
+          renderLtPanel();
+        });
+      });
     }
 
-    window.require.config({
-      paths: {
-        vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs"
+    function goToIssue(direction, sourceButton) {
+      const oldLabel = sourceButton ? sourceButton.textContent : "";
+
+      if (sourceButton) sourceButton.textContent = "Click primit";
+
+      if (!ltMatches.length) {
+        ltPanel.hidden = true;
+        setStatus("<strong>LanguageTool:</strong> nu există o problemă selectabilă. Rulează „Verifică text”; dacă rezultatul este 0 probleme, aceste butoane nu au unde naviga.");
+        flashStatus();
+        textarea.focus({ preventScroll: true });
+        if (sourceButton) {
+          window.setTimeout(function () { sourceButton.textContent = oldLabel; }, 900);
+        }
+        return;
+      }
+
+      ltIndex += direction;
+      if (ltIndex < 0) ltIndex = ltMatches.length - 1;
+      if (ltIndex >= ltMatches.length) ltIndex = 0;
+
+      const match = ltMatches[ltIndex] || {};
+      const start = Math.max(0, Number(match.offset || 0));
+      const end = start + Math.max(1, Number(match.length || 1));
+
+      try {
+        textarea.focus({ preventScroll: true });
+        textarea.setSelectionRange(start, end);
+        scrollTextareaToOffset(start);
+      } catch (_) {}
+
+      const label = "Problema " + (ltIndex + 1) + "/" + ltMatches.length;
+      setStatus("");
+      flashStatus();
+      renderLtPanel();
+
+      try {
+        textarea.focus({ preventScroll: true });
+        textarea.setSelectionRange(start, end);
+        scrollTextareaToOffset(start);
+      } catch (_) {}
+
+      if (sourceButton) {
+        sourceButton.textContent = label;
+        window.setTimeout(function () { sourceButton.textContent = oldLabel; }, 900);
+      }
+    }
+
+    saveButton.addEventListener("click", function () {
+      const submit = findReviewedSubmitButton();
+      if (form && submit && form.requestSubmit) {
+        form.requestSubmit(submit);
+      } else if (submit) {
+        submit.click();
+      } else if (form) {
+        form.submit();
       }
     });
 
-    window.require(["vs/editor/editor.main"], function () {
-      monaco.languages.register({ id: "voila-ocr" });
+    prevIssueButton.addEventListener("click", function () {
+      goToIssue(-1, prevIssueButton);
+    });
 
-      const model = monaco.editor.createModel(textarea.value || "", "voila-ocr");
+    nextIssueButton.addEventListener("click", function () {
+      goToIssue(1, nextIssueButton);
+    });
 
-      const editor = monaco.editor.create(host, {
-        model: model,
-        theme: "vs-dark",
-        automaticLayout: true,
-        wordWrap: "on",
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        fontSize: 15,
-        lineHeight: 22,
-        fontFamily: 'Consolas, "Cascadia Mono", "Courier New", monospace',
-        quickSuggestions: false,
-        suggestOnTriggerCharacters: false,
-        tabSize: 2,
-        padding: { top: 10, bottom: 10 },
-        lightbulb: { enabled: false },
-        fixedOverflowWidgets: true
-      });
-      window.voilaOcrMonacoEditor = editor;
+    checkButton.addEventListener("click", async function () {
+      const selected = langSelect.value || "auto";
+      const effective = effectiveLanguage(selected, textarea.value || "");
+      const ltLanguage = LT_LANG[effective] || "ro-RO";
 
-      window.voilaMonaco = editor;
-      window.voilaMonacoModel = model;
-      window.voilaLtMatches = [];
-      window.voilaLtIndex = 0;
+      checkButton.disabled = true;
+      const oldLabel = checkButton.textContent;
+      checkButton.textContent = "Verific...";
 
-      function syncToTextarea() {
-        textarea.value = model.getValue();
-      }
+      setStatus("<strong>LanguageTool:</strong> verific textul cu " + ltLanguage + "...");
 
-      model.onDidChangeContent(syncToTextarea);
-
-      if (form) {
-        form.addEventListener("submit", syncToTextarea);
-      }
-
-      function findReviewedSubmitButton() {
-        if (!form) return null;
-
-        const buttons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
-
-        return (
-          buttons.find(function (btn) {
-            const label = labelOf(btn);
-            return (label.includes("reviewed") || label.includes("salvează")) &&
-                   !label.includes("needs") &&
-                   !label.includes("mai târziu");
-          }) ||
-          buttons[0] ||
-          null
-        );
-      }
-
-      saveButton.addEventListener("click", function () {
-        syncToTextarea();
-
-        const submit = findReviewedSubmitButton();
-
-        if (form && submit && form.requestSubmit) {
-          form.requestSubmit(submit);
-        } else if (submit) {
-          submit.click();
-        } else if (form) {
-          form.submit();
-        }
-      });
-
-      function rangeFromMatch(match) {
-        const offset = Number(match.offset || 0);
-        const length = Math.max(1, Number(match.length || 1));
-        const start = model.getPositionAt(offset);
-        const end = model.getPositionAt(offset + length);
-
-        return new monaco.Range(
-          start.lineNumber,
-          start.column,
-          end.lineNumber,
-          end.column
-        );
-      }
-
-      function rangesIntersect(a, b) {
-        return !(a.endLineNumber < b.startLineNumber ||
-          a.startLineNumber > b.endLineNumber ||
-          (a.endLineNumber === b.startLineNumber && a.endColumn < b.startColumn) ||
-          (a.startLineNumber === b.endLineNumber && a.startColumn > b.endColumn));
-      }
-
-      monaco.languages.registerCodeActionProvider("voila-ocr", {
-        provideCodeActions: function (_model, range) {
-          const actions = [];
-
-          (window.voilaLtMatches || []).forEach(function (match) {
-            const matchRange = rangeFromMatch(match);
-
-            if (!rangesIntersect(matchRange, range)) return;
-
-            (match.replacements || []).slice(0, 5).forEach(function (replacement) {
-              actions.push({
-                title: replacement + " — LanguageTool",
-                kind: "quickfix",
-                edit: {
-                  edits: [{
-                    resource: model.uri,
-                    edit: {
-                      range: matchRange,
-                      text: replacement
-                    }
-                  }]
-                }
-              });
-            });
-          });
-
-          return {
-            actions: actions,
-            dispose: function () {}
-          };
-        }
-      });
-
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period, function () {
-        // Keep LanguageTool fixes in the Voila side panel.
-        // Do not open Monaco's Quick Fix popup because it overlaps the editor.
-        renderLtIssuePanel();
-      });
-
-      window.voilaSetLanguageToolMarkers = function (matches) {
-        window.voilaLtMatches = matches || [];
-        window.voilaLtIndex = 0;
-
-        const markers = window.voilaLtMatches.map(function (match) {
-          const range = rangeFromMatch(match);
-
-          return {
-            severity: monaco.MarkerSeverity.Warning,
-            startLineNumber: range.startLineNumber,
-            startColumn: range.startColumn,
-            endLineNumber: range.endLineNumber,
-            endColumn: range.endColumn,
-            message: match.message || "LanguageTool suggestion",
-            source: "LanguageTool",
-            code: match.ruleId || ""
-          };
+      try {
+        const response = await fetch("/check-ocr-languagetool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: textarea.value || "",
+            language: ltLanguage
+          })
         });
 
-        monaco.editor.setModelMarkers(model, "languagetool", markers);
+        const data = await response.json();
 
-        if (!markers.length) {
+        if (!data.ok) {
+          ltMatches = [];
+          ltIndex = 0;
           ltPanel.hidden = true;
-          setStatus("<strong>" + tr("lt_no_issues") + "</strong>");
-        } else {
-          setStatus(
-            "<strong>LanguageTool:</strong> " + markers.length +
-            " sugestii · sugestii vizibile."
-          );
-          renderLtIssuePanel();
-
-          // VOILA_V0_7_32_OCR_REVIEW_SCROLL_ONLY_START
-          // After a LanguageTool check, jump to the first detected issue automatically.
-          // The existing navigation function already selects and centers the issue in Monaco.
-          if (typeof window.voilaGoToLanguageToolIssue === "function") {
-            window.setTimeout(function () {
-              window.voilaGoToLanguageToolIssue(0);
-            }, 0);
-          }
-          // VOILA_V0_7_32_OCR_REVIEW_SCROLL_ONLY_END
-        }
-      };
-
-      window.voilaGoToLanguageToolIssue = function (direction) {
-        const matches = window.voilaLtMatches || [];
-        if (!matches.length) return;
-
-        window.voilaLtIndex += direction;
-
-        if (window.voilaLtIndex < 0) window.voilaLtIndex = matches.length - 1;
-        if (window.voilaLtIndex >= matches.length) window.voilaLtIndex = 0;
-
-        const range = rangeFromMatch(matches[window.voilaLtIndex]);
-        editor.setSelection(range);
-        editor.revealRangeInCenter(range);
-        editor.focus();
-
-        setStatus(
-          "<strong>LanguageTool:</strong> sugestia " +
-          (window.voilaLtIndex + 1) + " / " + matches.length
-        );
-        renderLtIssuePanel();
-      };
-
-
-      function escapeHtml(value) {
-        return String(value || "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;");
-      }
-
-      function renderLtIssuePanel() {
-        const matches = window.voilaLtMatches || [];
-
-        if (!matches.length) {
-          ltPanel.hidden = true;
+          setStatus("<strong>LanguageTool:</strong> " + (data.message || "nu răspunde."));
+          flashStatus();
           return;
         }
 
-        if (window.voilaLtIndex < 0) window.voilaLtIndex = 0;
-        if (window.voilaLtIndex >= matches.length) window.voilaLtIndex = matches.length - 1;
+        ltMatches = data.matches || [];
+        ltIndex = 0;
 
-        const match = matches[window.voilaLtIndex];
-        const replacements = match.replacements || [];
-        const range = rangeFromMatch(match);
+        if (!ltMatches.length) {
+          ltPanel.hidden = true;
+          setStatus("<strong>LanguageTool:</strong> 0 probleme evidente.");
+          flashStatus();
+          return;
+        }
 
-        const currentText = model.getValueInRange(range);
+        setStatus("<strong>LT:</strong> " + ltMatches.length + " sugestii.");
+        goToIssue(0, null);
+      } catch (err) {
+        ltMatches = [];
+        ltIndex = 0;
+        ltPanel.hidden = true;
+        setStatus("<strong>LanguageTool:</strong> eroare: " + (err.message || String(err)));
+        flashStatus();
+      } finally {
+        checkButton.disabled = false;
+        checkButton.textContent = oldLabel;
+      }
+    });
 
-        const buttons = replacements.slice(0, 8).map(function (replacement, index) {
-          return '<button type="button" class="lt-replace" data-index="' + index + '">' +
-            escapeHtml(replacement) +
-            '</button>';
-        }).join("");
+    runOcrButton.addEventListener("click", async function () {
+      const pageNumber = getPageNumber();
 
-        ltPanel.hidden = false;
-        ltPanel.classList.add("voila-lt-side-panel");
-        ltPanel.innerHTML =
-          '<div class="lt-head">' +
-            '<strong>LT · sugestii</strong>' +
-            '<span>' + (window.voilaLtIndex + 1) + ' / ' + matches.length + '</span>' +
-          '</div>' +
-          '<div class="lt-message">' + escapeHtml(match.message || "Sugestie") + '</div>' +
-          '<div class="lt-current">Text: <code>' + escapeHtml(currentText) + '</code></div>' +
-          '<div class="lt-actions">' + buttons + '</div>';
-
-        Array.from(ltPanel.querySelectorAll(".lt-replace")).forEach(function (button) {
-          button.addEventListener("click", function () {
-            const replacement = replacements[Number(button.dataset.index || "0")] || "";
-
-            editor.executeEdits("LanguageTool", [{
-              range: range,
-              text: replacement,
-              forceMoveMarkers: true
-            }]);
-
-            syncToTextarea();
-
-            setStatus("<strong>" + tr("lt_apply_again") + "</strong>");
-
-            matches.splice(window.voilaLtIndex, 1);
-            window.voilaSetLanguageToolMarkers(matches);
-          });
-        });
+      if (!pdfName || !pageNumber) {
+        setStatus("<strong>OCR:</strong> nu pot determina PDF-ul sau pagina.");
+        flashStatus();
+        return;
       }
 
-      prevButton.addEventListener("click", function () {
-        window.voilaGoToLanguageToolIssue(-1);
-      });
+      runOcrButton.disabled = true;
+      const oldLabel = runOcrButton.textContent;
+      runOcrButton.textContent = "OCR...";
 
-      nextButton.addEventListener("click", function () {
-        window.voilaGoToLanguageToolIssue(1);
-      });
+      setStatus("<strong>OCR:</strong> generez text pentru pagina curentă...");
 
-      runOcrPageButton.addEventListener("click", async function () {
-        syncToTextarea();
+      try {
+        const response = await fetch("/run-ocr-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pdf: pdfName,
+            page: pageNumber,
+            psm: 6,
+            zoom: 3.0,
+            columns: Number(columnsSelect.value || "0")
+          })
+        });
 
+        const data = await response.json();
+
+        if (!data.ok) {
+          setStatus("<strong>OCR:</strong> " + (data.message || "eroare") + "<br><pre>" + String(data.stderr || data.stdout || "").slice(-900) + "</pre>");
+          flashStatus();
+          return;
+        }
+
+        setStatus("<strong>OCR:</strong> gata. Reîncarc pagina...");
         const url = new URL(window.location.href);
-        const pdfName = url.searchParams.get("pdf") || getPdfName();
-        const pageNumber = Number(url.searchParams.get("page") || "1");
-
-        if (!pdfName || !pageNumber) {
-          setStatus("<strong>OCR:</strong> nu pot determina PDF-ul sau pagina.");
-          return;
-        }
-
-        runOcrPageButton.disabled = true;
-        const oldLabel = runOcrPageButton.textContent;
-        runOcrPageButton.textContent = "OCR...";
-
-        setStatus("<strong>OCR:</strong> generez text pentru pagina curentă...");
-
-        try {
-          const response = await fetch("/run-ocr-page", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              pdf: pdfName,
-              page: pageNumber,
-              psm: 6,
-              zoom: 3.0,
-              columns: Number(ocrColumnsSelect.value || "0")
-            })
-          });
-
-          const data = await response.json();
-
-          if (!data.ok) {
-            setStatus("<strong>OCR:</strong> " + (data.message || "eroare") + "<br><pre>" + String(data.stderr || data.stdout || "").slice(-900) + "</pre>");
-            return;
-          }
-
-          setStatus("<strong>OCR:</strong> gata. Reîncarc pagina...");
-          window.location.href = window.location.href.replace(/([?&])v=[^&]*/, "$1v=" + Date.now());
-
-          if (!window.location.href.includes("v=")) {
-            window.location.href += (window.location.href.includes("?") ? "&" : "?") + "v=" + Date.now();
-          }
-        } catch (err) {
-          setStatus("<strong>OCR:</strong> eroare: " + (err.message || String(err)));
-        } finally {
-          runOcrPageButton.disabled = false;
-          runOcrPageButton.textContent = oldLabel;
-        }
-      });
-
-      checkButton.addEventListener("click", async function () {
-        syncToTextarea();
-
-        const effectiveLanguage = getEffectiveLanguage(langSelect.value, textarea.value || "");
-        const ltLanguage = LT_LANG[effectiveLanguage] || "en-US";
-
-        checkButton.disabled = true;
-        const oldLabel = checkButton.textContent;
-        checkButton.textContent = "Verific...";
-
-        setStatus("<strong>" + tr("lt_checking") + "</strong> " + ltLanguage + "...");
-
-        try {
-          const response = await fetch("/check-ocr-languagetool", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              text: textarea.value || "",
-              language: ltLanguage
-            })
-          });
-
-          const data = await response.json();
-
-          if (!data.ok) {
-            setStatus("<strong>LanguageTool:</strong> " + (data.message || "nu rulează."));
-            return;
-          }
-
-          window.voilaSetLanguageToolMarkers(data.matches || []);
-        } catch (err) {
-          setStatus("<strong>LanguageTool:</strong> eroare: " + (err.message || String(err)));
-        } finally {
-          checkButton.disabled = false;
-          checkButton.textContent = oldLabel;
-        }
-      });
-
-      editor.setPosition({ lineNumber: 1, column: 1 });
-      editor.revealLine(1);
-      editor.focus();
-
-      const effectiveInitial = getEffectiveLanguage(langSelect.value, model.getValue());
-      setStatus(
-        "<strong>Editor:</strong> Monaco activ. Limba: " +
-        LANGUAGE_LABELS[langSelect.value] +
-        " · LanguageTool: " +
-        (LT_LANG[effectiveInitial] || "en-US") +
-        ". Ctrl+. = quick fix."
-      );
-    }, function () {
-      fallback("<strong>Editor:</strong> Monaco nu a putut fi inițializat.");
+        url.searchParams.set("v", Date.now());
+        window.location.href = url.toString();
+      } catch (err) {
+        setStatus("<strong>OCR:</strong> eroare: " + (err.message || String(err)));
+        flashStatus();
+      } finally {
+        runOcrButton.disabled = false;
+        runOcrButton.textContent = oldLabel;
+      }
     });
   });
-})();
-
-
-/* VOILA_LT_VISIBLE_COMPACT_PANEL_CSS_V1 */
-(function installVoilaLtVisibleCompactPanelCss() {
-  function install() {
-    if (document.getElementById("voila-lt-visible-compact-panel-css")) {
-      return;
-    }
-
-    const style = document.createElement("style");
-    style.id = "voila-lt-visible-compact-panel-css";
-    style.textContent = [
-      ".voila-lt-side-panel {",
-      "  max-height: 112px !important;",
-      "  min-height: 88px !important;",
-      "  overflow: hidden !important;",
-      "  padding: 8px 12px !important;",
-      "  margin: 8px 0 10px !important;",
-      "  border-radius: 12px !important;",
-      "}",
-      ".voila-lt-side-panel:hover,",
-      ".voila-lt-side-panel:focus-within {",
-      "  max-height: 156px !important;",
-      "  min-height: 88px !important;",
-      "  overflow: auto !important;",
-      "}",
-      ".voila-lt-side-panel .lt-head {",
-      "  display: flex !important;",
-      "  align-items: center !important;",
-      "  justify-content: space-between !important;",
-      "  gap: 10px !important;",
-      "  margin: 0 0 4px !important;",
-      "  min-height: 20px !important;",
-      "  font-size: 12px !important;",
-      "  line-height: 1.1 !important;",
-      "}",
-      ".voila-lt-side-panel .lt-head strong,",
-      ".voila-lt-side-panel .lt-head span {",
-      "  font-size: 12px !important;",
-      "  line-height: 1.1 !important;",
-      "  white-space: nowrap !important;",
-      "}",
-      ".voila-lt-side-panel .lt-message {",
-      "  margin: 2px 0 3px !important;",
-      "  font-size: 12px !important;",
-      "  line-height: 1.2 !important;",
-      "  white-space: nowrap !important;",
-      "  overflow: hidden !important;",
-      "  text-overflow: ellipsis !important;",
-      "}",
-      ".voila-lt-side-panel .lt-context,",
-      ".voila-lt-side-panel .lt-text,",
-      ".voila-lt-side-panel .lt-detail {",
-      "  margin: 1px 0 4px !important;",
-      "  font-size: 11px !important;",
-      "  line-height: 1.15 !important;",
-      "  white-space: nowrap !important;",
-      "  overflow: hidden !important;",
-      "  text-overflow: ellipsis !important;",
-      "}",
-      ".voila-lt-side-panel .lt-replacements,",
-      ".voila-lt-side-panel .lt-actions,",
-      ".voila-lt-side-panel .lt-buttons {",
-      "  display: flex !important;",
-      "  flex-wrap: nowrap !important;",
-      "  gap: 6px !important;",
-      "  overflow-x: auto !important;",
-      "  overflow-y: hidden !important;",
-      "  padding: 2px 0 3px !important;",
-      "  margin: 3px 0 0 !important;",
-      "}",
-      ".voila-lt-side-panel button,",
-      ".voila-lt-side-panel .lt-replacement,",
-      ".voila-lt-side-panel .chip {",
-      "  font-size: 12px !important;",
-      "  line-height: 1.1 !important;",
-      "  padding: 5px 9px !important;",
-      "  min-height: 26px !important;",
-      "  border-radius: 999px !important;",
-      "  white-space: nowrap !important;",
-      "}",
-      ".voila-lt-side-panel::-webkit-scrollbar {",
-      "  width: 8px !important;",
-      "  height: 8px !important;",
-      "}"
-    ].join("\n");
-
-    document.head.appendChild(style);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install, { once: true });
-  } else {
-    install();
-  }
 })();
