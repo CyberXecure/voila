@@ -331,19 +331,68 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
             """
         )
 
+    import_action_html = ""
+    if sidecar.get("sidecar_exists") and items:
+        pdf_name = html.escape(pdf.name, quote=True)
+        import_action_html = f"""
+        <form method="post" action="/ocr-math-sidecar-import" onsubmit="return confirm('Import OCR Math sidecar candidates into the Crop Editor manifest? This is owner-local, explicit, creates a backup, and may add pending crops.');">
+          <input type="hidden" name="pdf_name" value="{pdf_name}">
+          <button class="primary" type="submit">Import OCR Math sidecar candidates</button>
+          <p class="fine">
+            Explicit owner-local action · no auto-import · creates backup · skips duplicate source_candidate_id.
+          </p>
+        </form>
+        """
+
     return f"""
     <section class="ocr-math-sidecar">
       <h2>OCR Math visual fallback candidates</h2>
       <p class="meta">
-        Read-only sidecar · status: {sidecar_status} · candidates: {len(items)} · no import into Crop Editor manifest
+        Sidecar cards are read-only · status: {sidecar_status} · candidates: {len(items)} · no auto-import
       </p>
       <p class="fine">Marker: <code>{marker}</code></p>
+      {import_action_html}
       <div class="grid ocr-math-grid">
         {''.join(cards)}
       </div>
     </section>
     """
 
+
+
+
+def build_ocr_math_import_status(
+    status: str | None,
+    imported: int | None,
+    duplicates: int | None,
+    manifest_written: str | None,
+    error: str | None,
+) -> str:
+    if not status:
+        return ""
+
+    if status == "PASS":
+        return f"""
+        <section class="ocr-math-sidecar">
+          <h2>OCR Math sidecar import result</h2>
+          <p class="meta">
+            Import PASS · imported: {html.escape(str(imported or 0))} ·
+            duplicates skipped: {html.escape(str(duplicates or 0))} ·
+            manifest written: {html.escape(str(manifest_written or "false"))}
+          </p>
+          <p class="fine">
+            VOILA_V0_7_47_OCR_MATH_SIDECAR_EXPLICIT_IMPORT_BUTTON_CROP_UI_OWNER_LOCAL
+          </p>
+        </section>
+        """
+
+    return f"""
+    <section class="ocr-math-sidecar">
+      <h2>OCR Math sidecar import result</h2>
+      <p class="meta">Import failed.</p>
+      <p><strong>Error:</strong> {html.escape(str(error or "Unknown error"))}</p>
+    </section>
+    """
 
 
 def page(title: str, body: str) -> HTMLResponse:
@@ -624,7 +673,14 @@ def page(title: str, body: str) -> HTMLResponse:
 
 
 @app.get("/", response_class=HTMLResponse)
-def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
+def editor(
+    pdf: str | None = Query(default=None),
+    ocr_math_import: str | None = Query(default=None),
+    imported: int | None = Query(default=None),
+    duplicates: int | None = Query(default=None),
+    manifest_written: str | None = Query(default=None),
+    error: str | None = Query(default=None),
+) -> HTMLResponse:
     try:
         pdf_path = validate_pdf_name(pdf)
         manifest = load_manifest(pdf_path)
@@ -714,6 +770,8 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
       <a class="btn" href="http://127.0.0.1:8787">Back to Voila!</a>
       <label class="btn"><input id="showRejectedToggle" type="checkbox" onchange="toggleRejected()"> Show rejected</label>
     </div>
+
+    {build_ocr_math_import_status(ocr_math_import, imported, duplicates, manifest_written, error)}
 
     {build_ocr_math_sidecar_section(pdf_path)}
 
@@ -933,6 +991,40 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
     """
 
     return page("Voila! Crop Editor", body)
+
+
+
+@app.post("/ocr-math-sidecar-import")
+def ocr_math_sidecar_import(pdf_name: str = Form(...)) -> RedirectResponse:
+    pdf_path = validate_pdf_name(pdf_name)
+
+    try:
+        try:
+            from .ocr_math_sidecar_crop_manifest_importer import import_sidecar_to_crop_manifest
+        except ImportError:
+            from ocr_math_sidecar_crop_manifest_importer import import_sidecar_to_crop_manifest
+
+        result = import_sidecar_to_crop_manifest(OUTPUT_DIR / pdf_path.stem, apply=True)
+        url = (
+            "/?pdf="
+            + quote(pdf_path.name)
+            + "&ocr_math_import=PASS"
+            + "&imported="
+            + quote(str(result.get("imported_count", 0)))
+            + "&duplicates="
+            + quote(str(result.get("skipped_duplicate_count", 0)))
+            + "&manifest_written="
+            + quote(str(result.get("manifest_written", False)).lower())
+        )
+    except Exception as exc:
+        url = (
+            "/?pdf="
+            + quote(pdf_path.name)
+            + "&ocr_math_import=FAIL&error="
+            + quote(str(exc))
+        )
+
+    return RedirectResponse(url=url, status_code=303)
 
 
 @app.post("/figure-status-json")
