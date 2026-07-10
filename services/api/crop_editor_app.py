@@ -216,6 +216,136 @@ def set_item_rejection(pdf: Path, index: int, rejected: bool) -> dict:
     return item
 
 
+
+def ocr_math_sidecar_path_for(pdf: Path) -> Path:
+    return OUTPUT_DIR / pdf.stem / "figures_hybrid" / "ocr_math_visual_fallback_manifest.json"
+
+
+def load_ocr_math_sidecar(pdf: Path) -> dict:
+    sidecar_path = ocr_math_sidecar_path_for(pdf)
+
+    if not sidecar_path.exists():
+        return {
+            "marker": "VOILA_V0_7_44_OCR_MATH_VISUAL_FALLBACK_SIDECAR_VISIBLE_IN_CROP_UI",
+            "candidate_count": 0,
+            "figure_crops": [],
+            "sidecar_exists": False,
+        }
+
+    try:
+        payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {
+            "marker": "VOILA_V0_7_44_OCR_MATH_VISUAL_FALLBACK_SIDECAR_VISIBLE_IN_CROP_UI",
+            "candidate_count": 0,
+            "figure_crops": [],
+            "sidecar_exists": True,
+            "sidecar_error": str(exc),
+        }
+
+    payload["sidecar_exists"] = True
+    return payload
+
+
+def ocr_math_sidecar_image_url(pdf: Path, item: dict) -> str:
+    relative_path = str(item.get("relative_path") or "").replace("\\", "/").strip()
+
+    if relative_path:
+        return output_url(pdf.stem, "figures_hybrid", relative_path)
+
+    capture_source = str(item.get("capture_source") or "").replace("\\", "/").strip()
+
+    if capture_source:
+        return output_url(pdf.stem, capture_source)
+
+    return ""
+
+
+def build_ocr_math_sidecar_section(pdf: Path) -> str:
+    sidecar = load_ocr_math_sidecar(pdf)
+    items = sidecar.get("figure_crops", [])
+
+    if not isinstance(items, list):
+        items = []
+
+    marker = html.escape(str(sidecar.get("marker") or ""))
+    sidecar_status = "present" if sidecar.get("sidecar_exists") else "missing"
+
+    if sidecar.get("sidecar_error"):
+        error = html.escape(str(sidecar.get("sidecar_error")))
+        return f"""
+        <section class="ocr-math-sidecar">
+          <h2>OCR Math visual fallback candidates</h2>
+          <p class="meta">Read-only sidecar · status: {sidecar_status}</p>
+          <p><strong>Cannot read sidecar:</strong> {error}</p>
+        </section>
+        """
+
+    cards = []
+
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+
+        number = html.escape(str(item.get("number") or index + 1))
+        caption = html.escape(str(item.get("caption") or "OCR Math visual fallback candidate"))
+        pdf_page = html.escape(str(item.get("pdf_page") or "unknown"))
+        risk = html.escape(str(item.get("risk_level") or "unknown"))
+        crop_status = html.escape(str(item.get("crop_status") or "needs_crop"))
+        import_status = html.escape(str(item.get("import_status") or "sidecar_only"))
+        source_candidate_id = html.escape(str(item.get("source_candidate_id") or ""))
+        line_number = html.escape(str(item.get("source_line_number") or ""))
+        source_file = html.escape(str(item.get("source_file") or ""))
+        relative_path = html.escape(str(item.get("relative_path") or ""))
+        image_url = ocr_math_sidecar_image_url(pdf, item)
+
+        if image_url:
+            image_html = f'<img src="{html.escape(image_url)}" alt="OCR Math fallback candidate {number}">'
+        else:
+            image_html = '<p class="meta">No preview image path available.</p>'
+
+        cards.append(
+            f"""
+            <article class="card ocr-math-card">
+              <h2>OCR Math candidate {number}</h2>
+              <p class="caption">{caption}</p>
+              <p class="meta">PDF page {pdf_page} · risk {risk} · {crop_status}</p>
+              <p class="meta">Read-only · {import_status}</p>
+              {image_html}
+              <div class="fine">
+                source_candidate_id: <code>{source_candidate_id}</code><br>
+                source: <code>{source_file}</code> line <code>{line_number}</code><br>
+                relative_path: <code>{relative_path}</code>
+              </div>
+            </article>
+            """
+        )
+
+    if not cards:
+        cards.append(
+            """
+            <article class="card ocr-math-card">
+              <h2>No OCR Math fallback candidates</h2>
+              <p>No sidecar candidates are available for this PDF yet.</p>
+            </article>
+            """
+        )
+
+    return f"""
+    <section class="ocr-math-sidecar">
+      <h2>OCR Math visual fallback candidates</h2>
+      <p class="meta">
+        Read-only sidecar · status: {sidecar_status} · candidates: {len(items)} · no import into Crop Editor manifest
+      </p>
+      <p class="fine">Marker: <code>{marker}</code></p>
+      <div class="grid ocr-math-grid">
+        {''.join(cards)}
+      </div>
+    </section>
+    """
+
+
+
 def page(title: str, body: str) -> HTMLResponse:
     doc = f"""<!doctype html>
 <html lang="en">
@@ -585,6 +715,9 @@ def editor(pdf: str | None = Query(default=None)) -> HTMLResponse:
       <label class="btn"><input id="showRejectedToggle" type="checkbox" onchange="toggleRejected()"> Show rejected</label>
     </div>
 
+    {build_ocr_math_sidecar_section(pdf_path)}
+
+    <h2>Hybrid figure crops</h2>
     <div class="grid">
       {''.join(cards)}
     </div>
