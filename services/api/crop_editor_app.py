@@ -314,6 +314,19 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
         )
     )
 
+    practical_note_title = html.escape(
+        _crop_editor_text(
+            "Practical owner-local checklist",
+            "Checklist practic owner-local",
+        )
+    )
+    practical_note_body = html.escape(
+        _crop_editor_text(
+            "Inspect the OCR Math candidate before importing. Use this button only when the crop should become a real Hybrid figure crop. Confirm the browser prompt, then verify the imported crop in Hybrid figure crops.",
+            "Inspecteaz\u0103 candidatul OCR Math \u00eenainte de import. Folose\u0219te acest buton doar c\u00e2nd crop-ul trebuie s\u0103 devin\u0103 o figur\u0103 Hybrid real\u0103. Confirm\u0103 promptul din browser, apoi verific\u0103 figura importat\u0103 \u00een Hybrid figure crops.",
+        )
+    )
+
     marker = html.escape(str(sidecar.get("marker") or ""))
     sidecar_status = "present" if sidecar.get("sidecar_exists") else "missing"
 
@@ -387,6 +400,9 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
           <p class="fine">
             {import_note}
           </p>
+          <div class="fine ocr-math-practical-readiness-note" data-marker="VOILA_V0_7_53_CROP_EDITOR_OCR_MATH_IMPORT_PRACTICAL_READINESS_NOTE_I18N">
+            <strong>{practical_note_title}:</strong> {practical_note_body}
+          </div>
         </form>
         """
 
