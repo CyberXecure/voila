@@ -21,6 +21,26 @@ app = FastAPI(title="Voila! Crop Editor")
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 
+# VOILA_V0_7_51_CROP_EDITOR_UI_LANGUAGE_BRIDGE_START
+def _crop_editor_ui_language_code() -> str:
+    try:
+        try:
+            from . import i18n
+        except ImportError:
+            import i18n  # type: ignore
+
+        value = str(i18n.get_ui_language(PROJECT_ROOT).get("ui_language") or "en").strip().lower()
+    except Exception:
+        value = "en"
+
+    return "ro" if value == "ro" else "en"
+
+
+def _crop_editor_text(en: str, ro: str) -> str:
+    return ro if _crop_editor_ui_language_code() == "ro" else en
+# VOILA_V0_7_51_CROP_EDITOR_UI_LANGUAGE_BRIDGE_END
+
+
 def latest_pdf() -> Path | None:
     pdfs = sorted(INPUT_DIR.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
     return pdfs[0] if pdfs else None
@@ -268,6 +288,32 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
     if not isinstance(items, list):
         items = []
 
+    sidecar_heading = html.escape(
+        _crop_editor_text(
+            "OCR Math visual fallback candidates",
+            "Candida\u021bi vizuali OCR Math pentru fallback",
+        )
+    )
+    import_confirm = html.escape(
+        _crop_editor_text(
+            "Import OCR Math sidecar candidates into the Crop Editor manifest? This is owner-local, explicit, creates a backup, and may add pending crops.",
+            "Importi candida\u021bii OCR Math din sidecar \u00een manifestul Crop Editor? Ac\u021biunea este owner-local, explicit\u0103, creeaz\u0103 backup \u0219i poate ad\u0103uga crop-uri \u00een a\u0219teptare.",
+        ),
+        quote=True,
+    )
+    import_button = html.escape(
+        _crop_editor_text(
+            "Import OCR Math sidecar candidates",
+            "Import\u0103 candida\u021bii OCR Math din sidecar",
+        )
+    )
+    import_note = html.escape(
+        _crop_editor_text(
+            "Explicit owner-local action \u00b7 no auto-import \u00b7 creates backup \u00b7 skips duplicate source_candidate_id.",
+            "Ac\u021biune explicit\u0103 owner-local \u00b7 f\u0103r\u0103 auto-import \u00b7 creeaz\u0103 backup \u00b7 sare peste source_candidate_id duplicate.",
+        )
+    )
+
     marker = html.escape(str(sidecar.get("marker") or ""))
     sidecar_status = "present" if sidecar.get("sidecar_exists") else "missing"
 
@@ -275,7 +321,7 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
         error = html.escape(str(sidecar.get("sidecar_error")))
         return f"""
         <section class="ocr-math-sidecar">
-          <h2>OCR Math visual fallback candidates</h2>
+          <h2>{sidecar_heading}</h2>
           <p class="meta">Read-only sidecar · status: {sidecar_status}</p>
           <p><strong>Cannot read sidecar:</strong> {error}</p>
         </section>
@@ -335,18 +381,18 @@ def build_ocr_math_sidecar_section(pdf: Path) -> str:
     if sidecar.get("sidecar_exists") and items:
         pdf_name = html.escape(pdf.name, quote=True)
         import_action_html = f"""
-        <form method="post" action="/ocr-math-sidecar-import" onsubmit="return confirm('Import OCR Math sidecar candidates into the Crop Editor manifest? This is owner-local, explicit, creates a backup, and may add pending crops.');">
+        <form method="post" action="/ocr-math-sidecar-import" onsubmit="return confirm('{import_confirm}');">
           <input type="hidden" name="pdf_name" value="{pdf_name}">
-          <button class="primary" type="submit">Import OCR Math sidecar candidates</button>
+          <button class="primary" type="submit">{import_button}</button>
           <p class="fine">
-            Explicit owner-local action · no auto-import · creates backup · skips duplicate source_candidate_id.
+            {import_note}
           </p>
         </form>
         """
 
     return f"""
     <section class="ocr-math-sidecar">
-      <h2>OCR Math visual fallback candidates</h2>
+      <h2>{sidecar_heading}</h2>
       <p class="meta">
         Sidecar cards are read-only · status: {sidecar_status} · candidates: {len(items)} · no auto-import
       </p>
@@ -397,7 +443,7 @@ def build_ocr_math_import_status(
 
 def page(title: str, body: str) -> HTMLResponse:
     doc = f"""<!doctype html>
-<html lang="en">
+<html lang="{html.escape(_crop_editor_ui_language_code(), quote=True)}">
 <head>
   <meta charset="utf-8">
   <title>{html.escape(title)}</title>
