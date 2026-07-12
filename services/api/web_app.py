@@ -10152,8 +10152,9 @@ def _voila_v0727_inject_bottom_nav_css_once(value: str) -> str:
 
     css = "\n".join([
         '<style id="voila-v0727-bottom-nav-polish">',
-        '.voila-tester-flow-bottom-nav-v0724,',
-        '#voila-tester-flow-bottom-nav-v0724 {',
+        # v0.7.57: target the injected nav element, not the script tag marker.
+        '.voila-tester-flow-bottom-nav,',
+        '#voilaTesterFlowBottomNav {',
         '  position: static !important;',
         '  left: auto !important;',
         '  right: auto !important;',
@@ -10170,8 +10171,8 @@ def _voila_v0727_inject_bottom_nav_css_once(value: str) -> str:
         '  background: transparent !important;',
         '  box-shadow: none !important;',
         '}',
-        '.voila-tester-flow-bottom-nav-v0724 a,',
-        '#voila-tester-flow-bottom-nav-v0724 a {',
+        '.voila-tester-flow-bottom-nav a,',
+        '#voilaTesterFlowBottomNav a {',
         '  white-space: normal !important;',
         '  line-height: 1.25 !important;',
         '}',
