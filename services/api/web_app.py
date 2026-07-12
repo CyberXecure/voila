@@ -167,18 +167,9 @@ def _voila_ocr_math_report_paths(course_id: str) -> tuple[Path | None, Path | No
             if md.is_file():
                 return md, directory / "ocr_math_report.json"
 
-        try:
-            iterator = root.rglob("ocr_math_report.md")
-            for md in iterator:
-                if _voila_ocr_math_report_is_excluded(md):
-                    continue
-                parent = md.parent
-                parts = {part.lower() for part in parent.parts}
-                parent_posix = parent.as_posix().lower()
-                if lowered in parts or f"/{lowered}/" in f"/{parent_posix}/":
-                    matches.append(md)
-        except Exception:
-            continue
+        # v0.7.56: bounded owner-local lookup only.
+        # Do not fall back to recursive scans across repo parents or drive roots.
+        # Missing OCR Math reports must return quickly as unavailable.
 
     if not matches:
         return None, None
@@ -1392,7 +1383,7 @@ def page(title: str, body: str) -> HTMLResponse:
       }}
     }}
 
-  
+
     /* Voila fixed navigation */
     body {{
       padding-bottom: 108px;
@@ -1488,7 +1479,7 @@ def page(title: str, body: str) -> HTMLResponse:
     }}
     /* End Voila fixed navigation */
 
-  
+
     .inline-form {{
       display: inline;
       margin: 0;
@@ -1501,7 +1492,7 @@ def page(title: str, body: str) -> HTMLResponse:
       border-color: rgba(151, 75, 58, 0.92);
     }}
 
-  
+
     .btn.danger,
     button.danger {{
       background: rgba(151, 75, 58, 0.92);
@@ -1708,7 +1699,7 @@ def page(title: str, body: str) -> HTMLResponse:
     </script>
 
 
-    
+
 
 
     <script id="hide-fixed-nav-on-home">
@@ -4152,7 +4143,7 @@ def review_ocr_text(pdf: str = "", page: int = 1):
         justify-content: flex-start;
       }}
     }}
-  
+
 
     /* OCR suggestions panel: static, non-overlapping, below the editor. */
     .ocr-suggestions {{
