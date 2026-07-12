@@ -24,16 +24,50 @@ def compact(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
+def normalize_legacy_ro(text: str) -> str:
+    return str(text or "").translate(
+        str.maketrans(
+            {
+                "ş": "ș",
+                "Ş": "Ș",
+                "ţ": "ț",
+                "Ţ": "Ț",
+            }
+        )
+    )
+
+
 def normalize_term(term: str) -> str:
-    term = compact(term).strip(" ,.;:-")
-    lower = term.lower()
+    term = normalize_legacy_ro(compact(term)).strip(" ,.;:-")
+    term = re.sub(r"^(?:definiție|definitie|observații|observatii)\s*:\s*", "", term, flags=re.IGNORECASE)
+    term = term.replace("vectoruluiv", "vectorului v")
+    term = term.replace("vectorulu i", "vectorului")
+    lower = compact(term.lower())
 
     replacements = {
         "modulul unui vector": "modul",
+        "modulul vectorului": "modul",
         "modulul": "modul",
+        "modul": "modul",
         "segmentul orientat": "segment orientat",
         "un segment orientat": "segment orientat",
+        "vectorii egali": "vectori egali",
+        "vectorii opuși": "vectori opuși",
+        "vectorii coliniari": "vectori coliniari",
+        "vectorii necoliniari": "vectori necoliniari",
+        "direcție": "direcție",
+        "directie": "direcție",
+        "sensul": "sens",
+        "baza ortonormată": "bază ortonormată",
+        "bază ortonormata": "bază ortonormată",
     }
+
+    if lower.startswith("modul("):
+        return "modul"
+    if lower.startswith("coordonatele vectorului"):
+        return "coordonatele vectorului"
+    if lower.startswith("versorii axelor de coordonate"):
+        return "versorii axelor de coordonate"
 
     return replacements.get(lower, lower)
 
@@ -49,12 +83,12 @@ def all_text(data: dict[str, Any]) -> str:
 
 def page_refs(pages: list[dict[str, Any]], evidence: str) -> list[int]:
     refs: list[int] = []
-    needle = compact(evidence).lower()[:80]
+    needle = normalize_legacy_ro(compact(evidence)).lower()[:80]
     if not needle:
         return refs
 
     for page in pages:
-        text = compact(page.get("text") or "").lower()
+        text = normalize_legacy_ro(compact(page.get("text") or "")).lower()
         if needle in text and isinstance(page.get("page"), int):
             refs.append(page["page"])
 
@@ -62,9 +96,10 @@ def page_refs(pages: list[dict[str, Any]], evidence: str) -> list[int]:
 
 
 def detect_language(text: str) -> dict[str, Any]:
-    lower = compact(text).lower()
+    normalized = normalize_legacy_ro(text)
+    lower = compact(normalized).lower()
     ro_hits = sum(1 for word in RO_SIGNALS if word in lower)
-    diacritics = len(re.findall(r"[ăâîșțĂÂÎȘȚ]", text))
+    diacritics = len(re.findall(r"[ăâîșțĂÂÎȘȚ]", normalized))
 
     if ro_hits or diacritics:
         return {
@@ -81,7 +116,7 @@ def detect_language(text: str) -> dict[str, Any]:
 
 
 def detect_domain(text: str) -> dict[str, Any]:
-    lower = compact(text).lower()
+    lower = compact(normalize_legacy_ro(text)).lower()
     hits = sorted(word for word in MATH_SIGNALS if word in lower)
 
     if len(hits) >= 2:
@@ -99,8 +134,21 @@ def detect_domain(text: str) -> dict[str, Any]:
 
 
 def split_sentences(text: str) -> list[str]:
-    parts = re.split(r"(?<=[.!?])\s+", compact(text))
+    normalized = normalize_legacy_ro(text)
+    parts = re.split(r"(?<=[.!?])\s+", compact(normalized))
     return [part.strip() for part in parts if len(part.strip()) >= 12]
+
+
+def split_candidate_units(text: str) -> list[str]:
+    units: list[str] = []
+
+    for sentence in split_sentences(text):
+        for part in re.split(r"\s*;\s*", sentence):
+            cleaned = compact(part)
+            if len(cleaned) >= 12:
+                units.append(cleaned)
+
+    return units
 
 
 def add_concept(
@@ -113,7 +161,8 @@ def add_concept(
     method: str,
 ) -> None:
     clean_term = normalize_term(term)
-    clean_definition = compact(definition).strip(" ,.;:-")
+    clean_definition = compact(normalize_legacy_ro(definition)).strip(" ,.;:-")
+    clean_definition = clean_definition.replace("vectoruluiv", "vectorului v").replace("vectorulu i", "vectorului")
 
     if not clean_term or len(clean_term) < 2:
         return
@@ -128,41 +177,176 @@ def add_concept(
             "definition": clean_definition,
             "kind": "concept",
             "source_pdf_pages": page_refs(pages, evidence),
-            "evidence": compact(evidence)[:500],
+            "evidence": compact(normalize_legacy_ro(evidence))[:500],
             "extraction_method": method,
         }
+
+
+def extract_definition_markers(unit: str, pages: list[dict[str, Any]], concepts: dict[str, dict[str, Any]]) -> None:
+    text = normalize_legacy_ro(unit)
+
+    for match in re.finditer(
+        r"(?:^|:\s*)se\s+numește\s+(?P<term>[^,.;:]{2,90})\s*,\s*(?P<definition>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        add_concept(
+            concepts,
+            term=match.group("term"),
+            definition=match.group("definition"),
+            evidence=unit,
+            pages=pages,
+            method="romanian_definition_se_numeste",
+        )
+
+    for match in re.finditer(
+        r"(?:^|:\s*)se\s+numesc\s+(?P<term>[^,.;:]{2,90})\s*,\s*(?P<definition>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        add_concept(
+            concepts,
+            term=match.group("term"),
+            definition=match.group("definition"),
+            evidence=unit,
+            pages=pages,
+            method="romanian_definition_se_numesc",
+        )
+
+    match = re.search(
+        r"doi\s+vectori\s+se\s+numesc\s+(?P<name>[^,.;:]+?)\s+dacă\s+(?P<definition>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        add_concept(
+            concepts,
+            term=f"vectori {match.group('name')}",
+            definition=f"Doi vectori se numesc {match.group('name')} dacă {match.group('definition')}",
+            evidence=unit,
+            pages=pages,
+            method="romanian_vector_relation_daca",
+        )
+
+    match = re.search(
+        r"^(?P<term>Segmentul orientat|Modulul unui vector|Modulul)\s+este\s+(?P<definition>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        add_concept(
+            concepts,
+            term=match.group("term"),
+            definition=match.group("definition"),
+            evidence=unit,
+            pages=pages,
+            method="romanian_definition_este",
+        )
+
+    if re.search(r"\bse\s+numesc\s+necoliniari\b", text, flags=re.IGNORECASE):
+        add_concept(
+            concepts,
+            term="vectori necoliniari",
+            definition="vectori care nu sunt coliniari",
+            evidence=unit,
+            pages=pages,
+            method="romanian_definition_necoliniari",
+        )
+
+
+def extract_characteristics(unit: str, pages: list[dict[str, Any]], concepts: dict[str, dict[str, Any]]) -> None:
+    text = normalize_legacy_ro(unit)
+
+    match = re.search(
+        r"(?P<term>modul\s*\([^)]*\)|direcție|sens)\s*,\s*(?P<prefix>dat[ăa]?\s+de|indic(?:at|ată)\s+prin)\s+(?P<definition>.+)$",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        add_concept(
+            concepts,
+            term=match.group("term"),
+            definition=match.group("definition"),
+            evidence=unit,
+            pages=pages,
+            method="romanian_vector_characteristic",
+        )
+
+
+def extract_named_notation(unit: str, pages: list[dict[str, Any]], concepts: dict[str, dict[str, Any]]) -> None:
+    text = normalize_legacy_ro(unit)
+
+    if re.search(r"\bvectorii\s+.+\bformează\s+o\s+bază\b", text, flags=re.IGNORECASE):
+        add_concept(
+            concepts,
+            term="bază",
+            definition="vectori folosiți pentru exprimarea unui vector prin coordonate în acea bază",
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_structure_baza",
+        )
+
+    match = re.search(r"se\s+numesc\s+(coordonatele\s+vectorului\s*v[^.;]*)", text, flags=re.IGNORECASE)
+    if match:
+        add_concept(
+            concepts,
+            term="coordonatele vectorului",
+            definition=match.group(1),
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_notation_coordinates",
+        )
+
+    match = re.search(r"se\s+numesc\s+(versorii\s+axelor\s+de\s+coordonate)", text, flags=re.IGNORECASE)
+    if match:
+        add_concept(
+            concepts,
+            term="versorii axelor de coordonate",
+            definition="vectorii asociați axelor de coordonate",
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_notation_versors",
+        )
+
+    match = re.search(r"se\s+numește\s+(bază\s+ortonormată)", text, flags=re.IGNORECASE)
+    if match:
+        add_concept(
+            concepts,
+            term=match.group(1),
+            definition="baza formată de versorii axelor de coordonate",
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_notation_orthonormal_basis",
+        )
+
+    if re.search(r"produsul\s+scalar\s+a\s+doi\s+vectori", text, flags=re.IGNORECASE):
+        add_concept(
+            concepts,
+            term="produsul scalar",
+            definition="operație între doi vectori nenuli, exprimată în document prin formule și unghiul dintre vectori",
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_formula_scalar_product",
+        )
+
+    if re.search(r"funcții\s+trigonometrice|funcţii\s+trigonometrice", text, flags=re.IGNORECASE):
+        add_concept(
+            concepts,
+            term="funcții trigonometrice",
+            definition="funcții precum sinus, cosinus, arcsinus și arccosinus, cu domenii și valori indicate în document",
+            evidence=unit,
+            pages=pages,
+            method="romanian_named_section_trigonometric_functions",
+        )
 
 
 def extract_concepts(text: str, pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     concepts: dict[str, dict[str, Any]] = {}
 
-    for sentence in split_sentences(text):
-        lower = sentence.lower()
-
-        if "se numește" in lower or "se numeste" in lower:
-            marker = "se numește" if "se numește" in lower else "se numeste"
-            after = sentence[lower.index(marker) + len(marker):].strip(" ,.;:-")
-            if "," in after:
-                term, definition = after.split(",", 1)
-                add_concept(
-                    concepts,
-                    term=term,
-                    definition=definition,
-                    evidence=sentence,
-                    pages=pages,
-                    method="romanian_definition_se_numeste",
-                )
-
-        match = re.search(r"\b(Segmentul orientat|Modulul unui vector|Modulul)\s+este\s+(.+)", sentence, flags=re.IGNORECASE)
-        if match:
-            add_concept(
-                concepts,
-                term=match.group(1),
-                definition=match.group(2),
-                evidence=sentence,
-                pages=pages,
-                method="romanian_definition_este",
-            )
+    for unit in split_candidate_units(text):
+        extract_definition_markers(unit, pages, concepts)
+        extract_characteristics(unit, pages, concepts)
+        extract_named_notation(unit, pages, concepts)
 
     return list(concepts.values())
 
