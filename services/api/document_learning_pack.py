@@ -57,6 +57,8 @@ def verified_decisions(decisions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         decision = item.get("decision")
         if decision in {None, "", "pending", "ignored", "marked_not_relevant"}:
             continue
+        if item.get("fixture_only_not_real_user_decision") is True:
+            continue
         verified.append(item)
     return verified
 
@@ -64,14 +66,17 @@ def verified_decisions(decisions: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def pending_review_terms(items: list[dict[str, Any]], decisions: list[dict[str, Any]]) -> set[str]:
     terms: set[str] = set()
 
-    for item in items:
-        for term in as_list(item.get("linked_concept_terms")):
-            cleaned = compact(term).lower()
-            if cleaned:
-                terms.add(cleaned)
+    if decisions:
+        for item in decisions:
+            if item.get("decision") == "pending" and item.get("requires_user_decision", True):
+                for term in as_list(item.get("linked_concept_terms")):
+                    cleaned = compact(term).lower()
+                    if cleaned:
+                        terms.add(cleaned)
+        return terms
 
-    for item in decisions:
-        if item.get("decision") in {None, "", "pending"}:
+    for item in items:
+        if item.get("requires_user_decision", True):
             for term in as_list(item.get("linked_concept_terms")):
                 cleaned = compact(term).lower()
                 if cleaned:
@@ -234,7 +239,15 @@ def build_document_learning_pack(
     review_summary = pending_review_summary(queue_items, decisions)
     review_terms = pending_review_terms(queue_items, decisions)
     review_summary["review_linked_concept_terms"] = sorted(review_terms)
+    review_summary["decisions_fixture_only"] = bool(
+        ocr_review_decisions
+        and isinstance(ocr_review_decisions.get("fixture"), dict)
+        and ocr_review_decisions["fixture"].get("fixture_only") is True
+    )
+    review_summary["real_user_decisions_performed"] = not review_summary["decisions_fixture_only"]
     gate = quality_gate(concepts, review_summary)
+    gate["decisions_fixture_only"] = review_summary["decisions_fixture_only"]
+    gate["real_user_decisions_performed"] = review_summary["real_user_decisions_performed"]
 
     source_file = document_concepts.get("source_file")
     source_page_count = document_concepts.get("source_page_count")
@@ -269,6 +282,8 @@ def build_document_learning_pack(
             "user_corrections_become_verified_evidence": True,
             "pending_decisions_are_not_verified_evidence": True,
             "do_not_generate_from_unresolved_blocked_items": True,
+            "synthetic_fixture_not_real_user_evidence": review_summary["decisions_fixture_only"],
+            "real_user_review_required_for_actual_delivery": review_summary["decisions_fixture_only"],
         },
         "policy": {
             "no_ui_implementation": True,
