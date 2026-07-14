@@ -10261,3 +10261,303 @@ async def _voila_v0727_html_response_polish_middleware(request, call_next):
         status_code=response.status_code,
         headers=headers,
     )
+
+
+# VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_START
+# Owner-local guided OCR Review read-only shell.
+# Policy: read-only display only; no decision write, no apply patch, no learning pack rebuild,
+# no /generate integration, no build, no ZIP, no delivery, no distribution.
+
+def _voila_ocr_review_safe_course_id(course_id: str) -> str:
+    safe_id = unquote(str(course_id or "")).strip().strip("/")
+    if not safe_id:
+        raise ValueError("Missing OCR Review course id")
+    if ".." in safe_id or "\\" in safe_id or "/" in safe_id or ":" in safe_id:
+        raise ValueError("Unsafe OCR Review course id")
+    return safe_id
+
+
+def _voila_ocr_review_json_load(path: Path) -> tuple[dict, str]:
+    if not path.is_file():
+        return {}, f"missing {path.name}"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}, f"invalid {path.name}"
+    if not isinstance(data, dict):
+        return {}, f"invalid {path.name}: expected JSON object"
+    return data, ""
+
+
+def _voila_ocr_review_list(value) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _voila_ocr_review_bool_label(value) -> str:
+    if value is True:
+        return "True"
+    if value is False:
+        return "False"
+    return "n/a"
+
+
+def _voila_ocr_review_text(value, max_len: int = 260) -> str:
+    clean = " ".join(str(value or "").split()).strip()
+    if len(clean) > max_len:
+        return clean[: max_len - 1] + "…"
+    return clean
+
+
+def _voila_ocr_review_decision_counts(decisions_data: dict) -> dict:
+    decisions = _voila_ocr_review_list(decisions_data.get("decisions"))
+    decision_count = int(decisions_data.get("decision_count") or len(decisions))
+    pending_count = int(
+        decisions_data.get("pending_decision_count")
+        if decisions_data.get("pending_decision_count") is not None
+        else sum(1 for item in decisions if item.get("decision") == "pending" and item.get("requires_user_decision", True))
+    )
+    resolved_count = int(
+        decisions_data.get("resolved_decision_count")
+        if decisions_data.get("resolved_decision_count") is not None
+        else max(0, decision_count - pending_count)
+    )
+    return {
+        "decision_count": decision_count,
+        "pending_decision_count": pending_count,
+        "resolved_decision_count": resolved_count,
+    }
+
+
+def _voila_ocr_review_gate(queue_data: dict, decisions_data: dict) -> dict:
+    review_items = _voila_ocr_review_list(queue_data.get("review_items"))
+    counts = _voila_ocr_review_decision_counts(decisions_data)
+    quality_gate = decisions_data.get("quality_gate") if isinstance(decisions_data.get("quality_gate"), dict) else {}
+
+    generation_should_wait = quality_gate.get("generation_should_wait_for_review")
+    if generation_should_wait is None:
+        generation_should_wait = counts["pending_decision_count"] > 0 or (len(review_items) > 0 and counts["decision_count"] == 0)
+
+    all_resolved = quality_gate.get("all_required_decisions_resolved")
+    if all_resolved is None:
+        all_resolved = counts["pending_decision_count"] == 0 and counts["decision_count"] == len(review_items)
+
+    return {
+        "review_item_count": len(review_items),
+        "decision_count": counts["decision_count"],
+        "pending_decision_count": counts["pending_decision_count"],
+        "resolved_decision_count": counts["resolved_decision_count"],
+        "generation_should_wait_for_review": bool(generation_should_wait),
+        "all_required_decisions_resolved": bool(all_resolved),
+    }
+
+
+def _voila_ocr_review_card_html(item: dict, decision_by_id: dict) -> str:
+    review_item_id = str(item.get("review_item_id") or "")
+    decision = decision_by_id.get(review_item_id) or {}
+
+    linked_terms = ", ".join(str(term) for term in _voila_ocr_review_list(item.get("linked_concept_terms"))) or "n/a"
+
+    return f"""
+    <article class="card" data-voila-ocr-review-item="{html.escape(review_item_id, quote=True)}">
+      <h2>{html.escape(review_item_id or "Review item")}</h2>
+      <div class="meta">
+        Pagină PDF: <strong>{html.escape(str(item.get("source_pdf_page") or "n/a"))}</strong> ·
+        Tip problemă: <strong>{html.escape(str(item.get("issue_type") or "n/a"))}</strong> ·
+        Rol sugerat: <strong>{html.escape(str(item.get("suggested_learning_role") or "n/a"))}</strong>
+      </div>
+      <p><strong>Concepte legate:</strong> {html.escape(linked_terms)}</p>
+      <p><strong>Text OCR suspect:</strong><br>{html.escape(_voila_ocr_review_text(item.get("source_text")))}</p>
+      <p><strong>Sugestie:</strong><br>{html.escape(_voila_ocr_review_text(item.get("suggested_text")))}</p>
+      <p><strong>Decizie curentă:</strong> <code>{html.escape(str(decision.get("decision") or "pending"))}</code></p>
+      <p class="muted">Read-only v0.7.71: nu există butoane de salvare, nu se aplică patch și nu se modifică niciun artifact.</p>
+    </article>
+    """
+
+
+@app.get("/owner/ocr-review/{course_id}", response_class=HTMLResponse, include_in_schema=False)
+def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
+    try:
+        safe_id = _voila_ocr_review_safe_course_id(course_id)
+    except ValueError:
+        return PlainTextResponse(
+            "OCR Review unavailable: invalid local course id.",
+            status_code=400,
+        )
+
+    output_dir = OUTPUT_DIR / safe_id
+    queue_path = output_dir / "ocr_review_queue.json"
+    decisions_path = output_dir / "ocr_review_decisions.json"
+
+    queue_data, queue_error = _voila_ocr_review_json_load(queue_path)
+    decisions_data, decisions_error = _voila_ocr_review_json_load(decisions_path)
+
+    review_items = _voila_ocr_review_list(queue_data.get("review_items"))
+    decisions = _voila_ocr_review_list(decisions_data.get("decisions"))
+    decision_by_id = {
+        str(item.get("review_item_id") or ""): item
+        for item in decisions
+        if isinstance(item, dict)
+    }
+
+    gate = _voila_ocr_review_gate(queue_data, decisions_data)
+
+    missing = []
+    if queue_error:
+        missing.append(queue_error)
+    if decisions_error:
+        missing.append(decisions_error)
+
+    if gate["generation_should_wait_for_review"]:
+        gate_label = "Blocat — OCR Review trebuie rezolvat înainte de generare."
+        gate_class = "notice"
+    else:
+        gate_label = "OK — nu există decizii pending în artifactele citite."
+        gate_class = "notice success"
+
+    missing_html = ""
+    if missing:
+        missing_html = """
+        <div class="notice warning">
+          <strong>Diagnostic local:</strong><br>
+          """ + "<br>".join(html.escape(item) for item in missing) + """
+          <br>Pagina este read-only și nu creează artifacte lipsă.
+        </div>
+        """
+
+    cards_html = "".join(_voila_ocr_review_card_html(item, decision_by_id) for item in review_items[:50])
+    if not cards_html:
+        cards_html = """
+        <article class="card">
+          <h2>Niciun item OCR Review de afișat</h2>
+          <p class="muted">Lipsește queue-ul sau nu există itemi care cer review.</p>
+        </article>
+        """
+
+    q_pdf = html.escape(quote(safe_id + ".pdf", safe=""), quote=True)
+    body = f"""
+    <style>
+      .ocr-review-summary {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+      }}
+      .ocr-review-metric {{
+        border: 1px solid rgba(80, 64, 40, 0.18);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(255,255,255,0.28);
+      }}
+      .ocr-review-metric strong {{
+        display: block;
+        font-size: 24px;
+        margin-top: 4px;
+      }}
+      .notice.warning {{
+        border-color: #b7791f;
+      }}
+      .notice.success {{
+        border-color: #2f855a;
+      }}
+    </style>
+
+    <section data-testid="owner-ocr-review-read-only-shell">
+      <h1>OCR Review · read-only</h1>
+      <div class="meta">Course ID: <strong>{html.escape(safe_id)}</strong></div>
+
+      <div class="{gate_class}">
+        <strong>Status generare:</strong> {html.escape(gate_label)}<br>
+        generation_should_wait_for_review=<code>{html.escape(_voila_ocr_review_bool_label(gate["generation_should_wait_for_review"]))}</code> ·
+        all_required_decisions_resolved=<code>{html.escape(_voila_ocr_review_bool_label(gate["all_required_decisions_resolved"]))}</code>
+      </div>
+
+      {missing_html}
+
+      <div class="ocr-review-summary">
+        <div class="ocr-review-metric">Review items<strong>{gate["review_item_count"]}</strong></div>
+        <div class="ocr-review-metric">Decizii total<strong>{gate["decision_count"]}</strong></div>
+        <div class="ocr-review-metric">Pending<strong>{gate["pending_decision_count"]}</strong></div>
+        <div class="ocr-review-metric">Rezolvate<strong>{gate["resolved_decision_count"]}</strong></div>
+      </div>
+
+      <div class="notice">
+        Această pagină este doar pentru citire în v0.7.71. Nu scrie decizii, nu aplică patch, nu reconstruiește learning pack și nu cheamă /generate.
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="/course-tools?pdf={q_pdf}">Course Tools</a>
+        <a class="btn" href="/">Library</a>
+      </div>
+
+      <h2>Itemi OCR Review</h2>
+      <div class="grid">
+        {cards_html}
+      </div>
+    </section>
+    """
+
+    doc = f"""<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voila! OCR Review read-only</title>
+  <style>
+    body {{
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #e8dfd0;
+      color: #1f2933;
+    }}
+    .wrap {{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px;
+    }}
+    .card, .notice {{
+      background: #f5ecd9;
+      border: 1px solid rgba(80, 64, 40, 0.16);
+      border-radius: 18px;
+      padding: 18px;
+      margin: 14px 0;
+      box-shadow: 0 10px 28px rgba(80, 64, 40, 0.08);
+    }}
+    .grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }}
+    .actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0;
+    }}
+    .btn {{
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #1f2933;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+    }}
+    .meta, .muted {{
+      color: #6b5b45;
+    }}
+    code {{
+      background: rgba(31, 41, 51, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    {body}
+  </main>
+</body>
+</html>"""
+    return HTMLResponse(content=doc)
+
+# VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END
