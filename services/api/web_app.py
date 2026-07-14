@@ -10454,12 +10454,45 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
     if decisions_error:
         missing.append(decisions_error)
 
+    owner_review_confirmed = bool(decisions_data.get("owner_review_confirmed") is True)
+    pending_count_for_confirm = int(gate.get("pending_decision_count") or 0)
+    confirm_action = "/owner/ocr-review/" + quote(safe_id, safe="") + "/confirm"
+
     if gate["generation_should_wait_for_review"]:
         gate_label = "Blocat — OCR Review trebuie rezolvat înainte de generare."
         gate_class = "notice"
     else:
         gate_label = "OK — nu există decizii pending în artifactele citite."
         gate_class = "notice success"
+
+    if owner_review_confirmed:
+        confirm_html = """
+        <div class="notice success">
+          <strong>OCR Review confirmat final.</strong><br>
+          v0.7.73 păstrează generarea blocată până la un milestone separat de integrare.
+        </div>
+        """
+    elif pending_count_for_confirm == 0 and int(gate.get("decision_count") or 0) > 0:
+        confirm_html = f"""
+        <form method="post" action="{html.escape(confirm_action, quote=True)}" class="ocr-review-final-confirm-form">
+          <div class="notice success">
+            <strong>Toate deciziile OCR Review sunt rezolvate.</strong><br>
+            Apasă doar dacă ai verificat manual toate cardurile.
+            <div class="actions">
+              <button class="primary" type="submit">Confirmă OCR Review</button>
+            </div>
+            <p class="muted">v0.7.73: confirmarea scrie doar în <code>ocr_review_decisions.json</code>. Nu aplică patch, nu reconstruiește learning pack și nu cheamă /generate.</p>
+          </div>
+        </form>
+        """
+    else:
+        confirm_html = f"""
+        <div class="notice">
+          <strong>Confirmarea finală este blocată.</strong><br>
+          Mai există <strong>{pending_count_for_confirm}</strong> decizii pending.
+          <p class="muted">Rezolvă toate deciziile înainte de „Confirmă OCR Review”.</p>
+        </div>
+        """
 
     missing_html = ""
     if missing:
@@ -10519,6 +10552,8 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
       </div>
 
       {missing_html}
+
+      {confirm_html}
 
       <div class="ocr-review-summary">
         <div class="ocr-review-metric">Review items<strong>{gate["review_item_count"]}</strong></div>
@@ -10758,5 +10793,104 @@ def _voila_owner_ocr_review_guided_decision(
     )
 
 # VOILA_V0_7_72_OWNER_LOCAL_OCR_REVIEW_GUIDED_DECISION_BUTTONS_END
+
+
+# VOILA_V0_7_73_OWNER_LOCAL_OCR_REVIEW_FINAL_CONFIRM_BUTTON_START
+# Owner-local OCR Review final confirmation.
+# Policy: write final confirmation only to ocr_review_decisions.json.
+# No apply patch, no ocr_review_decisions.applied.json, no document_learning_pack rebuild,
+# no /generate integration, no build, no ZIP, no delivery, no distribution.
+
+def _voila_ocr_review_save_final_confirmation(course_id: str) -> tuple[bool, str]:
+    try:
+        safe_id = _voila_ocr_review_safe_course_id(course_id)
+    except ValueError:
+        return False, "invalid_course_id"
+
+    decisions_path = OUTPUT_DIR / safe_id / "ocr_review_decisions.json"
+    if not decisions_path.is_file():
+        return False, "missing_decisions_file"
+
+    try:
+        decisions_data = json.loads(decisions_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False, "invalid_decisions_file"
+
+    if not isinstance(decisions_data, dict):
+        return False, "invalid_decisions_file"
+
+    decisions = decisions_data.get("decisions")
+    if not isinstance(decisions, list):
+        return False, "invalid_decisions_file"
+
+    decision_count = len([item for item in decisions if isinstance(item, dict)])
+    pending_count = sum(
+        1
+        for item in decisions
+        if isinstance(item, dict)
+        and item.get("requires_user_decision", True)
+        and str(item.get("decision") or "pending") == "pending"
+    )
+    if decision_count <= 0:
+        return False, "no_decisions_to_confirm"
+    if pending_count != 0:
+        return False, "pending_decisions_remain"
+
+    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    resolved_count = decision_count
+
+    decisions_data["decision_count"] = decision_count
+    decisions_data["pending_decision_count"] = 0
+    decisions_data["resolved_decision_count"] = resolved_count
+    decisions_data["owner_review_confirmed"] = True
+    decisions_data["owner_review_confirmed_at"] = now
+    decisions_data["real_user_decisions_performed"] = True
+    decisions_data["applied_to_learning_pack"] = False
+    decisions_data["updated_at"] = now
+    decisions_data["final_confirmation_source"] = "owner_local_guided_ui_v0.7.73"
+
+    quality_gate = decisions_data.get("quality_gate")
+    if not isinstance(quality_gate, dict):
+        quality_gate = {}
+    quality_gate["pending_decision_count"] = 0
+    quality_gate["resolved_decision_count"] = resolved_count
+    quality_gate["all_required_decisions_resolved"] = True
+    quality_gate["owner_review_confirmed"] = True
+    quality_gate["owner_review_confirmed_at"] = now
+    quality_gate["generation_should_wait_for_review"] = True
+    quality_gate["generation_block_reason"] = "generate_integration_not_enabled_v0.7.73"
+    decisions_data["quality_gate"] = quality_gate
+
+    decisions_path.write_text(
+        json.dumps(decisions_data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    return True, "confirmed"
+
+
+@app.post("/owner/ocr-review/{course_id}/confirm", include_in_schema=False)
+def _voila_owner_ocr_review_final_confirm(course_id: str):
+    ok, _message = _voila_ocr_review_save_final_confirmation(course_id)
+    if not ok:
+        return PlainTextResponse(
+            "OCR Review final confirmation was not saved.",
+            status_code=400,
+        )
+
+    try:
+        safe_id = _voila_ocr_review_safe_course_id(course_id)
+    except ValueError:
+        return PlainTextResponse(
+            "OCR Review final confirmation was not saved.",
+            status_code=400,
+        )
+
+    return RedirectResponse(
+        url="/owner/ocr-review/" + quote(safe_id, safe=""),
+        status_code=303,
+    )
+
+# VOILA_V0_7_73_OWNER_LOCAL_OCR_REVIEW_FINAL_CONFIRM_BUTTON_END
 
 # VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END
