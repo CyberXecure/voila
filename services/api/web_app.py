@@ -10351,11 +10351,42 @@ def _voila_ocr_review_gate(queue_data: dict, decisions_data: dict) -> dict:
     }
 
 
-def _voila_ocr_review_card_html(item: dict, decision_by_id: dict) -> str:
+# VOILA_V0_7_72_OWNER_LOCAL_OCR_REVIEW_GUIDED_DECISION_BUTTONS_START
+# Owner-local guided OCR Review decision buttons.
+# Policy: write decisions only to ocr_review_decisions.json.
+# No apply patch, no ocr_review_decisions.applied.json, no document learning pack rebuild,
+# no /generate integration, no build, no ZIP, no delivery, no distribution.
+VOILA_V0_7_72_OCR_REVIEW_GUIDED_DECISIONS = {
+    "accepted": "Acceptă sugestia",
+    "edited": "Editează textul",
+    "ignored": "Ignoră",
+    "marked_definition": "Este definiție",
+    "marked_formula": "Este formulă",
+    "marked_notation": "Este notație",
+    "marked_theorem": "Este teoremă",
+    "marked_example": "Este exemplu",
+    "marked_glossary_term": "Este termen de glosar",
+    "marked_not_relevant": "Nu este relevant",
+}
+
+
+def _voila_ocr_review_card_html(item: dict, decision_by_id: dict, course_id: str) -> str:
     review_item_id = str(item.get("review_item_id") or "")
     decision = decision_by_id.get(review_item_id) or {}
+    current_decision = str(decision.get("decision") or "pending")
 
     linked_terms = ", ".join(str(term) for term in _voila_ocr_review_list(item.get("linked_concept_terms"))) or "n/a"
+    form_action = "/owner/ocr-review/" + quote(str(course_id), safe="") + "/decision"
+    corrected_text = str(decision.get("corrected_text") or "")
+    user_note = str(decision.get("user_note") or "")
+
+    buttons = []
+    for value, label in VOILA_V0_7_72_OCR_REVIEW_GUIDED_DECISIONS.items():
+        css = "primary" if value == current_decision else ""
+        buttons.append(
+            f'<button class="{html.escape(css, quote=True)}" type="submit" name="decision" value="{html.escape(value, quote=True)}">'
+            f'{html.escape(label)}</button>'
+        )
 
     return f"""
     <article class="card" data-voila-ocr-review-item="{html.escape(review_item_id, quote=True)}">
@@ -10368,8 +10399,24 @@ def _voila_ocr_review_card_html(item: dict, decision_by_id: dict) -> str:
       <p><strong>Concepte legate:</strong> {html.escape(linked_terms)}</p>
       <p><strong>Text OCR suspect:</strong><br>{html.escape(_voila_ocr_review_text(item.get("source_text")))}</p>
       <p><strong>Sugestie:</strong><br>{html.escape(_voila_ocr_review_text(item.get("suggested_text")))}</p>
-      <p><strong>Decizie curentă:</strong> <code>{html.escape(str(decision.get("decision") or "pending"))}</code></p>
-      <p class="muted">Read-only v0.7.71: nu există butoane de salvare, nu se aplică patch și nu se modifică niciun artifact.</p>
+      <p><strong>Decizie curentă:</strong> <code>{html.escape(current_decision)}</code></p>
+
+      <form method="post" action="{html.escape(form_action, quote=True)}" class="ocr-review-decision-form">
+        <input type="hidden" name="review_item_id" value="{html.escape(review_item_id, quote=True)}">
+        <label>
+          Text corectat, doar pentru „Editează textul”
+          <textarea name="corrected_text" rows="3" maxlength="4000">{html.escape(corrected_text)}</textarea>
+        </label>
+        <label>
+          Notă opțională
+          <input name="user_note" maxlength="1000" value="{html.escape(user_note, quote=True)}">
+        </label>
+        <div class="actions">
+          {''.join(buttons)}
+        </div>
+      </form>
+
+      <p class="muted">v0.7.72: salvează doar decizia în <code>ocr_review_decisions.json</code>. Nu aplică patch, nu reconstruiește learning pack și nu cheamă /generate.</p>
     </article>
     """
 
@@ -10424,7 +10471,7 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
         </div>
         """
 
-    cards_html = "".join(_voila_ocr_review_card_html(item, decision_by_id) for item in review_items[:50])
+    cards_html = "".join(_voila_ocr_review_card_html(item, decision_by_id, safe_id) for item in review_items[:50])
     if not cards_html:
         cards_html = """
         <article class="card">
@@ -10462,7 +10509,7 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
     </style>
 
     <section data-testid="owner-ocr-review-read-only-shell">
-      <h1>OCR Review · read-only</h1>
+      <h1>OCR Review · decizii ghidate</h1>
       <div class="meta">Course ID: <strong>{html.escape(safe_id)}</strong></div>
 
       <div class="{gate_class}">
@@ -10481,7 +10528,7 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
       </div>
 
       <div class="notice">
-        Această pagină este doar pentru citire în v0.7.71. Nu scrie decizii, nu aplică patch, nu reconstruiește learning pack și nu cheamă /generate.
+        v0.7.72: poți salva decizii ghidate în ocr_review_decisions.json. Nu aplică patch, nu reconstruiește learning pack și nu cheamă /generate.
       </div>
 
       <div class="actions">
@@ -10501,7 +10548,7 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Voila! OCR Review read-only</title>
+  <title>Voila! OCR Review decisions</title>
   <style>
     body {{
       margin: 0;
@@ -10559,5 +10606,157 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
 </body>
 </html>"""
     return HTMLResponse(content=doc)
+
+
+def _voila_ocr_review_confirmed_role_for_decision(decision: str) -> str:
+    return {
+        "marked_definition": "definition",
+        "marked_formula": "formula",
+        "marked_notation": "notation",
+        "marked_theorem": "theorem",
+        "marked_example": "example",
+        "marked_glossary_term": "glossary_term",
+        "marked_not_relevant": "not_relevant",
+    }.get(str(decision or ""), "")
+
+
+def _voila_ocr_review_save_guided_decision(
+    course_id: str,
+    review_item_id: str,
+    decision: str,
+    corrected_text: str = "",
+    user_note: str = "",
+) -> tuple[bool, str]:
+    try:
+        safe_id = _voila_ocr_review_safe_course_id(course_id)
+    except ValueError:
+        return False, "invalid_course_id"
+
+    clean_review_item_id = str(review_item_id or "").strip()
+    clean_decision = str(decision or "").strip()
+    clean_corrected_text = str(corrected_text or "").strip()
+    clean_user_note = str(user_note or "").strip()
+
+    if not clean_review_item_id or len(clean_review_item_id) > 100:
+        return False, "invalid_review_item_id"
+    if clean_decision not in VOILA_V0_7_72_OCR_REVIEW_GUIDED_DECISIONS:
+        return False, "invalid_decision"
+    if clean_decision == "edited" and not clean_corrected_text:
+        return False, "edited_requires_corrected_text"
+    if len(clean_corrected_text) > 4000 or len(clean_user_note) > 1000:
+        return False, "input_too_long"
+
+    decisions_path = OUTPUT_DIR / safe_id / "ocr_review_decisions.json"
+    if not decisions_path.is_file():
+        return False, "missing_decisions_file"
+
+    try:
+        decisions_data = json.loads(decisions_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False, "invalid_decisions_file"
+
+    if not isinstance(decisions_data, dict):
+        return False, "invalid_decisions_file"
+
+    decisions = decisions_data.get("decisions")
+    if not isinstance(decisions, list):
+        return False, "invalid_decisions_file"
+
+    target = None
+    for item in decisions:
+        if isinstance(item, dict) and str(item.get("review_item_id") or "") == clean_review_item_id:
+            target = item
+            break
+
+    if target is None:
+        return False, "unknown_review_item_id"
+
+    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    target["decision"] = clean_decision
+    target["corrected_text"] = clean_corrected_text if clean_decision == "edited" else ""
+    target["user_note"] = clean_user_note
+    target["requires_user_decision"] = False
+    target["real_user_decision"] = True
+    target["decision_source"] = "owner_local_guided_ui_v0.7.72"
+    target["applied_to_learning_pack"] = False
+    target["updated_at"] = now
+
+    confirmed_role = _voila_ocr_review_confirmed_role_for_decision(clean_decision)
+    if confirmed_role:
+        target["confirmed_learning_role"] = confirmed_role
+
+    pending_count = sum(
+        1
+        for item in decisions
+        if isinstance(item, dict)
+        and item.get("requires_user_decision", True)
+        and str(item.get("decision") or "pending") == "pending"
+    )
+    decision_count = len([item for item in decisions if isinstance(item, dict)])
+    resolved_count = max(0, decision_count - pending_count)
+
+    decisions_data["decision_count"] = decision_count
+    decisions_data["pending_decision_count"] = pending_count
+    decisions_data["resolved_decision_count"] = resolved_count
+    decisions_data["real_user_decisions_performed"] = True
+    decisions_data["owner_review_confirmed"] = False
+    decisions_data["applied_to_learning_pack"] = False
+    decisions_data["updated_at"] = now
+    decisions_data["decision_source"] = "owner_local_guided_ui_v0.7.72"
+
+    quality_gate = decisions_data.get("quality_gate")
+    if not isinstance(quality_gate, dict):
+        quality_gate = {}
+    quality_gate["pending_decision_count"] = pending_count
+    quality_gate["resolved_decision_count"] = resolved_count
+    quality_gate["all_required_decisions_resolved"] = pending_count == 0
+    quality_gate["owner_review_confirmed"] = False
+    quality_gate["generation_should_wait_for_review"] = True
+    quality_gate["generation_block_reason"] = "owner_review_not_final_confirmed"
+    decisions_data["quality_gate"] = quality_gate
+
+    decisions_path.write_text(
+        json.dumps(decisions_data, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    return True, "saved"
+
+
+@app.post("/owner/ocr-review/{course_id}/decision", include_in_schema=False)
+def _voila_owner_ocr_review_guided_decision(
+    course_id: str,
+    review_item_id: str = Form(...),
+    decision: str = Form(...),
+    corrected_text: str = Form(default=""),
+    user_note: str = Form(default=""),
+):
+    ok, _message = _voila_ocr_review_save_guided_decision(
+        course_id=course_id,
+        review_item_id=review_item_id,
+        decision=decision,
+        corrected_text=corrected_text,
+        user_note=user_note,
+    )
+    if not ok:
+        return PlainTextResponse(
+            "OCR Review decision was not saved.",
+            status_code=400,
+        )
+
+    try:
+        safe_id = _voila_ocr_review_safe_course_id(course_id)
+    except ValueError:
+        return PlainTextResponse(
+            "OCR Review decision was not saved.",
+            status_code=400,
+        )
+
+    return RedirectResponse(
+        url="/owner/ocr-review/" + quote(safe_id, safe=""),
+        status_code=303,
+    )
+
+# VOILA_V0_7_72_OWNER_LOCAL_OCR_REVIEW_GUIDED_DECISION_BUTTONS_END
 
 # VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END
