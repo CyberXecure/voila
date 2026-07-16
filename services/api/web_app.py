@@ -2158,6 +2158,93 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
 
 
 
+
+
+# VOILA_V0_7_77_OWNER_LOCAL_GENERATE_INTEGRATION_FROM_READINESS_GATED_LEARNING_PACK_START
+# Owner-local /generate integration from readiness-gated document learning pack.
+# Policy: use local document_learning_pack.json only when generate_readiness_gate.json is PASS.
+# No build, no ZIP, no share, no delivery, no distribution.
+
+def _voila_v0777_load_json(path: Path) -> dict:
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _voila_v0777_ready_learning_pack_for_generate(output_dir: Path) -> Path | None:
+    pack_path = Path(output_dir) / "document_learning_pack.json"
+    gate_path = Path(output_dir) / "generate_readiness_gate.json"
+
+    if not pack_path.is_file() or not gate_path.is_file():
+        return None
+
+    pack = _voila_v0777_load_json(pack_path)
+    gate = _voila_v0777_load_json(gate_path)
+
+    pack_gate = pack.get("quality_gate") if isinstance(pack.get("quality_gate"), dict) else {}
+    gate_quality = gate.get("quality_gate") if isinstance(gate.get("quality_gate"), dict) else {}
+    gate_policy = gate.get("policy") if isinstance(gate.get("policy"), dict) else {}
+
+    if gate.get("artifact") != "owner_local_generate_readiness_gate":
+        return None
+    if gate.get("artifact_version") != "v0.7.76":
+        return None
+    if gate.get("generate_readiness_status") != "PASS":
+        return None
+    if gate.get("ready_for_separate_generate_integration_milestone") is not True:
+        return None
+    if pack.get("artifact") != "document_learning_pack":
+        return None
+    if pack.get("rebuild_artifact_version") != "v0.7.75":
+        return None
+    if pack.get("document_learning_pack_rebuilt_from_applied_ocr_review") is not True:
+        return None
+    if pack_gate.get("document_learning_status") != "PASS":
+        return None
+    if pack_gate.get("generation_allowed") is not True:
+        return None
+    if int(pack_gate.get("verified_user_evidence_count") or 0) <= 0:
+        return None
+    if gate_quality.get("generate_integration_changed") is not False:
+        return None
+    if gate_quality.get("course_regeneration_performed") is not False:
+        return None
+    if gate_policy.get("build_performed") is not False:
+        return None
+    if gate_policy.get("zip_created") is not False:
+        return None
+    if gate_policy.get("delivery_performed") is not False:
+        return None
+
+    return pack_path
+
+
+def _voila_v0777_write_generate_integration_report(output_dir: Path, learning_pack_path: Path | None) -> None:
+    report = {
+        "artifact": "owner_local_generate_integration_from_readiness_gated_learning_pack",
+        "artifact_version": "v0.7.77",
+        "learning_pack_used": learning_pack_path is not None,
+        "learning_pack_path": str(learning_pack_path or ""),
+        "generate_readiness_gate_required": True,
+        "generate_integration_changed": True,
+        "generator_route_changed": True,
+        "course_regeneration_performed": True,
+        "build_performed": False,
+        "zip_created": False,
+        "share_created": False,
+        "delivery_performed": False,
+        "distribution_performed": False,
+        "tester_readiness": "BROWSER_SMOKE_REQUIRED",
+    }
+    target = Path(output_dir) / "generate_integration_report.json"
+    target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+# VOILA_V0_7_77_OWNER_LOCAL_GENERATE_INTEGRATION_FROM_READINESS_GATED_LEARNING_PACK_END
+
+
 # VOILA_V0_7_17C_GENERATE_FOR_PDF_ENTRYPOINT
 def generate_for_pdf(pdf_path: Path) -> Path:
     """Run the existing local PDF-to-course pipeline used by /generate.
@@ -2172,6 +2259,8 @@ def generate_for_pdf(pdf_path: Path) -> Path:
     from pathlib import Path as _VoilaPath
 
     source_pdf = _VoilaPath(pdf_path)
+    if not source_pdf.is_absolute():
+        source_pdf = (_VoilaPath(PROJECT_ROOT) / source_pdf).resolve()
     if not source_pdf.exists():
         raise FileNotFoundError(f"PDF not found: {source_pdf}")
 
@@ -2179,6 +2268,9 @@ def generate_for_pdf(pdf_path: Path) -> Path:
     output_root = OUTPUT_DIR
     output_dir = output_root / source_pdf.stem
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    learning_pack_path = _voila_v0777_ready_learning_pack_for_generate(output_dir)
+    _voila_v0777_write_generate_integration_report(output_dir, learning_pack_path)
 
     steps = [
         (
@@ -2213,7 +2305,11 @@ def generate_for_pdf(pdf_path: Path) -> Path:
                 sys.executable,
                 str(api_dir / "course_generator.py"),
                 str(output_dir / "course_outline.normalized.json"),
-            ],
+            ] + (
+                ["--learning-pack-json", str(learning_pack_path)]
+                if learning_pack_path is not None
+                else []
+            ),
         ),
         (
             "polish course",
@@ -2221,7 +2317,11 @@ def generate_for_pdf(pdf_path: Path) -> Path:
                 sys.executable,
                 str(api_dir / "course_polisher.py"),
                 str(output_dir / "course_outline.normalized.json"),
-            ],
+            ] + (
+                ["--learning-pack-json", str(learning_pack_path)]
+                if learning_pack_path is not None
+                else []
+            ),
         ),
     ]
 
@@ -2248,6 +2348,11 @@ def generate_for_pdf(pdf_path: Path) -> Path:
                 if part
             )
             raise RuntimeError(detail)
+
+    if learning_pack_path is not None:
+        stale_course_html = output_dir / "course.cleaned.html"
+        if stale_course_html.exists():
+            stale_course_html.unlink()
 
     ensure_course_html_for_pdf(source_pdf)
 

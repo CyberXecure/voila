@@ -252,9 +252,145 @@ def write_course(outline: dict, output_path: Path) -> None:
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
+
+# VOILA_V0_7_77_COURSE_GENERATOR_LEARNING_PACK_INTEGRATION_START
+def load_learning_pack(path: str | None) -> dict:
+    if not path:
+        return {}
+    pack_path = Path(path)
+    if not pack_path.is_file():
+        return {}
+    try:
+        data = json.loads(pack_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def learning_pack_concepts(learning_pack: dict) -> list[dict]:
+    concepts = learning_pack.get("concept_summary", {}).get("concepts", [])
+    return [item for item in concepts if isinstance(item, dict)] if isinstance(concepts, list) else []
+
+
+def learning_pack_evidence_items(learning_pack: dict) -> list[dict]:
+    items = learning_pack.get("verified_user_evidence", {}).get("items", [])
+    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+
+
+def append_learning_pack_assets(
+    glossary: list[dict],
+    quiz: list[dict],
+    flashcards: list[dict],
+    learning_pack: dict,
+) -> None:
+    if not learning_pack:
+        return
+
+    concepts = learning_pack_concepts(learning_pack)
+    evidence_items = learning_pack_evidence_items(learning_pack)
+
+    for concept in concepts:
+        term = str(concept.get("term") or "").strip()
+        definition = str(concept.get("definition") or concept.get("teaching_note") or "").strip()
+        pages = concept.get("source_pdf_pages") or []
+        concept_id = str(concept.get("concept_id") or "").strip()
+        if not term:
+            continue
+
+        glossary.append(
+            {
+                "term": term,
+                "definition": definition or "Concept extracted from the verified document learning pack.",
+                "lesson_id": concept_id or "document_learning_pack",
+                "source_pdf_pages": pages,
+                "generation_method": "v0.7.77_learning_pack_verified_evidence",
+                "learning_pack_source": "document_learning_pack.json",
+            }
+        )
+
+        flashcards.append(
+            {
+                "front": term,
+                "back": definition or "Review this concept in the generated course.",
+                "lesson_id": concept_id or "document_learning_pack",
+                "source_pdf_pages": pages,
+                "generation_method": "v0.7.77_learning_pack_verified_evidence",
+                "learning_pack_source": "document_learning_pack.json",
+            }
+        )
+
+        quiz.append(
+            {
+                "lesson_id": concept_id or "document_learning_pack",
+                "question": f"What should you remember about '{term}' from this document?",
+                "answer": definition or "Use the verified document learning pack evidence for this concept.",
+                "source_pdf_pages": pages,
+                "generation_method": "v0.7.77_learning_pack_verified_evidence",
+                "learning_pack_source": "document_learning_pack.json",
+            }
+        )
+
+    for item in evidence_items[:20]:
+        text = str(item.get("verified_evidence_text") or item.get("corrected_text") or "").strip()
+        role = str(item.get("confirmed_learning_role") or "verified_evidence").strip()
+        review_item_id = str(item.get("review_item_id") or "").strip()
+        if not text:
+            continue
+        quiz.append(
+            {
+                "lesson_id": review_item_id or "ocr_review_verified_evidence",
+                "question": f"Which verified OCR Review evidence was marked as {role}?",
+                "answer": text,
+                "source_pdf_pages": item.get("source_pdf_pages") or [],
+                "generation_method": "v0.7.77_learning_pack_verified_evidence",
+                "learning_pack_source": "ocr_review_decisions.applied.json",
+            }
+        )
+
+
+def write_learning_pack_course_section(learning_pack: dict, output_path: Path) -> None:
+    if not learning_pack:
+        return
+
+    concepts = learning_pack_concepts(learning_pack)
+    evidence_items = learning_pack_evidence_items(learning_pack)
+    lines = [
+        "",
+        "## Document learning pack integration",
+        "",
+        "Integration: `v0.7.77 readiness-gated learning pack`",
+        f"Learning pack rebuild version: `{learning_pack.get('rebuild_artifact_version')}`",
+        f"Document learning status: `{learning_pack.get('quality_gate', {}).get('document_learning_status')}`",
+        f"Verified user evidence count: `{learning_pack.get('quality_gate', {}).get('verified_user_evidence_count')}`",
+        "",
+        "### Verified document concepts",
+        "",
+    ]
+
+    for concept in concepts[:20]:
+        term = concept.get("term")
+        definition = concept.get("definition") or concept.get("teaching_note") or ""
+        lines.append(f"- **{term}** — {definition}")
+
+    lines.extend(["", "### Verified OCR Review evidence", ""])
+    for item in evidence_items[:20]:
+        rid = item.get("review_item_id")
+        role = item.get("confirmed_learning_role")
+        text = item.get("verified_evidence_text") or item.get("corrected_text")
+        lines.append(f"- `{rid}` · `{role}` — {text}")
+
+    with output_path.open("a", encoding="utf-8") as handle:
+        handle.write("\n".join(lines))
+        handle.write("\n")
+
+
+# VOILA_V0_7_77_COURSE_GENERATOR_LEARNING_PACK_INTEGRATION_END
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Voila! rule-based course generator")
     parser.add_argument("normalized_outline_json", help="Path to course_outline.normalized.json")
+    parser.add_argument("--learning-pack-json", default=None, help="Optional readiness-gated document_learning_pack.json")
 
     args = parser.parse_args()
     outline_path = Path(args.normalized_outline_json).resolve()
@@ -263,6 +399,7 @@ def main() -> None:
         raise FileNotFoundError(f"Normalized outline not found: {outline_path}")
 
     outline = json.loads(outline_path.read_text(encoding="utf-8"))
+    learning_pack = load_learning_pack(args.learning_pack_json)
     output_dir = outline_path.parent
 
     glossary = []
@@ -294,11 +431,14 @@ def main() -> None:
         flashcards.extend(make_flashcards(lesson, terms))
 
     course_path = output_dir / "course.md"
+    append_learning_pack_assets(glossary, quiz, flashcards, learning_pack)
+
     glossary_path = output_dir / "glossary.json"
     quiz_path = output_dir / "quiz.json"
     flashcards_path = output_dir / "flashcards.json"
 
     write_course(outline, course_path)
+    write_learning_pack_course_section(learning_pack, course_path)
 
     glossary_path.write_text(json.dumps(glossary, ensure_ascii=False, indent=2), encoding="utf-8")
     quiz_path.write_text(json.dumps(quiz, ensure_ascii=False, indent=2), encoding="utf-8")
