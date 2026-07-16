@@ -467,9 +467,75 @@ def write_clean_course(outline: dict, output_path: Path) -> list[dict]:
     return all_corrections
 
 
+
+# VOILA_V0_7_77_COURSE_POLISHER_LEARNING_PACK_INTEGRATION_START
+def load_learning_pack(path: str | None) -> dict:
+    if not path:
+        return {}
+    pack_path = Path(path)
+    if not pack_path.is_file():
+        return {}
+    try:
+        data = json.loads(pack_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def learning_pack_concepts(learning_pack: dict) -> list[dict]:
+    concepts = learning_pack.get("concept_summary", {}).get("concepts", [])
+    return [item for item in concepts if isinstance(item, dict)] if isinstance(concepts, list) else []
+
+
+def learning_pack_evidence_items(learning_pack: dict) -> list[dict]:
+    items = learning_pack.get("verified_user_evidence", {}).get("items", [])
+    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+
+
+def append_learning_pack_clean_course_section(output_path: Path, learning_pack: dict) -> None:
+    if not learning_pack:
+        return
+
+    concepts = learning_pack_concepts(learning_pack)
+    evidence_items = learning_pack_evidence_items(learning_pack)
+
+    lines = [
+        "",
+        "## Learning pack verificat",
+        "",
+        "Integrare: `v0.7.77 readiness-gated learning pack`",
+        f"Status document learning: `{learning_pack.get('quality_gate', {}).get('document_learning_status')}`",
+        f"Evidence verificat: `{learning_pack.get('quality_gate', {}).get('verified_user_evidence_count')}`",
+        "",
+        "### Concepte verificate",
+        "",
+    ]
+
+    for concept in concepts[:20]:
+        term = concept.get("term")
+        definition = concept.get("definition") or concept.get("teaching_note") or ""
+        pages = ", ".join(str(page) for page in concept.get("source_pdf_pages") or [])
+        lines.append(f"- **{term}** — {definition} _(pagini: {pages or 'n/a'})_")
+
+    lines.extend(["", "### Dovezi OCR Review verificate", ""])
+    for item in evidence_items[:20]:
+        rid = item.get("review_item_id")
+        role = item.get("confirmed_learning_role")
+        text = item.get("verified_evidence_text") or item.get("corrected_text")
+        lines.append(f"- `{rid}` · `{role}` — {text}")
+
+    with output_path.open("a", encoding="utf-8") as handle:
+        handle.write("\n".join(lines))
+        handle.write("\n")
+
+
+# VOILA_V0_7_77_COURSE_POLISHER_LEARNING_PACK_INTEGRATION_END
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Voila! course polisher")
     parser.add_argument("normalized_outline_json", help="Path to course_outline.normalized.json")
+    parser.add_argument("--learning-pack-json", default=None, help="Optional readiness-gated document_learning_pack.json")
 
     args = parser.parse_args()
     outline_path = Path(args.normalized_outline_json).resolve()
@@ -478,12 +544,15 @@ def main() -> None:
         raise FileNotFoundError(f"Normalized outline not found: {outline_path}")
 
     outline = json.loads(outline_path.read_text(encoding="utf-8"))
+    learning_pack = load_learning_pack(args.learning_pack_json)
     output_dir = outline_path.parent
 
     clean_course_path = output_dir / "course.cleaned.md"
     corrections_path = output_dir / "ocr_corrections.json"
 
     corrections = write_clean_course(outline, clean_course_path)
+
+    append_learning_pack_clean_course_section(clean_course_path, learning_pack)
 
     corrections_path.write_text(
         json.dumps(corrections, ensure_ascii=False, indent=2),
