@@ -5360,6 +5360,9 @@ def course_tools(pdf: str = Query("")):
     course_html = output_dir / "course.cleaned.html"
     quiz_json = output_dir / "quiz.json"
     quiz_study_json = output_dir / "quiz.study.json"
+    # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_START
+    study_items_preview_json = output_dir / "study_items.preview.json"
+    # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_END
     flashcards_json = output_dir / "flashcards.json"
     glossary_json = output_dir / "glossary.json"
     pages_json = output_dir / "pages.json"
@@ -5370,6 +5373,9 @@ def course_tools(pdf: str = Query("")):
 
     course_available = course_html.exists() or course_md.exists()
     study_available = quiz_json.exists() or quiz_study_json.exists()
+    # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_AVAILABLE_START
+    study_items_preview_available = study_items_preview_json.exists()
+    # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_AVAILABLE_END
     ocr_available = pages_json.exists() or ocr_pages_json.exists()
     figures_available = figures_hybrid_html.exists() or figures_html.exists()
     crops_available = hybrid_manifest.exists()
@@ -5439,6 +5445,13 @@ def course_tools(pdf: str = Query("")):
             f"/study?pdf={q}",
             study_available,
             "Lipsește quiz.json sau quiz.study.json. Rulează Generate pentru acest PDF.",
+        ),
+        card(
+            "Study Items Preview",
+            "Previzualizare owner-local read-only pentru întrebările pedagogice generate din learning pack. Preview only: nu modifică Study, BKT sau Progress.",
+            f"/owner/study-items-preview/{quote(pdf_path.stem, safe='')}/view",
+            study_items_preview_available,
+            "Lipsește study_items.preview.json. Rulează generatorul preview pentru acest curs.",
         ),
         card(
             _ut("ui.progress", _ut("progress", "Progress")),
