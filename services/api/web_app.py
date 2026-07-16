@@ -3184,6 +3184,17 @@ def _voila_v080_study_recommendation_reason_label(raw: str) -> str:
         "new concept": "Concept nou",
         "legacy short answer": "răspuns scurt",
         "legacy_short_answer": "răspuns scurt",
+        "concept_understanding": "înțelegere concept",
+        "concept understanding": "înțelegere concept",
+        "conditions_check": "verificare condiții",
+        "conditions check": "verificare condiții",
+        "distinction": "diferențiere",
+        "true_false": "adevărat/fals",
+        "true false": "adevărat/fals",
+        "why_it_matters": "de ce contează",
+        "why it matters": "de ce contează",
+        "apply_or_check": "aplicare/verificare",
+        "apply or check": "aplicare/verificare",
     }
     for old, new in replacements.items():
         label = label.replace(old, new)
@@ -3202,6 +3213,32 @@ def _voila_v082_study_items_preview_path(course_id: str):
 def _voila_v082_escape(value) -> str:
     import html as _html
     return _html.escape(str(value or ""))
+
+
+# VOILA_V0_7_85_STUDY_ITEMS_PREVIEW_LABEL_POLISH_START
+def _voila_v085_study_item_question_type_label(value) -> str:
+    labels = {
+        "concept_understanding": "înțelegere concept",
+        "concept understanding": "înțelegere concept",
+        "conditions_check": "verificare condiții",
+        "conditions check": "verificare condiții",
+        "distinction": "diferențiere",
+        "true_false": "adevărat/fals",
+        "true false": "adevărat/fals",
+        "why_it_matters": "de ce contează",
+        "why it matters": "de ce contează",
+        "apply_or_check": "aplicare/verificare",
+        "apply or check": "aplicare/verificare",
+        "learning_pack_preview": "întrebare pedagogică",
+        "learning pack preview": "întrebare pedagogică",
+        "technical_fact": "fapt tehnic",
+        "technical fact": "fapt tehnic",
+        "legacy_short_answer": "răspuns scurt",
+        "legacy short answer": "răspuns scurt",
+    }
+    raw = str(value or "").strip()
+    return labels.get(raw, raw.replace("_", " "))
+# VOILA_V0_7_85_STUDY_ITEMS_PREVIEW_LABEL_POLISH_END
 
 
 @app.get("/owner/study-items-preview/{course_id}/view", response_class=HTMLResponse)
@@ -3246,12 +3283,12 @@ def owner_study_items_preview_view(course_id: str):
           <div class="meta">
             #{index} · {_voila_v082_escape(item.get("concept_id"))}
             · {_voila_v082_escape(item.get("term"))}
-            · {_voila_v082_escape(item.get("question_type"))}
+            · {_voila_v082_escape(_voila_v085_study_item_question_type_label(item.get("question_type")))}
             · pagini sursă: {_voila_v082_escape(pages_label)}
           </div>
           <h2>{_voila_v082_escape(item.get("question"))}</h2>
           <p><strong>Răspuns așteptat:</strong> {_voila_v082_escape(item.get("expected_answer"))}</p>
-          <p><strong>Hint:</strong> {_voila_v082_escape(item.get("hint"))}</p>
+          <p><strong>Indiciu:</strong> {_voila_v082_escape(item.get("hint"))}</p>
           <p><strong>Explicație:</strong> {_voila_v082_escape(item.get("explanation"))}</p>
         </article>
         """)
