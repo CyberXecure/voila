@@ -763,7 +763,7 @@ def _voila_tester_flow_bottom_nav_html() -> str:
     color: #fff;
   }
   body.voila-has-tester-flow-bottom-nav {
-    padding-bottom: 104px !important;
+    padding-bottom: 168px !important;
   }
   @media (prefers-color-scheme: dark) {
     .voila-tester-flow-bottom-nav {
@@ -2712,7 +2712,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         last_html = f"""
         <div class="notice">
           {_ut("last_review_answer", "Last review answer")}: <strong>{result}</strong>.
-          {_ut("mastery_changed", "Mastery changed from")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
+          {_ut("study.concept_mastery_changed", "Nivelul conceptului s-a schimbat de la")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
         </div>
         """
 
@@ -2730,7 +2730,7 @@ def review(pdf: str = Query(...)) -> HTMLResponse:
         concept_id = html.escape(str(current.get("concept_id") or current.get("lesson_id") or ""))
         question = html.escape(str(current.get("question") or ""))
         answer_id = html.escape(str(current.get("question_id") or ""))
-        recommendation_reason = html.escape(_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
+        recommendation_reason = html.escape(_voila_v080_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
 
         reason_html = ""
         if recommendation_reason:
@@ -3168,6 +3168,24 @@ def progress(pdf: str = Query(...)) -> HTMLResponse:
     return page("Voila! Progress", body)
 
 
+
+# VOILA_V0_7_80_STUDY_UX_REASON_LABEL_START
+# Display-only Study UX labels.
+# Policy: no question generation, no BKT, no Study state, no Progress logic changes.
+def _voila_v080_study_recommendation_reason_label(raw: str) -> str:
+    label = _study_recommendation_reason_label(str(raw or ""))
+    replacements = {
+        "concept nou": "Concept nou",
+        "new concept": "Concept nou",
+        "legacy short answer": "răspuns scurt",
+        "legacy_short_answer": "răspuns scurt",
+    }
+    for old, new in replacements.items():
+        label = label.replace(old, new)
+    return label
+# VOILA_V0_7_80_STUDY_UX_REASON_LABEL_END
+
+
 @app.get("/study", response_class=HTMLResponse)
 def study(pdf: str = Query(...)) -> HTMLResponse:
     pdf_path = validate_pdf_name(pdf)
@@ -3199,7 +3217,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
         last_html = f"""
         <div class="notice">
           {_ut("last_answer", "Last answer")}: <strong>{result}</strong>.
-          {_ut("mastery_changed", "Mastery changed from")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
+          {_ut("study.concept_mastery_changed", "Nivelul conceptului s-a schimbat de la")} <strong>{before}%</strong> {_ut("to", "to")} <strong>{after}%</strong>.
         </div>
         """
 
@@ -3214,7 +3232,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
             </details>
             """
 
-        recommendation_reason = html.escape(_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
+        recommendation_reason = html.escape(_voila_v080_study_recommendation_reason_label(str(current.get("recommendation_reason") or "")))
         reason_html = ""
         if recommendation_reason:
             reason_html = f'<div class="meta">{_ut("recommended_because", "Recommended because")}: <strong>{recommendation_reason}</strong></div>'
@@ -3290,7 +3308,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
       PDF: <strong>{html.escape(pdf_path.name)}</strong><br>
       {_ut("questions", "Questions")}: <strong>{view.get("total_questions")}</strong> ·
       {_ut("answered", "Answered")}: <strong>{view.get("answered_count")}</strong> ·
-      {_ut("status.overall_mastery", _ut("overall_mastery", "Overall mastery"))}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
+      {_ut("study.current_overall_mastery", "Nivel general curent")}: <strong>{view.get("overall_mastery_percent")}%</strong> ·
       {_ut("status.status", _ut("status", "Status"))}: <strong>{html.escape(_study_status_label(str(view.get("overall_status") or "")))}</strong>
     </div>
 
