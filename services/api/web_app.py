@@ -3296,6 +3296,15 @@ def owner_study_items_preview_view(course_id: str):
     item_count = preview.get("item_count", len(items))
     concept_count = preview.get("concept_count", "—")
     quality_status = gate.get("preview_quality_status", "—")
+    # VOILA_V0_7_86_STUDY_ITEMS_PREVIEW_STATUS_COPY_POLISH_START
+    quality_status_normalized = str(quality_status or "").strip().upper()
+    if quality_status_normalized == "PASS":
+        study_status_copy = "Owner-local · read-only · integrat în Study când Quality gate este PASS"
+        study_integration_badge = "activă"
+    else:
+        study_status_copy = "Owner-local · read-only · neintegrat în Study: Quality gate nu este PASS"
+        study_integration_badge = "inactivă"
+    # VOILA_V0_7_86_STUDY_ITEMS_PREVIEW_STATUS_COPY_POLISH_END
 
     body = f"""
     <style id="voila-v0782-study-items-preview-viewer-style">
@@ -3331,7 +3340,7 @@ def owner_study_items_preview_view(course_id: str):
     <main>
       <section class="card v0782-study-preview-summary">
         <h1>Previzualizare Study items</h1>
-        <p class="meta">Owner-local · read-only · preview only · nu este integrat încă în Study</p>
+        <p class="meta">{_voila_v082_escape(study_status_copy)}</p>
         <p><code>study_items.preview.json</code></p>
 
         <div class="v0782-study-preview-badges">
@@ -3340,7 +3349,7 @@ def owner_study_items_preview_view(course_id: str):
           <span>Quality gate: <strong>{_voila_v082_escape(quality_status)}</strong></span>
           <span>LLM: <strong>{_voila_v082_escape(policy.get("uses_llm", False))}</strong></span>
           <span>Cloud: <strong>{_voila_v082_escape(policy.get("uses_cloud", False))}</strong></span>
-          <span>Study integration: <strong>{_voila_v082_escape(gate.get("study_integration_changed", False))}</strong></span>
+          <span>Study integration: <strong>{_voila_v082_escape(study_integration_badge)}</strong></span>
         </div>
       </section>
 
@@ -5490,7 +5499,7 @@ def course_tools(pdf: str = Query("")):
         ),
         card(
             "Study Items Preview",
-            "Previzualizare owner-local read-only pentru întrebările pedagogice generate din learning pack. Preview only: nu modifică Study, BKT sau Progress.",
+            "Previzualizare owner-local read-only pentru întrebările pedagogice generate din learning pack. Study folosește artifactul când Quality gate este PASS; nu modifică BKT sau Progress.",
             f"/owner/study-items-preview/{quote(pdf_path.stem, safe='')}/view",
             study_items_preview_available,
             "Lipsește study_items.preview.json. Rulează generatorul preview pentru acest curs.",
