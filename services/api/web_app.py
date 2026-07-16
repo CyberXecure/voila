@@ -5423,7 +5423,19 @@ def course_tools(pdf: str = Query("")):
     hybrid_manifest = output_dir / "figures_hybrid" / "figures_manifest.hybrid.json"
 
     course_available = course_html.exists() or course_md.exists()
-    study_available = quiz_json.exists() or quiz_study_json.exists()
+    # VOILA_V0_7_87_STUDY_STATUS_COPY_CONSISTENCY_START
+    def _voila_v087_preview_quality_pass(path) -> bool:
+        try:
+            import json as _json
+            data = _json.loads(path.read_text(encoding="utf-8"))
+            gate = data.get("quality_gate") if isinstance(data, dict) else {}
+            return str((gate or {}).get("preview_quality_status") or "").strip().upper() == "PASS"
+        except Exception:
+            return False
+
+    preview_quality_pass = study_items_preview_json.exists() and _voila_v087_preview_quality_pass(study_items_preview_json)
+    study_available = quiz_json.exists() or quiz_study_json.exists() or preview_quality_pass
+    # VOILA_V0_7_87_STUDY_STATUS_COPY_CONSISTENCY_END
     # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_AVAILABLE_START
     study_items_preview_available = study_items_preview_json.exists()
     # VOILA_V0_7_83_STUDY_ITEMS_PREVIEW_LINK_AVAILABLE_END
@@ -5492,10 +5504,10 @@ def course_tools(pdf: str = Query("")):
         ),
         card(
             _ut("ui.study", _ut("study", "Study")),
-            "Întrebări de studiu din quiz.json / quiz.study.json.",
+            "Întrebări de studiu din study_items.preview.json când Quality gate este PASS, cu fallback la quiz.json / quiz.study.json.",
             f"/study?pdf={q}",
             study_available,
-            "Lipsește quiz.json sau quiz.study.json. Rulează Generate pentru acest PDF.",
+            "Lipsește study_items.preview.json PASS sau quiz.json / quiz.study.json. Rulează Generate pentru acest PDF.",
         ),
         card(
             "Study Items Preview",
@@ -5506,10 +5518,10 @@ def course_tools(pdf: str = Query("")):
         ),
         card(
             _ut("ui.progress", _ut("progress", "Progress")),
-            "Dashboard de progres pentru întrebările de studiu.",
+            "Dashboard de progres pentru întrebările de studiu disponibile în Study.",
             f"/progress?pdf={q}",
             study_available,
-            "Progress are nevoie de quiz.json / quiz.study.json.",
+            "Progress are nevoie de study_items.preview.json PASS sau quiz.json / quiz.study.json.",
         ),
         card(
             _ut("ui.review_ocr_text", "OCR Review"),
@@ -5833,12 +5845,25 @@ def quick_tools():
         out = output_dir / pdf.stem
         q = quote(pdf.name)
 
+        # VOILA_V0_7_87_QUICK_TOOLS_STUDY_STATUS_CONSISTENCY_START
+        study_preview_path = out / "study_items.preview.json"
+        study_preview_pass = False
+        if study_preview_path.exists():
+            try:
+                import json as _json
+                preview_data = _json.loads(study_preview_path.read_text(encoding="utf-8"))
+                preview_gate = preview_data.get("quality_gate") if isinstance(preview_data, dict) else {}
+                study_preview_pass = str((preview_gate or {}).get("preview_quality_status") or "").strip().upper() == "PASS"
+            except Exception:
+                study_preview_pass = False
+
         exists = {
             "course": (out / "course.cleaned.html").exists(),
-            "study": (out / "quiz.study.json").exists(),
+            "study": (out / "quiz.study.json").exists() or (out / "quiz.json").exists() or study_preview_pass,
             "figures": (out / "figures_hybrid" / "figures_hybrid.html").exists(),
             "ocr": (out / "ocr_pages.json").exists() or (out / "pages.json").exists(),
         }
+        # VOILA_V0_7_87_QUICK_TOOLS_STUDY_STATUS_CONSISTENCY_END
 
         status = []
         for key, ok in exists.items():
