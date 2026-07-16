@@ -7,8 +7,8 @@
   "skills": [
     {
       "id": "multimi",
-      "name": "Multimi si operatii",
-      "description": "Multimi, operatii cu multimi si notatii de baza."
+      "name": "Mulțimi și operații",
+      "description": "Mulțimi, operații cu mulțimi și notații de bază."
     },
     {
       "id": "functii",
@@ -17,12 +17,12 @@
     },
     {
       "id": "ecuatii_inecuatii",
-      "name": "Ecuatii si inecuatii",
+      "name": "Ecuații și inecuații",
       "description": "Ecuatii, inecuatii, sisteme si metode de rezolvare."
     },
     {
       "id": "limite_continuitate",
-      "name": "Limite si continuitate",
+      "name": "Limite și continuitate",
       "description": "Limite de functii, continuitate si comportament local."
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "id": "probabilitati_combinatorica",
-      "name": "Probabilitati si combinatorica",
+      "name": "Probabilități și combinatorică",
       "description": "Numarare, combinari, aranjamente, probabilitati."
     },
     {

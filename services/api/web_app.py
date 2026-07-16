@@ -3177,7 +3177,7 @@ def study(pdf: str = Query(...)) -> HTMLResponse:
         view = get_study_view(output_dir)
     except Exception as exc:
         body = f"""
-        <h1>{_ut("ui.study_mode", "Study Mode")}</h1>
+        <h1>{_ut("ui.study_mode", "Modul Studiu")}</h1>
         <div class="notice">
           Cannot open Study Mode for <strong>{html.escape(pdf_path.name)}</strong>.
         </div>
@@ -6777,10 +6777,10 @@ def _v46f_fallback_skill_detail_page(skill_id: str) -> str:
         '<p class="muted">Pregătire examene - Bacalaureat - Matematică M1</p>'
         f'<h1>Detaliu skill: {label}</h1>'
         '<p>Skill din planul de pregătire Bacalaureat Matematică M1. '
-        'Progresul se actualizeaza pe baza întrebărilor lucrate în Study Mode.</p>'
+        'Progresul se actualizează pe baza întrebărilor lucrate în Modul Studiu.</p>'
         '<div class="metric-grid">'
         '<div class="metric"><span>Stare consolidare</span><strong>Nepornit</strong>'
-        '<small class="muted">Consolidat după lucru suficient în Study Mode</small></div>'
+        '<small class="muted">Consolidat după lucru suficient în Modul Studiu</small></div>'
         '<div class="metric"><span>Scor progres</span><strong>-</strong>'
         '<small class="muted">read-only din Modul Studiu, unde există</small></div>'
         '<div class="metric"><span>Întrebări asociate din Modul Studiu</span><strong>0</strong>'
@@ -7499,11 +7499,11 @@ def _v423_polish_skill_detail_response(text: str) -> str:
         ("In progres", "În progres"),
         ("Pregatire examene", "Pregătire examene"),
         ("Matematica M1", "Matematică M1"),
-        ("Intrebari", "Întrebări"),
+        ("Întrebări", "Întrebări"),
         ("Continua", "Continuă"),
         ("Inapoi", "Înapoi"),
         ("Întrebări Study legate", "Întrebări asociate din Modul Studiu"),
-        ("Continuă în Study Mode", "Continuă în Modul Studiu"),
+        ("Continuă în Modul Studiu", "Continuă în Modul Studiu"),
         ("Înapoi la Exam Prep", "Înapoi la Pregătire examene"),
     ]
 

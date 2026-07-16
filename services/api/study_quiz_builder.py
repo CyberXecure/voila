@@ -25,7 +25,7 @@ TECHNICAL_KEYWORDS = [
     "limita", "limitÄƒ", "continuitate", "derivata", "derivatÄƒ", "derivare",
     "tangenta", "tangentÄƒ", "integrala", "integralÄƒ", "primitiva", "primitivÄƒ",
     "probabilitate", "combinari", "combinÄƒri", "aranjamente", "permutari", "permutÄƒri",
-    "multime", "mulÈ›ime", "multimi", "mulÈ›imi", "reuniune", "intersectie", "intersecÈ›ie",
+    "multime", "mulțime", "multimi", "mulțimi", "reuniune", "intersectie", "intersecție",
     "vector", "vectori", "dreapta", "plan", "distanta", "distanÈ›Äƒ", "unghi",
     "function", "equation", "inequality", "limit", "continuity", "derivative",
     "tangent", "integral", "primitive", "probability", "combinatorics", "vector", "geometry",
