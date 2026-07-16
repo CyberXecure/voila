@@ -929,6 +929,11 @@ def _utf(key: str, fallback: str, **kwargs) -> str:
 
 
 def _build_study_question_display(question: dict, pdf_name: str) -> str:
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_DISPLAY_GUARD_START
+    if isinstance(question, dict) and question.get("source_artifact") == "study_items.preview.json":
+        return _study_question_display(str(question.get("question") or ""))
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_DISPLAY_GUARD_END
+
     try:
         import study_questions
         return study_questions.build_study_question(PROJECT_ROOT, pdf_name, question)

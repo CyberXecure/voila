@@ -449,8 +449,109 @@ def _legacy_questions_from_raw_list(raw: object) -> list[dict]:
     return legacy_questions
 
 
+
+# VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_GUARDED_LOAD_START
+
+def _as_source_pages(value: object) -> list[object]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, (str, int)):
+        return [value]
+    return []
+
+
+def _load_study_items_preview_questions(output_dir: Path) -> list[dict]:
+    """Load v0.7.81/v0.7.82 Study items preview only when its quality gate is PASS."""
+    preview_path = output_dir / "study_items.preview.json"
+
+    if not preview_path.exists():
+        return []
+
+    try:
+        preview = json.loads(preview_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(preview, dict):
+        return []
+
+    if preview.get("artifact") != "study_items_preview":
+        return []
+
+    gate = preview.get("quality_gate")
+    if not isinstance(gate, dict):
+        return []
+
+    if gate.get("preview_quality_status") != "PASS":
+        return []
+
+    items = preview.get("items")
+    if not isinstance(items, list):
+        return []
+
+    questions: list[dict] = []
+
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        question = _clean_romanian_ocr_display_text(str(item.get("question") or "").strip())
+        expected_answer = _clean_romanian_ocr_display_text(str(item.get("expected_answer") or "").strip())
+        hint = _clean_romanian_ocr_display_text(str(item.get("hint") or "").strip())
+        explanation = _clean_romanian_ocr_display_text(str(item.get("explanation") or "").strip())
+
+        if not question or not expected_answer:
+            continue
+
+        concept_id = str(item.get("concept_id") or f"C{index:03d}").strip()
+        term = _clean_romanian_ocr_display_text(str(item.get("term") or concept_id).strip())
+        question_type = str(item.get("question_type") or "learning_pack_preview").strip() or "learning_pack_preview"
+        item_id = str(item.get("item_id") or f"{concept_id}.preview.{index:03d}").strip()
+
+        answer_parts = [expected_answer]
+        if hint:
+            answer_parts.append("Indiciu: " + hint)
+        if explanation:
+            answer_parts.append("Explicație: " + explanation)
+
+        answer = "\n\n".join(answer_parts)
+
+        questions.append(
+            {
+                "id": item_id,
+                "question_id": item_id,
+                "lesson_id": concept_id,
+                "concept_id": concept_id,
+                "concept_title": term,
+                "question": question,
+                "prompt": question,
+                "answer": answer,
+                "expected_answer": expected_answer,
+                "hint": hint,
+                "explanation": explanation,
+                "source_pdf_pages": _as_source_pages(item.get("source_pdf_pages")),
+                "question_type": question_type,
+                "difficulty": str(item.get("difficulty") or "medium"),
+                "generation_method": "v0.7.84_study_items_preview_guarded_study_integration",
+                "source_artifact": "study_items.preview.json",
+                "recommendation_reason": "întrebare pedagogică din learning pack",
+                "study_items_preview_used": True,
+            }
+        )
+
+    return questions
+
+# VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_GUARDED_LOAD_END
+
+
 def load_questions(output_dir: Path) -> list[dict]:
     """Load usable Study questions."""
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_GUARDED_FALLBACK_START
+    preview_questions = _load_study_items_preview_questions(output_dir)
+    if preview_questions:
+        return preview_questions
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_GUARDED_FALLBACK_END
+
     study_quiz_path = output_dir / "quiz.study.json"
     default_quiz_path = output_dir / "quiz.json"
 
@@ -818,6 +919,12 @@ def reset_study_state(output_dir: Path) -> None:
 
 def get_study_view(output_dir: Path) -> dict:
     questions = load_questions(output_dir)
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_VIEW_METADATA_START
+    study_items_preview_used = any(
+        isinstance(question, dict) and question.get("source_artifact") == "study_items.preview.json"
+        for question in questions
+    )
+    # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_VIEW_METADATA_END
     state = load_state(output_dir, questions)
     save_state(output_dir, state)
 
@@ -880,5 +987,8 @@ def get_study_view(output_dir: Path) -> dict:
         "overall_mastery_percent": round(overall_mastery * 100),
         "overall_status": mastery_status(overall_mastery) if concepts else "No quiz yet",
         "last_attempt": state.get("last_attempt"),
+        # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_VIEW_RETURN_START
+        "study_items_preview_used": study_items_preview_used,
+        "question_source": "study_items.preview.json" if study_items_preview_used else "quiz",
+        # VOILA_V0_7_84_STUDY_ITEMS_PREVIEW_VIEW_RETURN_END
     }
-
