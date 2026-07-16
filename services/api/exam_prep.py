@@ -394,7 +394,7 @@ def _v46_skill_items() -> list[dict]:
         else:
             normalized.setdefault(
                 "description_ro",
-                "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Study Mode.",
+                "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Modul Studiu.",
             )
 
         items.append(normalized)
@@ -566,7 +566,7 @@ def _v48_skill_catalog() -> list[dict]:
 
         description = _v48_pick(node, description_keys)
         if not description:
-            description = "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Study Mode."
+            description = "Skill din planul de pregătire Bacalaureat Matematică M1. Progresul se actualizează pe baza întrebărilor lucrate în Modul Studiu."
 
         items.append(
             {
@@ -652,7 +652,7 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
     linked_questions = _v48_linked_question_count(skill["id"])
 
     status_ro = "În progres" if linked_questions > 0 else "Nepornit"
-    status_hint = "Consolidat după lucru suficient în Study Mode"
+    status_hint = "Consolidat după lucru suficient în Modul Studiu"
 
     html = (
         '<!doctype html><html lang="ro"><head><meta charset="utf-8">'
@@ -688,10 +688,10 @@ def render_exam_prep_skill_detail_page(skill_id: str) -> tuple[str, int]:
         '<h2>Cum lucrezi acest skill?</h2>'
         '<ol class="study-steps">'
         '<li>Deschide un PDF generat din biblioteca Voila.</li>'
-        '<li>Foloseste actiunea Study pentru intrebari legate de acest skill.</li>'
-        '<li>Revino in Exam Prep pentru a vedea progresul actualizat din Study Mode.</li>'
+        '<li>Folosește acțiunea Studiu pentru întrebări legate de acest skill.</li>'
+        '<li>Revino în Exam Prep pentru a vedea progresul actualizat din Modul Studiu.</li>'
         '</ol>'
-        '<p class="muted">Obiectivul este sa ajungi treptat la nivel Consolidat, fara sa modificam motorul BKT existent.</p>'
+        '<p class="muted">Obiectivul este să ajungi treptat la nivel Consolidat, fără să modificăm motorul BKT existent.</p>'
         '</section>'
         '<div class="actions">'
         '<a class="button primary" href="/#library">Continuă în Modul Studiu</a>'
@@ -1659,7 +1659,7 @@ def _v423_polish_skill_detail_ro_html(html: str) -> str:
         ("In progres", "În progres"),
         ("Pregatire examene", "Pregătire examene"),
         ("Matematica M1", "Matematică M1"),
-        ("Intrebari", "Întrebări"),
+        ("Întrebări", "Întrebări"),
         ("Continua", "Continuă"),
         ("Inapoi", "Înapoi"),
     ]
@@ -1690,4 +1690,3 @@ def render_exam_prep_skill_detail_sections_html(skill_id: str) -> str:
         + rendered_sections
         + "</div>"
     )
-
