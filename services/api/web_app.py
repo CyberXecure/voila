@@ -2284,6 +2284,25 @@ def generate_for_pdf(pdf_path: Path) -> Path:
             ],
         ),
         (
+            "build OCR Math report if enabled",
+            [
+                sys.executable,
+                str(api_dir / "ocr_math_report_hook.py"),
+                "--output-folder",
+                str(output_dir),
+                "--pdf-name",
+                source_pdf.name,
+            ] + (
+                ["--enable"]
+                if __import__("os").environ.get("VOILA_ENABLE_OCR_MATH_REPORT_HOOK", "").strip().lower()
+                in {"1", "true", "yes", "on"}
+                else []
+            ) + [
+                "--reason",
+                "v0.7.78-generate-for-pdf",
+            ],
+        ),
+        (
             "build outline",
             [
                 sys.executable,
