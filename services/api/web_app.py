@@ -3186,6 +3186,133 @@ def _voila_v080_study_recommendation_reason_label(raw: str) -> str:
 # VOILA_V0_7_80_STUDY_UX_REASON_LABEL_END
 
 
+
+# VOILA_V0_7_82_STUDY_ITEMS_PREVIEW_VIEWER_START
+
+def _voila_v082_study_items_preview_path(course_id: str):
+    from pathlib import Path as _Path
+    return _Path(__file__).resolve().parents[2] / "data" / "output" / course_id / "study_items.preview.json"
+
+
+def _voila_v082_escape(value) -> str:
+    import html as _html
+    return _html.escape(str(value or ""))
+
+
+@app.get("/owner/study-items-preview/{course_id}/view", response_class=HTMLResponse)
+def owner_study_items_preview_view(course_id: str):
+    import json as _json
+    import re as _re
+
+    if not _re.fullmatch(r"[A-Za-z0-9_.-]+", str(course_id or "")):
+        body = "<main class=\"card\"><h1>Previzualizare Study items</h1><p>Course id invalid.</p></main>"
+        return HTMLResponse(content=page("Voila! Study items preview", body), status_code=400)
+
+    preview_path = _voila_v082_study_items_preview_path(course_id)
+
+    if not preview_path.exists():
+        body = f"""
+        <main class="card">
+          <h1>Previzualizare Study items</h1>
+          <p>Nu există <code>study_items.preview.json</code> pentru cursul <strong>{_voila_v082_escape(course_id)}</strong>.</p>
+          <p>Rulează generatorul preview înainte de vizualizare.</p>
+        </main>
+        """
+        return HTMLResponse(content=page("Voila! Study items preview", body), status_code=404)
+
+    preview = _json.loads(preview_path.read_text(encoding="utf-8"))
+    items = preview.get("items") if isinstance(preview.get("items"), list) else []
+    gate = preview.get("quality_gate") if isinstance(preview.get("quality_gate"), dict) else {}
+    policy = preview.get("policy") if isinstance(preview.get("policy"), dict) else {}
+
+    cards = []
+    for index, item in enumerate(items, 1):
+        if not isinstance(item, dict):
+            continue
+
+        pages = item.get("source_pdf_pages") or []
+        if isinstance(pages, list):
+            pages_label = ", ".join(str(x) for x in pages) or "—"
+        else:
+            pages_label = _voila_v082_escape(pages) or "—"
+
+        cards.append(f"""
+        <article class="card v0782-study-item-card">
+          <div class="meta">
+            #{index} · {_voila_v082_escape(item.get("concept_id"))}
+            · {_voila_v082_escape(item.get("term"))}
+            · {_voila_v082_escape(item.get("question_type"))}
+            · pagini sursă: {_voila_v082_escape(pages_label)}
+          </div>
+          <h2>{_voila_v082_escape(item.get("question"))}</h2>
+          <p><strong>Răspuns așteptat:</strong> {_voila_v082_escape(item.get("expected_answer"))}</p>
+          <p><strong>Hint:</strong> {_voila_v082_escape(item.get("hint"))}</p>
+          <p><strong>Explicație:</strong> {_voila_v082_escape(item.get("explanation"))}</p>
+        </article>
+        """)
+
+    item_count = preview.get("item_count", len(items))
+    concept_count = preview.get("concept_count", "—")
+    quality_status = gate.get("preview_quality_status", "—")
+
+    body = f"""
+    <style id="voila-v0782-study-items-preview-viewer-style">
+      .v0782-study-preview-summary {{
+        display: grid;
+        gap: 12px;
+      }}
+      .v0782-study-preview-badges {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }}
+      .v0782-study-preview-badges span {{
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(15, 23, 42, 0.35);
+      }}
+      .v0782-study-preview-grid {{
+        display: grid;
+        gap: 14px;
+        margin-top: 16px;
+      }}
+      .v0782-study-item-card h2 {{
+        margin-top: 8px;
+      }}
+      .v0782-study-item-card p {{
+        margin: 8px 0;
+      }}
+    </style>
+
+    <main>
+      <section class="card v0782-study-preview-summary">
+        <h1>Previzualizare Study items</h1>
+        <p class="meta">Owner-local · read-only · preview only · nu este integrat încă în Study</p>
+        <p><code>study_items.preview.json</code></p>
+
+        <div class="v0782-study-preview-badges">
+          <span>Itemuri: <strong>{_voila_v082_escape(item_count)}</strong></span>
+          <span>Concepte: <strong>{_voila_v082_escape(concept_count)}</strong></span>
+          <span>Quality gate: <strong>{_voila_v082_escape(quality_status)}</strong></span>
+          <span>LLM: <strong>{_voila_v082_escape(policy.get("uses_llm", False))}</strong></span>
+          <span>Cloud: <strong>{_voila_v082_escape(policy.get("uses_cloud", False))}</strong></span>
+          <span>Study integration: <strong>{_voila_v082_escape(gate.get("study_integration_changed", False))}</strong></span>
+        </div>
+      </section>
+
+      <section class="v0782-study-preview-grid">
+        {''.join(cards)}
+      </section>
+    </main>
+    """
+
+    return page("Voila! Study items preview", body)
+
+# VOILA_V0_7_82_STUDY_ITEMS_PREVIEW_VIEWER_END
+
+
 @app.get("/study", response_class=HTMLResponse)
 def study(pdf: str = Query(...)) -> HTMLResponse:
     pdf_path = validate_pdf_name(pdf)
