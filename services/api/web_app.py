@@ -364,6 +364,9 @@ async def _voila_owner_ocr_math_report_viewer(course_id: str):
 
     safe_course_id = html.escape(str(course_id), quote=True)
     safe_raw_href = "/owner/ocr-math-report/" + quote(str(course_id), safe="") + "/ocr_math_report.md"
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_OCR_MATH_LINK_START
+    safe_formula_visual_href = "/owner/formula-visual-evidence/" + quote(str(course_id), safe="") + "/view"
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_OCR_MATH_LINK_END
     total_suggestions = html.escape(_voila_ocr_math_report_display_value(summary.get("total_suggestions")))
     changed_line_count = html.escape(_voila_ocr_math_report_display_value(summary.get("changed_line_count")))
     size_bytes = html.escape(_voila_ocr_math_report_display_value(summary.get("report_size_bytes")))
@@ -493,6 +496,7 @@ async def _voila_owner_ocr_math_report_viewer(course_id: str):
       </div>
       <div class="actions">
         <a class="button" href="{safe_raw_href}">Deschide raw .md</a>
+        <a class="button" href="{safe_formula_visual_href}">Formula visual evidence</a>
       </div>
     </section>
 
@@ -5633,6 +5637,9 @@ def course_tools(pdf: str = Query("")):
     figures_hybrid_html = output_dir / "figures_hybrid" / "figures_hybrid.html"
     figures_html = output_dir / "figures" / "figures.html"
     hybrid_manifest = output_dir / "figures_hybrid" / "figures_manifest.hybrid.json"
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_COURSE_TOOLS_LINK_START
+    formula_visual_manifest = output_dir / "formula_visual_evidence.manifest.json"
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_COURSE_TOOLS_LINK_END
 
     course_available = course_html.exists() or course_md.exists()
     # VOILA_V0_7_87_STUDY_STATUS_COPY_CONSISTENCY_START
@@ -5654,7 +5661,23 @@ def course_tools(pdf: str = Query("")):
     ocr_available = pages_json.exists() or ocr_pages_json.exists()
     figures_available = figures_hybrid_html.exists() or figures_html.exists()
     crops_available = hybrid_manifest.exists()
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_COURSE_TOOLS_AVAILABLE_START
+    formula_visual_available = formula_visual_manifest.exists()
+    formula_visual_candidate_count = None
+    if formula_visual_available:
+        try:
+            import json as _json
+            _formula_visual_data = _json.loads(formula_visual_manifest.read_text(encoding="utf-8"))
+            formula_visual_candidate_count = _formula_visual_data.get("candidate_count")
+        except Exception:
+            formula_visual_candidate_count = None
+    formula_visual_description = (
+        "Viewer owner-local read-only pentru crop-uri vizuale formulă/simbol: imagine, pagină, bbox, text OCR, motiv detectare și status review."
+    )
+    if formula_visual_candidate_count is not None:
+        formula_visual_description += " Candidați vizuali: " + html.escape(str(formula_visual_candidate_count)) + "."
 
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_COURSE_TOOLS_AVAILABLE_END
     ocr_math_md, ocr_math_json = _voila_ocr_math_report_paths(pdf_path.stem)
     # VOILA_V0_7_34_OCR_MATH_CARD_AVAILABILITY_ONLY_START
     ocr_math_available = bool(ocr_math_md and ocr_math_md.is_file())
@@ -5754,6 +5777,13 @@ def course_tools(pdf: str = Query("")):
             f"/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view",
             ocr_math_available,
             "Lipsește ocr_math_report.md. Activează hook-ul local OCR Math și regenerează dacă vrei diagnostic.",
+        ),
+        card(
+            "Formula Visual Evidence",
+            formula_visual_description,
+            f"/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view",
+            formula_visual_available,
+            "Lipsește formula_visual_evidence.manifest.json. Rulează manifest builder local pentru crop-uri formulă/simbol.",
         ),
         card(
             _ut("ui.figures", "Figures"),
@@ -5915,6 +5945,7 @@ def course_tools(pdf: str = Query("")):
       <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
       <a href="/exam-prep">Exam Prep</a>
       <a href="/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view">OCR Math</a>
+      <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
     </nav>
     """
 
@@ -5940,6 +5971,7 @@ def course_tools(pdf: str = Query("")):
         <a href="/study?pdf={q}">Studiu</a>
         <a href="/progress?pdf={q}">Progres</a>
         <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
+        <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
         <a href="/exam-prep">Exam Prep</a>
         <a href="/">Bibliotecă</a>
       </nav>
@@ -11084,6 +11116,12 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
         """
 
     q_pdf = html.escape(quote(safe_id + ".pdf", safe=""), quote=True)
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_OCR_REVIEW_LINK_START
+    safe_formula_visual_href = html.escape(
+        "/owner/formula-visual-evidence/" + quote(safe_id, safe="") + "/view",
+        quote=True,
+    )
+    # VOILA_V0_7_91_FORMULA_VISUAL_EVIDENCE_OCR_REVIEW_LINK_END
     body = f"""
     <style>
       .ocr-review-summary {{
@@ -11138,6 +11176,7 @@ def _voila_owner_ocr_review_read_only_shell(course_id: str) -> HTMLResponse:
 
       <div class="actions">
         <a class="btn" href="/course-tools?pdf={q_pdf}">Course Tools</a>
+        <a class="btn" href="{safe_formula_visual_href}">Formula visual evidence</a>
         <a class="btn" href="/">Library</a>
       </div>
 
