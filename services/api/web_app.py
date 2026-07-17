@@ -3467,11 +3467,24 @@ def owner_formula_visual_evidence_view(course_id: str):
 
     manifest = _json.loads(manifest_path.read_text(encoding="utf-8"))
     candidates = manifest.get("candidates") if isinstance(manifest.get("candidates"), list) else []
+    # VOILA_V0_7_92_FORMULA_VISUAL_EVIDENCE_VIEWER_SORT_START
+    def _v0792_quality_rank(item):
+        tier = str((item or {}).get("quality_tier") or "low")
+        tier_rank = {"high": 0, "medium": 1, "low": 2}.get(tier, 2)
+        score = int((item or {}).get("quality_score") or 0)
+        return (tier_rank, -score, str((item or {}).get("id") or ""))
+
+    display_candidates = sorted(candidates, key=_v0792_quality_rank)
+    quality_counts = manifest.get("quality_counts") if isinstance(manifest.get("quality_counts"), dict) else {}
+    high_count = int(quality_counts.get("high") or 0)
+    medium_count = int(quality_counts.get("medium") or 0)
+    low_count = int(quality_counts.get("low") or 0)
+    # VOILA_V0_7_92_FORMULA_VISUAL_EVIDENCE_VIEWER_SORT_END
     page_images = manifest.get("page_images") if isinstance(manifest.get("page_images"), list) else []
     policy = manifest.get("policy") if isinstance(manifest.get("policy"), dict) else {}
 
     cards = []
-    for index, item in enumerate(candidates, 1):
+    for index, item in enumerate(display_candidates, 1):
         if not isinstance(item, dict):
             continue
 
@@ -3484,6 +3497,10 @@ def owner_formula_visual_evidence_view(course_id: str):
         )
         reasons = item.get("reasons") if isinstance(item.get("reasons"), list) else []
         reasons_label = ", ".join(str(x) for x in reasons) or "—"
+        quality_tier = str(item.get("quality_tier") or "low")
+        quality_score = str(item.get("quality_score") or 0)
+        noise_reasons = item.get("noise_reasons") if isinstance(item.get("noise_reasons"), list) else []
+        noise_label = ", ".join(str(x) for x in noise_reasons) or "—"
         bbox = item.get("bbox") if isinstance(item.get("bbox"), list) else []
         bbox_label = ", ".join(str(x) for x in bbox) or "—"
 
@@ -3499,10 +3516,13 @@ def owner_formula_visual_evidence_view(course_id: str):
             #{index} · {_voila_v082_escape(item.get("id"))}
             · pagina {_voila_v082_escape(item.get("page"))}
             · status: {_voila_v082_escape(item.get("review_status"))}
+            · calitate: {_voila_v082_escape(quality_tier)} ({_voila_v082_escape(quality_score)})
           </div>
           {image_html}
           <p><strong>Text OCR:</strong> {_voila_v082_escape(item.get("text"))}</p>
+          <p><strong>Calitate:</strong> {_voila_v082_escape(quality_tier)} · score {_voila_v082_escape(quality_score)}</p>
           <p><strong>Motiv detectare:</strong> {_voila_v082_escape(reasons_label)}</p>
+          <p><strong>Zgomot:</strong> {_voila_v082_escape(noise_label)}</p>
           <p><strong>BBox:</strong> <code>{_voila_v082_escape(bbox_label)}</code></p>
           <p><strong>Crop:</strong> <code>{_voila_v082_escape(crop_path)}</code></p>
         </article>
@@ -3562,6 +3582,9 @@ def owner_formula_visual_evidence_view(course_id: str):
           <span>Pagini: <strong>{_voila_v082_escape(manifest.get("page_count"))}</strong></span>
           <span>Imagini pagină: <strong>{_voila_v082_escape(len(page_images))}</strong></span>
           <span>Candidați: <strong>{_voila_v082_escape(manifest.get("candidate_count", len(candidates)))}</strong></span>
+          <span>High: <strong>{_voila_v082_escape(high_count)}</strong></span>
+          <span>Medium: <strong>{_voila_v082_escape(medium_count)}</strong></span>
+          <span>Low/noisy: <strong>{_voila_v082_escape(low_count)}</strong></span>
           <span>PyMuPDF: <strong>{_voila_v082_escape(uses_pymupdf_label)}</strong></span>
           <span>LLM: <strong>{_voila_v082_escape(uses_llm_label)}</strong></span>
           <span>Cloud: <strong>{_voila_v082_escape(uses_cloud_label)}</strong></span>

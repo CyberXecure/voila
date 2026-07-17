@@ -62,6 +62,87 @@ def _clip_bbox(bbox: tuple[float, float, float, float], rect, pad: float) -> tup
     )
 
 
+
+# VOILA_V0_7_92_FORMULA_VISUAL_EVIDENCE_QUALITY_FILTER_START
+def _quality_profile(text: str, reasons: list[str]) -> dict[str, Any]:
+    import re as _re
+
+    raw = str(text or "").strip()
+    compact = _re.sub(r"\s+", " ", raw)
+    lowered = compact.lower()
+
+    noise_reasons: list[str] = []
+    score = 0
+
+    math_chars = set("=+-×*/^√∑∫∞≤≥→↔<>∈∉⊂⊆⊄∪∩πθλμαβγΔδφΩω")
+    math_char_count = sum(1 for ch in compact if ch in math_chars)
+    digit_count = sum(1 for ch in compact if ch.isdigit())
+    letter_count = sum(1 for ch in compact if ch.isalpha())
+
+    if "math" in " ".join(reasons) or "formula" in " ".join(reasons):
+        score += 35
+    if "symbol_dense_short_line" in reasons:
+        score += 25
+    if "numeric_formula_candidate" in reasons:
+        score += 18
+    if math_char_count >= 2:
+        score += 24
+    elif math_char_count == 1:
+        score += 10
+    if digit_count >= 2:
+        score += 12
+    if _re.search(r"\b(sin|cos|tg|tan|arcsin|arccos|arctg|cotg)\b", lowered):
+        score += 30
+    if _re.search(r"[A-Z]\s*\([^)]+\)", compact):
+        score += 22
+    if _re.search(r"[\[\(]\s*[-−]?\d+|π|pi", compact):
+        score += 18
+    if "=" in compact or "→" in compact or "<" in compact or ">" in compact:
+        score += 20
+
+    if len(compact) <= 2:
+        noise_reasons.append("too_short_partial_crop")
+        score -= 35
+    if _re.match(r"^\d+\.\s+[A-Za-zĂÂÎȘȚăâîșț ]{6,}$", compact):
+        noise_reasons.append("section_title")
+        score -= 55
+    if any(word in lowered for word in ["definiție", "definitie", "atunci", "fie ", "considerăm", "consideram"]):
+        noise_reasons.append("mostly_explanatory_text")
+        score -= 35
+    if letter_count > 18 and math_char_count <= 1 and digit_count <= 1:
+        noise_reasons.append("mostly_plain_text")
+        score -= 35
+    if compact in {"-", "—", "–", ".", ",", ":", ";"}:
+        noise_reasons.append("punctuation_or_separator")
+        score -= 50
+    if compact.lower() in {"a.i.", "a.i", "cos:", "sin:", "atunci:"}:
+        noise_reasons.append("label_or_fragment")
+        score -= 35
+
+    if score >= 65 and not noise_reasons:
+        tier = "high"
+    elif score >= 35:
+        tier = "medium"
+    else:
+        tier = "low"
+
+    return {
+        "quality_tier": tier,
+        "quality_score": max(0, min(100, int(score))),
+        "noise_reasons": noise_reasons,
+    }
+
+
+def _quality_counts(candidates: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"high": 0, "medium": 0, "low": 0}
+    for item in candidates:
+        tier = str(item.get("quality_tier") or "low")
+        if tier not in counts:
+            tier = "low"
+        counts[tier] += 1
+    return counts
+# VOILA_V0_7_92_FORMULA_VISUAL_EVIDENCE_QUALITY_FILTER_END
+
 def build_manifest(course_id: str, max_candidates_per_page: int = 24, dpi: int = 180) -> dict[str, Any]:
     root = _repo_root()
     input_pdf = root / "data" / "input" / f"{course_id}.pdf"
@@ -121,6 +202,8 @@ def build_manifest(course_id: str, max_candidates_per_page: int = 24, dpi: int =
                 if not reasons:
                     continue
 
+                quality = _quality_profile(line_text, reasons)
+
                 raw_bbox = tuple(float(x) for x in line.get("bbox", [0, 0, 0, 0]))
                 x0, y0, x1, y1 = _clip_bbox(raw_bbox, page_rect, pad=10.0)
                 if x1 <= x0 or y1 <= y0:
@@ -133,10 +216,19 @@ def build_manifest(course_id: str, max_candidates_per_page: int = 24, dpi: int =
                         "bbox": [round(x0, 2), round(y0, 2), round(x1, 2), round(y1, 2)],
                         "raw_bbox": [round(x, 2) for x in raw_bbox],
                         "reasons": reasons,
+                        "quality_tier": quality["quality_tier"],
+                        "quality_score": quality["quality_score"],
+                        "noise_reasons": quality["noise_reasons"],
                     }
                 )
 
-        page_candidates = page_candidates[:max_candidates_per_page]
+        page_candidates = sorted(
+            page_candidates,
+            key=lambda item: (
+                -int(item.get("quality_score") or 0),
+                str(item.get("text") or ""),
+            ),
+        )[:max_candidates_per_page]
 
         for page_item_index, item in enumerate(page_candidates, 1):
             crop_rel = Path("formula_visual_evidence") / "crops" / f"page-{page_number:03d}-candidate-{page_item_index:03d}.png"
@@ -168,6 +260,7 @@ def build_manifest(course_id: str, max_candidates_per_page: int = 24, dpi: int =
         "output_dir": str(output_dir),
         "page_count": len(page_images),
         "candidate_count": len(candidates),
+        "quality_counts": _quality_counts(candidates),
         "page_images": page_images,
         "candidates": candidates,
         "policy": {
