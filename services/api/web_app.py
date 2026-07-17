@@ -3347,8 +3347,8 @@ def owner_study_items_preview_view(course_id: str):
           <span>Itemuri: <strong>{_voila_v082_escape(item_count)}</strong></span>
           <span>Concepte: <strong>{_voila_v082_escape(concept_count)}</strong></span>
           <span>Quality gate: <strong>{_voila_v082_escape(quality_status)}</strong></span>
-          <span>LLM: <strong>{_voila_v082_escape(policy.get("uses_llm", False))}</strong></span>
-          <span>Cloud: <strong>{_voila_v082_escape(policy.get("uses_cloud", False))}</strong></span>
+          <span>LLM: <strong>{_voila_v082_escape(uses_llm_label)}</strong></span>
+          <span>Cloud: <strong>{_voila_v082_escape(uses_cloud_label)}</strong></span>
           <span>Study integration: <strong>{_voila_v082_escape(study_integration_badge)}</strong></span>
         </div>
       </section>
@@ -3361,7 +3361,219 @@ def owner_study_items_preview_view(course_id: str):
 
     return page("Voila! Study items preview", body)
 
-# VOILA_V0_7_82_STUDY_ITEMS_PREVIEW_VIEWER_END
+
+# VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_VIEWER_START
+
+def _voila_v090_formula_visual_manifest_path(course_id: str):
+    from pathlib import Path as _Path
+    return _Path(__file__).resolve().parents[2] / "data" / "output" / course_id / "formula_visual_evidence.manifest.json"
+
+
+def _voila_v090_formula_visual_evidence_dir(course_id: str):
+    from pathlib import Path as _Path
+    return _Path(__file__).resolve().parents[2] / "data" / "output" / course_id / "formula_visual_evidence"
+
+
+def _voila_v090_validate_course_id(course_id: str) -> str:
+    import re as _re
+    safe_course_id = str(course_id or "").strip()
+    if not _re.fullmatch(r"[A-Za-z0-9_.-]+", safe_course_id):
+        raise ValueError("invalid course id")
+    return safe_course_id
+
+
+@app.get("/owner/formula-visual-evidence/{course_id}/asset", include_in_schema=False)
+def owner_formula_visual_evidence_asset(course_id: str, candidate_id: str):
+    # VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_SAFE_ASSET_START
+    # Security policy: do not build a filesystem path directly from a user-provided path.
+    # The request provides only a strict candidate id. The crop path is resolved from the
+    # owner-local manifest and then constrained to the formula_visual_evidence directory.
+    import json as _json
+    import re as _re
+    from fastapi.responses import FileResponse as _FileResponse
+
+    try:
+        safe_course_id = _voila_v090_validate_course_id(course_id)
+    except ValueError:
+        return HTMLResponse(content="Invalid course id.", status_code=400)
+
+    safe_candidate_id = str(candidate_id or "").strip()
+    if not _re.fullmatch(r"p[0-9]{3}-c[0-9]{3}", safe_candidate_id):
+        return HTMLResponse(content="Invalid candidate id.", status_code=400)
+
+    manifest_path = _voila_v090_formula_visual_manifest_path(safe_course_id)
+    if not manifest_path.exists():
+        return HTMLResponse(content="Manifest not found.", status_code=404)
+
+    manifest = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    candidates = manifest.get("candidates") if isinstance(manifest.get("candidates"), list) else []
+
+    crop_path = ""
+    for item in candidates:
+        if isinstance(item, dict) and str(item.get("id") or "") == safe_candidate_id:
+            crop_path = str(item.get("crop_path") or "")
+            break
+
+    if not crop_path:
+        return HTMLResponse(content="Candidate not found.", status_code=404)
+
+    if not crop_path.startswith("formula_visual_evidence/crops/"):
+        return HTMLResponse(content="Invalid manifest crop scope.", status_code=400)
+
+    filename = crop_path.rsplit("/", 1)[-1]
+    if not _re.fullmatch(r"page-[0-9]{3}-candidate-[0-9]{3}\.png", filename):
+        return HTMLResponse(content="Invalid manifest crop filename.", status_code=400)
+
+    base = _voila_v090_formula_visual_evidence_dir(safe_course_id).resolve()
+    target = (base / "crops" / filename).resolve()
+
+    try:
+        target.relative_to(base / "crops")
+    except ValueError:
+        return HTMLResponse(content="Invalid asset scope.", status_code=400)
+
+    if not target.exists() or not target.is_file():
+        return HTMLResponse(content="Asset not found.", status_code=404)
+
+    return _FileResponse(str(target))
+    # VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_SAFE_ASSET_END
+
+
+@app.get("/owner/formula-visual-evidence/{course_id}/view", response_class=HTMLResponse)
+def owner_formula_visual_evidence_view(course_id: str):
+    import json as _json
+    from urllib.parse import quote as _quote
+
+    try:
+        safe_course_id = _voila_v090_validate_course_id(course_id)
+    except ValueError:
+        body = "<main class=\"card\"><h1>Formula visual evidence</h1><p>Course id invalid.</p></main>"
+        return HTMLResponse(content=page("Voila! Formula visual evidence", body), status_code=400)
+
+    manifest_path = _voila_v090_formula_visual_manifest_path(safe_course_id)
+    if not manifest_path.exists():
+        body = f"""
+        <main class="card">
+          <h1>Formula visual evidence</h1>
+          <p>Nu există <code>formula_visual_evidence.manifest.json</code> pentru cursul <strong>{_voila_v082_escape(safe_course_id)}</strong>.</p>
+          <p>Rulează <code>scripts/dev/build-formula-visual-evidence-manifest.py</code> pentru acest curs.</p>
+        </main>
+        """
+        return HTMLResponse(content=page("Voila! Formula visual evidence", body), status_code=404)
+
+    manifest = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    candidates = manifest.get("candidates") if isinstance(manifest.get("candidates"), list) else []
+    page_images = manifest.get("page_images") if isinstance(manifest.get("page_images"), list) else []
+    policy = manifest.get("policy") if isinstance(manifest.get("policy"), dict) else {}
+
+    cards = []
+    for index, item in enumerate(candidates, 1):
+        if not isinstance(item, dict):
+            continue
+
+        crop_path = str(item.get("crop_path") or "")
+        candidate_id = str(item.get("id") or "")
+        crop_src = (
+            f"/owner/formula-visual-evidence/{_quote(safe_course_id, safe='')}/asset?candidate_id={_quote(candidate_id, safe='')}"
+            if crop_path and candidate_id
+            else ""
+        )
+        reasons = item.get("reasons") if isinstance(item.get("reasons"), list) else []
+        reasons_label = ", ".join(str(x) for x in reasons) or "—"
+        bbox = item.get("bbox") if isinstance(item.get("bbox"), list) else []
+        bbox_label = ", ".join(str(x) for x in bbox) or "—"
+
+        image_html = (
+            f'<img class="v0790-formula-crop" src="{_voila_v082_escape(crop_src)}" alt="Formula candidate crop {_voila_v082_escape(item.get("id"))}">'
+            if crop_src
+            else '<p class="missing-note">Crop lipsă.</p>'
+        )
+
+        cards.append(f"""
+        <article class="card v0790-formula-card">
+          <div class="meta">
+            #{index} · {_voila_v082_escape(item.get("id"))}
+            · pagina {_voila_v082_escape(item.get("page"))}
+            · status: {_voila_v082_escape(item.get("review_status"))}
+          </div>
+          {image_html}
+          <p><strong>Text OCR:</strong> {_voila_v082_escape(item.get("text"))}</p>
+          <p><strong>Motiv detectare:</strong> {_voila_v082_escape(reasons_label)}</p>
+          <p><strong>BBox:</strong> <code>{_voila_v082_escape(bbox_label)}</code></p>
+          <p><strong>Crop:</strong> <code>{_voila_v082_escape(crop_path)}</code></p>
+        </article>
+        """)
+
+    # VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_BOOL_DISPLAY_START
+    uses_pymupdf_label = str(policy.get("uses_pymupdf", False))
+    uses_llm_label = str(policy.get("uses_llm", False))
+    uses_cloud_label = str(policy.get("uses_cloud", False))
+    formula_ocr_label = str(policy.get("formula_ocr_performed", False))
+    # VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_BOOL_DISPLAY_END
+
+    body = f"""
+    <style id="voila-v0790-formula-visual-evidence-viewer-style">
+      .v0790-formula-summary {{
+        display: grid;
+        gap: 12px;
+      }}
+      .v0790-formula-badges {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }}
+      .v0790-formula-badges span {{
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(15, 23, 42, 0.35);
+      }}
+      .v0790-formula-grid {{
+        display: grid;
+        gap: 14px;
+        margin-top: 16px;
+      }}
+      .v0790-formula-crop {{
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 10px 0;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 12px;
+        background: white;
+      }}
+      .v0790-formula-card p {{
+        margin: 8px 0;
+      }}
+    </style>
+
+    <main>
+      <section class="card v0790-formula-summary">
+        <h1>Formula visual evidence</h1>
+        <p class="meta">Owner-local · read-only · crop-uri vizuale pentru candidați formulă/simbol</p>
+        <p><code>formula_visual_evidence.manifest.json</code></p>
+
+        <div class="v0790-formula-badges">
+          <span>Pagini: <strong>{_voila_v082_escape(manifest.get("page_count"))}</strong></span>
+          <span>Imagini pagină: <strong>{_voila_v082_escape(len(page_images))}</strong></span>
+          <span>Candidați: <strong>{_voila_v082_escape(manifest.get("candidate_count", len(candidates)))}</strong></span>
+          <span>PyMuPDF: <strong>{_voila_v082_escape(uses_pymupdf_label)}</strong></span>
+          <span>LLM: <strong>{_voila_v082_escape(uses_llm_label)}</strong></span>
+          <span>Cloud: <strong>{_voila_v082_escape(uses_cloud_label)}</strong></span>
+          <span>Formula OCR: <strong>{_voila_v082_escape(formula_ocr_label)}</strong></span>
+        </div>
+      </section>
+
+      <section class="v0790-formula-grid">
+        {''.join(cards)}
+      </section>
+    </main>
+    """
+
+    return page("Voila! Formula visual evidence", body)
+
+# VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_VIEWER_END
 
 
 @app.get("/study", response_class=HTMLResponse)
@@ -11251,4 +11463,4 @@ def _voila_owner_ocr_review_final_confirm(course_id: str):
 
 # VOILA_V0_7_73_OWNER_LOCAL_OCR_REVIEW_FINAL_CONFIRM_BUTTON_END
 
-# VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END
+# VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END\n
