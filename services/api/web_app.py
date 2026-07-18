@@ -3603,6 +3603,190 @@ def owner_formula_visual_evidence_view(course_id: str):
 # VOILA_V0_7_90_FORMULA_VISUAL_EVIDENCE_VIEWER_END
 
 
+
+# VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_START
+def _voila_v0796_safe_course_id(course_id: str) -> str:
+    return Path(str(course_id or "").replace("\\", "/")).name
+
+
+def _voila_v0796_manual_learning_evidence_dir(course_id: str) -> Path:
+    return OUTPUT_DIR / _voila_v0796_safe_course_id(course_id)
+
+
+def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
+    safe_course_id = _voila_v0796_safe_course_id(course_id)
+    return OUTPUT_DIR / safe_course_id / "formula_visual_evidence" / "pages" / f"page-{int(page):03d}.png"
+
+
+@app.get("/owner/manual-learning-evidence/{course_id}", response_class=HTMLResponse, include_in_schema=False)
+def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Query(default=1, alias="page")) -> HTMLResponse:
+    safe_course_id = _voila_v0796_safe_course_id(course_id)
+    safe_page = max(1, int(page_number or 1))
+    output_dir = _voila_v0796_manual_learning_evidence_dir(safe_course_id)
+    page_image = _voila_v0796_page_image_path(safe_course_id, safe_page)
+    pdf_name = safe_course_id + ".pdf"
+
+    if page_image.exists():
+        page_image_html = f"""
+        <figure class="v0796-page-frame">
+          <img src="{output_url(safe_course_id, "formula_visual_evidence", "pages", f"page-{safe_page:03d}.png")}" alt="Source page {safe_page}">
+          <figcaption>source page {safe_page} · read-only skeleton</figcaption>
+        </figure>
+        """
+        source_state = "source_page_image_found"
+    else:
+        page_image_html = f"""
+        <div class="notice warn">
+          <strong>Source page image missing.</strong><br>
+          Expected: <code>{html.escape(str(page_image))}</code>
+        </div>
+        """
+        source_state = "source_page_image_missing"
+
+    body = f"""
+    <style>
+      .v0796-grid {{
+        display: grid;
+        grid-template-columns: minmax(320px, 1.2fr) minmax(320px, 0.8fr);
+        gap: 20px;
+        align-items: start;
+      }}
+      .v0796-page-frame {{
+        margin: 0;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 12px;
+        background: rgba(255,255,255,0.32);
+      }}
+      .v0796-page-frame img {{
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: white;
+      }}
+      .v0796-form {{
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+        background: rgba(255,255,255,0.32);
+      }}
+      .v0796-form label {{
+        display: block;
+        font-weight: 700;
+        margin-top: 12px;
+      }}
+      .v0796-form input,
+      .v0796-form select,
+      .v0796-form textarea {{
+        width: 100%;
+        margin-top: 4px;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fffaf0;
+      }}
+      .v0796-disabled-note {{
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 14px;
+      }}
+      @media (max-width: 860px) {{
+        .v0796-grid {{
+          grid-template-columns: 1fr;
+        }}
+      }}
+    </style>
+
+    <h1>Manual Learning Evidence · skeleton</h1>
+    <p class="meta">
+      Owner-local · read-only · follows v0.7.94 Direction Charter and v0.7.95 UI design.
+    </p>
+
+    <div class="toolbar">
+      <a class="btn" href="/course-tools?pdf={quote(pdf_name)}">Back to Course Tools</a>
+      <a class="btn" href="/owner/formula-visual-evidence/{quote(safe_course_id)}/view">Formula Visual Evidence viewer</a>
+      <a class="btn" href="/owner/manual-learning-evidence/{quote(safe_course_id)}?page={max(1, safe_page - 1)}">Previous page</a>
+      <a class="btn" href="/owner/manual-learning-evidence/{quote(safe_course_id)}?page={safe_page + 1}">Next page</a>
+    </div>
+
+    <div class="notice">
+      <strong>Skeleton only.</strong>
+      This page does not implement mouse crop selection and does not save evidence yet.
+      Future evidence will be saved to <code>manual_learning_evidence.json</code>.
+    </div>
+
+    <p class="meta">
+      course_id: <code>{html.escape(safe_course_id)}</code><br>
+      page: <code>{safe_page}</code><br>
+      source_state: <code>{source_state}</code><br>
+      output_dir: <code>{html.escape(str(output_dir))}</code>
+    </p>
+
+    <div class="v0796-grid">
+      <section>
+        <h2>1. Source page</h2>
+        {page_image_html}
+      </section>
+
+      <section class="v0796-form">
+        <h2>2. Evidence metadata form</h2>
+        <p class="meta">Read-only placeholder. Save endpoint is intentionally absent in v0.7.96.</p>
+
+        <label>title</label>
+        <input value="" placeholder="Example: Modulul vectorului AB" disabled>
+
+        <label>kind</label>
+        <select disabled>
+          <option>formula</option>
+          <option>definition</option>
+          <option>example</option>
+          <option>theorem</option>
+          <option>diagram</option>
+          <option>drawing</option>
+          <option>note</option>
+        </select>
+
+        <label>verified_text</label>
+        <textarea rows="4" placeholder="Owner-verified text/formula goes here" disabled></textarea>
+
+        <label>explanation_ro</label>
+        <textarea rows="4" placeholder="Explicație scurtă verificată de owner" disabled></textarea>
+
+        <label>source_status</label>
+        <select disabled>
+          <option>verified</option>
+          <option>uncertain</option>
+          <option>possible_source_error</option>
+        </select>
+
+        <label>source_note</label>
+        <textarea rows="3" placeholder="Observații despre sursă / posibile greșeli" disabled></textarea>
+
+        <label>status</label>
+        <select disabled>
+          <option>pending_owner_review</option>
+          <option>accepted_owner_verified</option>
+          <option>rejected_noise</option>
+        </select>
+
+        <div class="v0796-disabled-note">
+          Save disabled. Manual crop disabled. Learning Pack integration disabled.
+        </div>
+      </section>
+    </div>
+
+    <h2>3. Future evidence list</h2>
+    <div class="notice">
+      No evidence list is implemented in this milestone.
+      Future accepted items will come from <code>manual_learning_evidence.json</code>.
+    </div>
+    """
+
+    return page("Manual Learning Evidence · skeleton", body)
+# VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_END
+
+
 @app.get("/study", response_class=HTMLResponse)
 def study(pdf: str = Query(...)) -> HTMLResponse:
     pdf_path = validate_pdf_name(pdf)
