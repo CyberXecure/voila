@@ -3783,6 +3783,29 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         overflow-wrap: anywhere;
         margin: 8px 0;
       }}
+      /* VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_START */
+      .v0799-pending-preview {{
+        margin-top: 14px;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(31,78,121,0.06);
+      }}
+      .v0799-pending-preview textarea {{
+        width: 100%;
+        min-height: 190px;
+        margin-top: 8px;
+        padding: 10px;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 12px;
+        background: #fffaf0;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 13px;
+      }}
+      .v0799-readonly-field {{
+        margin-top: 8px;
+      }}
+      /* VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -3837,6 +3860,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <h2>2. Crop selection preview</h2>
         <p class="meta" id="v0798CropHelp">Drag on the source page to preview a crop. Preview only; no file is written.</p>
         <code class="v0798-bbox" id="v0798BboxText">bbox_px=[]</code>
+        <input id="v0799BoundBboxPreview" class="v0799-readonly-field" value="bbox_px=[]" readonly disabled>
         <canvas class="v0798-preview-canvas" id="v0798PreviewCanvas" width="640" height="220" aria-label="Crop preview canvas"></canvas>
         <div class="v0796-disabled-note">
           Preview only. Save disabled. No manual_learning_evidence.json write.
@@ -3848,10 +3872,10 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <p class="meta">Read-only placeholder. Save endpoint is intentionally absent in v0.7.98.</p>
 
         <label>title</label>
-        <input value="" placeholder="Example: Modulul vectorului AB" disabled>
+        <input id="v0799TitlePreview" value="" placeholder="Example: Modulul vectorului AB" disabled>
 
         <label>kind</label>
-        <select disabled>
+        <select id="v0799KindPreview" disabled>
           <option>formula</option>
           <option>definition</option>
           <option>example</option>
@@ -3862,27 +3886,37 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         </select>
 
         <label>verified_text</label>
-        <textarea rows="4" placeholder="Owner-verified text/formula goes here" disabled></textarea>
+        <textarea id="v0799VerifiedTextPreview" rows="4" placeholder="Owner-verified text/formula goes here" disabled></textarea>
 
         <label>explanation_ro</label>
-        <textarea rows="4" placeholder="Explicație scurtă verificată de owner" disabled></textarea>
+        <textarea id="v0799ExplanationPreview" rows="4" placeholder="Explicație scurtă verificată de owner" disabled></textarea>
 
         <label>source_status</label>
-        <select disabled>
+        <select id="v0799SourceStatusPreview" disabled>
           <option>verified</option>
           <option>uncertain</option>
           <option>possible_source_error</option>
         </select>
 
         <label>source_note</label>
-        <textarea rows="3" placeholder="Observații despre sursă / posibile greșeli" disabled></textarea>
+        <textarea id="v0799SourceNotePreview" rows="3" placeholder="Observații despre sursă / posibile greșeli" disabled></textarea>
 
         <label>status</label>
-        <select disabled>
+        <select id="v0799StatusPreview" disabled>
           <option>pending_owner_review</option>
           <option>accepted_owner_verified</option>
           <option>rejected_noise</option>
         </select>
+
+        <div class="v0799-pending-preview">
+          <strong>Pending evidence preview</strong>
+          <p class="meta">Browser-only preview. Nothing is saved in v0.7.99.</p>
+          <textarea id="v0799PendingEvidencePreview" readonly disabled>{{
+  "status": "pending_owner_review",
+  "bbox": [],
+  "save_enabled": false
+}}</textarea>
+        </div>
 
         <div class="v0796-disabled-note">
           Save disabled. Manual crop disabled. Learning Pack integration disabled.
@@ -3905,8 +3939,19 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         const bboxText = document.getElementById("v0798BboxText");
         const canvas = document.getElementById("v0798PreviewCanvas");
         const help = document.getElementById("v0798CropHelp");
+        // VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_JS_START
+        const boundBboxPreview = document.getElementById("v0799BoundBboxPreview");
+        const pendingEvidencePreview = document.getElementById("v0799PendingEvidencePreview");
+        const titlePreview = document.getElementById("v0799TitlePreview");
+        const kindPreview = document.getElementById("v0799KindPreview");
+        const verifiedTextPreview = document.getElementById("v0799VerifiedTextPreview");
+        const explanationPreview = document.getElementById("v0799ExplanationPreview");
+        const sourceStatusPreview = document.getElementById("v0799SourceStatusPreview");
+        const sourceNotePreview = document.getElementById("v0799SourceNotePreview");
+        const statusPreview = document.getElementById("v0799StatusPreview");
+        // VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_JS_END
 
-        if (!shell || !image || !box || !bboxText || !canvas || !help) {{
+        if (!shell || !image || !box || !bboxText || !canvas || !help || !boundBboxPreview || !pendingEvidencePreview) {{
           return;
         }}
 
@@ -3936,6 +3981,41 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
           ctx.clearRect(0, 0, canvas.width, canvas.height);
         }}
 
+        // VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_PENDING_PREVIEW_START
+        function fieldValue(element, fallback) {{
+          if (!element) {{
+            return fallback;
+          }}
+          return element.value || fallback;
+        }}
+
+        function updatePendingEvidencePreview(bbox, cropW, cropH) {{
+          const bboxTextValue = "bbox_px=[" + bbox.join(", ") + "]";
+          boundBboxPreview.value = bboxTextValue;
+
+          const pending = {{
+            artifact: "manual_learning_evidence.preview",
+            course_id: "{safe_course_id_html}",
+            page: {safe_page},
+            bbox: bbox,
+            crop_size: [cropW, cropH],
+            kind: fieldValue(kindPreview, "formula"),
+            title: fieldValue(titlePreview, ""),
+            verified_text: fieldValue(verifiedTextPreview, ""),
+            explanation_ro: fieldValue(explanationPreview, ""),
+            source_status: fieldValue(sourceStatusPreview, "verified"),
+            source_note: fieldValue(sourceNotePreview, ""),
+            status: fieldValue(statusPreview, "pending_owner_review"),
+            save_enabled: false,
+            manual_learning_evidence_written: false,
+            crop_file_written: false,
+            learning_pack_changed: false
+          }};
+
+          pendingEvidencePreview.value = JSON.stringify(pending, null, 2);
+        }}
+        // VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_PENDING_PREVIEW_END
+
         function updateSelection(point) {{
           if (!startPoint) {{
             return;
@@ -3959,7 +4039,9 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
           const cropW = Math.max(0, x2 - x1);
           const cropH = Math.max(0, y2 - y1);
 
-          bboxText.textContent = "bbox_px=[" + x1 + ", " + y1 + ", " + x2 + ", " + y2 + "] · size=" + cropW + "x" + cropH;
+          const bbox = [x1, y1, x2, y2];
+          bboxText.textContent = "bbox_px=[" + bbox.join(", ") + "] · size=" + cropW + "x" + cropH;
+          updatePendingEvidencePreview(bbox, cropW, cropH);
 
           if (cropW < 2 || cropH < 2 || !image.complete) {{
             clearPreview();
