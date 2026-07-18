@@ -3625,6 +3625,114 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
     return OUTPUT_DIR / safe_course_id / "formula_visual_evidence" / "pages" / f"page-{int(page):03d}.png"
 
 
+
+# VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_START
+def _voila_v081_manual_learning_evidence_list_html(course_id: str):
+    import json as _json
+
+    safe_course_id = _voila_v0796_safe_course_id(course_id)
+    target = _voila_v0796_manual_learning_evidence_dir(safe_course_id) / "manual_learning_evidence.json"
+
+    if not target.exists():
+        return (
+            """
+            <div class="notice" data-testid="manual-evidence-draft-list">
+              <strong>Draft evidence list</strong><br>
+              No <code>manual_learning_evidence.json</code> exists yet.
+            </div>
+            """,
+            0,
+            False,
+        )
+
+    try:
+        data = _json.loads(target.read_text(encoding="utf-8", errors="replace"))
+    except Exception as exc:
+        return (
+            f"""
+            <div class="notice warn" data-testid="manual-evidence-draft-list">
+              <strong>Draft evidence list unavailable</strong><br>
+              Could not read <code>manual_learning_evidence.json</code>:
+              <code>{html.escape(str(exc), quote=True)}</code>
+            </div>
+            """,
+            0,
+            True,
+        )
+
+    if isinstance(data, dict):
+        raw_items = data.get("items", [])
+    elif isinstance(data, list):
+        raw_items = data
+    else:
+        raw_items = []
+
+    if not isinstance(raw_items, list):
+        raw_items = []
+
+    items = [item for item in raw_items if isinstance(item, dict)]
+
+    if not items:
+        return (
+            """
+            <div class="notice" data-testid="manual-evidence-draft-list">
+              <strong>Draft evidence list</strong><br>
+              <code>manual_learning_evidence.json</code> exists, but it has no draft items yet.
+            </div>
+            """,
+            0,
+            True,
+        )
+
+    cards = []
+    for item in reversed(items[-25:]):
+        draft_id = html.escape(str(item.get("id") or "(missing-id)"), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        kind = html.escape(str(item.get("kind") or ""), quote=True)
+        status = html.escape(str(item.get("status") or ""), quote=True)
+        page_value = html.escape(str(item.get("page") or ""), quote=True)
+        owner_verified = "true" if item.get("owner_verified") is True else "false"
+        save_state = html.escape(str(item.get("save_state") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+
+        bbox = item.get("bbox")
+        if isinstance(bbox, list):
+            bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+        else:
+            bbox_text = "[]"
+
+        cards.append(
+            f"""
+            <article class="v081-draft-card" data-testid="manual-evidence-draft-card">
+              <h3>{title}</h3>
+              <p class="meta">
+                id: <code>{draft_id}</code><br>
+                page: <code>{page_value}</code> · kind: <code>{kind}</code> · source_status: <code>{source_status}</code>
+              </p>
+              <p>
+                status: <code>{status}</code> · owner_verified: <code>{owner_verified}</code> · save_state: <code>{save_state}</code>
+              </p>
+              <p>bbox: <code>{bbox_text}</code></p>
+            </article>
+            """
+        )
+
+    return (
+        f"""
+        <div class="v081-draft-summary" data-testid="manual-evidence-draft-list">
+          <strong>Draft evidence list</strong> · items: <code>{len(items)}</code> · source:
+          <code>manual_learning_evidence.json</code>
+        </div>
+        <div class="v081-draft-list">
+          {''.join(cards)}
+        </div>
+        """,
+        len(items),
+        True,
+    )
+# VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_END
+
+
 @app.get("/owner/manual-learning-evidence/{course_id}", response_class=HTMLResponse, include_in_schema=False)
 def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Query(default=1, alias="page")) -> HTMLResponse:
     safe_course_id = _voila_v0796_safe_course_id(course_id)
@@ -3666,6 +3774,10 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         </div>
         """
         source_state = "source_page_image_missing"
+
+    # VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_READ_START
+    manual_evidence_list_html, manual_evidence_item_count, manual_evidence_json_exists = _voila_v081_manual_learning_evidence_list_html(safe_course_id)
+    # VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_READ_END
 
     body = f"""
     <style>
@@ -3830,6 +3942,30 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         cursor: not-allowed;
       }}
       /* VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_JSON_END */
+      /* VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_CSS_START */
+      .v081-draft-summary {{
+        margin: 12px 0;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(31,78,121,0.06);
+      }}
+      .v081-draft-list {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }}
+      .v081-draft-card {{
+        border: 1px solid rgba(31,78,121,0.24);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.38);
+      }}
+      .v081-draft-card h3 {{
+        margin: 0 0 8px;
+      }}
+      /* VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -3857,6 +3993,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
       <div class="v0797-status-row">
         <span class="v0797-chip">crop preview only</span>
         <span class="v0797-chip">draft save enabled</span>
+        <span class="v0797-chip">draft list read-only</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -3871,7 +4008,9 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
       course_id: <code>{safe_course_id_html}</code><br>
       page: <code>{safe_page}</code><br>
       source_state: <code>{source_state}</code><br>
-      output_dir: <code>{output_dir_html}</code>
+      output_dir: <code>{output_dir_html}</code><br>
+      manual_evidence_json_exists: <code>{manual_evidence_json_exists}</code><br>
+      manual_evidence_item_count: <code>{manual_evidence_item_count}</code>
     </p>
 
     <div class="v0796-grid">
@@ -3962,11 +4101,9 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
       </section>
     </div>
 
-    <h2>4. Future evidence list</h2>
-    <div class="notice">
-      No evidence list is implemented in this milestone.
-      Future accepted items will come from <code>manual_learning_evidence.json</code>.
-    </div>
+    <h2>4. Draft evidence list</h2>
+    <p class="meta">Read-only list from <code>manual_learning_evidence.json</code>. No accept/verify action in v0.8.1.</p>
+    {manual_evidence_list_html}
 
     <script>
       // VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_JS_START
