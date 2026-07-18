@@ -3701,6 +3701,23 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
         else:
             bbox_text = "[]"
 
+        # VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_CARD_START
+        if item.get("status") == "accepted_owner_verified" and item.get("owner_verified") is True:
+            verify_action_html = '<span class="v082-verified-badge">accepted_owner_verified</span>'
+        else:
+            verify_action = html.escape(
+                "/owner/manual-learning-evidence/" + quote(safe_course_id, safe="") + "/verify-draft",
+                quote=True,
+            )
+            verify_action_html = (
+                f'<form class="v082-verify-form" method="post" action="{verify_action}">'
+                f'<input type="hidden" name="draft_id" value="{draft_id}">'
+                f'<button type="submit">Verify / Accept draft</button>'
+                f'<p class="meta">Writes only <code>manual_learning_evidence.json</code>. No Learning Pack.</p>'
+                f'</form>'
+            )
+        # VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_CARD_END
+
         cards.append(
             f"""
             <article class="v081-draft-card" data-testid="manual-evidence-draft-card">
@@ -3713,6 +3730,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
                 status: <code>{status}</code> · owner_verified: <code>{owner_verified}</code> · save_state: <code>{save_state}</code>
               </p>
               <p>bbox: <code>{bbox_text}</code></p>
+              {verify_action_html}
             </article>
             """
         )
@@ -3966,6 +3984,31 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin: 0 0 8px;
       }}
       /* VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_CSS_END */
+      /* VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_CSS_START */
+      .v082-verify-form {{
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(31,78,121,0.16);
+      }}
+      .v082-verify-form button {{
+        border: 0;
+        border-radius: 12px;
+        padding: 9px 12px;
+        background: var(--voila-blue, #1F4E79);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+      }}
+      .v082-verified-badge {{
+        display: inline-flex;
+        border: 1px solid rgba(31,78,121,0.24);
+        border-radius: 999px;
+        padding: 5px 9px;
+        background: rgba(31,78,121,0.08);
+        font-size: 13px;
+        font-weight: 800;
+      }}
+      /* VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -3994,6 +4037,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">crop preview only</span>
         <span class="v0797-chip">draft save enabled</span>
         <span class="v0797-chip">draft list read-only</span>
+        <span class="v0797-chip">verify draft enabled</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -4496,6 +4540,146 @@ async def owner_manual_learning_evidence_save_draft(course_id: str, request: Req
         }
     )
 # VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_ENDPOINT_END
+
+# VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_ENDPOINT_START
+@app.post("/owner/manual-learning-evidence/{course_id}/verify-draft", include_in_schema=False)
+async def owner_manual_learning_evidence_verify_draft(course_id: str, request: Request):
+    import json as _json
+    from datetime import datetime as _datetime, timezone as _timezone
+    from fastapi.responses import JSONResponse as _JSONResponse
+
+    safe_course_id = _voila_v0796_safe_course_id(course_id)
+    output_dir = _voila_v0796_manual_learning_evidence_dir(safe_course_id)
+    target = output_dir / "manual_learning_evidence.json"
+
+    if not output_dir.exists() or not output_dir.is_dir():
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "course_output_dir_missing",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=404,
+        )
+
+    if not target.exists() or not target.is_file():
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "manual_learning_evidence_json_missing",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=404,
+        )
+
+    payload = await _voila_v080_request_payload(request)
+    draft_id = _voila_v080_clean_text(payload.get("draft_id"), 160)
+
+    if not draft_id:
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "draft_id_required",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=400,
+        )
+
+    try:
+        data = _json.loads(target.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "manual_learning_evidence_json_invalid",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=409,
+        )
+
+    if isinstance(data, list):
+        data = {
+            "schema": "voila.manual_learning_evidence.v0",
+            "course_id": safe_course_id,
+            "items": data,
+        }
+
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "manual_learning_evidence_items_invalid",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=409,
+        )
+
+    target_item = None
+    for item in data["items"]:
+        if isinstance(item, dict) and str(item.get("id") or "") == draft_id:
+            target_item = item
+            break
+
+    if target_item is None:
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "draft_not_found",
+                "draft_id": draft_id,
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=404,
+        )
+
+    verified_at_utc = _datetime.now(_timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    target_item["status"] = "accepted_owner_verified"
+    target_item["owner_verified"] = True
+    target_item["save_state"] = "verified"
+    target_item["verified_at_utc"] = verified_at_utc
+    target_item["verified_by"] = "owner"
+    target_item["crop_file_written"] = False
+    target_item["learning_pack_changed"] = False
+    target_item["course_generation_changed"] = False
+    target_item["study_changed"] = False
+    target_item["progress_changed"] = False
+
+    data["updated_at_utc"] = verified_at_utc
+    data["manual_learning_evidence_written"] = True
+    data["crop_file_written"] = False
+    data["learning_pack_changed"] = False
+
+    target.write_text(_json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    return _JSONResponse(
+        {
+            "ok": True,
+            "draft_id": draft_id,
+            "status": "accepted_owner_verified",
+            "owner_verified": True,
+            "manual_learning_evidence_written": True,
+            "manual_learning_evidence_path": str(target),
+            "crop_file_written": False,
+            "learning_pack_changed": False,
+            "course_generation_changed": False,
+            "study_changed": False,
+            "progress_changed": False,
+        }
+    )
+# VOILA_V0_8_2_MANUAL_LEARNING_EVIDENCE_VERIFY_DRAFT_ENDPOINT_END
+
 
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_END
 
