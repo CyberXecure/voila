@@ -17,6 +17,7 @@ import html
 import json
 import os
 from pathlib import Path
+from starlette.requests import Request
 from urllib.parse import quote, unquote
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -3806,6 +3807,29 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin-top: 8px;
       }}
       /* VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_END */
+      /* VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_JSON_START */
+      .v080-save-draft-form {{
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(31,78,121,0.18);
+      }}
+      .v080-save-draft-form button {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        background: var(--voila-blue, #1F4E79);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+      }}
+      .v080-save-draft-form button:disabled {{
+        opacity: 0.55;
+        cursor: not-allowed;
+      }}
+      /* VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_JSON_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -3828,17 +3852,17 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
 
     <div class="v0797-readonly-banner">
       <strong>Skeleton only · read-only.</strong>
-      This page supports browser-only crop selection preview but does not save evidence yet.
+      This page supports browser-only crop selection preview and can save a draft evidence JSON item.
       Future evidence will be saved to <code>manual_learning_evidence.json</code>.
       <div class="v0797-status-row">
         <span class="v0797-chip">crop preview only</span>
-        <span class="v0797-chip">save disabled</span>
+        <span class="v0797-chip">draft save enabled</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
       <ul class="v0797-next-steps">
         <li>Selectează un dreptunghi pe pagina sursă pentru preview local în browser.</li>
-        <li>Scrierea în <code>manual_learning_evidence.json</code> rămâne dezactivată.</li>
+        <li>Save draft scrie doar în <code>manual_learning_evidence.json</code>.</li>
         <li>Learning Pack nu consumă încă acest ecran.</li>
       </ul>
     </div>
@@ -3863,7 +3887,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <input id="v0799BoundBboxPreview" class="v0799-readonly-field" value="bbox_px=[]" readonly disabled>
         <canvas class="v0798-preview-canvas" id="v0798PreviewCanvas" width="640" height="220" aria-label="Crop preview canvas"></canvas>
         <div class="v0796-disabled-note">
-          Preview only. Save disabled. No manual_learning_evidence.json write.
+          Draft save enabled. Writes manual_learning_evidence.json only. No crop file write.
         </div>
       </section>
 
@@ -3916,10 +3940,24 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
   "bbox": [],
   "save_enabled": false
 }}</textarea>
+
+          <form class="v080-save-draft-form" method="post" action="/owner/manual-learning-evidence/{safe_course_id_url}/save-draft">
+            <input type="hidden" name="draft_id" value="ui-draft-{safe_course_id_html}-p{safe_page}">
+            <input type="hidden" name="page" value="{safe_page}">
+            <input type="hidden" id="v080SaveDraftBbox" name="bbox" value="">
+            <input type="hidden" name="kind" value="formula">
+            <input type="hidden" name="title" value="">
+            <input type="hidden" name="verified_text" value="">
+            <input type="hidden" name="explanation_ro" value="">
+            <input type="hidden" name="source_status" value="uncertain">
+            <input type="hidden" name="source_note" value="">
+            <button id="v080SaveDraftButton" type="submit">Save draft evidence</button>
+            <p class="meta">Owner-local POST. Writes only <code>manual_learning_evidence.json</code>. No crop file. No Learning Pack.</p>
+          </form>
         </div>
 
         <div class="v0796-disabled-note">
-          Save disabled. Manual crop disabled. Learning Pack integration disabled.
+          Draft save enabled. Crop file write disabled. Learning Pack integration disabled.
         </div>
       </section>
     </div>
@@ -3949,6 +3987,9 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         const sourceStatusPreview = document.getElementById("v0799SourceStatusPreview");
         const sourceNotePreview = document.getElementById("v0799SourceNotePreview");
         const statusPreview = document.getElementById("v0799StatusPreview");
+        // VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_JSON_JS_START
+        const saveDraftBboxInput = document.getElementById("v080SaveDraftBbox");
+        // VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_JSON_JS_END
         // VOILA_V0_7_99_MANUAL_LEARNING_EVIDENCE_METADATA_PREVIEW_BINDING_JS_END
 
         if (!shell || !image || !box || !bboxText || !canvas || !help || !boundBboxPreview || !pendingEvidencePreview) {{
@@ -3992,6 +4033,9 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         function updatePendingEvidencePreview(bbox, cropW, cropH) {{
           const bboxTextValue = "bbox_px=[" + bbox.join(", ") + "]";
           boundBboxPreview.value = bboxTextValue;
+          if (saveDraftBboxInput) {{
+            saveDraftBboxInput.value = JSON.stringify(bbox);
+          }}
 
           const pending = {{
             artifact: "manual_learning_evidence.preview",
@@ -4092,6 +4136,230 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
     """
 
     return page("Manual Learning Evidence · skeleton", body)
+
+# VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_ENDPOINT_START
+def _voila_v080_clean_text(value, max_len: int = 4000) -> str:
+    cleaned = str(value or "").replace("\x00", "").strip()
+    return cleaned[:max_len]
+
+
+def _voila_v080_normalize_bbox(value):
+    import json as _json
+
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        try:
+            value = _json.loads(raw)
+        except Exception:
+            parts = [part.strip() for part in raw.replace("[", "").replace("]", "").split(",")]
+            value = parts
+
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return None
+
+    try:
+        bbox = [int(round(float(part))) for part in value]
+    except Exception:
+        return None
+
+    x1, y1, x2, y2 = bbox
+    if x2 <= x1 or y2 <= y1:
+        return None
+    if min(bbox) < 0:
+        return None
+    return bbox
+
+
+async def _voila_v080_request_payload(request: Request) -> dict:
+    import json as _json
+    from urllib.parse import parse_qs as _parse_qs
+
+    content_type = str(request.headers.get("content-type") or "").lower()
+
+    if "application/json" in content_type:
+        try:
+            data = await request.json()
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    raw = await request.body()
+    decoded = raw.decode("utf-8", errors="replace")
+    parsed = _parse_qs(decoded, keep_blank_values=True)
+    return {str(key): (values[-1] if values else "") for key, values in parsed.items()}
+
+
+@app.post("/owner/manual-learning-evidence/{course_id}/save-draft", include_in_schema=False)
+async def owner_manual_learning_evidence_save_draft(course_id: str, request: Request):
+    import json as _json
+    import re as _re
+    from datetime import datetime as _datetime, timezone as _timezone
+    from fastapi.responses import JSONResponse as _JSONResponse
+
+    safe_course_id = _voila_v0796_safe_course_id(course_id)
+    output_dir = _voila_v0796_manual_learning_evidence_dir(safe_course_id)
+
+    if not output_dir.exists() or not output_dir.is_dir():
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "course_output_dir_missing",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=404,
+        )
+
+    payload = await _voila_v080_request_payload(request)
+    bbox = _voila_v080_normalize_bbox(payload.get("bbox"))
+
+    if bbox is None:
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "valid_bbox_required",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=400,
+        )
+
+    try:
+        page_value = max(1, int(str(payload.get("page") or "1").strip()))
+    except Exception:
+        page_value = 1
+
+    kind_allowed = {"formula", "definition", "example", "theorem", "diagram", "drawing", "note"}
+    source_status_allowed = {"verified", "uncertain", "possible_source_error"}
+
+    kind = _voila_v080_clean_text(payload.get("kind"), 80) or "note"
+    if kind not in kind_allowed:
+        kind = "note"
+
+    source_status = _voila_v080_clean_text(payload.get("source_status"), 80) or "uncertain"
+    if source_status not in source_status_allowed:
+        source_status = "uncertain"
+
+    requested_draft_id = _voila_v080_clean_text(payload.get("draft_id"), 120)
+    draft_id = _re.sub(r"[^A-Za-z0-9_.-]+", "-", requested_draft_id).strip("-._")
+
+    created_at_utc = _datetime.now(_timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    if not draft_id:
+        draft_id = "draft-" + created_at_utc.replace(":", "").replace("-", "").replace("Z", "")
+
+    crop_size = [bbox[2] - bbox[0], bbox[3] - bbox[1]]
+    target = output_dir / "manual_learning_evidence.json"
+
+    if target.exists():
+        try:
+            existing = _json.loads(target.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return _JSONResponse(
+                {
+                    "ok": False,
+                    "error": "manual_learning_evidence_json_invalid",
+                    "manual_learning_evidence_written": False,
+                    "crop_file_written": False,
+                    "learning_pack_changed": False,
+                },
+                status_code=409,
+            )
+    else:
+        existing = {}
+
+    if isinstance(existing, list):
+        data = {
+            "schema": "voila.manual_learning_evidence.v0",
+            "course_id": safe_course_id,
+            "items": existing,
+        }
+    elif isinstance(existing, dict):
+        data = existing
+        data.setdefault("schema", "voila.manual_learning_evidence.v0")
+        data.setdefault("course_id", safe_course_id)
+        data.setdefault("items", [])
+    else:
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "manual_learning_evidence_json_shape_invalid",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=409,
+        )
+
+    if not isinstance(data.get("items"), list):
+        return _JSONResponse(
+            {
+                "ok": False,
+                "error": "manual_learning_evidence_items_invalid",
+                "manual_learning_evidence_written": False,
+                "crop_file_written": False,
+                "learning_pack_changed": False,
+            },
+            status_code=409,
+        )
+
+    item = {
+        "id": draft_id,
+        "course_id": safe_course_id,
+        "page": page_value,
+        "bbox": bbox,
+        "crop_size": crop_size,
+        "kind": kind,
+        "title": _voila_v080_clean_text(payload.get("title"), 300),
+        "verified_text": _voila_v080_clean_text(payload.get("verified_text"), 4000),
+        "explanation_ro": _voila_v080_clean_text(payload.get("explanation_ro"), 4000),
+        "source_status": source_status,
+        "source_note": _voila_v080_clean_text(payload.get("source_note"), 2000),
+        "status": "pending_owner_review",
+        "owner_verified": False,
+        "save_state": "draft",
+        "created_at_utc": created_at_utc,
+        "source": "manual_learning_evidence_ui_v0.8.0",
+        "crop_file_written": False,
+        "learning_pack_changed": False,
+        "course_generation_changed": False,
+        "study_changed": False,
+        "progress_changed": False,
+    }
+
+    data["items"] = [
+        existing_item
+        for existing_item in data.get("items", [])
+        if not (isinstance(existing_item, dict) and existing_item.get("id") == draft_id)
+    ]
+    data["items"].append(item)
+
+    data["updated_at_utc"] = created_at_utc
+    data["manual_learning_evidence_written"] = True
+    data["crop_file_written"] = False
+    data["learning_pack_changed"] = False
+
+    target.write_text(_json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    return _JSONResponse(
+        {
+            "ok": True,
+            "draft_id": draft_id,
+            "manual_learning_evidence_written": True,
+            "manual_learning_evidence_path": str(target),
+            "crop_file_written": False,
+            "learning_pack_changed": False,
+            "course_generation_changed": False,
+            "study_changed": False,
+            "progress_changed": False,
+            "item_count": len(data["items"]),
+        }
+    )
+# VOILA_V0_8_0_MANUAL_LEARNING_EVIDENCE_SAVE_DRAFT_ENDPOINT_END
+
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_END
 
 
