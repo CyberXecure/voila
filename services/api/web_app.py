@@ -3710,6 +3710,38 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         color: var(--muted);
         font-size: 14px;
       }}
+      /* VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_VISUAL_POLISH_START */
+      .v0797-readonly-banner {{
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 18px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        background: rgba(31,78,121,0.08);
+      }}
+      .v0797-status-row {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 16px;
+      }}
+      .v0797-chip {{
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.42);
+        font-size: 13px;
+        font-weight: 700;
+      }}
+      .v0797-next-steps {{
+        margin-top: 12px;
+        padding-left: 18px;
+      }}
+      .v0797-next-steps li {{
+        margin: 4px 0;
+      }}
+      /* VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_VISUAL_POLISH_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
           grid-template-columns: 1fr;
@@ -3729,10 +3761,21 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
       <a class="btn" href="{next_url}">Next page</a>
     </div>
 
-    <div class="notice">
-      <strong>Skeleton only.</strong>
+    <div class="v0797-readonly-banner">
+      <strong>Skeleton only · read-only.</strong>
       This page does not implement mouse crop selection and does not save evidence yet.
       Future evidence will be saved to <code>manual_learning_evidence.json</code>.
+      <div class="v0797-status-row">
+        <span class="v0797-chip">crop disabled</span>
+        <span class="v0797-chip">save disabled</span>
+        <span class="v0797-chip">Learning Pack disabled</span>
+        <span class="v0797-chip">owner-local only</span>
+      </div>
+      <ul class="v0797-next-steps">
+        <li>Selectarea cu mouse va veni într-un milestone separat.</li>
+        <li>Scrierea în <code>manual_learning_evidence.json</code> rămâne dezactivată.</li>
+        <li>Learning Pack nu consumă încă acest ecran.</li>
+      </ul>
     </div>
 
     <p class="meta">
@@ -6176,6 +6219,13 @@ def course_tools(pdf: str = Query("")):
     </nav>
     """
 
+    # VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_COURSE_TOOLS_LINK_START
+    manual_learning_evidence_href = html.escape(
+        "/owner/manual-learning-evidence/" + quote(pdf_path.stem, safe="") + "?page=1",
+        quote=True,
+    )
+    # VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_COURSE_TOOLS_LINK_END
+
     page_html = f"""<!doctype html>
 <html>
 <head>
@@ -6199,6 +6249,7 @@ def course_tools(pdf: str = Query("")):
         <a href="/progress?pdf={q}">Progres</a>
         <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
         <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
+        <a href="{manual_learning_evidence_href}">Manual evidence</a>
         <a href="/exam-prep">Exam Prep</a>
         <a href="/">Bibliotecă</a>
       </nav>
