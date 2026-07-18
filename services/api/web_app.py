@@ -3605,6 +3605,7 @@ def owner_formula_visual_evidence_view(course_id: str):
 
 
 
+
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_START
 def _voila_v0796_safe_course_id(course_id: str) -> str:
     raw = Path(str(course_id or "").replace("\\", "/")).name
@@ -3647,8 +3648,11 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         )
         page_image_html = f"""
         <figure class="v0796-page-frame">
-          <img src="{page_image_src}" alt="Source page {safe_page}">
-          <figcaption>source page {safe_page} · read-only skeleton</figcaption>
+          <div class="v0798-crop-shell" id="v0798CropShell" aria-label="Manual crop selection preview">
+            <img id="v0798SourceImage" src="{page_image_src}" alt="Source page {safe_page}" draggable="false">
+            <div class="v0798-selection-box" id="v0798SelectionBox" hidden></div>
+          </div>
+          <figcaption>source page {safe_page} · crop preview only · no save</figcaption>
         </figure>
         """
         source_state = "source_page_image_found"
@@ -3742,6 +3746,44 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin: 4px 0;
       }}
       /* VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_VISUAL_POLISH_END */
+      /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_START */
+      .v0798-crop-shell {{
+        position: relative;
+        cursor: crosshair;
+        touch-action: none;
+        user-select: none;
+      }}
+      .v0798-crop-shell img {{
+        display: block;
+      }}
+      .v0798-selection-box {{
+        position: absolute;
+        border: 2px solid rgba(31,78,121,0.95);
+        background: rgba(31,78,121,0.16);
+        pointer-events: none;
+        border-radius: 4px;
+      }}
+      .v0798-preview-panel {{
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 18px;
+        padding: 16px;
+        background: rgba(255,255,255,0.32);
+      }}
+      .v0798-preview-canvas {{
+        width: 100%;
+        max-height: 360px;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 12px;
+        background: white;
+        display: block;
+      }}
+      .v0798-bbox {{
+        display: block;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        margin: 8px 0;
+      }}
+      /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
           grid-template-columns: 1fr;
@@ -3763,16 +3805,16 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
 
     <div class="v0797-readonly-banner">
       <strong>Skeleton only · read-only.</strong>
-      This page does not implement mouse crop selection and does not save evidence yet.
+      This page supports browser-only crop selection preview but does not save evidence yet.
       Future evidence will be saved to <code>manual_learning_evidence.json</code>.
       <div class="v0797-status-row">
-        <span class="v0797-chip">crop disabled</span>
+        <span class="v0797-chip">crop preview only</span>
         <span class="v0797-chip">save disabled</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
       <ul class="v0797-next-steps">
-        <li>Selectarea cu mouse va veni într-un milestone separat.</li>
+        <li>Selectează un dreptunghi pe pagina sursă pentru preview local în browser.</li>
         <li>Scrierea în <code>manual_learning_evidence.json</code> rămâne dezactivată.</li>
         <li>Learning Pack nu consumă încă acest ecran.</li>
       </ul>
@@ -3791,9 +3833,19 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         {page_image_html}
       </section>
 
+      <section class="v0798-preview-panel">
+        <h2>2. Crop selection preview</h2>
+        <p class="meta" id="v0798CropHelp">Drag on the source page to preview a crop. Preview only; no file is written.</p>
+        <code class="v0798-bbox" id="v0798BboxText">bbox_px=[]</code>
+        <canvas class="v0798-preview-canvas" id="v0798PreviewCanvas" width="640" height="220" aria-label="Crop preview canvas"></canvas>
+        <div class="v0796-disabled-note">
+          Preview only. Save disabled. No manual_learning_evidence.json write.
+        </div>
+      </section>
+
       <section class="v0796-form">
-        <h2>2. Evidence metadata form</h2>
-        <p class="meta">Read-only placeholder. Save endpoint is intentionally absent in v0.7.96.</p>
+        <h2>3. Evidence metadata form</h2>
+        <p class="meta">Read-only placeholder. Save endpoint is intentionally absent in v0.7.98.</p>
 
         <label>title</label>
         <input value="" placeholder="Example: Modulul vectorului AB" disabled>
@@ -3838,15 +3890,128 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
       </section>
     </div>
 
-    <h2>3. Future evidence list</h2>
+    <h2>4. Future evidence list</h2>
     <div class="notice">
       No evidence list is implemented in this milestone.
       Future accepted items will come from <code>manual_learning_evidence.json</code>.
     </div>
+
+    <script>
+      // VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_JS_START
+      (function () {{
+        const shell = document.getElementById("v0798CropShell");
+        const image = document.getElementById("v0798SourceImage");
+        const box = document.getElementById("v0798SelectionBox");
+        const bboxText = document.getElementById("v0798BboxText");
+        const canvas = document.getElementById("v0798PreviewCanvas");
+        const help = document.getElementById("v0798CropHelp");
+
+        if (!shell || !image || !box || !bboxText || !canvas || !help) {{
+          return;
+        }}
+
+        const ctx = canvas.getContext("2d");
+        let active = false;
+        let startPoint = null;
+
+        function clamp(value, min, max) {{
+          return Math.min(Math.max(value, min), max);
+        }}
+
+        function pointFromEvent(event) {{
+          const rect = image.getBoundingClientRect();
+          const cssX = clamp(event.clientX - rect.left, 0, rect.width);
+          const cssY = clamp(event.clientY - rect.top, 0, rect.height);
+          const scaleX = image.naturalWidth && rect.width ? image.naturalWidth / rect.width : 1;
+          const scaleY = image.naturalHeight && rect.height ? image.naturalHeight / rect.height : 1;
+          return {{
+            cssX: cssX,
+            cssY: cssY,
+            imgX: Math.round(cssX * scaleX),
+            imgY: Math.round(cssY * scaleY),
+          }};
+        }}
+
+        function clearPreview() {{
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }}
+
+        function updateSelection(point) {{
+          if (!startPoint) {{
+            return;
+          }}
+
+          const left = Math.min(startPoint.cssX, point.cssX);
+          const top = Math.min(startPoint.cssY, point.cssY);
+          const width = Math.abs(point.cssX - startPoint.cssX);
+          const height = Math.abs(point.cssY - startPoint.cssY);
+
+          box.hidden = width < 2 || height < 2;
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+          box.style.width = width + "px";
+          box.style.height = height + "px";
+
+          const x1 = Math.min(startPoint.imgX, point.imgX);
+          const y1 = Math.min(startPoint.imgY, point.imgY);
+          const x2 = Math.max(startPoint.imgX, point.imgX);
+          const y2 = Math.max(startPoint.imgY, point.imgY);
+          const cropW = Math.max(0, x2 - x1);
+          const cropH = Math.max(0, y2 - y1);
+
+          bboxText.textContent = "bbox_px=[" + x1 + ", " + y1 + ", " + x2 + ", " + y2 + "] · size=" + cropW + "x" + cropH;
+
+          if (cropW < 2 || cropH < 2 || !image.complete) {{
+            clearPreview();
+            return;
+          }}
+
+          const maxWidth = 640;
+          const previewScale = Math.min(1, maxWidth / cropW);
+          canvas.width = Math.max(1, Math.round(cropW * previewScale));
+          canvas.height = Math.max(1, Math.round(cropH * previewScale));
+          ctx.drawImage(image, x1, y1, cropW, cropH, 0, 0, canvas.width, canvas.height);
+        }}
+
+        shell.addEventListener("pointerdown", function (event) {{
+          event.preventDefault();
+          active = true;
+          startPoint = pointFromEvent(event);
+          shell.setPointerCapture(event.pointerId);
+          help.textContent = "Selecting crop preview… release pointer to keep the preview.";
+          updateSelection(startPoint);
+        }});
+
+        shell.addEventListener("pointermove", function (event) {{
+          if (!active) {{
+            return;
+          }}
+          event.preventDefault();
+          updateSelection(pointFromEvent(event));
+        }});
+
+        shell.addEventListener("pointerup", function (event) {{
+          if (!active) {{
+            return;
+          }}
+          event.preventDefault();
+          active = false;
+          updateSelection(pointFromEvent(event));
+          help.textContent = "Crop preview ready. Save is disabled in v0.7.98.";
+        }});
+
+        shell.addEventListener("pointercancel", function () {{
+          active = false;
+          help.textContent = "Crop selection cancelled. Save is disabled in v0.7.98.";
+        }});
+      }})();
+      // VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_JS_END
+    </script>
     """
 
     return page("Manual Learning Evidence · skeleton", body)
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_END
+
 
 
 
