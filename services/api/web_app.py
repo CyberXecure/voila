@@ -3604,9 +3604,14 @@ def owner_formula_visual_evidence_view(course_id: str):
 
 
 
+
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_START
 def _voila_v0796_safe_course_id(course_id: str) -> str:
-    return Path(str(course_id or "").replace("\\", "/")).name
+    raw = Path(str(course_id or "").replace("\\", "/")).name
+    cleaned = "".join(ch for ch in raw if ch.isalnum() or ch in "._-")
+    if cleaned in {"", ".", ".."}:
+        return "_invalid_course"
+    return cleaned
 
 
 def _voila_v0796_manual_learning_evidence_dir(course_id: str) -> Path:
@@ -3626,19 +3631,33 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
     page_image = _voila_v0796_page_image_path(safe_course_id, safe_page)
     pdf_name = safe_course_id + ".pdf"
 
+    safe_course_id_url = quote(safe_course_id, safe="")
+    pdf_name_url = quote(pdf_name, safe="")
+    back_url = html.escape(f"/course-tools?pdf={pdf_name_url}", quote=True)
+    formula_viewer_url = html.escape(f"/owner/formula-visual-evidence/{safe_course_id_url}/view", quote=True)
+    prev_url = html.escape(f"/owner/manual-learning-evidence/{safe_course_id_url}?page={max(1, safe_page - 1)}", quote=True)
+    next_url = html.escape(f"/owner/manual-learning-evidence/{safe_course_id_url}?page={safe_page + 1}", quote=True)
+    safe_course_id_html = html.escape(safe_course_id, quote=True)
+    output_dir_html = html.escape(str(output_dir), quote=True)
+
     if page_image.exists():
+        page_image_src = html.escape(
+            output_url(safe_course_id, "formula_visual_evidence", "pages", f"page-{safe_page:03d}.png"),
+            quote=True,
+        )
         page_image_html = f"""
         <figure class="v0796-page-frame">
-          <img src="{output_url(safe_course_id, "formula_visual_evidence", "pages", f"page-{safe_page:03d}.png")}" alt="Source page {safe_page}">
+          <img src="{page_image_src}" alt="Source page {safe_page}">
           <figcaption>source page {safe_page} · read-only skeleton</figcaption>
         </figure>
         """
         source_state = "source_page_image_found"
     else:
+        page_image_expected_html = html.escape(str(page_image), quote=True)
         page_image_html = f"""
         <div class="notice warn">
           <strong>Source page image missing.</strong><br>
-          Expected: <code>{html.escape(str(page_image))}</code>
+          Expected: <code>{page_image_expected_html}</code>
         </div>
         """
         source_state = "source_page_image_missing"
@@ -3704,10 +3723,10 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
     </p>
 
     <div class="toolbar">
-      <a class="btn" href="/course-tools?pdf={quote(pdf_name)}">Back to Course Tools</a>
-      <a class="btn" href="/owner/formula-visual-evidence/{quote(safe_course_id)}/view">Formula Visual Evidence viewer</a>
-      <a class="btn" href="/owner/manual-learning-evidence/{quote(safe_course_id)}?page={max(1, safe_page - 1)}">Previous page</a>
-      <a class="btn" href="/owner/manual-learning-evidence/{quote(safe_course_id)}?page={safe_page + 1}">Next page</a>
+      <a class="btn" href="{back_url}">Back to Course Tools</a>
+      <a class="btn" href="{formula_viewer_url}">Formula Visual Evidence viewer</a>
+      <a class="btn" href="{prev_url}">Previous page</a>
+      <a class="btn" href="{next_url}">Next page</a>
     </div>
 
     <div class="notice">
@@ -3717,10 +3736,10 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
     </div>
 
     <p class="meta">
-      course_id: <code>{html.escape(safe_course_id)}</code><br>
+      course_id: <code>{safe_course_id_html}</code><br>
       page: <code>{safe_page}</code><br>
       source_state: <code>{source_state}</code><br>
-      output_dir: <code>{html.escape(str(output_dir))}</code>
+      output_dir: <code>{output_dir_html}</code>
     </p>
 
     <div class="v0796-grid">
@@ -3785,6 +3804,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
 
     return page("Manual Learning Evidence · skeleton", body)
 # VOILA_V0_7_96_MANUAL_LEARNING_EVIDENCE_UI_SKELETON_END
+
 
 
 @app.get("/study", response_class=HTMLResponse)

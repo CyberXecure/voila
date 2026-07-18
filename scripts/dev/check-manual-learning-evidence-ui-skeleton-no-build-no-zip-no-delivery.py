@@ -42,6 +42,13 @@ required_web_terms = [
     "Save disabled",
     "Manual crop disabled",
     "Learning Pack integration disabled",
+    "cleaned = \"\".join",
+    "quote(safe_course_id, safe=\"\")",
+    "html.escape(f\"/course-tools?pdf={pdf_name_url}\"",
+    "html.escape(f\"/owner/formula-visual-evidence/{safe_course_id_url}/view\"",
+    "page_image_src = html.escape(",
+    "safe_course_id_html = html.escape(",
+    "output_dir_html = html.escape(",
 ]
 
 for term in required_web_terms:
