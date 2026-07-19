@@ -3626,6 +3626,61 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
 
 
 
+# VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_START
+def _voila_v084_manual_learning_evidence_review_summary_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    counts = {
+        "pending_owner_review": 0,
+        "accepted_owner_verified": 0,
+        "rejected_noise": 0,
+        "other": 0,
+    }
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status") or "")
+        if status in counts:
+            counts[status] += 1
+        else:
+            counts["other"] += 1
+
+    total = sum(counts.values())
+
+    return f"""
+    <section class="v084-review-summary" data-testid="manual-evidence-review-summary">
+      <strong>Review summary</strong>
+      <div class="v084-review-grid">
+        <div class="v084-review-stat" data-testid="manual-evidence-count-total">
+          <strong>{total}</strong>
+          total evidence items
+        </div>
+        <div class="v084-review-stat" data-testid="manual-evidence-count-pending">
+          <strong>{counts["pending_owner_review"]}</strong>
+          pending_owner_review
+        </div>
+        <div class="v084-review-stat" data-testid="manual-evidence-count-accepted">
+          <strong>{counts["accepted_owner_verified"]}</strong>
+          accepted_owner_verified
+        </div>
+        <div class="v084-review-stat" data-testid="manual-evidence-count-rejected">
+          <strong>{counts["rejected_noise"]}</strong>
+          rejected_noise
+        </div>
+      </div>
+      <div class="v084-filter-row" data-testid="manual-evidence-status-filters">
+        <a href="#manual-evidence-status-pending_owner_review">Pending</a>
+        <a href="#manual-evidence-status-accepted_owner_verified">Accepted</a>
+        <a href="#manual-evidence-status-rejected_noise">Rejected</a>
+      </div>
+      <p class="meta">Read-only review summary. No new write endpoint in v0.8.4. No Learning Pack.</p>
+    </section>
+    """
+# VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_END
+
+
 # VOILA_V0_8_1_MANUAL_LEARNING_EVIDENCE_LIST_DRAFTS_START
 def _voila_v081_manual_learning_evidence_list_html(course_id: str):
     import json as _json
@@ -3684,8 +3739,13 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
             True,
         )
 
+    # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_START
+    review_summary_html = _voila_v084_manual_learning_evidence_review_summary_html(items)
+    # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_END
+
     cards = []
-    for item in reversed(items[-25:]):
+    last_status_heading = None
+    for item in sorted(items[-25:], key=lambda candidate: str(candidate.get("status") or "") if isinstance(candidate, dict) else ""):
         draft_id = html.escape(str(item.get("id") or "(missing-id)"), quote=True)
         title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
         kind = html.escape(str(item.get("kind") or ""), quote=True)
@@ -3694,6 +3754,18 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
         owner_verified = "true" if item.get("owner_verified") is True else "false"
         save_state = html.escape(str(item.get("save_state") or ""), quote=True)
         source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+
+        status_raw = str(item.get("status") or "other")
+        status_anchor = status_raw if status_raw in {"pending_owner_review", "accepted_owner_verified", "rejected_noise"} else "other"
+        section_html = ""
+        if status_anchor != last_status_heading:
+            last_status_heading = status_anchor
+            section_html = (
+                f'<div class="v084-status-section" '
+                f'id="manual-evidence-status-{html.escape(status_anchor, quote=True)}">'
+                f'<h3>{html.escape(status_anchor, quote=True)}</h3>'
+                f'</div>'
+            )
 
         bbox = item.get("bbox")
         if isinstance(bbox, list):
@@ -3734,7 +3806,8 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
 
         cards.append(
             f"""
-            <article class="v081-draft-card" data-testid="manual-evidence-draft-card">
+            {section_html}
+            <article class="v081-draft-card" data-testid="manual-evidence-draft-card" data-status="{status_anchor}">
               <h3>{title}</h3>
               <p class="meta">
                 id: <code>{draft_id}</code><br>
@@ -3751,6 +3824,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
 
     return (
         f"""
+        {review_summary_html}
         <div class="v081-draft-summary" data-testid="manual-evidence-draft-list">
           <strong>Draft evidence list</strong> · items: <code>{len(items)}</code> · source:
           <code>manual_learning_evidence.json</code>
@@ -4055,6 +4129,52 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         font-weight: 800;
       }}
       /* VOILA_V0_8_3_MANUAL_LEARNING_EVIDENCE_REJECT_DRAFT_CSS_END */
+      /* VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_CSS_START */
+      .v084-review-summary {{
+        margin: 12px 0;
+        border: 1px solid rgba(31,78,121,0.24);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.055);
+      }}
+      .v084-review-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }}
+      .v084-review-stat {{
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.42);
+      }}
+      .v084-review-stat strong {{
+        display: block;
+        font-size: 20px;
+        margin-bottom: 3px;
+      }}
+      .v084-filter-row {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }}
+      .v084-filter-row a {{
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 999px;
+        padding: 6px 10px;
+        text-decoration: none;
+        font-weight: 800;
+        background: rgba(255,255,255,0.50);
+      }}
+      .v084-status-section {{
+        margin-top: 16px;
+      }}
+      .v084-status-section h3 {{
+        margin: 0 0 8px;
+      }}
+      /* VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4085,6 +4205,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">draft list read-only</span>
         <span class="v0797-chip">verify draft enabled</span>
         <span class="v0797-chip">reject draft enabled</span>
+        <span class="v0797-chip">review summary read-only</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
