@@ -3730,6 +3730,7 @@ def _voila_v088_manual_learning_pack_export_form_html(course_id, eligible_count)
       <p class="meta v088-export-note">
         eligible dry-run items: <code>{eligible_count}</code>.
         No Course/Study/Progress/OCR rewrite. No build/ZIP/share/delivery.
+        Viewer route: <code>/owner/manual-learning-pack-preview/{safe_course_id}</code>
       </p>
     </div>
     """
@@ -4678,6 +4679,48 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin-top: 8px;
       }}
       /* VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_CSS_END */
+      /* VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_CSS_START */
+      .v089-pack-viewer {{
+        margin: 14px 0;
+        border: 1px solid rgba(31,78,121,0.24);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.045);
+      }}
+      .v089-pack-meta-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }}
+      .v089-pack-meta-card {{
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.50);
+      }}
+      .v089-pack-item-grid {{
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
+      }}
+      .v089-pack-item {{
+        border: 1px solid rgba(31,78,121,0.20);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.54);
+      }}
+      .v089-policy-ok {{
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 13px;
+        font-weight: 800;
+        border: 1px solid rgba(31,78,121,0.24);
+        background: rgba(31,78,121,0.08);
+        margin: 2px 4px 2px 0;
+      }}
+      /* VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4713,6 +4756,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">quality gate read-only</span>
         <span class="v0797-chip">learning pack dry-run read-only</span>
         <span class="v0797-chip">learning pack draft export</span>
+        <span class="v0797-chip">learning pack preview viewer</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -5533,6 +5577,170 @@ def owner_manual_learning_evidence_export_learning_pack_draft(course_id: str):
         status_code=303,
     )
 # VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_ENDPOINT_END
+
+# VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_START
+def _voila_v089_find_existing_course_output_dir(course_id: str):
+    safe_course_id = _voila_v090_validate_course_id(course_id)
+    output_root = Path("data") / "output"
+    if not output_root.exists():
+        return None, safe_course_id
+
+    for candidate_dir in output_root.iterdir():
+        if candidate_dir.is_dir() and candidate_dir.name == safe_course_id:
+            return candidate_dir, safe_course_id
+
+    return None, safe_course_id
+
+
+def _voila_v089_pack_preview_policy_html(policy):
+    if not isinstance(policy, dict):
+        policy = {}
+
+    keys = [
+        "learning_pack_preview_only",
+        "course_generation_changed",
+        "study_changed",
+        "progress_changed",
+        "ocr_rewrite_performed",
+        "formula_ocr_performed",
+        "build_performed",
+        "zip_created",
+        "share_created",
+        "delivery_performed",
+        "distribution_performed",
+    ]
+
+    badges = []
+    for key in keys:
+        value = policy.get(key)
+        badges.append(
+            f'<span class="v089-policy-ok">{html.escape(str(key), quote=True)}=<code>{html.escape(str(value), quote=True)}</code></span>'
+        )
+
+    return "".join(badges)
+
+
+def _voila_v089_pack_preview_items_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    if not items:
+        return '<p class="meta" data-testid="manual-learning-pack-preview-empty">Nu există itemuri exportate în preview.</p>'
+
+    cards = []
+    for item in items[:100]:
+        if not isinstance(item, dict):
+            continue
+
+        source_evidence_id = html.escape(str(item.get("source_evidence_id") or ""), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        kind = html.escape(str(item.get("kind") or ""), quote=True)
+        verified_text = html.escape(str(item.get("verified_text") or ""), quote=True)
+        explanation_ro = html.escape(str(item.get("explanation_ro") or ""), quote=True)
+        page_value = html.escape(str(item.get("page") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+        bbox = item.get("bbox")
+        if isinstance(bbox, list):
+            bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+        else:
+            bbox_text = html.escape(str(bbox or ""), quote=True)
+
+        cards.append(
+            f"""
+            <article class="v089-pack-item" data-testid="manual-learning-pack-preview-item">
+              <h3>{title}</h3>
+              <p class="meta">
+                source_evidence_id: <code>{source_evidence_id}</code><br>
+                kind: <code>{kind}</code> · page: <code>{page_value}</code> · source_status: <code>{source_status}</code>
+              </p>
+              <p><strong>Verified text</strong><br>{verified_text}</p>
+              <p><strong>Explicație RO</strong><br>{explanation_ro}</p>
+              <p>bbox: <code>{bbox_text}</code></p>
+            </article>
+            """
+        )
+
+    return "".join(cards)
+
+
+@app.get("/owner/manual-learning-pack-preview/{course_id}")
+def owner_manual_learning_pack_preview_viewer(course_id: str):
+    output_dir, safe_course_id = _voila_v089_find_existing_course_output_dir(course_id)
+    if output_dir is None:
+        raise HTTPException(status_code=404, detail="Course output folder not found")
+
+    preview_path = output_dir / "manual_learning_pack.preview.json"
+    if not preview_path.exists():
+        raise HTTPException(status_code=404, detail="manual_learning_pack.preview.json not found")
+
+    try:
+        pack = json.loads(preview_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json could not be read")
+
+    if not isinstance(pack, dict):
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json is invalid")
+
+    schema = html.escape(str(pack.get("schema") or ""), quote=True)
+    artifact = html.escape(str(pack.get("artifact") or ""), quote=True)
+    mode = html.escape(str(pack.get("mode") or ""), quote=True)
+    generated_by = html.escape(str(pack.get("generated_by") or ""), quote=True)
+    source = html.escape(str(pack.get("source") or ""), quote=True)
+    course_label = html.escape(str(safe_course_id), quote=True)
+
+    items = pack.get("items") if isinstance(pack.get("items"), list) else []
+    items_count = len(items)
+
+    policy_html = _voila_v089_pack_preview_policy_html(pack.get("policy"))
+    items_html = _voila_v089_pack_preview_items_html(items)
+
+    body = f"""
+    <section class="v089-pack-viewer" data-testid="manual-learning-pack-preview-viewer">
+      <h1>Manual Learning Pack Preview</h1>
+      <p class="meta">
+        Read-only viewer pentru <code>manual_learning_pack.preview.json</code>.
+        Nu conectează Study/Course/Progress și nu rescrie OCR/course.
+      </p>
+
+      <div class="v089-pack-meta-grid">
+        <div class="v089-pack-meta-card" data-testid="manual-learning-pack-preview-schema">
+          <strong>schema</strong><br><code>{schema}</code>
+        </div>
+        <div class="v089-pack-meta-card" data-testid="manual-learning-pack-preview-course">
+          <strong>course_id</strong><br><code>{course_label}</code>
+        </div>
+        <div class="v089-pack-meta-card" data-testid="manual-learning-pack-preview-items-count">
+          <strong>items_count</strong><br><code>{items_count}</code>
+        </div>
+        <div class="v089-pack-meta-card">
+          <strong>artifact</strong><br><code>{artifact}</code>
+        </div>
+        <div class="v089-pack-meta-card">
+          <strong>source</strong><br><code>{source}</code>
+        </div>
+        <div class="v089-pack-meta-card">
+          <strong>mode</strong><br><code>{mode}</code>
+        </div>
+        <div class="v089-pack-meta-card">
+          <strong>generated_by</strong><br><code>{generated_by}</code>
+        </div>
+      </div>
+
+      <h2>Policy flags</h2>
+      <div data-testid="manual-learning-pack-preview-policy">
+        {policy_html}
+      </div>
+
+      <h2>Preview items</h2>
+      <div class="v089-pack-item-grid" data-testid="manual-learning-pack-preview-items">
+        {items_html}
+      </div>
+    </section>
+    """
+
+    return page("Manual Learning Pack Preview", body)
+# VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_END
+
 
 
 
