@@ -4763,6 +4763,27 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         background: rgba(255,255,255,0.50);
       }}
       /* VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_CSS_END */
+      /* VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_CSS_START */
+      .v0811-study-export {{
+        margin-top: 12px;
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.48);
+      }}
+      .v0811-study-export-button {{
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        background: #1F4E79;
+        color: white;
+      }}
+      .v0811-study-export-note {{
+        margin-top: 8px;
+      }}
+      /* VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4800,6 +4821,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">learning pack draft export</span>
         <span class="v0797-chip">learning pack preview viewer</span>
         <span class="v0797-chip">study adapter dry-run</span>
+        <span class="v0797-chip">manual study preview export</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -5785,6 +5807,84 @@ def owner_manual_learning_pack_preview_viewer(course_id: str):
     return page("Manual Learning Pack Preview", body)
 # VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_END
 
+# VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_START
+def _voila_v0811_manual_study_items_preview_payload(course_id, dry_run_items):
+    if not isinstance(dry_run_items, list):
+        dry_run_items = []
+
+    items = []
+    for item in dry_run_items:
+        if not isinstance(item, dict):
+            continue
+
+        items.append({
+            "source_evidence_id": str(item.get("source_evidence_id") or ""),
+            "manual_study_item_id": str(item.get("dry_run_id") or ""),
+            "study_item_type": str(item.get("study_item_type") or ""),
+            "title": str(item.get("title") or ""),
+            "prompt": str(item.get("prompt") or ""),
+            "answer": str(item.get("answer") or ""),
+            "source_page": item.get("source_page"),
+            "source_bbox": item.get("source_bbox"),
+            "source_kind": str(item.get("source_kind") or ""),
+            "source_status": str(item.get("source_status") or ""),
+            "owner_verified_source": True,
+            "write_target": "manual_study_items.preview.json",
+        })
+
+    return {
+        "schema": "voila.manual_study_items.preview.v1",
+        "course_id": str(course_id or ""),
+        "source": "manual_learning_pack.preview.json",
+        "artifact": "manual_study_items.preview.json",
+        "mode": "owner_local_manual_study_items_preview",
+        "generated_by": "v0.8.11_manual_study_items_preview_export_json",
+        "items_count": len(items),
+        "items": items,
+        "policy": {
+            "manual_study_preview_only": True,
+            "legacy_study_items_preview_untouched": True,
+            "study_integration": False,
+            "course_generation_changed": False,
+            "study_changed": False,
+            "progress_changed": False,
+            "ocr_rewrite_performed": False,
+            "formula_ocr_performed": False,
+            "build_performed": False,
+            "zip_created": False,
+            "share_created": False,
+            "delivery_performed": False,
+            "distribution_performed": False,
+        },
+    }
+
+
+def _voila_v0811_manual_study_items_export_form_html(course_id, dry_run_count):
+    safe_course_id = _voila_v090_validate_course_id(str(course_id or ""))
+    action_path = f"/owner/manual-learning-pack-study-adapter-dry-run/{safe_course_id}/export-manual-study-items-preview"
+
+    disabled = "" if dry_run_count > 0 else " disabled"
+    label = "Exportă manual_study_items.preview.json" if dry_run_count > 0 else "Export blocat: nu există candidate Study items"
+
+    return f"""
+    <div class="v0811-study-export" data-testid="manual-study-items-preview-export">
+      <strong>Manual Study Items preview export</strong>
+      <p class="meta">
+        Scrie doar artifact separat <code>manual_study_items.preview.json</code>.
+        Nu atinge vechiul <code>study_items.preview.json</code> și nu conectează Study real.
+      </p>
+      <form method="post" action="{action_path}">
+        <button class="v0811-study-export-button" type="submit"{disabled} data-testid="manual-study-items-preview-export-button">{html.escape(label, quote=True)}</button>
+      </form>
+      <p class="meta v0811-study-export-note">
+        candidate Study items: <code>{dry_run_count}</code>.
+        No Course/Progress/OCR rewrite. No build/ZIP/share/delivery.
+      </p>
+    </div>
+    """
+# VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_END
+
+
 # VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_START
 def _voila_v0810_study_adapter_type(kind):
     kind_value = str(kind or "").strip().lower()
@@ -5947,6 +6047,8 @@ def owner_manual_learning_pack_study_adapter_dry_run(course_id: str):
         delivery_performed=<code>false</code>.
       </p>
 
+      {_voila_v0811_manual_study_items_export_form_html(safe_course_id, dry_run_count)}
+
       <div class="v0810-study-grid" data-testid="manual-learning-pack-study-adapter-items">
         {items_html}
       </div>
@@ -5955,6 +6057,40 @@ def owner_manual_learning_pack_study_adapter_dry_run(course_id: str):
 
     return page("Manual Learning Pack Study Adapter Dry-run", body)
 # VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_END
+
+# VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_ENDPOINT_START
+@app.post("/owner/manual-learning-pack-study-adapter-dry-run/{course_id}/export-manual-study-items-preview")
+def owner_manual_study_items_preview_export(course_id: str):
+    output_dir, safe_course_id = _voila_v089_find_existing_course_output_dir(course_id)
+    if output_dir is None:
+        raise HTTPException(status_code=404, detail="Course output folder not found")
+
+    learning_pack_preview_path = output_dir / "manual_learning_pack.preview.json"
+    manual_study_preview_path = output_dir / "manual_study_items.preview.json"
+
+    if not learning_pack_preview_path.exists():
+        raise HTTPException(status_code=404, detail="manual_learning_pack.preview.json not found")
+
+    try:
+        pack = json.loads(learning_pack_preview_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json could not be read")
+
+    if not isinstance(pack, dict):
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json is invalid")
+
+    pack_items = pack.get("items") if isinstance(pack.get("items"), list) else []
+    dry_run_items = _voila_v0810_build_study_adapter_dry_run_items(pack_items)
+    preview_payload = _voila_v0811_manual_study_items_preview_payload(safe_course_id, dry_run_items)
+
+    manual_study_preview_path.write_text(json.dumps(preview_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    return RedirectResponse(
+        url="/?manual_study_items_preview_exported=1",
+        status_code=303,
+    )
+# VOILA_V0_8_11_MANUAL_STUDY_ITEMS_PREVIEW_EXPORT_ENDPOINT_END
+
 
 
 
