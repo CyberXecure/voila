@@ -4721,6 +4721,48 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin: 2px 4px 2px 0;
       }}
       /* VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_CSS_END */
+      /* VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_CSS_START */
+      .v0810-study-adapter {{
+        margin: 14px 0;
+        border: 1px dashed rgba(31,78,121,0.34);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.045);
+      }}
+      .v0810-study-grid {{
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
+      }}
+      .v0810-study-card {{
+        border: 1px solid rgba(31,78,121,0.20);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.54);
+      }}
+      .v0810-study-type {{
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 13px;
+        font-weight: 900;
+        border: 1px solid rgba(31,78,121,0.24);
+        background: rgba(31,78,121,0.08);
+        margin-bottom: 8px;
+      }}
+      .v0810-study-meta-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }}
+      .v0810-study-meta-card {{
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.50);
+      }}
+      /* VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4757,6 +4799,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">learning pack dry-run read-only</span>
         <span class="v0797-chip">learning pack draft export</span>
         <span class="v0797-chip">learning pack preview viewer</span>
+        <span class="v0797-chip">study adapter dry-run</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -5700,6 +5743,7 @@ def owner_manual_learning_pack_preview_viewer(course_id: str):
       <p class="meta">
         Read-only viewer pentru <code>manual_learning_pack.preview.json</code>.
         Nu conectează Study/Course/Progress și nu rescrie OCR/course.
+        Study adapter dry-run: <code>/owner/manual-learning-pack-study-adapter-dry-run/{course_label}</code>.
       </p>
 
       <div class="v089-pack-meta-grid">
@@ -5740,6 +5784,178 @@ def owner_manual_learning_pack_preview_viewer(course_id: str):
 
     return page("Manual Learning Pack Preview", body)
 # VOILA_V0_8_9_MANUAL_LEARNING_PACK_PREVIEW_VIEWER_END
+
+# VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_START
+def _voila_v0810_study_adapter_type(kind):
+    kind_value = str(kind or "").strip().lower()
+    if kind_value == "formula":
+        return "formula_card"
+    if kind_value == "definition":
+        return "concept_card"
+    if kind_value == "definiție":
+        return "concept_card"
+    if kind_value == "example":
+        return "worked_example_card"
+    if kind_value == "exemplu":
+        return "worked_example_card"
+    if kind_value == "theorem":
+        return "theorem_card"
+    if kind_value == "teoremă":
+        return "theorem_card"
+    return "concept_card"
+
+
+def _voila_v0810_build_study_adapter_dry_run_items(pack_items):
+    if not isinstance(pack_items, list):
+        pack_items = []
+
+    dry_run_items = []
+    for index, item in enumerate(pack_items, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        title = str(item.get("title") or "").strip()
+        verified_text = str(item.get("verified_text") or "").strip()
+        explanation_ro = str(item.get("explanation_ro") or "").strip()
+        kind = str(item.get("kind") or "").strip()
+
+        if not title or not verified_text or not explanation_ro:
+            continue
+
+        adapter_type = _voila_v0810_study_adapter_type(kind)
+        source_evidence_id = str(item.get("source_evidence_id") or "").strip()
+
+        dry_run_items.append({
+            "dry_run_id": f"study-dry-run-{index}",
+            "source_evidence_id": source_evidence_id,
+            "study_item_type": adapter_type,
+            "title": title,
+            "prompt": verified_text,
+            "answer": explanation_ro,
+            "source_page": item.get("page"),
+            "source_bbox": item.get("bbox"),
+            "source_kind": kind,
+            "source_status": str(item.get("source_status") or ""),
+            "write_target": "none",
+        })
+
+    return dry_run_items
+
+
+def _voila_v0810_study_adapter_items_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    if not items:
+        return '<p class="meta" data-testid="manual-learning-pack-study-adapter-empty">Nu există candidate Study items pentru dry-run.</p>'
+
+    cards = []
+    for item in items[:100]:
+        dry_run_id = html.escape(str(item.get("dry_run_id") or ""), quote=True)
+        source_evidence_id = html.escape(str(item.get("source_evidence_id") or ""), quote=True)
+        study_item_type = html.escape(str(item.get("study_item_type") or ""), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        prompt = html.escape(str(item.get("prompt") or ""), quote=True)
+        answer = html.escape(str(item.get("answer") or ""), quote=True)
+        source_page = html.escape(str(item.get("source_page") or ""), quote=True)
+        source_kind = html.escape(str(item.get("source_kind") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+        bbox = item.get("source_bbox")
+        if isinstance(bbox, list):
+            bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+        else:
+            bbox_text = html.escape(str(bbox or ""), quote=True)
+
+        cards.append(
+            f"""
+            <article class="v0810-study-card" data-testid="manual-learning-pack-study-adapter-item">
+              <span class="v0810-study-type">{study_item_type}</span>
+              <h3>{title}</h3>
+              <p class="meta">
+                dry_run_id: <code>{dry_run_id}</code><br>
+                source_evidence_id: <code>{source_evidence_id}</code><br>
+                source_kind: <code>{source_kind}</code> · source_status: <code>{source_status}</code> · page: <code>{source_page}</code>
+              </p>
+              <p><strong>Study prompt</strong><br>{prompt}</p>
+              <p><strong>Study answer</strong><br>{answer}</p>
+              <p>source bbox: <code>{bbox_text}</code></p>
+              <p class="meta">write_target: <code>none</code> · dry-run only</p>
+            </article>
+            """
+        )
+
+    return "".join(cards)
+
+
+@app.get("/owner/manual-learning-pack-study-adapter-dry-run/{course_id}")
+def owner_manual_learning_pack_study_adapter_dry_run(course_id: str):
+    output_dir, safe_course_id = _voila_v089_find_existing_course_output_dir(course_id)
+    if output_dir is None:
+        raise HTTPException(status_code=404, detail="Course output folder not found")
+
+    preview_path = output_dir / "manual_learning_pack.preview.json"
+    if not preview_path.exists():
+        raise HTTPException(status_code=404, detail="manual_learning_pack.preview.json not found")
+
+    try:
+        pack = json.loads(preview_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json could not be read")
+
+    if not isinstance(pack, dict):
+        raise HTTPException(status_code=500, detail="manual_learning_pack.preview.json is invalid")
+
+    pack_items = pack.get("items") if isinstance(pack.get("items"), list) else []
+    dry_run_items = _voila_v0810_build_study_adapter_dry_run_items(pack_items)
+    items_html = _voila_v0810_study_adapter_items_html(dry_run_items)
+
+    schema = html.escape(str(pack.get("schema") or ""), quote=True)
+    course_label = html.escape(str(safe_course_id), quote=True)
+    pack_count = len(pack_items)
+    dry_run_count = len(dry_run_items)
+
+    body = f"""
+    <section class="v0810-study-adapter" data-testid="manual-learning-pack-study-adapter-dry-run">
+      <h1>Manual Learning Pack → Study Adapter Dry-run</h1>
+      <p class="meta">
+        Read-only adapter preview. Transformă în memorie <code>manual_learning_pack.preview.json</code>
+        în candidate Study items. Nu scrie niciun Study artifact și nu conectează Study real.
+      </p>
+
+      <div class="v0810-study-meta-grid">
+        <div class="v0810-study-meta-card" data-testid="manual-learning-pack-study-adapter-schema">
+          <strong>source schema</strong><br><code>{schema}</code>
+        </div>
+        <div class="v0810-study-meta-card" data-testid="manual-learning-pack-study-adapter-course">
+          <strong>course_id</strong><br><code>{course_label}</code>
+        </div>
+        <div class="v0810-study-meta-card" data-testid="manual-learning-pack-study-adapter-source-count">
+          <strong>source preview items</strong><br><code>{pack_count}</code>
+        </div>
+        <div class="v0810-study-meta-card" data-testid="manual-learning-pack-study-adapter-dry-run-count">
+          <strong>candidate Study items</strong><br><code>{dry_run_count}</code>
+        </div>
+      </div>
+
+      <p class="meta" data-testid="manual-learning-pack-study-adapter-policy">
+        write_target=<code>none</code>;
+        study_integration=<code>false</code>;
+        course_generation_changed=<code>false</code>;
+        progress_changed=<code>false</code>;
+        build_performed=<code>false</code>;
+        zip_created=<code>false</code>;
+        delivery_performed=<code>false</code>.
+      </p>
+
+      <div class="v0810-study-grid" data-testid="manual-learning-pack-study-adapter-items">
+        {items_html}
+      </div>
+    </section>
+    """
+
+    return page("Manual Learning Pack Study Adapter Dry-run", body)
+# VOILA_V0_8_10_MANUAL_LEARNING_PACK_STUDY_ADAPTER_DRY_RUN_END
+
 
 
 
