@@ -3626,6 +3626,103 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
 
 
 
+# VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_START
+def _voila_v086_manual_learning_evidence_quality_gate_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    required_fields = ["title", "kind", "verified_text", "explanation_ro", "page", "bbox"]
+    accepted_items = [
+        item for item in items
+        if isinstance(item, dict)
+        and item.get("status") == "accepted_owner_verified"
+        and item.get("owner_verified") is True
+    ]
+
+    eligible = 0
+    incomplete = 0
+    blocked = 0
+    rows = []
+
+    for item in accepted_items[-25:]:
+        missing = []
+
+        for field in required_fields:
+            value = item.get(field)
+            if field == "bbox":
+                if not isinstance(value, list) or len(value) != 4:
+                    missing.append(field)
+            elif value is None or str(value).strip() == "":
+                missing.append(field)
+
+        draft_id = html.escape(str(item.get("id") or "(missing-id)"), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+
+        if missing:
+            incomplete += 1
+            gate_status = "incomplete"
+            missing_text = ", ".join(html.escape(field, quote=True) for field in missing)
+        else:
+            eligible += 1
+            gate_status = "eligible"
+            missing_text = "none"
+
+        rows.append(
+            f"""
+            <div class="v086-quality-item" data-testid="manual-evidence-quality-item">
+              <span class="v086-gate-badge">{gate_status}</span>
+              <strong>{title}</strong>
+              <p class="meta">
+                id: <code>{draft_id}</code><br>
+                required fields: <code>{html.escape(', '.join(required_fields), quote=True)}</code><br>
+                missing: <code>{missing_text}</code>
+              </p>
+            </div>
+            """
+        )
+
+    if not accepted_items:
+        blocked = 1
+        gate_state = "blocked"
+    elif incomplete:
+        gate_state = "incomplete"
+    else:
+        gate_state = "eligible"
+
+    return f"""
+    <section class="v086-quality-gate" data-testid="manual-evidence-quality-gate">
+      <strong>Accepted evidence quality gate</strong>
+      <p class="meta">
+        Read-only validation for future Learning Pack eligibility.
+        Required fields: <code>{html.escape(', '.join(required_fields), quote=True)}</code>.
+        No Learning Pack is generated in v0.8.6.
+      </p>
+      <div class="v086-quality-grid">
+        <div class="v086-quality-stat" data-testid="manual-evidence-quality-eligible">
+          <strong>{eligible}</strong>
+          eligible
+        </div>
+        <div class="v086-quality-stat" data-testid="manual-evidence-quality-incomplete">
+          <strong>{incomplete}</strong>
+          incomplete
+        </div>
+        <div class="v086-quality-stat" data-testid="manual-evidence-quality-blocked">
+          <strong>{blocked}</strong>
+          blocked
+        </div>
+        <div class="v086-quality-stat" data-testid="manual-evidence-quality-state">
+          <strong>{gate_state}</strong>
+          gate state
+        </div>
+      </div>
+      <div class="v086-quality-list">
+        {''.join(rows)}
+      </div>
+    </section>
+    """
+# VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_END
+
+
 # VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_START
 def _voila_v085_manual_learning_evidence_accepted_preview_html(items):
     if not isinstance(items, list):
@@ -3813,6 +3910,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_START
     review_summary_html = _voila_v084_manual_learning_evidence_review_summary_html(items)
     accepted_preview_html = _voila_v085_manual_learning_evidence_accepted_preview_html(items)
+    quality_gate_html = _voila_v086_manual_learning_evidence_quality_gate_html(items)
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_END
 
     cards = []
@@ -3898,6 +3996,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
         f"""
         {review_summary_html}
         {accepted_preview_html}
+        {quality_gate_html}
         <div class="v081-draft-summary" data-testid="manual-evidence-draft-list">
           <strong>Draft evidence list</strong> · items: <code>{len(items)}</code> · source:
           <code>manual_learning_evidence.json</code>
@@ -4281,6 +4380,52 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         font-weight: 800;
       }}
       /* VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_CSS_END */
+      /* VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_CSS_START */
+      .v086-quality-gate {{
+        margin: 14px 0;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.06);
+      }}
+      .v086-quality-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }}
+      .v086-quality-stat {{
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.46);
+      }}
+      .v086-quality-stat strong {{
+        display: block;
+        font-size: 20px;
+        margin-bottom: 3px;
+      }}
+      .v086-quality-list {{
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }}
+      .v086-quality-item {{
+        border: 1px solid rgba(31,78,121,0.16);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.42);
+      }}
+      .v086-gate-badge {{
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 13px;
+        font-weight: 800;
+        border: 1px solid rgba(31,78,121,0.24);
+        background: rgba(31,78,121,0.08);
+      }}
+      /* VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4313,6 +4458,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">reject draft enabled</span>
         <span class="v0797-chip">review summary read-only</span>
         <span class="v0797-chip">accepted preview read-only</span>
+        <span class="v0797-chip">quality gate read-only</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
