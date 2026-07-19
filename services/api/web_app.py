@@ -3626,6 +3626,77 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
 
 
 
+# VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_START
+def _voila_v085_manual_learning_evidence_accepted_preview_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    accepted_items = [
+        item for item in items
+        if isinstance(item, dict)
+        and item.get("status") == "accepted_owner_verified"
+        and item.get("owner_verified") is True
+    ]
+
+    if not accepted_items:
+        return """
+        <section class="v085-accepted-preview" data-testid="manual-evidence-accepted-preview">
+          <strong>Accepted evidence preview</strong>
+          <p class="meta">
+            No <code>accepted_owner_verified</code> items yet.
+            Future Learning Pack input preview is empty.
+          </p>
+          <span class="v085-learning-pack-ghost">Learning Pack not generated in v0.8.5</span>
+        </section>
+        """
+
+    cards = []
+    for item in accepted_items[-25:]:
+        draft_id = html.escape(str(item.get("id") or "(missing-id)"), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        kind = html.escape(str(item.get("kind") or ""), quote=True)
+        page_value = html.escape(str(item.get("page") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+        verified_text = html.escape(str(item.get("verified_text") or ""), quote=True)
+        explanation_ro = html.escape(str(item.get("explanation_ro") or ""), quote=True)
+
+        bbox = item.get("bbox")
+        if isinstance(bbox, list):
+            bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+        else:
+            bbox_text = "[]"
+
+        cards.append(
+            f"""
+            <article class="v085-accepted-card" data-testid="manual-evidence-accepted-card">
+              <h3>{title}</h3>
+              <p class="meta">
+                id: <code>{draft_id}</code><br>
+                page: <code>{page_value}</code> · kind: <code>{kind}</code> · source_status: <code>{source_status}</code>
+              </p>
+              <p><strong>Verified text:</strong><br>{verified_text}</p>
+              <p><strong>Explanation RO:</strong><br>{explanation_ro}</p>
+              <p>bbox: <code>{bbox_text}</code></p>
+              <span class="v085-learning-pack-ghost">Would be eligible for future Learning Pack</span>
+            </article>
+            """
+        )
+
+    return f"""
+    <section class="v085-accepted-preview" data-testid="manual-evidence-accepted-preview">
+      <strong>Accepted evidence preview</strong> · accepted items: <code>{len(accepted_items)}</code>
+      <p class="meta">
+        Read-only preview of <code>accepted_owner_verified</code> items.
+        This shows what could feed a future Learning Pack, but v0.8.5 does not generate or modify Learning Pack artifacts.
+      </p>
+      <div class="v085-accepted-grid">
+        {''.join(cards)}
+      </div>
+    </section>
+    """
+# VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_END
+
+
 # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_START
 def _voila_v084_manual_learning_evidence_review_summary_html(items):
     if not isinstance(items, list):
@@ -3741,6 +3812,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
 
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_START
     review_summary_html = _voila_v084_manual_learning_evidence_review_summary_html(items)
+    accepted_preview_html = _voila_v085_manual_learning_evidence_accepted_preview_html(items)
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_END
 
     cards = []
@@ -3825,6 +3897,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
     return (
         f"""
         {review_summary_html}
+        {accepted_preview_html}
         <div class="v081-draft-summary" data-testid="manual-evidence-draft-list">
           <strong>Draft evidence list</strong> · items: <code>{len(items)}</code> · source:
           <code>manual_learning_evidence.json</code>
@@ -4175,6 +4248,39 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin: 0 0 8px;
       }}
       /* VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_CSS_END */
+      /* VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_CSS_START */
+      .v085-accepted-preview {{
+        margin: 14px 0;
+        border: 1px solid rgba(31,78,121,0.28);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.075);
+      }}
+      .v085-accepted-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }}
+      .v085-accepted-card {{
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.48);
+      }}
+      .v085-accepted-card h3 {{
+        margin: 0 0 8px;
+      }}
+      .v085-learning-pack-ghost {{
+        display: inline-flex;
+        margin-top: 8px;
+        border: 1px dashed rgba(31,78,121,0.35);
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 13px;
+        font-weight: 800;
+      }}
+      /* VOILA_V0_8_5_MANUAL_LEARNING_EVIDENCE_ACCEPTED_PREVIEW_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4206,6 +4312,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">verify draft enabled</span>
         <span class="v0797-chip">reject draft enabled</span>
         <span class="v0797-chip">review summary read-only</span>
+        <span class="v0797-chip">accepted preview read-only</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
