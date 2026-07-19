@@ -3626,8 +3626,119 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
 
 
 
+# VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_START
+def _voila_v088_manual_learning_pack_required_fields():
+    return ["title", "kind", "verified_text", "explanation_ro", "page", "bbox"]
+
+
+def _voila_v088_manual_learning_pack_eligible_items(items):
+    if not isinstance(items, list):
+        items = []
+
+    required_fields = _voila_v088_manual_learning_pack_required_fields()
+    eligible_items = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        if item.get("status") != "accepted_owner_verified" or item.get("owner_verified") is not True:
+            continue
+
+        missing = []
+        for field in required_fields:
+            value = item.get(field)
+            if field == "bbox":
+                if not isinstance(value, list) or len(value) != 4:
+                    missing.append(field)
+            elif value is None or str(value).strip() == "":
+                missing.append(field)
+
+        if missing:
+            continue
+
+        eligible_items.append(item)
+
+    return eligible_items
+
+
+def _voila_v088_manual_learning_pack_payload(course_id, items):
+    eligible_items = _voila_v088_manual_learning_pack_eligible_items(items)
+    pack_items = []
+
+    for item in eligible_items:
+        pack_items.append({
+            "source_evidence_id": str(item.get("id") or ""),
+            "title": str(item.get("title") or ""),
+            "kind": str(item.get("kind") or ""),
+            "verified_text": str(item.get("verified_text") or ""),
+            "explanation_ro": str(item.get("explanation_ro") or ""),
+            "page": item.get("page"),
+            "bbox": item.get("bbox"),
+            "source_status": str(item.get("source_status") or ""),
+            "owner_verified": True,
+            "status": "accepted_owner_verified",
+        })
+
+    return {
+        "schema": "voila.manual_learning_pack.preview.v1",
+        "course_id": str(course_id or ""),
+        "source": "manual_learning_evidence.json",
+        "artifact": "manual_learning_pack.preview.json",
+        "mode": "owner_local_preview_draft",
+        "generated_by": "v0.8.8_manual_learning_evidence_export_draft_json",
+        "quality_gate": {
+            "required_fields": _voila_v088_manual_learning_pack_required_fields(),
+            "uses_only_accepted_owner_verified": True,
+            "uses_only_owner_verified_true": True,
+            "uses_only_quality_gate_eligible": True,
+        },
+        "items_count": len(pack_items),
+        "items": pack_items,
+        "policy": {
+            "learning_pack_preview_only": True,
+            "course_generation_changed": False,
+            "study_changed": False,
+            "progress_changed": False,
+            "ocr_rewrite_performed": False,
+            "formula_ocr_performed": False,
+            "build_performed": False,
+            "zip_created": False,
+            "share_created": False,
+            "delivery_performed": False,
+            "distribution_performed": False,
+        },
+    }
+
+
+def _voila_v088_manual_learning_pack_export_form_html(course_id, eligible_count):
+    safe_course_id = html.escape(str(course_id or ""), quote=True)
+    action = "/owner/manual-learning-evidence/" + quote(str(course_id or ""), safe="") + "/export-learning-pack-draft"
+
+    disabled = "" if eligible_count > 0 else " disabled"
+    button_label = "Exportă draft Learning Pack JSON" if eligible_count > 0 else "Export blocat: nu există itemuri eligibile"
+
+    return f"""
+    <div class="v088-export-draft" data-testid="manual-learning-pack-export-draft">
+      <strong>Learning Pack preview export</strong>
+      <p class="meta">
+        Scrie doar artifact separat <code>manual_learning_pack.preview.json</code>
+        din itemuri accepted + owner verified + quality gate eligible.
+      </p>
+      <form method="post" action="{html.escape(action, quote=True)}">
+        <input type="hidden" name="course_id" value="{safe_course_id}">
+        <button class="v088-export-button" type="submit"{disabled} data-testid="manual-learning-pack-export-draft-button">{html.escape(button_label, quote=True)}</button>
+      </form>
+      <p class="meta v088-export-note">
+        eligible dry-run items: <code>{eligible_count}</code>.
+        No Course/Study/Progress/OCR rewrite. No build/ZIP/share/delivery.
+      </p>
+    </div>
+    """
+# VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_END
+
+
 # VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_START
-def _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items):
+def _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(course_id, items):
     if not isinstance(items, list):
         items = []
 
@@ -3664,6 +3775,7 @@ def _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items):
             accepted incomplete/blocked: <code>{accepted_incomplete_count}</code>.
           </p>
           <span class="v087-dry-run-badge">Dry-run only · no Learning Pack artifact written</span>
+          {_voila_v088_manual_learning_pack_export_form_html(course_id, 0)}
         </section>
         """
 
@@ -3702,6 +3814,7 @@ def _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items):
         Read-only dry-run using only <code>accepted_owner_verified</code> items that pass the quality gate.
         v0.8.7 does not write or modify any Learning Pack artifact.
       </p>
+      {_voila_v088_manual_learning_pack_export_form_html(course_id, len(eligible_items))}
       <div class="v087-learning-pack-grid">
         {''.join(cards)}
       </div>
@@ -3995,7 +4108,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
     review_summary_html = _voila_v084_manual_learning_evidence_review_summary_html(items)
     accepted_preview_html = _voila_v085_manual_learning_evidence_accepted_preview_html(items)
     quality_gate_html = _voila_v086_manual_learning_evidence_quality_gate_html(items)
-    learning_pack_dry_run_html = _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items)
+    learning_pack_dry_run_html = _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(course_id, items)
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_END
 
     cards = []
@@ -4545,6 +4658,27 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         background: rgba(255,255,255,0.42);
       }}
       /* VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_CSS_END */
+      /* VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_CSS_START */
+      .v088-export-draft {{
+        margin-top: 12px;
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.46);
+      }}
+      .v088-export-button {{
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        background: #1F4E79;
+        color: white;
+      }}
+      .v088-export-note {{
+        margin-top: 8px;
+      }}
+      /* VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4579,6 +4713,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">accepted preview read-only</span>
         <span class="v0797-chip">quality gate read-only</span>
         <span class="v0797-chip">learning pack dry-run read-only</span>
+        <span class="v0797-chip">learning pack draft export</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -5362,6 +5497,34 @@ async def owner_manual_learning_evidence_reject_draft(course_id: str, request: R
         }
     )
 # VOILA_V0_8_3_MANUAL_LEARNING_EVIDENCE_REJECT_DRAFT_ENDPOINT_END
+
+# VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_ENDPOINT_START
+@app.post("/owner/manual-learning-evidence/{course_id}/export-learning-pack-draft")
+def owner_manual_learning_evidence_export_learning_pack_draft(course_id: str):
+    safe_course_id = _voila_v090_validate_course_id(course_id)
+    output_dir = Path("data") / "output" / safe_course_id
+    evidence_path = output_dir / "manual_learning_evidence.json"
+    preview_path = output_dir / "manual_learning_pack.preview.json"
+
+    items = []
+    if evidence_path.exists():
+        try:
+            payload = json.loads(evidence_path.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(payload, dict) and isinstance(payload.get("items"), list):
+                items = payload.get("items") or []
+        except Exception:
+            items = []
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    preview_payload = _voila_v088_manual_learning_pack_payload(safe_course_id, items)
+    preview_path.write_text(json.dumps(preview_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    return RedirectResponse(
+        url="/owner/manual-learning-evidence/" + quote(safe_course_id, safe="") + "?page=1&learning_pack_preview_exported=1",
+        status_code=303,
+    )
+# VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_ENDPOINT_END
+
 
 
 
