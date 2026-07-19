@@ -3626,6 +3626,90 @@ def _voila_v0796_page_image_path(course_id: str, page: int) -> Path:
 
 
 
+# VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_START
+def _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    required_fields = ["title", "kind", "verified_text", "explanation_ro", "page", "bbox"]
+    eligible_items = []
+    accepted_incomplete_count = 0
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        if item.get("status") != "accepted_owner_verified" or item.get("owner_verified") is not True:
+            continue
+
+        missing = []
+        for field in required_fields:
+            value = item.get(field)
+            if field == "bbox":
+                if not isinstance(value, list) or len(value) != 4:
+                    missing.append(field)
+            elif value is None or str(value).strip() == "":
+                missing.append(field)
+
+        if missing:
+            accepted_incomplete_count += 1
+        else:
+            eligible_items.append(item)
+
+    if not eligible_items:
+        return f"""
+        <section class="v087-learning-pack-dry-run" data-testid="manual-evidence-learning-pack-dry-run">
+          <strong>Learning Pack dry-run preview</strong>
+          <p class="meta">
+            No quality-gate eligible accepted evidence items yet.
+            accepted incomplete/blocked: <code>{accepted_incomplete_count}</code>.
+          </p>
+          <span class="v087-dry-run-badge">Dry-run only · no Learning Pack artifact written</span>
+        </section>
+        """
+
+    cards = []
+    for item in eligible_items[-25:]:
+        draft_id = html.escape(str(item.get("id") or "(missing-id)"), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        kind = html.escape(str(item.get("kind") or ""), quote=True)
+        page_value = html.escape(str(item.get("page") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+        verified_text = html.escape(str(item.get("verified_text") or ""), quote=True)
+        explanation_ro = html.escape(str(item.get("explanation_ro") or ""), quote=True)
+        bbox = item.get("bbox")
+        bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+
+        cards.append(
+            f"""
+            <article class="v087-learning-pack-card" data-testid="manual-evidence-learning-pack-dry-run-card">
+              <h3>{title}</h3>
+              <p class="meta">
+                dry_run_source_id: <code>{draft_id}</code><br>
+                page: <code>{page_value}</code> · kind: <code>{kind}</code> · source_status: <code>{source_status}</code>
+              </p>
+              <p><strong>Learning objective source:</strong><br>{verified_text}</p>
+              <p><strong>Romanian explanation:</strong><br>{explanation_ro}</p>
+              <p>source bbox: <code>{bbox_text}</code></p>
+              <span class="v087-dry-run-badge">Would enter future Learning Pack</span>
+            </article>
+            """
+        )
+
+    return f"""
+    <section class="v087-learning-pack-dry-run" data-testid="manual-evidence-learning-pack-dry-run">
+      <strong>Learning Pack dry-run preview</strong> · eligible items: <code>{len(eligible_items)}</code>
+      <p class="meta">
+        Read-only dry-run using only <code>accepted_owner_verified</code> items that pass the quality gate.
+        v0.8.7 does not write or modify any Learning Pack artifact.
+      </p>
+      <div class="v087-learning-pack-grid">
+        {''.join(cards)}
+      </div>
+    </section>
+    """
+# VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_END
+
+
 # VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_START
 def _voila_v086_manual_learning_evidence_quality_gate_html(items):
     if not isinstance(items, list):
@@ -3911,6 +3995,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
     review_summary_html = _voila_v084_manual_learning_evidence_review_summary_html(items)
     accepted_preview_html = _voila_v085_manual_learning_evidence_accepted_preview_html(items)
     quality_gate_html = _voila_v086_manual_learning_evidence_quality_gate_html(items)
+    learning_pack_dry_run_html = _voila_v087_manual_learning_evidence_learning_pack_dry_run_html(items)
     # VOILA_V0_8_4_MANUAL_LEARNING_EVIDENCE_REVIEW_SUMMARY_COUNTS_END
 
     cards = []
@@ -3997,6 +4082,7 @@ def _voila_v081_manual_learning_evidence_list_html(course_id: str):
         {review_summary_html}
         {accepted_preview_html}
         {quality_gate_html}
+        {learning_pack_dry_run_html}
         <div class="v081-draft-summary" data-testid="manual-evidence-draft-list">
           <strong>Draft evidence list</strong> · items: <code>{len(items)}</code> · source:
           <code>manual_learning_evidence.json</code>
@@ -4426,6 +4512,39 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         background: rgba(31,78,121,0.08);
       }}
       /* VOILA_V0_8_6_MANUAL_LEARNING_EVIDENCE_QUALITY_GATE_CSS_END */
+      /* VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_CSS_START */
+      .v087-learning-pack-dry-run {{
+        margin: 14px 0;
+        border: 1px dashed rgba(31,78,121,0.38);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.045);
+      }}
+      .v087-learning-pack-grid {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }}
+      .v087-learning-pack-card {{
+        border: 1px solid rgba(31,78,121,0.20);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.50);
+      }}
+      .v087-learning-pack-card h3 {{
+        margin: 0 0 8px;
+      }}
+      .v087-dry-run-badge {{
+        display: inline-flex;
+        border: 1px dashed rgba(31,78,121,0.35);
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 13px;
+        font-weight: 800;
+        background: rgba(255,255,255,0.42);
+      }}
+      /* VOILA_V0_8_7_MANUAL_LEARNING_EVIDENCE_LEARNING_PACK_DRY_RUN_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4459,6 +4578,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">review summary read-only</span>
         <span class="v0797-chip">accepted preview read-only</span>
         <span class="v0797-chip">quality gate read-only</span>
+        <span class="v0797-chip">learning pack dry-run read-only</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
