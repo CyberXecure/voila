@@ -5501,7 +5501,18 @@ async def owner_manual_learning_evidence_reject_draft(course_id: str, request: R
 @app.post("/owner/manual-learning-evidence/{course_id}/export-learning-pack-draft")
 def owner_manual_learning_evidence_export_learning_pack_draft(course_id: str):
     safe_course_id = _voila_v090_validate_course_id(course_id)
-    output_dir = Path("data") / "output" / safe_course_id
+
+    output_root = Path("data") / "output"
+    output_dir = None
+    if output_root.exists():
+        for candidate_dir in output_root.iterdir():
+            if candidate_dir.is_dir() and candidate_dir.name == safe_course_id:
+                output_dir = candidate_dir
+                break
+
+    if output_dir is None:
+        raise HTTPException(status_code=404, detail="Course output folder not found")
+
     evidence_path = output_dir / "manual_learning_evidence.json"
     preview_path = output_dir / "manual_learning_pack.preview.json"
 
@@ -5514,12 +5525,11 @@ def owner_manual_learning_evidence_export_learning_pack_draft(course_id: str):
         except Exception:
             items = []
 
-    output_dir.mkdir(parents=True, exist_ok=True)
     preview_payload = _voila_v088_manual_learning_pack_payload(safe_course_id, items)
     preview_path.write_text(json.dumps(preview_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     return RedirectResponse(
-        url=f"/owner/manual-learning-evidence/{safe_course_id}?page=1&learning_pack_preview_exported=1",
+        url="/?learning_pack_preview_exported=1",
         status_code=303,
     )
 # VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_ENDPOINT_END
