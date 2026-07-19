@@ -3711,8 +3711,8 @@ def _voila_v088_manual_learning_pack_payload(course_id, items):
 
 
 def _voila_v088_manual_learning_pack_export_form_html(course_id, eligible_count):
-    safe_course_id = html.escape(str(course_id or ""), quote=True)
-    action = "/owner/manual-learning-evidence/" + quote(str(course_id or ""), safe="") + "/export-learning-pack-draft"
+    safe_course_id = _voila_v090_validate_course_id(str(course_id or ""))
+    action_path = f"/owner/manual-learning-evidence/{safe_course_id}/export-learning-pack-draft"
 
     disabled = "" if eligible_count > 0 else " disabled"
     button_label = "Exportă draft Learning Pack JSON" if eligible_count > 0 else "Export blocat: nu există itemuri eligibile"
@@ -3724,8 +3724,7 @@ def _voila_v088_manual_learning_pack_export_form_html(course_id, eligible_count)
         Scrie doar artifact separat <code>manual_learning_pack.preview.json</code>
         din itemuri accepted + owner verified + quality gate eligible.
       </p>
-      <form method="post" action="{html.escape(action, quote=True)}">
-        <input type="hidden" name="course_id" value="{safe_course_id}">
+      <form method="post" action="{action_path}">
         <button class="v088-export-button" type="submit"{disabled} data-testid="manual-learning-pack-export-draft-button">{html.escape(button_label, quote=True)}</button>
       </form>
       <p class="meta v088-export-note">
@@ -5520,7 +5519,7 @@ def owner_manual_learning_evidence_export_learning_pack_draft(course_id: str):
     preview_path.write_text(json.dumps(preview_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     return RedirectResponse(
-        url="/owner/manual-learning-evidence/" + quote(safe_course_id, safe="") + "?page=1&learning_pack_preview_exported=1",
+        url=f"/owner/manual-learning-evidence/{safe_course_id}?page=1&learning_pack_preview_exported=1",
         status_code=303,
     )
 # VOILA_V0_8_8_MANUAL_LEARNING_PACK_EXPORT_DRAFT_ENDPOINT_END

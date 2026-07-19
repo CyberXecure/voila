@@ -120,7 +120,8 @@ course_id = "03-pag-30-34-vectori-trigonometrie"
 output_dir = root / "data" / "output" / course_id
 preview_json = output_dir / "manual_learning_pack.preview.json"
 
-before_preview = preview_json.read_text(encoding="utf-8", errors="replace") if preview_json.exists() else None
+if preview_json.exists():
+    preview_json.unlink()
 
 manual_url = f"http://127.0.0.1:8787/owner/manual-learning-evidence/{course_id}?page=1"
 save_url = f"http://127.0.0.1:8787/owner/manual-learning-evidence/{course_id}/save-draft"
@@ -256,8 +257,6 @@ if not preview_json.exists():
     raise SystemExit("FAILED_V088_PREVIEW_JSON_MISSING")
 
 after_preview = preview_json.read_text(encoding="utf-8", errors="replace")
-if before_preview == after_preview:
-    raise SystemExit("FAILED_V088_PREVIEW_JSON_NOT_UPDATED")
 
 pack = json.loads(after_preview)
 
