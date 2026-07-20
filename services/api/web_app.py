@@ -14852,3 +14852,106 @@ def owner_manual_study_integration_dry_run(course_id: str, enabled: str = "0"):
         """,
     )
 # VOILA_V0_8_18_MANUAL_STUDY_INTEGRATION_DRY_RUN_TOGGLE_END
+
+# VOILA_V0_8_19_MANUAL_STUDY_DRY_RUN_COURSE_TOOLS_LINK_START
+def _voila_v0819_inject_manual_study_dry_run_course_tools_link(html_text):
+    if not isinstance(html_text, str):
+        return html_text
+
+    if 'data-testid="manual-study-dry-run-course-tools-link"' in html_text:
+        return html_text
+
+    import re as _voila_v0819_re
+    from urllib.parse import quote as _voila_v0819_quote
+
+    match = _voila_v0819_re.search(
+        r'href="(/owner/manual-study-preview/([A-Za-z0-9_.-]+))"',
+        html_text,
+    )
+    if not match:
+        return html_text
+
+    safe_course_id = match.group(2)
+    if not _voila_v0819_re.fullmatch(r"[A-Za-z0-9_.-]+", safe_course_id):
+        return html_text
+
+    safe_course_id_url = _voila_v0819_quote(safe_course_id, safe="")
+    dry_run_href = "/owner/manual-study-integration-dry-run/" + safe_course_id_url + "?enabled=0"
+    dry_run_href_html = html.escape(dry_run_href, quote=True)
+    safe_course_id_html = html.escape(safe_course_id, quote=True)
+
+    dry_run_block = f"""
+    <section class="v0813-manual-study" data-testid="manual-study-dry-run-course-tools-section">
+      <h2>Manual Study dry-run</h2>
+      <p class="meta">
+        Link owner-local către dry-run toggle înainte de orice integrare reală în <code>/study</code>.
+      </p>
+      <p>
+        <a href="{dry_run_href_html}" data-testid="manual-study-dry-run-course-tools-link">
+          Deschide Manual Study Integration Dry Run
+        </a>
+      </p>
+      <p class="meta" data-testid="manual-study-dry-run-course-tools-status">
+        course_id=<code>{safe_course_id_html}</code><br>
+        source_artifact=<code>manual_study_items.preview.json</code><br>
+        dry_run_toggle_default=<code>off</code><br>
+        integration_mode=<code>dry_run_only</code><br>
+        manual_study_connected_to_real_study=<code>false</code><br>
+        progress_write=<code>false</code><br>
+        answer_marking=<code>false</code><br>
+        writes_legacy_study_items_preview=<code>false</code>
+      </p>
+    </section>
+    """
+
+    anchor = 'data-testid="manual-study-preview-course-tools-status"'
+    anchor_index = html_text.find(anchor)
+    if anchor_index >= 0:
+        paragraph_end = html_text.find("</p>", anchor_index)
+        if paragraph_end >= 0:
+            insert_at = paragraph_end + len("</p>")
+            return html_text[:insert_at] + dry_run_block + html_text[insert_at:]
+
+    body_end = html_text.lower().rfind("</body>")
+    if body_end >= 0:
+        return html_text[:body_end] + dry_run_block + html_text[body_end:]
+
+    return html_text + dry_run_block
+
+
+@app.middleware("http")
+async def _voila_v0819_manual_study_dry_run_course_tools_link_middleware(request, call_next):
+    response = await call_next(request)
+
+    if getattr(request.url, "path", "") != "/course-tools":
+        return response
+
+    if getattr(response, "status_code", 200) != 200:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    injected = _voila_v0819_inject_manual_study_dry_run_course_tools_link(html_text)
+
+    from starlette.responses import Response as _VoilaV0819Response
+
+    headers = {
+        key: value
+        for key, value in response.headers.items()
+        if key.lower() not in {"content-length", "content-type"}
+    }
+
+    return _VoilaV0819Response(
+        content=injected,
+        status_code=response.status_code,
+        headers=headers,
+        media_type="text/html",
+    )
+# VOILA_V0_8_19_MANUAL_STUDY_DRY_RUN_COURSE_TOOLS_LINK_END
