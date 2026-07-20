@@ -14731,3 +14731,124 @@ def _voila_owner_ocr_review_final_confirm(course_id: str):
 # VOILA_V0_7_73_OWNER_LOCAL_OCR_REVIEW_FINAL_CONFIRM_BUTTON_END
 
 # VOILA_V0_7_71_OWNER_LOCAL_OCR_REVIEW_READ_ONLY_PAGE_SHELL_END\n
+
+
+# VOILA_V0_8_18_MANUAL_STUDY_INTEGRATION_DRY_RUN_TOGGLE_START
+def _voila_v0818_manual_study_dry_run_toggle_enabled(value):
+    value_text = str(value or "").strip().lower()
+    return value_text in {"1", "true", "yes", "on"}
+
+
+def _voila_v0818_load_manual_study_items_preview(course_id):
+    safe_course_id = _voila_v090_validate_course_id(course_id)
+
+    output_root = Path("data") / "output"
+    output_dir = None
+
+    if output_root.exists():
+        try:
+            for candidate_dir in output_root.iterdir():
+                if candidate_dir.is_dir() and candidate_dir.name == safe_course_id:
+                    output_dir = candidate_dir
+                    break
+        except Exception:
+            output_dir = None
+
+    if output_dir is None:
+        return safe_course_id, None, [], "course_output_not_found"
+
+    preview_path = output_dir / "manual_study_items.preview.json"
+    if not preview_path.exists():
+        return safe_course_id, None, [], "manual_study_items_preview_missing"
+
+    try:
+        preview_data = json.loads(preview_path.read_text(encoding="utf-8"))
+    except Exception:
+        return safe_course_id, None, [], "manual_study_items_preview_unreadable"
+
+    preview_items = preview_data.get("items")
+    if not isinstance(preview_items, list):
+        preview_items = []
+
+    return safe_course_id, preview_data, preview_items, "ok"
+
+
+@app.get("/owner/manual-study-integration-dry-run/{course_id}")
+def owner_manual_study_integration_dry_run(course_id: str, enabled: str = "0"):
+    safe_course_id, preview_data, preview_items, load_status = _voila_v0818_load_manual_study_items_preview(course_id)
+
+    enabled_flag = _voila_v0818_manual_study_dry_run_toggle_enabled(enabled)
+    safe_course_id_html = html.escape(safe_course_id, quote=True)
+    safe_course_id_url = quote(safe_course_id, safe="")
+    item_count = len(preview_items)
+
+    off_href = "/owner/manual-study-integration-dry-run/" + safe_course_id_url + "?enabled=0"
+    on_href = "/owner/manual-study-integration-dry-run/" + safe_course_id_url + "?enabled=1"
+    preview_href = "/owner/manual-study-preview/" + safe_course_id_url
+
+    if preview_data is None:
+        cards_html = (
+            '<p class="meta" data-testid="manual-study-integration-dry-run-missing-preview">'
+            + html.escape("manual_study_items.preview.json lipsește sau nu poate fi citit. Status: " + load_status, quote=True)
+            + "</p>"
+        )
+        preview_available = "false"
+    elif enabled_flag:
+        cards_html = _voila_v0813_manual_study_preview_cards_html(preview_items)
+        preview_available = "true"
+    else:
+        cards_html = """
+        <p class="meta" data-testid="manual-study-integration-dry-run-toggle-off">
+          Toggle OFF. Nu randăm cardurile până nu activezi dry-run-ul explicit.
+        </p>
+        """
+        preview_available = "true"
+
+    enabled_text = "true" if enabled_flag else "false"
+
+    return page(
+        "Manual Study Integration Dry Run",
+        f"""
+        <section class="v0813-manual-study" data-testid="manual-study-integration-dry-run-route">
+          <h1>Manual Study Integration Dry Run</h1>
+
+          <p class="meta">
+            Route owner-local pentru verificarea explicită a integrării Manual Study înainte de orice atingere a route-ului real <code>/study</code>.
+          </p>
+
+          <div class="v0815-study-top-nav" data-testid="manual-study-integration-dry-run-toggle">
+            <span class="v0815-study-position">dry_run_toggle_enabled=<code>{enabled_text}</code></span>
+            <a href="{html.escape(off_href, quote=True)}" data-testid="manual-study-integration-dry-run-off">Toggle OFF</a>
+            <a href="{html.escape(on_href, quote=True)}" data-testid="manual-study-integration-dry-run-on">Toggle ON</a>
+            <a href="{html.escape(preview_href, quote=True)}" data-testid="manual-study-integration-dry-run-preview-link">Înapoi la Manual Study Preview</a>
+          </div>
+
+          <p class="meta" data-testid="manual-study-integration-dry-run-source">
+            course_id=<code>{safe_course_id_html}</code><br>
+            source_artifact=<code>manual_study_items.preview.json</code><br>
+            load_status=<code>{html.escape(load_status, quote=True)}</code><br>
+            preview_available=<code>{preview_available}</code><br>
+            item_count=<code>{item_count}</code><br>
+            target_route=<code>/study</code><br>
+            integration_mode=<code>dry_run_only</code>
+          </p>
+
+          <p class="meta" data-testid="manual-study-integration-dry-run-policy">
+            manual_study_connected_to_real_study=<code>false</code><br>
+            replaces_existing_study_route=<code>false</code><br>
+            progress_write=<code>false</code><br>
+            answer_marking=<code>false</code><br>
+            writes_legacy_study_items_preview=<code>false</code><br>
+            build_performed=<code>false</code><br>
+            zip_created=<code>false</code><br>
+            share_created=<code>false</code><br>
+            delivery_performed=<code>false</code>
+          </p>
+
+          <div id="manual-study-preview-top" data-testid="manual-study-integration-dry-run-cards">
+            {cards_html}
+          </div>
+        </section>
+        """,
+    )
+# VOILA_V0_8_18_MANUAL_STUDY_INTEGRATION_DRY_RUN_TOGGLE_END
