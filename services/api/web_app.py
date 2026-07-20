@@ -14955,3 +14955,102 @@ async def _voila_v0819_manual_study_dry_run_course_tools_link_middleware(request
         media_type="text/html",
     )
 # VOILA_V0_8_19_MANUAL_STUDY_DRY_RUN_COURSE_TOOLS_LINK_END
+
+# VOILA_V0_8_22_MANUAL_STUDY_REAL_STUDY_READ_ONLY_SHADOW_TOGGLE_START
+def _voila_v0822_manual_study_shadow_toggle_enabled(value):
+    value_text = str(value or "").strip().lower()
+    return value_text in {"1", "true", "yes", "on"}
+
+
+def _voila_v0822_manual_study_shadow_page(course_id):
+    safe_course_id, preview_data, preview_items, load_status = _voila_v0818_load_manual_study_items_preview(course_id)
+
+    safe_course_id_html = html.escape(safe_course_id, quote=True)
+    preview_href = "/owner/manual-study-preview/" + quote(safe_course_id, safe="")
+    dry_run_href = "/owner/manual-study-integration-dry-run/" + quote(safe_course_id, safe="") + "?enabled=1"
+
+    if preview_data is None:
+        cards_html = (
+            '<p class="meta" data-testid="manual-study-shadow-missing-preview">'
+            + html.escape("manual_study_items.preview.json lipsește sau nu poate fi citit. Status: " + load_status, quote=True)
+            + "</p>"
+        )
+        preview_available = "false"
+        item_count = 0
+    else:
+        cards_html = _voila_v0813_manual_study_preview_cards_html(preview_items)
+        preview_available = "true"
+        item_count = len(preview_items)
+
+    return page(
+        "Study · Manual Shadow",
+        f"""
+        <section class="v0813-manual-study" data-testid="manual-study-shadow-route">
+          <h1>Study · Manual Shadow</h1>
+
+          <p class="meta">
+            Shadow mode owner-local pentru <code>/study</code>. Activ doar cu query explicit:
+            <code>manual_study_shadow=1</code> și <code>course_id</code>.
+          </p>
+
+          <div class="v0815-study-top-nav" data-testid="manual-study-shadow-navigation">
+            <span class="v0815-study-position">manual_study_shadow=<code>true</code></span>
+            <a href="{html.escape(preview_href, quote=True)}" data-testid="manual-study-shadow-preview-link">Manual Study Preview</a>
+            <a href="{html.escape(dry_run_href, quote=True)}" data-testid="manual-study-shadow-dry-run-link">Dry-run ON</a>
+          </div>
+
+          <p class="meta" data-testid="manual-study-shadow-source">
+            course_id=<code>{safe_course_id_html}</code><br>
+            source_artifact=<code>manual_study_items.preview.json</code><br>
+            load_status=<code>{html.escape(load_status, quote=True)}</code><br>
+            preview_available=<code>{preview_available}</code><br>
+            item_count=<code>{item_count}</code><br>
+            route=<code>/study</code><br>
+            integration_mode=<code>read_only_shadow_toggle</code>
+          </p>
+
+          <p class="meta" data-testid="manual-study-shadow-policy">
+            fallback_existing_study_available=<code>true</code><br>
+            manual_study_connected_to_real_study=<code>shadow_only</code><br>
+            replaces_existing_study_route=<code>false</code><br>
+            progress_write=<code>false</code><br>
+            answer_marking=<code>false</code><br>
+            writes_legacy_study_items_preview=<code>false</code><br>
+            study_artifact_written=<code>false</code><br>
+            build_performed=<code>false</code><br>
+            zip_created=<code>false</code><br>
+            share_created=<code>false</code><br>
+            delivery_performed=<code>false</code>
+          </p>
+
+          <div id="manual-study-preview-top" data-testid="manual-study-shadow-cards">
+            {cards_html}
+          </div>
+        </section>
+        """,
+    )
+
+
+@app.middleware("http")
+async def _voila_v0822_manual_study_real_study_read_only_shadow_toggle_middleware(request, call_next):
+    if getattr(request.url, "path", "") != "/study":
+        return await call_next(request)
+
+    shadow_enabled = _voila_v0822_manual_study_shadow_toggle_enabled(request.query_params.get("manual_study_shadow"))
+    if not shadow_enabled:
+        return await call_next(request)
+
+    course_id = request.query_params.get("course_id")
+    if not course_id:
+        return page(
+            "Study · Manual Shadow",
+            """
+            <section class="v0813-manual-study" data-testid="manual-study-shadow-missing-course">
+              <h1>Study · Manual Shadow</h1>
+              <p class="meta">Lipsește <code>course_id</code>. Fallback-ul /study existent rămâne disponibil când shadow toggle-ul lipsește.</p>
+            </section>
+            """,
+        )
+
+    return _voila_v0822_manual_study_shadow_page(course_id)
+# VOILA_V0_8_22_MANUAL_STUDY_REAL_STUDY_READ_ONLY_SHADOW_TOGGLE_END
