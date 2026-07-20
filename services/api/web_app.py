@@ -4894,6 +4894,37 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         background: rgba(255,255,255,0.50);
       }}
       /* VOILA_V0_8_13_MANUAL_STUDY_ROUTE_READ_ONLY_PREVIEW_CSS_END */
+      /* VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_CSS_START */
+      .v0814-manual-study-tools-link {{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 8px 11px;
+        margin: 4px 6px 4px 0;
+        font-weight: 900;
+        text-decoration: none;
+        border: 1px solid rgba(31,78,121,0.26);
+        background: rgba(31,78,121,0.08);
+      }}
+      .v0814-manual-study-tools-status {{
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 9px;
+        margin: 4px 6px 4px 0;
+        font-size: 13px;
+        font-weight: 900;
+        border: 1px solid rgba(31,78,121,0.22);
+        background: rgba(255,255,255,0.52);
+      }}
+      .v0814-manual-study-tools-status.ready {{
+        background: rgba(38,128,91,0.10);
+      }}
+      .v0814-manual-study-tools-status.missing {{
+        background: rgba(190,128,36,0.10);
+      }}
+      /* VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4934,6 +4965,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">manual study preview export</span>
         <span class="v0797-chip">manual study preview viewer</span>
         <span class="v0797-chip">manual study route preview</span>
+        <span class="v0797-chip">manual study Course Tools link</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -8521,6 +8553,185 @@ def _inject_voila_tools_bar(html_doc: str, pdf_name: str, active: str = "") -> s
     )
 
     return html_doc
+
+
+
+# VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_START
+def _voila_v0814_manual_study_preview_course_tools_link_html(course_id):
+    try:
+        safe_course_id = _voila_v090_validate_course_id(str(course_id or ""))
+    except Exception:
+        return ""
+
+    output_dir, _safe_course_id = _voila_v089_find_existing_course_output_dir(safe_course_id)
+    ready = bool(output_dir is not None and (output_dir / "manual_study_items.preview.json").exists())
+
+    status_text = "Manual Study preview: OK" if ready else "Manual Study preview: lipsește manual_study_items.preview.json"
+    status_class = "ready" if ready else "missing"
+    href = "/owner/manual-study-preview/" + safe_course_id
+
+    return (
+        '<a class="v0814-manual-study-tools-link" '
+        'data-testid="manual-study-preview-course-tools-link" '
+        f'href="{html.escape(href, quote=True)}">Manual Study Preview</a>'
+        f'<span class="v0814-manual-study-tools-status {html.escape(status_class, quote=True)}" '
+        'data-testid="manual-study-preview-course-tools-status">'
+        f'{html.escape(status_text, quote=True)}</span>'
+    )
+
+
+def _voila_v0814_manual_study_preview_course_tools_fallback_html():
+    output_root = Path("data") / "output"
+    if not output_root.exists():
+        return ""
+
+    links = []
+    for candidate_dir in sorted(output_root.iterdir(), key=lambda item: item.name):
+        if not candidate_dir.is_dir():
+            continue
+        if not (candidate_dir / "manual_study_items.preview.json").exists():
+            continue
+
+        link_html = _voila_v0814_manual_study_preview_course_tools_link_html(candidate_dir.name)
+        if link_html:
+            links.append(
+                '<div class="v0814-manual-study-tools-status ready" '
+                'data-testid="manual-study-preview-course-tools-fallback-item">'
+                f'{link_html}</div>'
+            )
+
+    if not links:
+        return (
+            '<section class="card" data-testid="manual-study-preview-course-tools-fallback">'
+            '<h2>Manual Study Preview</h2>'
+            '<span class="v0814-manual-study-tools-status missing" '
+            'data-testid="manual-study-preview-course-tools-status">'
+            'Manual Study preview: lipsește manual_study_items.preview.json</span>'
+            '</section>'
+        )
+
+    return (
+        '<section class="card" data-testid="manual-study-preview-course-tools-fallback">'
+        '<h2>Manual Study Preview</h2>'
+        '<p class="meta">Preview read-only din manual_study_items.preview.json. '
+        'Nu scrie progres și nu înlocuiește /study.</p>'
+        + "".join(links)
+        + '</section>'
+    )
+
+
+def _voila_v0814_inject_manual_study_preview_course_tools_link(body):
+    if not isinstance(body, str):
+        return body
+
+    marker = 'href="/owner/manual-learning-evidence/'
+    search_from = 0
+    changed = False
+
+    while True:
+        marker_pos = body.find(marker, search_from)
+        if marker_pos < 0:
+            break
+
+        course_start = marker_pos + len(marker)
+        course_end = body.find("?page=1", course_start)
+        if course_end < 0:
+            search_from = marker_pos + len(marker)
+            continue
+
+        anchor_end = body.find("</a>", course_end)
+        if anchor_end < 0:
+            search_from = course_end
+            continue
+        anchor_end += len("</a>")
+
+        course_id = body[course_start:course_end]
+        if "manual-study-preview-course-tools-link" in body[anchor_end:anchor_end + 700]:
+            search_from = anchor_end
+            continue
+
+        injected = _voila_v0814_manual_study_preview_course_tools_link_html(course_id)
+        body = body[:anchor_end] + injected + body[anchor_end:]
+        search_from = anchor_end + len(injected)
+        changed = True
+
+    if changed:
+        return body
+
+    if "manual-study-preview-course-tools-fallback" in body:
+        return body
+
+    fallback = _voila_v0814_manual_study_preview_course_tools_fallback_html()
+    if not fallback:
+        return body
+
+    body_close = body.rfind("</main>")
+    if body_close >= 0:
+        return body[:body_close] + fallback + body[body_close:]
+
+    return body + fallback
+# VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_END
+
+# VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_MIDDLEWARE_START
+@app.middleware("http")
+async def voila_v0814_manual_study_preview_course_tools_link_middleware(request, call_next):
+    response = await call_next(request)
+
+    if str(getattr(request, "method", "")).upper() != "GET":
+        return response
+
+    if str(getattr(getattr(request, "url", None), "path", "")) != "/course-tools":
+        return response
+
+    try:
+        status_code = int(getattr(response, "status_code", 0) or 0)
+    except Exception:
+        status_code = 0
+
+    if status_code != 200:
+        return response
+
+    media_type = str(getattr(response, "media_type", "") or "")
+    content_type = ""
+    try:
+        content_type = str(response.headers.get("content-type", "") or "")
+    except Exception:
+        content_type = ""
+
+    if "html" not in media_type.lower() and "html" not in content_type.lower():
+        return response
+
+    try:
+        chunks = []
+        async for chunk in response.body_iterator:
+            chunks.append(chunk)
+        body_bytes = b"".join(chunks)
+        body_text = body_bytes.decode("utf-8", errors="replace")
+    except Exception:
+        return response
+
+    if "manual-study-preview-course-tools-link" not in body_text:
+        fallback = _voila_v0814_manual_study_preview_course_tools_fallback_html()
+        if fallback:
+            close_main = body_text.rfind("</main>")
+            if close_main >= 0:
+                body_text = body_text[:close_main] + fallback + body_text[close_main:]
+            else:
+                close_body = body_text.rfind("</body>")
+                if close_body >= 0:
+                    body_text = body_text[:close_body] + fallback + body_text[close_body:]
+                else:
+                    body_text = body_text + fallback
+
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(
+        content=body_text,
+        status_code=status_code,
+        headers=dict(response.headers),
+    )
+# VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_MIDDLEWARE_END
+
+
 
 
 @app.get("/course-tools")
