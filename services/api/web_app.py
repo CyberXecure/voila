@@ -4836,6 +4836,64 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         margin: 2px 4px 2px 0;
       }}
       /* VOILA_V0_8_12_MANUAL_STUDY_ITEMS_PREVIEW_VIEWER_CSS_END */
+      /* VOILA_V0_8_13_MANUAL_STUDY_ROUTE_READ_ONLY_PREVIEW_CSS_START */
+      .v0813-manual-study {{
+        margin: 14px 0;
+        border: 1px solid rgba(31,78,121,0.24);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(31,78,121,0.045);
+      }}
+      .v0813-study-shell {{
+        display: grid;
+        gap: 14px;
+        margin-top: 14px;
+      }}
+      .v0813-study-card {{
+        border: 1px solid rgba(31,78,121,0.22);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255,255,255,0.58);
+      }}
+      .v0813-study-card h3 {{
+        margin: 4px 0 10px;
+      }}
+      .v0813-study-chip {{
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 13px;
+        font-weight: 900;
+        border: 1px solid rgba(31,78,121,0.24);
+        background: rgba(31,78,121,0.08);
+        margin: 2px 4px 8px 0;
+      }}
+      .v0813-study-prompt {{
+        border-left: 4px solid rgba(31,78,121,0.55);
+        padding: 8px 10px;
+        background: rgba(31,78,121,0.055);
+        border-radius: 10px;
+      }}
+      .v0813-study-answer {{
+        margin-top: 10px;
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.55);
+      }}
+      .v0813-study-meta {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }}
+      .v0813-study-meta-card {{
+        border: 1px solid rgba(31,78,121,0.18);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255,255,255,0.50);
+      }}
+      /* VOILA_V0_8_13_MANUAL_STUDY_ROUTE_READ_ONLY_PREVIEW_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4875,6 +4933,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">study adapter dry-run</span>
         <span class="v0797-chip">manual study preview export</span>
         <span class="v0797-chip">manual study preview viewer</span>
+        <span class="v0797-chip">manual study route preview</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -6264,6 +6323,7 @@ def owner_manual_study_items_preview_viewer(course_id: str):
         Read-only viewer pentru <code>manual_study_items.preview.json</code>.
         Nu conectează Study real, nu atinge legacy <code>study_items.preview.json</code>,
         nu schimbă Course/Progress/OCR și nu face build/ZIP/delivery.
+        Manual Study Preview: <code>/owner/manual-study-preview/{course_label}</code>.
       </p>
 
       <div class="v0812-manual-study-meta-grid">
@@ -6304,6 +6364,128 @@ def owner_manual_study_items_preview_viewer(course_id: str):
 
     return page("Manual Study Items Preview", body)
 # VOILA_V0_8_12_MANUAL_STUDY_ITEMS_PREVIEW_VIEWER_END
+
+# VOILA_V0_8_13_MANUAL_STUDY_ROUTE_READ_ONLY_PREVIEW_START
+def _voila_v0813_manual_study_preview_cards_html(items):
+    if not isinstance(items, list):
+        items = []
+
+    if not items:
+        return '<p class="meta" data-testid="manual-study-preview-empty">Nu există carduri manual Study disponibile.</p>'
+
+    cards = []
+    for index, item in enumerate(items[:100], start=1):
+        if not isinstance(item, dict):
+            continue
+
+        manual_study_item_id = html.escape(str(item.get("manual_study_item_id") or f"manual-study-{index}"), quote=True)
+        source_evidence_id = html.escape(str(item.get("source_evidence_id") or ""), quote=True)
+        study_item_type = html.escape(str(item.get("study_item_type") or ""), quote=True)
+        title = html.escape(str(item.get("title") or "(fără titlu)"), quote=True)
+        prompt = html.escape(str(item.get("prompt") or ""), quote=True)
+        answer = html.escape(str(item.get("answer") or ""), quote=True)
+        source_page = html.escape(str(item.get("source_page") or ""), quote=True)
+        source_kind = html.escape(str(item.get("source_kind") or ""), quote=True)
+        source_status = html.escape(str(item.get("source_status") or ""), quote=True)
+
+        bbox = item.get("source_bbox")
+        if isinstance(bbox, list):
+            bbox_text = "[" + ", ".join(html.escape(str(part), quote=True) for part in bbox) + "]"
+        else:
+            bbox_text = html.escape(str(bbox or ""), quote=True)
+
+        cards.append(
+            f"""
+            <article class="v0813-study-card" data-testid="manual-study-preview-card">
+              <span class="v0813-study-chip">manual Study preview</span>
+              <span class="v0813-study-chip">{study_item_type}</span>
+              <h3>{index}. {title}</h3>
+
+              <div class="v0813-study-prompt" data-testid="manual-study-preview-prompt">
+                <strong>Întrebare / prompt</strong><br>{prompt}
+              </div>
+
+              <details class="v0813-study-answer" data-testid="manual-study-preview-answer">
+                <summary><strong>Arată răspunsul</strong></summary>
+                <p>{answer}</p>
+              </details>
+
+              <p class="meta" data-testid="manual-study-preview-source">
+                manual_study_item_id: <code>{manual_study_item_id}</code><br>
+                source_evidence_id: <code>{source_evidence_id}</code><br>
+                source_kind: <code>{source_kind}</code> · source_status: <code>{source_status}</code><br>
+                source_page: <code>{source_page}</code> · source_bbox: <code>{bbox_text}</code>
+              </p>
+            </article>
+            """
+        )
+
+    return "".join(cards)
+
+
+@app.get("/owner/manual-study-preview/{course_id}")
+def owner_manual_study_route_read_only_preview(course_id: str):
+    output_dir, safe_course_id = _voila_v089_find_existing_course_output_dir(course_id)
+    if output_dir is None:
+        raise HTTPException(status_code=404, detail="Course output folder not found")
+
+    preview_path = output_dir / "manual_study_items.preview.json"
+    if not preview_path.exists():
+        raise HTTPException(status_code=404, detail="manual_study_items.preview.json not found")
+
+    try:
+        payload = json.loads(preview_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        raise HTTPException(status_code=500, detail="manual_study_items.preview.json could not be read")
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=500, detail="manual_study_items.preview.json is invalid")
+
+    items = payload.get("items") if isinstance(payload.get("items"), list) else []
+    cards_html = _voila_v0813_manual_study_preview_cards_html(items)
+
+    schema = html.escape(str(payload.get("schema") or ""), quote=True)
+    course_label = html.escape(str(safe_course_id), quote=True)
+    items_count = len(items)
+
+    body = f"""
+    <section class="v0813-manual-study" data-testid="manual-study-preview-route">
+      <h1>Manual Study Preview</h1>
+      <p class="meta">
+        Read-only Study-like preview bazat pe <code>manual_study_items.preview.json</code>.
+        Nu înlocuiește <code>/study</code>, nu scrie progres, nu marchează răspunsuri
+        și nu atinge legacy <code>study_items.preview.json</code>.
+      </p>
+
+      <div class="v0813-study-meta">
+        <div class="v0813-study-meta-card" data-testid="manual-study-preview-schema">
+          <strong>schema</strong><br><code>{schema}</code>
+        </div>
+        <div class="v0813-study-meta-card" data-testid="manual-study-preview-course">
+          <strong>course_id</strong><br><code>{course_label}</code>
+        </div>
+        <div class="v0813-study-meta-card" data-testid="manual-study-preview-items-count">
+          <strong>items_count</strong><br><code>{items_count}</code>
+        </div>
+        <div class="v0813-study-meta-card" data-testid="manual-study-preview-policy">
+          <strong>policy</strong><br>
+          progress_write=<code>false</code><br>
+          answer_marking=<code>false</code><br>
+          replaces_study_route=<code>false</code><br>
+          build_performed=<code>false</code><br>
+          delivery_performed=<code>false</code>
+        </div>
+      </div>
+
+      <div class="v0813-study-shell" data-testid="manual-study-preview-cards">
+        {cards_html}
+      </div>
+    </section>
+    """
+
+    return page("Manual Study Preview", body)
+# VOILA_V0_8_13_MANUAL_STUDY_ROUTE_READ_ONLY_PREVIEW_END
+
 
 
 
