@@ -4925,6 +4925,52 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         background: rgba(190,128,36,0.10);
       }}
       /* VOILA_V0_8_14_MANUAL_STUDY_PREVIEW_COURSE_TOOLS_LINK_CSS_END */
+      /* VOILA_V0_8_15_MANUAL_STUDY_PREVIEW_NAVIGATION_POLISH_CSS_START */
+      .v0815-study-top-nav {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin: 12px 0 16px;
+      }}
+      .v0815-study-top-nav a,
+      .v0815-study-card-nav a {{
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 13px;
+        font-weight: 900;
+        text-decoration: none;
+        border: 1px solid rgba(31,78,121,0.26);
+        background: rgba(31,78,121,0.08);
+      }}
+      .v0815-study-card-nav {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 4px;
+      }}
+      .v0815-study-position {{
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 13px;
+        font-weight: 900;
+        border: 1px solid rgba(31,78,121,0.18);
+        background: rgba(255,255,255,0.55);
+      }}
+      .v0815-study-focus-hint {{
+        margin-top: 8px;
+        font-size: 13px;
+        opacity: 0.82;
+      }}
+      .v0813-study-card:target {{
+        outline: 3px solid rgba(31,78,121,0.45);
+        scroll-margin-top: 18px;
+      }}
+      /* VOILA_V0_8_15_MANUAL_STUDY_PREVIEW_NAVIGATION_POLISH_CSS_END */
       /* VOILA_V0_7_98_MANUAL_LEARNING_EVIDENCE_CROP_SELECTION_PREVIEW_END */
       @media (max-width: 860px) {{
         .v0796-grid {{
@@ -4966,6 +5012,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
         <span class="v0797-chip">manual study preview viewer</span>
         <span class="v0797-chip">manual study route preview</span>
         <span class="v0797-chip">manual study Course Tools link</span>
+        <span class="v0797-chip">manual study navigation polish</span>
         <span class="v0797-chip">Learning Pack disabled</span>
         <span class="v0797-chip">owner-local only</span>
       </div>
@@ -6402,13 +6449,33 @@ def _voila_v0813_manual_study_preview_cards_html(items):
     if not isinstance(items, list):
         items = []
 
-    if not items:
+    valid_items = [item for item in items if isinstance(item, dict)]
+
+    if not valid_items:
         return '<p class="meta" data-testid="manual-study-preview-empty">Nu există carduri manual Study disponibile.</p>'
 
+    total = len(valid_items)
+    quick_links = []
     cards = []
-    for index, item in enumerate(items[:100], start=1):
-        if not isinstance(item, dict):
-            continue
+
+    for index, item in enumerate(valid_items[:100], start=1):
+        card_id = f"manual-study-card-{index}"
+        title = html.escape(str(item.get("title") or f"Card {index}"), quote=True)
+        quick_links.append(
+            f'<a href="#{html.escape(card_id, quote=True)}" data-testid="manual-study-preview-nav-jump">Card {index}</a>'
+        )
+
+    quick_nav_html = (
+        '<nav class="v0815-study-top-nav" data-testid="manual-study-preview-top-navigation">'
+        '<span class="v0815-study-position">Navigare carduri</span>'
+        + "".join(quick_links[:40])
+        + '</nav>'
+    )
+
+    for index, item in enumerate(valid_items[:100], start=1):
+        card_id = f"manual-study-card-{index}"
+        prev_id = f"manual-study-card-{index - 1}" if index > 1 else ""
+        next_id = f"manual-study-card-{index + 1}" if index < min(total, 100) else ""
 
         manual_study_item_id = html.escape(str(item.get("manual_study_item_id") or f"manual-study-{index}"), quote=True)
         source_evidence_id = html.escape(str(item.get("source_evidence_id") or ""), quote=True)
@@ -6426,11 +6493,23 @@ def _voila_v0813_manual_study_preview_cards_html(items):
         else:
             bbox_text = html.escape(str(bbox or ""), quote=True)
 
+        previous_link = (
+            f'<a href="#{html.escape(prev_id, quote=True)}" data-testid="manual-study-preview-prev">← Previous</a>'
+            if prev_id
+            else '<span class="v0815-study-position" data-testid="manual-study-preview-prev-disabled">Start</span>'
+        )
+        next_link = (
+            f'<a href="#{html.escape(next_id, quote=True)}" data-testid="manual-study-preview-next">Next →</a>'
+            if next_id
+            else '<span class="v0815-study-position" data-testid="manual-study-preview-next-disabled">Final</span>'
+        )
+
         cards.append(
             f"""
-            <article class="v0813-study-card" data-testid="manual-study-preview-card">
+            <article id="{html.escape(card_id, quote=True)}" class="v0813-study-card" data-testid="manual-study-preview-card">
               <span class="v0813-study-chip">manual Study preview</span>
               <span class="v0813-study-chip">{study_item_type}</span>
+              <span class="v0815-study-position" data-testid="manual-study-preview-position">Card {index} / {total}</span>
               <h3>{index}. {title}</h3>
 
               <div class="v0813-study-prompt" data-testid="manual-study-preview-prompt">
@@ -6442,6 +6521,16 @@ def _voila_v0813_manual_study_preview_cards_html(items):
                 <p>{answer}</p>
               </details>
 
+              <nav class="v0815-study-card-nav" data-testid="manual-study-preview-card-navigation">
+                {previous_link}
+                <a href="#manual-study-preview-top" data-testid="manual-study-preview-back-to-top">Sus ↑</a>
+                {next_link}
+              </nav>
+
+              <p class="meta v0815-study-focus-hint">
+                Navigarea este doar cu ancore locale. Nu se scrie progres și nu se marchează răspunsuri.
+              </p>
+
               <p class="meta" data-testid="manual-study-preview-source">
                 manual_study_item_id: <code>{manual_study_item_id}</code><br>
                 source_evidence_id: <code>{source_evidence_id}</code><br>
@@ -6452,7 +6541,7 @@ def _voila_v0813_manual_study_preview_cards_html(items):
             """
         )
 
-    return "".join(cards)
+    return quick_nav_html + "".join(cards)
 
 
 @app.get("/owner/manual-study-preview/{course_id}")
@@ -6481,7 +6570,7 @@ def owner_manual_study_route_read_only_preview(course_id: str):
     items_count = len(items)
 
     body = f"""
-    <section class="v0813-manual-study" data-testid="manual-study-preview-route">
+    <section id="manual-study-preview-top" class="v0813-manual-study" data-testid="manual-study-preview-route">
       <h1>Manual Study Preview</h1>
       <p class="meta">
         Read-only Study-like preview bazat pe <code>manual_study_items.preview.json</code>.
@@ -6503,6 +6592,7 @@ def owner_manual_study_route_read_only_preview(course_id: str):
           <strong>policy</strong><br>
           progress_write=<code>false</code><br>
           answer_marking=<code>false</code><br>
+          local_anchor_navigation=<code>true</code><br>
           replaces_study_route=<code>false</code><br>
           build_performed=<code>false</code><br>
           delivery_performed=<code>false</code>
