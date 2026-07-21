@@ -431,6 +431,15 @@ legacy_after = legacy_study_preview.read_text(encoding="utf-8", errors="replace"
 if legacy_before != legacy_after:
     raise SystemExit("FAILED_V0834_LEGACY_STUDY_PREVIEW_CHANGED")
 
+def win_extended_path(path):
+    resolved = Path(path).resolve()
+    value = str(resolved)
+    prefix = chr(92) + chr(92) + "?" + chr(92)
+    if os.name == "nt" and not value.startswith(prefix):
+        return prefix + value
+    return value
+
+
 release_dir = Path(r"D:\dev\release-assets\voila\v0.8.34-tester-package-rebuild-no-share-no-delivery")
 candidate_dir_name = "voila-v0.8.34-controlled-tester-windows-package-candidate"
 staging_dir = release_dir / "_s"
@@ -526,14 +535,6 @@ excluded_suffixes = (
     ".7z",
     ".rar",
 )
-
-def win_extended_path(path):
-    resolved = Path(path).resolve()
-    value = str(resolved)
-    prefix = chr(92) + chr(92) + "?" + chr(92)
-    if os.name == "nt" and not value.startswith(prefix):
-        return prefix + value
-    return value
 
 
 def is_safe_relative(rel_text):
