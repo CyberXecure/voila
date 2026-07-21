@@ -14878,6 +14878,10 @@ def _voila_v0819_inject_manual_study_dry_run_course_tools_link(html_text):
     safe_course_id_url = _voila_v0819_quote(safe_course_id, safe="")
     dry_run_href = "/owner/manual-study-integration-dry-run/" + safe_course_id_url + "?enabled=0"
     dry_run_href_html = html.escape(dry_run_href, quote=True)
+    # VOILA_V0_8_24_MANUAL_STUDY_SHADOW_COURSE_TOOLS_LINK_START
+    shadow_href = "/study?manual_study_shadow=1&course_id=" + safe_course_id_url
+    shadow_href_html = html.escape(shadow_href, quote=True)
+    # VOILA_V0_8_24_MANUAL_STUDY_SHADOW_COURSE_TOOLS_LINK_END
     safe_course_id_html = html.escape(safe_course_id, quote=True)
 
     dry_run_block = f"""
@@ -14891,12 +14895,20 @@ def _voila_v0819_inject_manual_study_dry_run_course_tools_link(html_text):
           Deschide Manual Study Integration Dry Run
         </a>
       </p>
+      <p>
+        <a href="{shadow_href_html}" data-testid="manual-study-shadow-course-tools-link">
+          Deschide Study Manual Shadow
+        </a>
+      </p>
       <p class="meta" data-testid="manual-study-dry-run-course-tools-status">
         course_id=<code>{safe_course_id_html}</code><br>
         source_artifact=<code>manual_study_items.preview.json</code><br>
         dry_run_toggle_default=<code>off</code><br>
         integration_mode=<code>dry_run_only</code><br>
-        manual_study_connected_to_real_study=<code>false</code><br>
+        shadow_route=<code>/study?manual_study_shadow=1&amp;course_id={safe_course_id_html}</code><br>
+        shadow_integration_mode=<code>read_only_shadow_toggle</code><br>
+        manual_study_default_enabled=<code>false</code><br>
+        manual_study_connected_to_real_study=<code>shadow_only_explicit_link</code><br>
         progress_write=<code>false</code><br>
         answer_marking=<code>false</code><br>
         writes_legacy_study_items_preview=<code>false</code>
