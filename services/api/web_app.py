@@ -15066,3 +15066,95 @@ async def _voila_v0822_manual_study_real_study_read_only_shadow_toggle_middlewar
 
     return _voila_v0822_manual_study_shadow_page(course_id)
 # VOILA_V0_8_22_MANUAL_STUDY_REAL_STUDY_READ_ONLY_SHADOW_TOGGLE_END
+
+# VOILA_V0_8_27_MANUAL_STUDY_DEFAULT_STUDY_READ_ONLY_FALLBACK_START
+def _voila_v0827_manual_study_default_page(pdf_name, course_id):
+    safe_course_id, preview_data, preview_items, load_status = _voila_v0818_load_manual_study_items_preview(course_id)
+
+    if preview_data is None or not preview_items:
+        return None
+
+    safe_course_id_html = html.escape(safe_course_id, quote=True)
+    safe_pdf_html = html.escape(str(pdf_name or ""), quote=True)
+    shadow_href = "/study?manual_study_shadow=1&course_id=" + quote(safe_course_id, safe="")
+    preview_href = "/owner/manual-study-preview/" + quote(safe_course_id, safe="")
+    dry_run_href = "/owner/manual-study-integration-dry-run/" + quote(safe_course_id, safe="") + "?enabled=1"
+
+    cards_html = _voila_v0813_manual_study_preview_cards_html(preview_items)
+
+    return page(
+        "Voila! Study",
+        f"""
+        <section class="v0813-manual-study" data-testid="manual-study-default-route">
+          <h1>Voila! Study · Manual Study</h1>
+
+          <p class="meta">
+            Manual Study este activ implicit pentru acest curs deoarece
+            <code>manual_study_items.preview.json</code> există și este valid.
+            Fallback-ul legacy rămâne disponibil automat când preview-ul lipsește sau nu este valid.
+          </p>
+
+          <div class="v0815-study-top-nav" data-testid="manual-study-default-navigation">
+            <span class="v0815-study-position">default_study=<code>manual_study_read_only</code></span>
+            <a href="{html.escape(shadow_href, quote=True)}" data-testid="manual-study-default-shadow-link">Study Manual Shadow</a>
+            <a href="{html.escape(preview_href, quote=True)}" data-testid="manual-study-default-preview-link">Manual Study Preview</a>
+            <a href="{html.escape(dry_run_href, quote=True)}" data-testid="manual-study-default-dry-run-link">Dry-run ON</a>
+          </div>
+
+          <p class="meta" data-testid="manual-study-default-source">
+            pdf=<code>{safe_pdf_html}</code><br>
+            course_id=<code>{safe_course_id_html}</code><br>
+            source_artifact=<code>manual_study_items.preview.json</code><br>
+            load_status=<code>{html.escape(load_status, quote=True)}</code><br>
+            preview_available=<code>true</code><br>
+            item_count=<code>{len(preview_items)}</code><br>
+            route=<code>/study</code><br>
+            integration_mode=<code>manual_study_default_read_only_fallback</code>
+          </p>
+
+          <p class="meta" data-testid="manual-study-default-policy">
+            manual_study_default_enabled=<code>true</code><br>
+            fallback_legacy_study_available=<code>true</code><br>
+            manual_study_connected_to_real_study=<code>default_read_only_with_legacy_fallback</code><br>
+            replaces_existing_study_route=<code>false</code><br>
+            progress_write=<code>false</code><br>
+            answer_marking=<code>false</code><br>
+            writes_legacy_study_items_preview=<code>false</code><br>
+            study_artifact_written=<code>false</code><br>
+            build_performed=<code>false</code><br>
+            zip_created=<code>false</code><br>
+            share_created=<code>false</code><br>
+            delivery_performed=<code>false</code>
+          </p>
+
+          <div id="manual-study-preview-top" data-testid="manual-study-default-cards">
+            {cards_html}
+          </div>
+        </section>
+        """,
+    )
+
+
+@app.middleware("http")
+async def _voila_v0827_manual_study_default_study_read_only_fallback_middleware(request, call_next):
+    if getattr(request.url, "path", "") != "/study":
+        return await call_next(request)
+
+    if _voila_v0822_manual_study_shadow_toggle_enabled(request.query_params.get("manual_study_shadow")):
+        return await call_next(request)
+
+    pdf_name = request.query_params.get("pdf")
+    if not pdf_name:
+        return await call_next(request)
+
+    try:
+        pdf_path = validate_pdf_name(pdf_name)
+    except Exception:
+        return await call_next(request)
+
+    manual_default_page = _voila_v0827_manual_study_default_page(pdf_path.name, pdf_path.stem)
+    if manual_default_page is None:
+        return await call_next(request)
+
+    return manual_default_page
+# VOILA_V0_8_27_MANUAL_STUDY_DEFAULT_STUDY_READ_ONLY_FALLBACK_END
