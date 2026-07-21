@@ -451,7 +451,7 @@ release_dir.mkdir(parents=True, exist_ok=True)
 evidence_dir.mkdir(parents=True, exist_ok=True)
 
 if staging_dir.exists():
-    shutil.rmtree(staging_dir)
+    shutil.rmtree(win_extended_path(staging_dir))
 
 if zip_path.exists():
     zip_path.unlink()
