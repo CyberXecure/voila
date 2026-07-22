@@ -16416,3 +16416,344 @@ async def _voila_v0853_corrections_suggested_read_only_queue_middleware(request:
         headers=headers,
     )
 # VOILA_V0_8_53_CORRECTIONS_SUGGESTED_READ_ONLY_QUEUE_END
+
+# VOILA_V0_8_54_FORMULAS_IMAGES_READ_ONLY_QUEUE_START
+from starlette.requests import Request as _VoilaV0854Request
+from starlette.responses import HTMLResponse as _VoilaV0854HTMLResponse
+import json as _voila_v0854_json
+
+
+def _voila_v0854_clean_text(value: str, limit: int = 360) -> str:
+    if not isinstance(value, str):
+        return ""
+
+    cleaned = " ".join(value.strip().split())
+    if len(cleaned) > limit:
+        cleaned = cleaned[:limit].rstrip() + "…"
+
+    return cleaned
+
+
+def _voila_v0854_first_string(value, keys):
+    if not isinstance(value, dict):
+        return ""
+
+    for key in keys:
+        candidate = value.get(key)
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate
+
+    return ""
+
+
+def _voila_v0854_friendly_type(raw_value: str) -> str:
+    value = str(raw_value or "").strip().lower()
+
+    if "formula" in value or "math" in value or "ecuat" in value:
+        return "Formulă"
+    if "diagram" in value:
+        return "Diagramă"
+    if "table" in value or "tabel" in value:
+        return "Tabel"
+    if "graph" in value or "grafic" in value:
+        return "Grafic"
+    if "draw" in value or "desen" in value:
+        return "Desen"
+    if "image" in value or "img" in value or "picture" in value:
+        return "Imagine"
+    if "note" in value or "observ" in value:
+        return "Observație importantă"
+
+    return "Imagine"
+
+
+def _voila_v0854_page_number(value, fallback: int) -> int:
+    if not isinstance(value, dict):
+        return fallback
+
+    for key in ["page", "page_number", "pageIndex", "page_index"]:
+        candidate = value.get(key)
+        if isinstance(candidate, int):
+            if key in {"pageIndex", "page_index"} and candidate >= 0:
+                return candidate + 1
+            if candidate > 0:
+                return candidate
+
+    return fallback
+
+
+def _voila_v0854_normalize_visual_item(item, fallback_page: int):
+    if not isinstance(item, dict):
+        return None
+
+    raw_type = _voila_v0854_first_string(
+        item,
+        ["friendly_type", "type", "kind", "category", "item_type", "label"],
+    )
+
+    title = _voila_v0854_clean_text(
+        _voila_v0854_first_string(
+            item,
+            ["title", "short_title", "label", "name", "caption"],
+        ),
+        limit=120,
+    )
+
+    description = _voila_v0854_clean_text(
+        _voila_v0854_first_string(
+            item,
+            ["description", "explanation", "summary", "text", "alt", "note", "caption"],
+        ),
+        limit=420,
+    )
+
+    if not title and not description and not raw_type:
+        return None
+
+    friendly_type = _voila_v0854_friendly_type(raw_type or title or description)
+
+    return {
+        "page": _voila_v0854_page_number(item, fallback_page),
+        "type": friendly_type,
+        "title": title or friendly_type,
+        "description": description,
+    }
+
+
+def _voila_v0854_collect_items_from_payload(payload):
+    candidates = []
+
+    if isinstance(payload, list):
+        candidates.extend(payload)
+
+    if isinstance(payload, dict):
+        for key in [
+            "visual_items",
+            "items",
+            "figures",
+            "images",
+            "crops",
+            "formulas",
+            "diagrams",
+            "tables",
+            "graphs",
+            "results",
+            "findings",
+        ]:
+            value = payload.get(key)
+            if isinstance(value, list):
+                candidates.extend(value)
+
+        pages = payload.get("pages")
+        if isinstance(pages, list):
+            for page in pages:
+                if isinstance(page, dict):
+                    page_number = _voila_v0854_page_number(page, len(candidates) + 1)
+                    for key in ["visual_items", "items", "figures", "images", "crops", "formulas", "diagrams", "tables", "graphs"]:
+                        nested = page.get(key)
+                        if isinstance(nested, list):
+                            for entry in nested:
+                                if isinstance(entry, dict) and "page" not in entry and "page_number" not in entry:
+                                    copied = dict(entry)
+                                    copied["page"] = page_number
+                                    candidates.append(copied)
+                                else:
+                                    candidates.append(entry)
+
+    normalized = []
+    for index, item in enumerate(candidates, start=1):
+        normalized_item = _voila_v0854_normalize_visual_item(item, index)
+        if normalized_item is not None:
+            normalized.append(normalized_item)
+        if len(normalized) >= 8:
+            break
+
+    return normalized
+
+
+def _voila_v0854_load_existing_visual_items(pdf_name: str = "", course_id: str = ""):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        safe_course = _voila_v0852_course_id_from_pdf(pdf_name)
+
+    if not safe_course:
+        return {
+            "course_id": "",
+            "source": "",
+            "items": [],
+            "status": "missing_course",
+        }
+
+    course_dir = _voila_v0852_find_course_output_dir(safe_course)
+    if course_dir is None:
+        return {
+            "course_id": safe_course,
+            "source": "",
+            "items": [],
+            "status": "missing_output_dir",
+        }
+
+    source_names = [
+        "visual_evidence.json",
+        "visual_items.json",
+        "ocr_math_report.json",
+        "ocr_math_visuals.json",
+        "figures.json",
+        "figures_sidecar.json",
+        "crops.json",
+        "crop_manifest.json",
+    ]
+
+    for source_name in source_names:
+        source = course_dir / source_name
+        if not source.exists() or not source.is_file():
+            continue
+
+        try:
+            payload = _voila_v0854_json.loads(source.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return {
+                "course_id": safe_course,
+                "source": source_name,
+                "items": [],
+                "status": "unreadable_artifact",
+            }
+
+        items = _voila_v0854_collect_items_from_payload(payload)
+        if items:
+            return {
+                "course_id": safe_course,
+                "source": source_name,
+                "items": items,
+                "status": "loaded",
+            }
+
+    return {
+        "course_id": safe_course,
+        "source": "",
+        "items": [],
+        "status": "missing_visual_artifact",
+    }
+
+
+def _voila_v0854_formulas_images_section(pdf_name: str = "", course_id: str = "") -> str:
+    data = _voila_v0854_load_existing_visual_items(pdf_name=pdf_name, course_id=course_id)
+    items = data.get("items", [])
+    status = data.get("status", "")
+    source = data.get("source", "")
+
+    cards = []
+
+    if items:
+        for item in items:
+            page = item.get("page", "?")
+            friendly_type = _voila_v0850_html.escape(str(item.get("type", "Imagine")).strip())
+            title = _voila_v0850_html.escape(str(item.get("title", "")).strip())
+            description = _voila_v0850_html.escape(str(item.get("description", "")).strip())
+
+            description_html = f"<p style=\"margin:8px 0 0;color:#f8fafc;line-height:1.55;\"><strong>Descriere:</strong> {description}</p>" if description else ""
+
+            cards.append(
+                f"""
+<article data-testid="formulas-images-card" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0 0 8px;color:#cbd5e1;font-weight:750;">Pagina {page} · Doar citire</p>
+  <p style="margin:0;color:#e0f2fe;font-weight:750;"><strong>Tip:</strong> {friendly_type}</p>
+  <p style="margin:8px 0 0;color:#f8fafc;line-height:1.55;"><strong>Titlu:</strong> {title}</p>
+  {description_html}
+</article>
+"""
+            )
+    else:
+        cards.append(
+            """
+<div data-testid="formulas-images-empty-state" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0;color:#f8fafc;font-weight:750;">Nu găsesc încă formule sau imagini pregătite pentru acest document.</p>
+  <p style="margin:8px 0 0;color:#cbd5e1;line-height:1.55;">Această secțiune nu pornește Formula OCR și nu extrage crop-uri. Va afișa elemente doar după ce există artefacte vizuale locale deja generate.</p>
+</div>
+"""
+        )
+
+    visible_count = len(items)
+
+    return f"""
+<section data-testid="review-document-formulas-images-queue" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Pasul 3</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Formule și imagini</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Elemente vizuale găsite pentru verificare: formule, imagini, diagrame, tabele, grafice sau desene. Acum este doar citire: nu extragem crop-uri și nu salvăm modificări.</p>
+  <p data-testid="formulas-images-read-only-status" style="margin:0 0 14px;color:#e0f2fe;font-weight:750;">Elemente vizuale găsite: {visible_count} · Doar citire</p>
+  <div style="display:grid;gap:10px;">{''.join(cards)}</div>
+  <details data-testid="formulas-images-diagnostic" style="margin-top:14px;">
+    <summary>Diagnostic tehnic pentru Formule și imagini</summary>
+    <p>Status: <code>{_voila_v0850_html.escape(status)}</code></p>
+    <p>Sursă locală citită: <code>{_voila_v0850_html.escape(source or "niciuna")}</code></p>
+    <p>Nu s-a rulat Formula OCR. Nu s-a făcut crop extraction. Nu s-a scris niciun artefact.</p>
+  </details>
+</section>
+"""
+
+
+def _voila_v0854_inject_formulas_images_queue(html_text: str, pdf_name: str = "", course_id: str = "") -> str:
+    if not isinstance(html_text, str) or "review-document-formulas-images-queue" in html_text:
+        return html_text
+
+    section = _voila_v0854_formulas_images_section(pdf_name=pdf_name, course_id=course_id)
+
+    corrections_anchor = 'data-testid="review-document-corrections-suggested-queue"'
+    section_end = "</section>"
+    if corrections_anchor in html_text:
+        start = html_text.find(corrections_anchor)
+        end = html_text.find(section_end, start)
+        if end != -1:
+            insert_at = end + len(section_end)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    text_anchor = 'data-testid="review-document-text-detected-queue"'
+    if text_anchor in html_text:
+        start = html_text.find(text_anchor)
+        end = html_text.find(section_end, start)
+        if end != -1:
+            insert_at = end + len(section_end)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    step_marker = "</ol>"
+    if step_marker in html_text:
+        return html_text.replace(step_marker, step_marker + "\n" + section, 1)
+
+    fallback = "</article>"
+    if fallback in html_text:
+        return html_text.replace(fallback, section + "\n" + fallback, 1)
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0854_formulas_images_read_only_queue_middleware(request: _VoilaV0854Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    updated = _voila_v0854_inject_formulas_images_queue(html_text, pdf_name=pdf_name, course_id=course_id)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0854HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_54_FORMULAS_IMAGES_READ_ONLY_QUEUE_END
