@@ -17203,3 +17203,264 @@ async def _voila_v0856_save_explanation_draft_route(request: _VoilaV0856Request)
         status_code=200 if ok else 400,
     )
 # VOILA_V0_8_56_SAFE_LOCAL_SAVE_FOR_EXPLANATION_DRAFTS_END
+
+# VOILA_V0_8_57_CLEAN_STUDY_READ_ONLY_PREVIEW_FROM_EXPLANATION_DRAFTS_START
+from starlette.requests import Request as _VoilaV0857Request
+from starlette.responses import HTMLResponse as _VoilaV0857HTMLResponse
+import json as _voila_v0857_json
+import urllib.parse as _voila_v0857_parse
+
+
+def _voila_v0857_e(value: str) -> str:
+    return _voila_v0850_html.escape(str(value or ""))
+
+
+def _voila_v0857_course_from_target(pdf_name: str = "", course_id: str = "") -> str:
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if safe_course:
+        return safe_course
+
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    if safe_pdf:
+        return safe_pdf[:-4]
+
+    return ""
+
+
+def _voila_v0857_load_ready_explanation_drafts(course_id: str):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        return [], "invalid_course", ""
+
+    draft_path = _voila_v0856_draft_path(safe_course)
+    if draft_path is None:
+        return [], "course_output_missing", ""
+
+    artifact_label = "explanation_drafts.preview.json"
+
+    if not draft_path.exists() or not draft_path.is_file():
+        return [], "draft_artifact_missing", artifact_label
+
+    try:
+        payload = _voila_v0857_json.loads(draft_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return [], "draft_artifact_unreadable", artifact_label
+
+    drafts = payload.get("drafts")
+    if not isinstance(drafts, list):
+        return [], "draft_list_missing", artifact_label
+
+    ready = []
+    for draft in drafts:
+        if not isinstance(draft, dict):
+            continue
+
+        if draft.get("ready_for_study") is not True:
+            continue
+
+        title = str(draft.get("title") or "").strip()
+        explanation = str(draft.get("friendly_explanation") or "").strip()
+        verified = str(draft.get("verified_content") or "").strip()
+
+        if not title or not explanation:
+            continue
+
+        ready.append(
+            {
+                "item_type": str(draft.get("item_type") or "Noțiune").strip()[:80],
+                "title": title[:160],
+                "verified_content": verified[:1200],
+                "friendly_explanation": explanation[:1600],
+                "importance": str(draft.get("importance") or "").strip()[:800],
+                "source_page": str(draft.get("source_page") or "").strip()[:40],
+                "lesson_language": str(draft.get("lesson_language") or "").strip()[:40],
+            }
+        )
+
+    return ready[-30:], "ready_drafts_loaded", artifact_label
+
+
+def _voila_v0857_clean_study_card_html(draft, index: int, total: int) -> str:
+    title = _voila_v0857_e(draft.get("title", ""))
+    item_type = _voila_v0857_e(draft.get("item_type", "Noțiune"))
+    verified = _voila_v0857_e(draft.get("verified_content", ""))
+    explanation = _voila_v0857_e(draft.get("friendly_explanation", ""))
+    importance = _voila_v0857_e(draft.get("importance", ""))
+    source_page = _voila_v0857_e(draft.get("source_page", ""))
+    language = _voila_v0857_e(draft.get("lesson_language", ""))
+
+    question = f"Ce trebuie să înțeleg despre: {title}?"
+
+    return f"""
+<article data-testid="study-clean-preview-card" style="padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:20px;background:rgba(15,23,42,.78);">
+  <p style="margin:0 0 8px;color:#93c5fd;font-weight:800;">Card {index} din {total}</p>
+  <p style="margin:0 0 8px;color:#cbd5e1;"><strong>Tip:</strong> {item_type or "Noțiune"}</p>
+  <h2 style="margin:0 0 10px;color:#f8fafc;">{title or "Noțiune verificată"}</h2>
+  <section style="display:grid;gap:10px;">
+    <div>
+      <p style="margin:0 0 4px;color:#cbd5e1;font-weight:800;">Întrebare</p>
+      <p style="margin:0;color:#f8fafc;line-height:1.55;">{_voila_v0857_e(question)}</p>
+    </div>
+    <div>
+      <p style="margin:0 0 4px;color:#cbd5e1;font-weight:800;">Răspuns</p>
+      <p style="margin:0;color:#f8fafc;line-height:1.55;">{verified or "Răspunsul va fi completat din conținutul verificat."}</p>
+    </div>
+    <div>
+      <p style="margin:0 0 4px;color:#cbd5e1;font-weight:800;">Explicație pe înțeles</p>
+      <p style="margin:0;color:#f8fafc;line-height:1.55;">{explanation}</p>
+    </div>
+    <div>
+      <p style="margin:0 0 4px;color:#cbd5e1;font-weight:800;">De ce este important?</p>
+      <p style="margin:0;color:#f8fafc;line-height:1.55;">{importance or "Această noțiune ajută la înțelegerea lecției."}</p>
+    </div>
+    <p style="margin:4px 0 0;color:#bae6fd;"><strong>Sursa:</strong> {source_page or "pagina necunoscută"} · <strong>Limba lecției:</strong> {language or "nespecificată"}</p>
+  </section>
+</article>
+"""
+
+
+def _voila_v0857_clean_study_preview_page(course_id: str) -> str:
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    drafts, state, artifact_label = _voila_v0857_load_ready_explanation_drafts(safe_course)
+
+    pdf_name = safe_course + ".pdf" if safe_course else ""
+    back_href = "/review-document?pdf=" + _voila_v0857_parse.quote(pdf_name) if pdf_name else "/"
+
+    if drafts:
+        total = len(drafts)
+        cards_html = "\n".join(
+            _voila_v0857_clean_study_card_html(draft, i + 1, total)
+            for i, draft in enumerate(drafts)
+        )
+        state_text = f"{total} noțiuni pregătite pentru previzualizare."
+    else:
+        cards_html = """
+<section data-testid="study-clean-preview-empty-state" style="padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:20px;background:rgba(15,23,42,.78);">
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Nu ai încă noțiuni gata pentru Study curat.</h2>
+  <p style="margin:0;color:#cbd5e1;line-height:1.55;">Salvează mai întâi un draft local în Revizuire document și marchează-l ca „Gata pentru studiu".</p>
+</section>
+"""
+        state_text = "Nu există încă drafturi gata pentru studiu."
+
+    return f"""<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Study curat - previzualizare · Voila</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#f8fafc;">
+<main data-testid="study-clean-preview-route" style="max-width:980px;margin:0 auto;padding:32px 18px;">
+  <section style="padding:22px;border:1px solid rgba(148,163,184,.28);border-radius:24px;background:rgba(15,23,42,.82);">
+    <p style="margin:0 0 6px;color:#cbd5e1;">Voila! - Documentele tale, lecții clare</p>
+    <h1 style="margin:0 0 10px;color:#f8fafc;">Study curat - previzualizare</h1>
+    <p data-testid="study-clean-preview-read-only-status" style="margin:0 0 12px;color:#e0f2fe;font-weight:800;">Read-only · nu creează carduri reale · nu scrie Progress</p>
+    <p style="margin:0;color:#cbd5e1;line-height:1.55;">{_voila_v0857_e(state_text)}</p>
+    <a href="{back_href}" style="display:inline-flex;margin-top:14px;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Înapoi la Revizuire document</a>
+  </section>
+
+  <section data-testid="study-clean-preview-cards" style="display:grid;gap:14px;margin-top:18px;">
+    {cards_html}
+  </section>
+
+  <details data-testid="study-clean-preview-diagnostic" style="margin-top:18px;padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(15,23,42,.62);">
+    <summary>Diagnostic tehnic</summary>
+    <p>Slice: <code>v0.8.57 clean Study read-only preview</code></p>
+    <p>State: <code>{_voila_v0857_e(state)}</code></p>
+    <p>Artefact citit: <code>{_voila_v0857_e(artifact_label or "none")}</code></p>
+    <p>Nu s-a creat niciun Study card real. Nu s-a scris Progress. Nu s-a făcut delivery.</p>
+  </details>
+</main>
+</body>
+</html>"""
+
+
+def _voila_v0857_clean_study_link_html(pdf_name: str = "", course_id: str = "") -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        safe_course = _voila_v0852_course_id_from_pdf(safe_pdf)
+
+    if safe_pdf:
+        href = "/study-clean-preview?pdf=" + _voila_v0857_parse.quote(safe_pdf)
+    elif safe_course:
+        href = "/study-clean-preview/" + _voila_v0857_parse.quote(safe_course)
+    else:
+        href = "/study-clean-preview"
+
+    return f"""
+<section data-testid="clean-study-preview-entry" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Pasul următor</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Study curat - previzualizare</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Vezi cum ar arăta noțiunile salvate ca drafturi într-un mod de învățare curat. Această previzualizare este read-only.</p>
+  <a data-testid="clean-study-preview-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Deschide previzualizare Study curat</a>
+</section>
+"""
+
+
+def _voila_v0857_inject_clean_study_link(html_text: str, pdf_name: str = "", course_id: str = "") -> str:
+    if not isinstance(html_text, str) or "clean-study-preview-entry" in html_text:
+        return html_text
+
+    section = _voila_v0857_clean_study_link_html(pdf_name=pdf_name, course_id=course_id)
+    end_tag = "</section>"
+
+    for anchor in [
+        'data-testid="friendly-explanation-save-entry"',
+        'data-testid="friendly-explanation-save-form-shell"',
+        'data-testid="review-document-friendly-explanation-shell"',
+    ]:
+        if anchor in html_text:
+            start = html_text.find(anchor)
+            end = html_text.find(end_tag, start)
+            if end != -1:
+                insert_at = end + len(end_tag)
+                return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0857_clean_study_preview_link_middleware(request: _VoilaV0857Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    updated = _voila_v0857_inject_clean_study_link(
+        body.decode("utf-8", errors="replace"),
+        pdf_name=pdf_name,
+        course_id=course_id,
+    )
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0857HTMLResponse(content=updated, status_code=response.status_code, headers=headers)
+
+
+@app.get("/study-clean-preview", response_class=_VoilaV0857HTMLResponse)
+async def _voila_v0857_clean_study_preview_query_route(request: _VoilaV0857Request):
+    pdf_name = str(request.query_params.get("pdf", "") or "")
+    course_id = str(request.query_params.get("course_id", "") or "")
+    safe_course = _voila_v0857_course_from_target(pdf_name=pdf_name, course_id=course_id)
+    return _VoilaV0857HTMLResponse(content=_voila_v0857_clean_study_preview_page(safe_course), status_code=200 if safe_course else 400)
+
+
+@app.get("/study-clean-preview/{course_id}", response_class=_VoilaV0857HTMLResponse)
+async def _voila_v0857_clean_study_preview_course_route(course_id: str):
+    safe_course = _voila_v0857_course_from_target(course_id=course_id)
+    return _VoilaV0857HTMLResponse(content=_voila_v0857_clean_study_preview_page(safe_course), status_code=200 if safe_course else 400)
+# VOILA_V0_8_57_CLEAN_STUDY_READ_ONLY_PREVIEW_FROM_EXPLANATION_DRAFTS_END
