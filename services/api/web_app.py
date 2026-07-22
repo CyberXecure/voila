@@ -15744,3 +15744,352 @@ async def _voila_v0851_course_tools_review_document_link_middleware(request: _Vo
         headers=headers,
     )
 # VOILA_V0_8_51_COURSE_TOOLS_LINK_TO_REVIEW_DOCUMENT_SHELL_END
+
+# VOILA_V0_8_52_TEXT_DETECTED_READ_ONLY_QUEUE_START
+from pathlib import Path as _VoilaV0852Path
+import json as _voila_v0852_json
+from starlette.requests import Request as _VoilaV0852Request
+from starlette.responses import HTMLResponse as _VoilaV0852HTMLResponse
+
+
+def _voila_v0852_repo_root() -> _VoilaV0852Path:
+    return _VoilaV0852Path(__file__).resolve().parents[2]
+
+
+def _voila_v0852_course_id_from_pdf(pdf_name: str) -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    if not safe_pdf:
+        return ""
+    return safe_pdf[:-4]
+
+
+def _voila_v0852_find_course_output_dir(course_id: str):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        return None
+
+    output_root = _voila_v0852_repo_root() / "data" / "output"
+    if not output_root.exists() or not output_root.is_dir():
+        return None
+
+    for child in output_root.iterdir():
+        try:
+            if child.is_dir() and child.name == safe_course:
+                return child
+        except OSError:
+            continue
+
+    return None
+
+
+def _voila_v0852_clean_text_fragment(value: str, limit: int = 900) -> str:
+    if not isinstance(value, str):
+        return ""
+
+    lines = []
+    for raw_line in value.splitlines():
+        line = " ".join(raw_line.strip().split())
+        if line:
+            lines.append(line)
+
+    cleaned = "\n".join(lines).strip()
+    if len(cleaned) > limit:
+        cleaned = cleaned[:limit].rstrip() + "…"
+
+    return cleaned
+
+
+def _voila_v0852_text_from_page_item(item) -> str:
+    if not isinstance(item, dict):
+        if isinstance(item, str):
+            return item
+        return ""
+
+    for key in [
+        "text",
+        "ocr_text",
+        "page_text",
+        "content",
+        "markdown",
+        "body",
+        "raw_text",
+    ]:
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+
+    blocks = item.get("blocks")
+    if isinstance(blocks, list):
+        parts = []
+        for block in blocks:
+            if isinstance(block, dict):
+                for key in ["text", "ocr_text", "content", "value"]:
+                    value = block.get(key)
+                    if isinstance(value, str) and value.strip():
+                        parts.append(value)
+                        break
+            elif isinstance(block, str) and block.strip():
+                parts.append(block)
+        return "\n".join(parts)
+
+    return ""
+
+
+def _voila_v0852_page_number_from_item(item, fallback: int) -> int:
+    if not isinstance(item, dict):
+        return fallback
+
+    for key in ["page", "page_number", "page_index", "index"]:
+        value = item.get(key)
+        if isinstance(value, int):
+            if key in {"page_index", "index"} and value >= 0:
+                return value + 1
+            if value > 0:
+                return value
+
+    return fallback
+
+
+def _voila_v0852_load_pages_json(course_dir: _VoilaV0852Path):
+    source = course_dir / "pages.json"
+    if not source.exists() or not source.is_file():
+        return [], ""
+
+    try:
+        payload = _voila_v0852_json.loads(source.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return [], "pages.json"
+
+    if isinstance(payload, dict):
+        raw_pages = payload.get("pages")
+        if not isinstance(raw_pages, list):
+            raw_pages = payload.get("items")
+        if not isinstance(raw_pages, list):
+            raw_pages = []
+    elif isinstance(payload, list):
+        raw_pages = payload
+    else:
+        raw_pages = []
+
+    blocks = []
+    for index, item in enumerate(raw_pages, start=1):
+        fragment = _voila_v0852_clean_text_fragment(_voila_v0852_text_from_page_item(item))
+        if not fragment:
+            continue
+        blocks.append(
+            {
+                "page": _voila_v0852_page_number_from_item(item, index),
+                "text": fragment,
+            }
+        )
+        if len(blocks) >= 8:
+            break
+
+    return blocks, "pages.json"
+
+
+def _voila_v0852_load_pages_md(course_dir: _VoilaV0852Path):
+    source = course_dir / "pages.md"
+    if not source.exists() or not source.is_file():
+        return [], ""
+
+    try:
+        content = source.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return [], "pages.md"
+
+    current_page = 1
+    current_lines = []
+    blocks = []
+
+    def flush():
+        nonlocal current_lines, current_page, blocks
+        fragment = _voila_v0852_clean_text_fragment("\n".join(current_lines))
+        if fragment:
+            blocks.append({"page": current_page, "text": fragment})
+        current_lines = []
+
+    for raw_line in content.splitlines():
+        stripped = raw_line.strip()
+        lowered = stripped.lower()
+
+        if stripped.startswith("#") and "pagina" in lowered:
+            flush()
+            digits = "".join(ch for ch in stripped if ch.isdigit())
+            if digits:
+                try:
+                    current_page = max(1, int(digits))
+                except ValueError:
+                    current_page = len(blocks) + 1
+            else:
+                current_page = len(blocks) + 1
+            continue
+
+        if stripped:
+            current_lines.append(stripped)
+
+        if len(blocks) >= 8:
+            break
+
+    if len(blocks) < 8:
+        flush()
+
+    return blocks[:8], "pages.md"
+
+
+def _voila_v0852_load_existing_ocr_blocks(pdf_name: str = "", course_id: str = ""):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        safe_course = _voila_v0852_course_id_from_pdf(pdf_name)
+
+    if not safe_course:
+        return {
+            "course_id": "",
+            "source": "",
+            "blocks": [],
+            "status": "missing_course",
+        }
+
+    course_dir = _voila_v0852_find_course_output_dir(safe_course)
+    if course_dir is None:
+        return {
+            "course_id": safe_course,
+            "source": "",
+            "blocks": [],
+            "status": "missing_output_dir",
+        }
+
+    for loader in [_voila_v0852_load_pages_json, _voila_v0852_load_pages_md]:
+        blocks, source_name = loader(course_dir)
+        if blocks:
+            return {
+                "course_id": safe_course,
+                "source": source_name,
+                "blocks": blocks,
+                "status": "loaded",
+            }
+
+    return {
+        "course_id": safe_course,
+        "source": "",
+        "blocks": [],
+        "status": "missing_text_artifact",
+    }
+
+
+def _voila_v0852_text_detected_section(pdf_name: str = "", course_id: str = "") -> str:
+    data = _voila_v0852_load_existing_ocr_blocks(pdf_name=pdf_name, course_id=course_id)
+    blocks = data.get("blocks", [])
+    status = data.get("status", "")
+    source = data.get("source", "")
+
+    cards = []
+
+    if blocks:
+        for block in blocks:
+            page = block.get("page", "?")
+            text_fragment = _voila_v0850_html.escape(str(block.get("text", "")).strip())
+            cards.append(
+                f"""
+<article data-testid="text-detected-block-card" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0 0 8px;color:#cbd5e1;font-weight:750;">Pagina {page} · Doar citire</p>
+  <p style="white-space:pre-wrap;margin:0;color:#f8fafc;line-height:1.55;">{text_fragment}</p>
+</article>
+"""
+            )
+    else:
+        cards.append(
+            """
+<div data-testid="text-detected-empty-state" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0;color:#f8fafc;font-weight:750;">Nu găsesc încă fragmente detectate pentru acest document.</p>
+  <p style="margin:8px 0 0;color:#cbd5e1;line-height:1.55;">Această secțiune nu pornește OCR. Va afișa textul doar după ce există artefacte locale deja generate.</p>
+</div>
+"""
+        )
+
+    visible_count = len(blocks)
+
+    return f"""
+<section data-testid="review-document-text-detected-queue" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Pasul 1</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Text detectat</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Fragmente detectate din document, afișate pentru verificare. Acum este doar citire: nu salvăm, nu corectăm și nu rescriem textul.</p>
+  <p data-testid="text-detected-read-only-status" style="margin:0 0 14px;color:#e0f2fe;font-weight:750;">Fragmente detectate: {visible_count} · Doar citire</p>
+  <div style="display:grid;gap:10px;">{''.join(cards)}</div>
+  <details data-testid="text-detected-diagnostic" style="margin-top:14px;">
+    <summary>Diagnostic tehnic pentru Text detectat</summary>
+    <p>Status-top:14px;">
+    <summary>Diagnostic tehnic pentru Text detectat</summary>
+    <p>Status: <code>{_voila_v0850_html.escape(status)}</code></p>
+    <p>Sursă locală citită: <code>{_voila_v0850_html.escape(source or "niciuna")}</code></p>
+    <p>Nu s-a rulat OCR. Nu s-a scris niciun artefact.</p>
+  </details>
+</section>
+"""
+
+
+def _voila_v0852_extract_review_target(request: _VoilaV0852Request):
+    path = request.url.path
+
+    if path == "/review-document":
+        pdf_name = request.query_params.get("pdf", "")
+        safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+        return safe_pdf, ""
+
+    prefix = "/review-document/"
+    if path.startswith(prefix):
+        candidate = path[len(prefix):].strip()
+        safe_course = candidate if _voila_v0850_valid_course_id(candidate) else ""
+        return "", safe_course
+
+    return "", ""
+
+
+def _voila_v0852_inject_text_detected_queue(html_text: str, pdf_name: str = "", course_id: str = "") -> str:
+    if not isinstance(html_text, str) or "review-document-text-detected-queue" in html_text:
+        return html_text
+
+    section = _voila_v0852_text_detected_section(pdf_name=pdf_name, course_id=course_id)
+
+    marker = "</ol>"
+    if marker in html_text:
+        return html_text.replace(marker, marker + "\n" + section, 1)
+
+    fallback = "</article>"
+    if fallback in html_text:
+        return html_text.replace(fallback, section + "\n" + fallback, 1)
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0852_text_detected_read_only_queue_middleware(request: _VoilaV0852Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    updated = _voila_v0852_inject_text_detected_queue(html_text, pdf_name=pdf_name, course_id=course_id)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0852HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_52_TEXT_DETECTED_READ_ONLY_QUEUE_END
