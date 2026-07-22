@@ -15158,3 +15158,206 @@ async def _voila_v0827_manual_study_default_study_read_only_fallback_middleware(
 
     return manual_default_page
 # VOILA_V0_8_27_MANUAL_STUDY_DEFAULT_STUDY_READ_ONLY_FALLBACK_END
+
+# VOILA_V0_8_42_EXAM_DOCUMENT_WORKFLOW_UX_POLISH_START
+from starlette.responses import HTMLResponse as _VoilaV0842HTMLResponse
+import html as _voila_v0842_html
+import re as _voila_v0842_re
+import urllib.parse as _voila_v0842_urllib_parse
+
+
+def _voila_v0842_exam_workflow_card(pdf_name: str) -> str:
+    safe_pdf = ""
+    course_id = ""
+
+    if isinstance(pdf_name, str):
+        candidate = pdf_name.strip()
+        if _voila_v0842_re.fullmatch(r"[A-Za-z0-9_.-]+\.pdf", candidate):
+            safe_pdf = candidate
+            course_id = candidate[:-4]
+
+    safe_pdf_q = _voila_v0842_urllib_parse.quote(safe_pdf) if safe_pdf else ""
+    safe_course_q = _voila_v0842_urllib_parse.quote(course_id) if course_id else ""
+
+    review_href = f"/owner/manual-learning-evidence/{safe_course_q}?page=1" if safe_course_q else "#"
+    preview_href = f"/owner/manual-study-preview/{safe_course_q}" if safe_course_q else "#"
+    study_href = f"/study?pdf={safe_pdf_q}" if safe_pdf_q else "#"
+    shadow_href = f"/study?manual_study_shadow=1&course_id={safe_course_q}" if safe_course_q else "#"
+    dry_run_href = f"/owner/manual-study-integration-dry-run/{safe_course_q}?enabled=0" if safe_course_q else "#"
+
+    safe_pdf_html = _voila_v0842_html.escape(safe_pdf or "documentul selectat")
+
+    return f"""
+<section class="voila-v0842-exam-workflow" data-testid="exam-document-workflow-ux-polish" aria-label="Învață pentru examen din acest document">
+  <style>
+    .voila-v0842-exam-workflow {{
+      margin: 18px 0 22px;
+      padding: 20px;
+      border: 1px solid rgba(148, 163, 184, .35);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, .96), rgba(30, 64, 175, .18));
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    }}
+    .voila-v0842-exam-workflow h2 {{
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }}
+    .voila-v0842-exam-workflow .voila-v0842-subtitle {{
+      margin: 0 0 16px;
+      color: #cbd5e1;
+      max-width: 850px;
+    }}
+    .voila-v0842-exam-workflow .voila-v0842-document {{
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0 0 14px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, .45);
+      color: #e2e8f0;
+      font-size: .92rem;
+    }}
+    .voila-v0842-exam-workflow ol {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      padding: 0;
+      margin: 0 0 16px;
+      list-style: none;
+      counter-reset: examWorkflow;
+    }}
+    .voila-v0842-exam-workflow li {{
+      counter-increment: examWorkflow;
+      padding: 13px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, .52);
+      border: 1px solid rgba(148, 163, 184, .22);
+      min-height: 94px;
+    }}
+    .voila-v0842-exam-workflow li::before {{
+      content: counter(examWorkflow);
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      margin-bottom: 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0f172a;
+      font-weight: 800;
+    }}
+    .voila-v0842-exam-workflow strong {{
+      display: block;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }}
+    .voila-v0842-exam-workflow span {{
+      color: #cbd5e1;
+      font-size: .92rem;
+    }}
+    .voila-v0842-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }}
+    .voila-v0842-actions a {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 13px;
+      border-radius: 12px;
+      text-decoration: none;
+      background: #e0f2fe;
+      color: #0f172a;
+      font-weight: 700;
+    }}
+    .voila-v0842-actions a.secondary {{
+      background: rgba(226, 232, 240, .12);
+      color: #e2e8f0;
+      border: 1px solid rgba(226, 232, 240, .22);
+    }}
+    .voila-v0842-diagnostic {{
+      margin-top: 14px;
+      color: #cbd5e1;
+      font-size: .9rem;
+    }}
+    .voila-v0842-diagnostic summary {{
+      cursor: pointer;
+      color: #e2e8f0;
+    }}
+    .voila-v0842-diagnostic code {{
+      color: #bfdbfe;
+    }}
+  </style>
+
+  <h2>Învață pentru examen din acest document</h2>
+  <p class="voila-v0842-subtitle">Transformă documentul în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Study.</p>
+  <p class="voila-v0842-document">Document: <strong>{safe_pdf_html}</strong></p>
+
+  <ol>
+    <li><strong>Revizuiește documentul</strong><span>Corectează textul, formulele și zonele importante din pagină.</span></li>
+    <li><strong>Alege noțiuni importante</strong><span>Marchează definiții, formule, exemple și teoreme utile.</span></li>
+    <li><strong>Creează material de învățare</strong><span>Pregătește cardurile care vor intra în lecția de studiu.</span></li>
+    <li><strong>Învață acum</strong><span>Deschide Study și parcurge cardurile verificate.</span></li>
+    <li><strong>Exersează pentru examen</strong><span>Folosește noțiunile clare ca bază pentru întrebări și recapitulare.</span></li>
+  </ol>
+
+  <div class="voila-v0842-actions">
+    <a href="{review_href}" data-testid="exam-workflow-review-document">Revizuiește documentul</a>
+    <a href="{preview_href}" data-testid="exam-workflow-important-concepts">Alege noțiuni importante</a>
+    <a href="{study_href}" data-testid="exam-workflow-study-now">Învață acum</a>
+    <a class="secondary" href="{shadow_href}" data-testid="exam-workflow-study-shadow">Study verificat</a>
+  </div>
+
+  <details class="voila-v0842-diagnostic" data-testid="exam-workflow-technical-diagnostic">
+    <summary>Diagnostic tehnic</summary>
+    <p>Flux intern: <code>Manual Learning Evidence</code> → <code>Learning Pack preview</code> → <code>Manual Study Items preview</code> → <code>Study</code>.</p>
+    <p>Dry-run tehnic: <a href="{dry_run_href}">deschide verificarea owner-local</a>.</p>
+  </details>
+</section>
+"""
+
+
+@app.middleware("http")
+async def _voila_v0842_exam_document_workflow_ux_polish_middleware(request, call_next):
+    response = await call_next(request)
+
+    if getattr(request.url, "path", "") != "/course-tools":
+        return response
+
+    if response.status_code != 200:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    if "data-testid=\"exam-document-workflow-ux-polish\"" in html_text:
+        return _VoilaV0842HTMLResponse(content=html_text, status_code=response.status_code)
+
+    pdf_name = request.query_params.get("pdf", "")
+    card = _voila_v0842_exam_workflow_card(pdf_name)
+
+    if "</main>" in html_text:
+        html_text = html_text.replace("<main", "<main", 1)
+        html_text = html_text.replace(">", ">" + card, 1) if "<main" in html_text else card + html_text
+    elif "<body" in html_text:
+        html_text = _voila_v0842_re.sub(r"(<body[^>]*>)", r"\1" + card, html_text, count=1, flags=_voila_v0842_re.IGNORECASE)
+    else:
+        html_text = card + html_text
+
+    headers = dict(response.headers)
+    for key in list(headers.keys()):
+        if key.lower() == "content-length":
+            headers.pop(key, None)
+
+    return _VoilaV0842HTMLResponse(content=html_text, status_code=response.status_code, headers=headers)
+# VOILA_V0_8_42_EXAM_DOCUMENT_WORKFLOW_UX_POLISH_END
