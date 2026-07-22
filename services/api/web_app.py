@@ -15671,3 +15671,76 @@ async def _voila_v0850_review_document_shell_course(course_id: str, lang: str = 
         status_code=200,
     )
 # VOILA_V0_8_50_REVIEW_DOCUMENT_SHELL_READ_ONLY_FIRST_SLICE_END
+
+# VOILA_V0_8_51_COURSE_TOOLS_LINK_TO_REVIEW_DOCUMENT_SHELL_START
+from starlette.requests import Request as _VoilaV0851Request
+from starlette.responses import HTMLResponse as _VoilaV0851HTMLResponse
+import urllib.parse as _voila_v0851_urllib_parse
+
+
+def _voila_v0851_review_document_course_tools_card(pdf_name: str) -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    if not safe_pdf:
+        return ""
+
+    safe_pdf_q = _voila_v0851_urllib_parse.quote(safe_pdf)
+    href = "/review-document?pdf=" + safe_pdf_q
+
+    return f"""
+<section class="voila-v0851-review-document-entry" data-testid="course-tools-review-document-entry" style="margin:18px 0;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.76);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Voila! — Documentele tale, lecții clare</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Revizuire document</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Înainte de Study curat, verifică textul, corecturile, formulele și imaginile într-un flux ghidat.</p>
+  <a data-testid="course-tools-review-document-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Deschide Revizuire document</a>
+</section>
+"""
+
+
+def _voila_v0851_inject_review_document_entry(html_text: str, pdf_name: str) -> str:
+    if not isinstance(html_text, str) or "course-tools-review-document-entry" in html_text:
+        return html_text
+
+    card = _voila_v0851_review_document_course_tools_card(pdf_name)
+    if not card:
+        return html_text
+
+    if "</main>" in html_text:
+        return html_text.replace("</main>", card + "\n</main>", 1)
+
+    if "</body>" in html_text:
+        return html_text.replace("</body>", card + "\n</body>", 1)
+
+    return html_text + card
+
+
+@app.middleware("http")
+async def _voila_v0851_course_tools_review_document_link_middleware(request: _VoilaV0851Request, call_next):
+    response = await call_next(request)
+
+    if request.url.path != "/course-tools":
+        return response
+
+    pdf_name = request.query_params.get("pdf", "")
+    if not _voila_v0850_valid_pdf_name(pdf_name):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    updated = _voila_v0851_inject_review_document_entry(html_text, pdf_name)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0851HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_51_COURSE_TOOLS_LINK_TO_REVIEW_DOCUMENT_SHELL_END
