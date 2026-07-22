@@ -16093,3 +16093,326 @@ async def _voila_v0852_text_detected_read_only_queue_middleware(request: _VoilaV
         headers=headers,
     )
 # VOILA_V0_8_52_TEXT_DETECTED_READ_ONLY_QUEUE_END
+
+# VOILA_V0_8_53_CORRECTIONS_SUGGESTED_READ_ONLY_QUEUE_START
+from starlette.requests import Request as _VoilaV0853Request
+from starlette.responses import HTMLResponse as _VoilaV0853HTMLResponse
+import json as _voila_v0853_json
+
+
+def _voila_v0853_clean_text(value: str, limit: int = 360) -> str:
+    if not isinstance(value, str):
+        return ""
+
+    cleaned = " ".join(value.strip().split())
+    if len(cleaned) > limit:
+        cleaned = cleaned[:limit].rstrip() + "…"
+
+    return cleaned
+
+
+def _voila_v0853_first_string(value, keys):
+    if not isinstance(value, dict):
+        return ""
+
+    for key in keys:
+        candidate = value.get(key)
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate
+
+    return ""
+
+
+def _voila_v0853_replacement_text(value) -> str:
+    if not isinstance(value, dict):
+        return ""
+
+    for key in ["replacement", "suggestion", "suggested", "suggested_text", "best_replacement"]:
+        candidate = value.get(key)
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate
+
+    replacements = value.get("replacements")
+    if isinstance(replacements, list):
+        readable = []
+        for item in replacements[:3]:
+            if isinstance(item, str) and item.strip():
+                readable.append(item.strip())
+            elif isinstance(item, dict):
+                replacement_value = item.get("value")
+                if isinstance(replacement_value, str) and replacement_value.strip():
+                    readable.append(replacement_value.strip())
+        if readable:
+            return ", ".join(readable)
+
+    return ""
+
+
+def _voila_v0853_page_number(value, fallback: int) -> int:
+    if not isinstance(value, dict):
+        return fallback
+
+    for key in ["page", "page_number", "pageIndex", "page_index"]:
+        candidate = value.get(key)
+        if isinstance(candidate, int):
+            if key in {"pageIndex", "page_index"} and candidate >= 0:
+                return candidate + 1
+            if candidate > 0:
+                return candidate
+
+    return fallback
+
+
+def _voila_v0853_normalize_correction_item(item, fallback_page: int):
+    if not isinstance(item, dict):
+        return None
+
+    message = _voila_v0853_clean_text(
+        _voila_v0853_first_string(
+            item,
+            ["message", "friendly_message", "shortMessage", "short_message", "description", "issue"],
+        )
+    )
+
+    detected = _voila_v0853_clean_text(
+        _voila_v0853_first_string(
+            item,
+            ["context", "text", "detected_text", "original", "original_text", "sentence", "fragment"],
+        )
+    )
+
+    suggestion = _voila_v0853_clean_text(_voila_v0853_replacement_text(item))
+
+    if not message and not detected and not suggestion:
+        return None
+
+    return {
+        "page": _voila_v0853_page_number(item, fallback_page),
+        "message": message or "Sugestie de verificat",
+        "detected": detected,
+        "suggestion": suggestion,
+    }
+
+
+def _voila_v0853_collect_items_from_payload(payload):
+    candidates = []
+
+    if isinstance(payload, list):
+        candidates.extend(payload)
+
+    if isinstance(payload, dict):
+        for key in [
+            "matches",
+            "corrections",
+            "suggestions",
+            "items",
+            "issues",
+            "results",
+        ]:
+            value = payload.get(key)
+            if isinstance(value, list):
+                candidates.extend(value)
+
+        pages = payload.get("pages")
+        if isinstance(pages, list):
+            for page in pages:
+                if isinstance(page, dict):
+                    page_number = _voila_v0853_page_number(page, len(candidates) + 1)
+                    for key in ["matches", "corrections", "suggestions", "items", "issues"]:
+                        nested = page.get(key)
+                        if isinstance(nested, list):
+                            for entry in nested:
+                                if isinstance(entry, dict) and "page" not in entry and "page_number" not in entry:
+                                    copied = dict(entry)
+                                    copied["page"] = page_number
+                                    candidates.append(copied)
+                                else:
+                                    candidates.append(entry)
+
+    normalized = []
+    for index, item in enumerate(candidates, start=1):
+        normalized_item = _voila_v0853_normalize_correction_item(item, index)
+        if normalized_item is not None:
+            normalized.append(normalized_item)
+        if len(normalized) >= 8:
+            break
+
+    return normalized
+
+
+def _voila_v0853_load_existing_corrections(pdf_name: str = "", course_id: str = ""):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        safe_course = _voila_v0852_course_id_from_pdf(pdf_name)
+
+    if not safe_course:
+        return {
+            "course_id": "",
+            "source": "",
+            "items": [],
+            "status": "missing_course",
+        }
+
+    course_dir = _voila_v0852_find_course_output_dir(safe_course)
+    if course_dir is None:
+        return {
+            "course_id": safe_course,
+            "source": "",
+            "items": [],
+            "status": "missing_output_dir",
+        }
+
+    source_names = [
+        "ocr_corrections.json",
+        "language_tool_corrections.json",
+        "languagetool_corrections.json",
+        "languagetool_report.json",
+        "ocr_report.json",
+    ]
+
+    for source_name in source_names:
+        source = course_dir / source_name
+        if not source.exists() or not source.is_file():
+            continue
+
+        try:
+            payload = _voila_v0853_json.loads(source.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return {
+                "course_id": safe_course,
+                "source": source_name,
+                "items": [],
+                "status": "unreadable_artifact",
+            }
+
+        items = _voila_v0853_collect_items_from_payload(payload)
+        if items:
+            return {
+                "course_id": safe_course,
+                "source": source_name,
+                "items": items,
+                "status": "loaded",
+            }
+
+    return {
+        "course_id": safe_course,
+        "source": "",
+        "items": [],
+        "status": "missing_correction_artifact",
+    }
+
+
+def _voila_v0853_corrections_suggested_section(pdf_name: str = "", course_id: str = "") -> str:
+    data = _voila_v0853_load_existing_corrections(pdf_name=pdf_name, course_id=course_id)
+    items = data.get("items", [])
+    status = data.get("status", "")
+    source = data.get("source", "")
+
+    cards = []
+
+    if items:
+        for item in items:
+            page = item.get("page", "?")
+            message = _voila_v0850_html.escape(str(item.get("message", "")).strip())
+            detected = _voila_v0850_html.escape(str(item.get("detected", "")).strip())
+            suggestion = _voila_v0850_html.escape(str(item.get("suggestion", "")).strip())
+
+            detected_html = f"<p style=\"margin:8px 0 0;color:#f8fafc;line-height:1.55;\"><strong>Text detectat:</strong> {detected}</p>" if detected else ""
+            suggestion_html = f"<p style=\"margin:8px 0 0;color:#e0f2fe;line-height:1.55;\"><strong>Sugestie:</strong> {suggestion}</p>" if suggestion else ""
+
+            cards.append(
+                f"""
+<article data-testid="corrections-suggested-card" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0 0 8px;color:#cbd5e1;font-weight:750;">Pagina {page} · Doar citire</p>
+  <p style="margin:0;color:#f8fafc;line-height:1.55;"><strong>Mesaj:</strong> {message}</p>
+  {detected_html}
+  {suggestion_html}
+</article>
+"""
+            )
+    else:
+        cards.append(
+            """
+<div data-testid="corrections-suggested-empty-state" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0;color:#f8fafc;font-weight:750;">Nu găsesc încă sugestii de corectură pentru acest document.</p>
+  <p style="margin:8px 0 0;color:#cbd5e1;line-height:1.55;">Această secțiune nu pornește LanguageTool. Va afișa sugestii doar după ce există artefacte locale deja generate.</p>
+</div>
+"""
+        )
+
+    visible_count = len(items)
+
+    return f"""
+<section data-testid="review-document-corrections-suggested-queue" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Pasul 2</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Corecturi sugerate</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Sugestii găsite pentru verificare, afișate prietenos. Acum este doar citire: nu acceptăm, nu ignorăm și nu rescriem textul.</p>
+  <p data-testid="corrections-suggested-read-only-status" style="margin:0 0 14px;color:#e0f2fe;font-weight:750;">Sugestii găsite: {visible_count} · Doar citire</p>
+  <div style="display:grid;gap:10px;">{''.join(cards)}</div>
+  <details data-testid="corrections-suggested-diagnostic" style="margin-top:14px;">
+    <summary>Diagnostic tehnic pentru Corecturi sugerate</summary>
+    <p>Status: <code>{_voila_v0850_html.escape(status)}</code></p>
+    <p>Sursă locală citită: <code>{_voila_v0850_html.escape(source or "niciuna")}</code></p>
+    <p>Nu s-a rulat LanguageTool. Nu s-a scris niciun artefact.</p>
+  </details>
+</section>
+"""
+
+
+def _voila_v0853_inject_corrections_suggested_queue(html_text: str, pdf_name: str = "", course_id: str = "") -> str:
+    if not isinstance(html_text, str) or "review-document-corrections-suggested-queue" in html_text:
+        return html_text
+
+    section = _voila_v0853_corrections_suggested_section(pdf_name=pdf_name, course_id=course_id)
+
+    text_detected_marker = "</section>"
+    text_detected_anchor = 'data-testid="review-document-text-detected-queue"'
+    if text_detected_anchor in html_text:
+        start = html_text.find(text_detected_anchor)
+        end = html_text.find(text_detected_marker, start)
+        if end != -1:
+            insert_at = end + len(text_detected_marker)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    step_marker = "</ol>"
+    if step_marker in html_text:
+        return html_text.replace(step_marker, step_marker + "\n" + section, 1)
+
+    fallback = "</article>"
+    if fallback in html_text:
+        return html_text.replace(fallback, section + "\n" + fallback, 1)
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0853_corrections_suggested_read_only_queue_middleware(request: _VoilaV0853Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    updated = _voila_v0853_inject_corrections_suggested_queue(html_text, pdf_name=pdf_name, course_id=course_id)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0853HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_53_CORRECTIONS_SUGGESTED_READ_ONLY_QUEUE_END
