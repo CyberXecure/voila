@@ -16912,3 +16912,294 @@ async def _voila_v0855_friendly_explanation_read_only_shell_middleware(request: 
         headers=headers,
     )
 # VOILA_V0_8_55_FRIENDLY_EXPLANATION_FORM_READ_ONLY_STATIC_DRAFT_SHELL_END
+
+# VOILA_V0_8_56_SAFE_LOCAL_SAVE_FOR_EXPLANATION_DRAFTS_START
+from starlette.requests import Request as _VoilaV0856Request
+from starlette.responses import HTMLResponse as _VoilaV0856HTMLResponse
+from datetime import datetime as _voila_v0856_datetime, timezone as _voila_v0856_timezone
+import json as _voila_v0856_json
+import urllib.parse as _voila_v0856_parse
+
+
+def _voila_v0856_clean_form_value(value: str, limit: int) -> str:
+    if not isinstance(value, str):
+        return ""
+    cleaned = value.replace("\x00", "").strip()
+    cleaned = "\n".join(line.rstrip() for line in cleaned.splitlines()).strip()
+    return cleaned[:limit].rstrip()
+
+
+def _voila_v0856_form_value(fields, name: str, limit: int) -> str:
+    values = fields.get(name)
+    if not values:
+        return ""
+    return _voila_v0856_clean_form_value(str(values[0]), limit)
+
+
+def _voila_v0856_form_bool(fields, name: str) -> bool:
+    values = fields.get(name)
+    if not values:
+        return False
+    return str(values[0]).strip().lower() in {"1", "true", "yes", "on", "gata"}
+
+
+def _voila_v0856_course_from_form(pdf_name: str = "", course_id: str = "") -> str:
+    candidate_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if candidate_course:
+        return candidate_course
+
+    candidate_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    if candidate_pdf:
+        return candidate_pdf[:-4]
+
+    return ""
+
+
+def _voila_v0856_draft_path(course_id: str):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        return None
+
+    course_dir = _voila_v0852_find_course_output_dir(safe_course)
+    if course_dir is None:
+        return None
+
+    return course_dir / "explanation_drafts.preview.json"
+
+
+def _voila_v0856_load_payload(path):
+    if path is None or not path.exists() or not path.is_file():
+        return {
+            "version": "v0.8.56",
+            "artifact": "explanation_drafts.preview.json",
+            "local_only": True,
+            "drafts": [],
+        }
+
+    try:
+        payload = _voila_v0856_json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        payload = {}
+
+    if not isinstance(payload, dict):
+        payload = {}
+
+    drafts = payload.get("drafts")
+    if not isinstance(drafts, list):
+        drafts = []
+
+    return {
+        "version": "v0.8.56",
+        "artifact": "explanation_drafts.preview.json",
+        "local_only": True,
+        "drafts": drafts[-50:],
+    }
+
+
+def _voila_v0856_save_draft(course_id: str, fields):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    draft_path = _voila_v0856_draft_path(safe_course)
+    if draft_path is None:
+        return False, "Nu găsesc folderul local al cursului.", None
+
+    draft = {
+        "draft_version": "v0.8.56",
+        "draft_type": "friendly_explanation",
+        "created_at_utc": _voila_v0856_datetime.now(_voila_v0856_timezone.utc).isoformat(),
+        "course_id": safe_course,
+        "title": _voila_v0856_form_value(fields, "title", 160),
+        "item_type": _voila_v0856_form_value(fields, "item_type", 80),
+        "verified_content": _voila_v0856_form_value(fields, "verified_content", 1200),
+        "friendly_explanation": _voila_v0856_form_value(fields, "friendly_explanation", 1600),
+        "importance": _voila_v0856_form_value(fields, "importance", 800),
+        "source_page": _voila_v0856_form_value(fields, "source_page", 40),
+        "lesson_language": _voila_v0856_form_value(fields, "lesson_language", 40),
+        "ready_for_study": _voila_v0856_form_bool(fields, "ready_for_study"),
+        "local_only": True,
+        "manual_evidence_written": False,
+        "study_card_created": False,
+        "progress_written": False,
+    }
+
+    payload = _voila_v0856_load_payload(draft_path)
+    payload["course_id"] = safe_course
+    payload["drafts"] = payload.get("drafts", []) + [draft]
+
+    tmp_path = draft_path.with_name("explanation_drafts.preview.json.tmp")
+    tmp_path.write_text(_voila_v0856_json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp_path.replace(draft_path)
+
+    return True, "Draftul local a fost salvat.", draft
+
+
+def _voila_v0856_e(value: str) -> str:
+    return _voila_v0850_html.escape(str(value or ""))
+
+
+def _voila_v0856_save_result_page(ok: bool, message: str, draft, course_id: str) -> str:
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    pdf_name = safe_course + ".pdf" if safe_course else ""
+    back_href = "/review-document?pdf=" + _voila_v0856_parse.quote(pdf_name) if pdf_name else "/"
+
+    status = "Salvat local" if ok else "Nu s-a salvat"
+    title = _voila_v0856_e((draft or {}).get("title", ""))
+    language = _voila_v0856_e((draft or {}).get("lesson_language", ""))
+    source_page = _voila_v0856_e((draft or {}).get("source_page", ""))
+
+    return f"""<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>{_voila_v0856_e(status)} · Voila</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;font-family:system-ui;background:#0f172a;color:#f8fafc;">
+<main data-testid="friendly-explanation-draft-save-result" style="max-width:860px;margin:0 auto;padding:32px 18px;">
+  <section style="border:1px solid rgba(148,163,184,.28);border-radius:22px;padding:22px;background:rgba(15,23,42,.88);">
+    <p style="color:#cbd5e1;">Voila! — Documentele tale, lecții clare</p>
+    <h1>{_voila_v0856_e(status)}</h1>
+    <p style="color:#cbd5e1;">{_voila_v0856_e(message)}</p>
+    <p><strong>Titlu scurt:</strong> {title or "—"}</p>
+    <p><strong>Limba lecției:</strong> {language or "—"}</p>
+    <p><strong>Sursa:</strong> {source_page or "—"}</p>
+    <p data-testid="friendly-explanation-local-only-policy">Local-only · nu s-a creat Study card · nu s-a scris Progress · nu s-a făcut delivery.</p>
+    <details>
+      <summary>Diagnostic tehnic</summary>
+      <p>Artefact: <code>explanation_drafts.preview.json</code></p>
+      <p>Endpoint: <code>/review-drafts/save-explanation-draft</code></p>
+    </details>
+    <a href="{back_href}" style="display:inline-flex;margin-top:14px;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Înapoi la Revizuire document</a>
+  </section>
+</main>
+</body>
+</html>"""
+
+
+def _voila_v0856_hidden_inputs(pdf_name: str, course_id: str) -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    return (
+        f'<input type="hidden" name="pdf_name" value="{_voila_v0856_e(safe_pdf)}">\n'
+        f'<input type="hidden" name="course_id" value="{_voila_v0856_e(safe_course)}">'
+    )
+
+
+def _voila_v0856_draft_ui(pdf_name: str = "", course_id: str = "", show_form: bool = False) -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    if not safe_course:
+        safe_course = _voila_v0852_course_id_from_pdf(safe_pdf)
+
+    if safe_pdf:
+        form_href = "/review-document?pdf=" + _voila_v0856_parse.quote(safe_pdf) + "&draft=1"
+    elif safe_course:
+        form_href = "/review-document/" + _voila_v0856_parse.quote(safe_course) + "?draft=1"
+    else:
+        form_href = "/review-document"
+
+    if not show_form:
+        return f"""
+<section data-testid="friendly-explanation-save-entry" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Salvare locală controlată</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Draft explicație</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Poți crea un draft local pentru explicația prietenoasă. Draftul nu intră încă în Study și nu scrie Progress.</p>
+  <a data-testid="friendly-explanation-open-draft-form" href="{form_href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Creează draft local</a>
+</section>
+"""
+
+    return f"""
+<section data-testid="friendly-explanation-save-form-shell" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Salvare locală controlată</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Creează draft local</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Acest formular salvează doar un draft local. Nu creează Study cards, nu scrie Progress și nu face delivery.</p>
+  <form data-testid="friendly-explanation-save-form" method="post" action="/review-drafts/save-explanation-draft" style="display:grid;gap:12px;">
+    {_voila_v0856_hidden_inputs(safe_pdf, safe_course)}
+    <label>Titlu scurt<br><input name="title" maxlength="160" value="Vectori — explicație verificată"></label>
+    <label>Ce este asta?<br><select name="item_type"><option>Definiție</option><option>Formulă</option><option>Exemplu</option><option>Diagramă</option><option>Tabel</option><option>Grafic</option><option>Observație importantă</option></select></label>
+    <label>Text / zonă verificată<br><textarea name="verified_content" maxlength="1200" rows="3">Text verificat din document.</textarea></label>
+    <label>Explicație pe înțeles<br><textarea name="friendly_explanation" maxlength="1600" rows="4">Explicația pe înțeles va fi scrisă aici.</textarea></label>
+    <label>De ce este important?<br><textarea name="importance" maxlength="800" rows="3">Această noțiune este importantă pentru lecție și exerciții.</textarea></label>
+    <label>Sursa: pagina X<br><input name="source_page" maxlength="40" value="pagina 1"></label>
+    <label>Limba lecției<br><select name="lesson_language"><option>Română</option><option>English</option></select></label>
+    <label><input name="ready_for_study" type="checkbox" value="1"> Gata pentru studiu</label>
+    <button data-testid="friendly-explanation-save-button" type="submit">Salvează draft local</button>
+  </form>
+  <details data-testid="friendly-explanation-save-diagnostic">
+    <summary>Diagnostic tehnic pentru salvare draft</summary>
+    <p>Endpoint: <code>/review-drafts/save-explanation-draft</code></p>
+    <p>Artefact: <code>explanation_drafts.preview.json</code></p>
+    <p>Nu creează Study cards. Nu scrie Progress. Nu face delivery.</p>
+  </details>
+</section>
+"""
+
+
+def _voila_v0856_inject_draft_ui(html_text: str, pdf_name: str = "", course_id: str = "", show_form: bool = False) -> str:
+    if not isinstance(html_text, str) or "friendly-explanation-save-entry" in html_text or "friendly-explanation-save-form-shell" in html_text:
+        return html_text
+
+    section = _voila_v0856_draft_ui(pdf_name=pdf_name, course_id=course_id, show_form=show_form)
+
+    anchor = 'data-testid="review-document-friendly-explanation-shell"'
+    end_tag = "</section>"
+    if anchor in html_text:
+        start = html_text.find(anchor)
+        end = html_text.find(end_tag, start)
+        if end != -1:
+            insert_at = end + len(end_tag)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0856_draft_ui_middleware(request: _VoilaV0856Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    updated = _voila_v0856_inject_draft_ui(
+        body.decode("utf-8", errors="replace"),
+        pdf_name=pdf_name,
+        course_id=course_id,
+        show_form=str(request.query_params.get("draft", "")).strip() == "1",
+    )
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0856HTMLResponse(content=updated, status_code=response.status_code, headers=headers)
+
+
+@app.post("/review-drafts/save-explanation-draft", response_class=_VoilaV0856HTMLResponse)
+async def _voila_v0856_save_explanation_draft_route(request: _VoilaV0856Request):
+    raw_body = await request.body()
+    fields = _voila_v0856_parse.parse_qs(
+        raw_body.decode("utf-8", errors="replace"),
+        keep_blank_values=True,
+        max_num_fields=30,
+    )
+
+    pdf_name = _voila_v0856_form_value(fields, "pdf_name", 180)
+    course_id = _voila_v0856_form_value(fields, "course_id", 180)
+    safe_course = _voila_v0856_course_from_form(pdf_name=pdf_name, course_id=course_id)
+
+    ok, message, draft = _voila_v0856_save_draft(safe_course, fields)
+    return _VoilaV0856HTMLResponse(
+        content=_voila_v0856_save_result_page(ok, message, draft, safe_course),
+        status_code=200 if ok else 400,
+    )
+# VOILA_V0_8_56_SAFE_LOCAL_SAVE_FOR_EXPLANATION_DRAFTS_END
