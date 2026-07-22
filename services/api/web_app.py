@@ -15361,3 +15361,313 @@ async def _voila_v0842_exam_document_workflow_ux_polish_middleware(request, call
 
     return _VoilaV0842HTMLResponse(content=html_text, status_code=response.status_code, headers=headers)
 # VOILA_V0_8_42_EXAM_DOCUMENT_WORKFLOW_UX_POLISH_END
+
+# VOILA_V0_8_50_REVIEW_DOCUMENT_SHELL_READ_ONLY_FIRST_SLICE_START
+from starlette.responses import HTMLResponse as _VoilaV0850HTMLResponse
+import html as _voila_v0850_html
+import urllib.parse as _voila_v0850_urllib_parse
+
+
+def _voila_v0850_ascii_name_is_safe(value: str, *, require_pdf: bool) -> bool:
+    if not isinstance(value, str):
+        return False
+
+    candidate = value.strip()
+    if not candidate or len(candidate) > 180:
+        return False
+
+    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-")
+
+    if any(ch not in allowed for ch in candidate):
+        return False
+
+    if "/" in candidate or "\\" in candidate:
+        return False
+
+    if candidate in {".", ".."} or candidate.startswith(".") or ".." in candidate:
+        return False
+
+    if require_pdf:
+        if not candidate.lower().endswith(".pdf"):
+            return False
+        stem = candidate[:-4]
+        return bool(stem) and stem not in {".", ".."}
+
+    return True
+
+
+def _voila_v0850_valid_pdf_name(value: str) -> bool:
+    return _voila_v0850_ascii_name_is_safe(value, require_pdf=True)
+
+
+def _voila_v0850_valid_course_id(value: str) -> bool:
+    return _voila_v0850_ascii_name_is_safe(value, require_pdf=False)
+
+
+def _voila_v0850_review_document_shell_html(*, pdf_name: str = "", course_id: str = "", lang: str = "ro") -> str:
+    safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+
+    if safe_pdf and not safe_course:
+        safe_course = safe_pdf[:-4]
+
+    if safe_course and not safe_pdf:
+        safe_pdf = safe_course + ".pdf"
+
+    selected_lang = "en" if str(lang).strip().lower() == "en" else "ro"
+
+    display_document = safe_pdf or safe_course or "documentul selectat"
+    display_document_html = _voila_v0850_html.escape(display_document)
+
+    safe_pdf_q = _voila_v0850_urllib_parse.quote(safe_pdf) if safe_pdf else ""
+    course_tools_href = f"/course-tools?pdf={safe_pdf_q}" if safe_pdf_q else "/"
+
+    language_badge_ro = "selectată" if selected_lang == "ro" else "disponibilă"
+    language_badge_en = "selected" if selected_lang == "en" else "available"
+
+    return f"""<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <title>Revizuire document · Voila</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {{
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, .86);
+      --panel-soft: rgba(30, 41, 59, .78);
+      --border: rgba(148, 163, 184, .28);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #e0f2fe;
+      --accent-text: #0f172a;
+    }}
+    body {{
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, .24), transparent 30rem),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, .16), transparent 26rem),
+        var(--bg);
+      color: var(--text);
+    }}
+    main {{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 42px;
+    }}
+    .hero {{
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, .96), rgba(30, 64, 175, .22));
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+    }}
+    .eyebrow {{
+      color: var(--muted);
+      margin: 0 0 8px;
+      font-size: .95rem;
+    }}
+    h1 {{
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: -.04em;
+    }}
+    .subtitle {{
+      color: var(--muted);
+      max-width: 820px;
+      line-height: 1.6;
+      margin: 0;
+    }}
+    .meta-row {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }}
+    .pill {{
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, .52);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: .95rem;
+    }}
+    .pill strong {{
+      color: var(--text);
+    }}
+    .layout {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(280px, .8fr);
+      gap: 16px;
+      margin-top: 18px;
+    }}
+    @media (max-width: 860px) {{
+      .layout {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+    .card {{
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+      padding: 18px;
+    }}
+    .steps {{
+      display: grid;
+      gap: 10px;
+      counter-reset: reviewSteps;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }}
+    .step {{
+      counter-increment: reviewSteps;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(148, 163, 184, .18);
+    }}
+    .step::before {{
+      content: counter(reviewSteps);
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font-weight: 800;
+    }}
+    .step strong {{
+      display: block;
+      margin-bottom: 4px;
+    }}
+    .step span {{
+      color: var(--muted);
+      line-height: 1.45;
+    }}
+    .guidance h2,
+    .card h2 {{
+      margin-top: 0;
+      letter-spacing: -.02em;
+    }}
+    .guidance p,
+    .guidance li {{
+      color: var(--muted);
+      line-height: 1.55;
+    }}
+    .actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }}
+    .button {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      padding: 10px 14px;
+      text-decoration: none;
+      font-weight: 750;
+      background: var(--accent);
+      color: var(--accent-text);
+    }}
+    .button.secondary {{
+      background: rgba(226, 232, 240, .10);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }}
+    details {{
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(15, 23, 42, .56);
+    }}
+    summary {{
+      cursor: pointer;
+      font-weight: 750;
+    }}
+    code {{
+      color: #bfdbfe;
+    }}
+  </style>
+</head>
+<body>
+<main data-testid="review-document-shell-read-only" data-voila-version="v0.8.50">
+  <section class="hero" aria-label="Revizuire document">
+    <p class="eyebrow">Voila! — Documentele tale, lecții clare</p>
+    <h1>Revizuire document</h1>
+    <p class="subtitle">Verifică textul, formulele și imaginile înainte să creezi lecția. Acest prim slice este read-only: arată noul flux ghidat, fără să scrie date și fără să pornească motoare.</p>
+    <div class="meta-row">
+      <span class="pill">Document: <strong>{display_document_html}</strong></span>
+      <span class="pill">Limba lecției: <strong>Română</strong> · {language_badge_ro}</span>
+      <span class="pill">English · {language_badge_en}</span>
+      <span class="pill">Mod: <strong>read-only</strong></span>
+    </div>
+  </section>
+
+  <section class="layout">
+    <article class="card" aria-label="Pași de revizuire">
+      <h2>Pașii pentru pregătirea lecției</h2>
+      <ol class="steps">
+        <li class="step" data-testid="review-step-text-detected"><div><strong>Text detectat</strong><span>Verifici textul extras din document, pe pagini și fragmente clare.</span></div></li>
+        <li class="step" data-testid="review-step-corrections"><div><strong>Corecturi sugerate</strong><span>Primești sugestii prietenoase pentru corectarea textului.</span></div></li>
+        <li class="step" data-testid="review-step-visuals"><div><strong>Formule și imagini</strong><span>Selectezi formule, diagrame, desene, tabele sau grafice importante.</span></div></li>
+        <li class="step" data-testid="review-step-important-concepts"><div><strong>Noțiuni importante</strong><span>Alegi ce merită să intre în lecție și adaugi explicații pe înțeles.</span></div></li>
+        <li class="step" data-testid="review-step-ready-study"><div><strong>Gata pentru studiu</strong><span>Confirmi ce este pregătit pentru Study curat.</span></div></li>
+      </ol>
+      <div class="actions">
+        <a class="button" href="{course_tools_href}" data-testid="review-document-back-course-tools">Înapoi la Course Tools</a>
+        <a class="button secondary" href="/" data-testid="review-document-back-home">Acasă</a>
+      </div>
+    </article>
+
+    <aside class="card guidance" aria-label="Ghid pentru student">
+      <h2>Ce faci aici?</h2>
+      <p>Voila te va ghida pas cu pas. Motoarele tehnice rulează în fundal; tu trebuie doar să confirmi ce este corect și ce merită învățat.</p>
+      <ul>
+        <li>Nu trebuie să știi ce înseamnă OCR, bbox sau JSON.</li>
+        <li>Nu editezi metadata.</li>
+        <li>Pregătești explicații clare pentru lecție.</li>
+      </ul>
+      <p><strong>Următorul pas:</strong> legăm acest shell din Course Tools, apoi adăugăm coada pentru Text detectat.</p>
+
+      <details data-testid="review-document-technical-diagnostic">
+        <summary>Diagnostic tehnic</summary>
+        <p>Slice: <code>v0.8.50 read-only learner shell</code></p>
+        <p>Rută primară: <code>/review-document?pdf={{pdf_name}}</code></p>
+        <p>Alias: <code>/review-document/{{course_id}}</code></p>
+        <p>Nu scrie date, nu rulează OCR, nu rulează LanguageTool, nu rulează crop, nu schimbă Study.</p>
+      </details>
+    </aside>
+  </section>
+</main>
+</body>
+</html>"""
+
+
+@app.get("/review-document", response_class=_VoilaV0850HTMLResponse)
+async def _voila_v0850_review_document_shell_query(pdf: str = "", lang: str = "ro"):
+    safe_pdf = pdf.strip() if _voila_v0850_valid_pdf_name(pdf) else ""
+    return _VoilaV0850HTMLResponse(
+        content=_voila_v0850_review_document_shell_html(pdf_name=safe_pdf, lang=lang),
+        status_code=200,
+    )
+
+
+@app.get("/review-document/{course_id}", response_class=_VoilaV0850HTMLResponse)
+async def _voila_v0850_review_document_shell_course(course_id: str, lang: str = "ro"):
+    safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
+    return _VoilaV0850HTMLResponse(
+        content=_voila_v0850_review_document_shell_html(course_id=safe_course, lang=lang),
+        status_code=200,
+    )
+# VOILA_V0_8_50_REVIEW_DOCUMENT_SHELL_READ_ONLY_FIRST_SLICE_END
