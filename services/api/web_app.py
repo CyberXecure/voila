@@ -16757,3 +16757,158 @@ async def _voila_v0854_formulas_images_read_only_queue_middleware(request: _Voil
         headers=headers,
     )
 # VOILA_V0_8_54_FORMULAS_IMAGES_READ_ONLY_QUEUE_END
+
+# VOILA_V0_8_55_FRIENDLY_EXPLANATION_FORM_READ_ONLY_STATIC_DRAFT_SHELL_START
+from starlette.requests import Request as _VoilaV0855Request
+from starlette.responses import HTMLResponse as _VoilaV0855HTMLResponse
+
+
+def _voila_v0855_read_only_field(label: str, value: str, hint: str = "") -> str:
+    safe_label = _voila_v0850_html.escape(str(label or "").strip())
+    safe_value = _voila_v0850_html.escape(str(value or "").strip())
+    safe_hint = _voila_v0850_html.escape(str(hint or "").strip())
+
+    hint_html = f'<p style="margin:6px 0 0;color:#94a3b8;line-height:1.45;">{safe_hint}</p>' if safe_hint else ""
+
+    return f"""
+<div data-testid="friendly-explanation-read-only-field" style="padding:14px;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(30,41,59,.74);">
+  <p style="margin:0 0 6px;color:#cbd5e1;font-weight:750;">{safe_label}</p>
+  <div aria-readonly="true" style="min-height:42px;border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:10px 12px;background:rgba(15,23,42,.62);color:#f8fafc;line-height:1.55;">{safe_value}</div>
+  {hint_html}
+</div>
+"""
+
+
+def _voila_v0855_friendly_explanation_section() -> str:
+    fields = [
+        _voila_v0855_read_only_field(
+            "Titlu scurt",
+            "Exemplu: Vectori — definiție și reprezentare",
+            "Un titlu simplu, ușor de recunoscut în Study.",
+        ),
+        _voila_v0855_read_only_field(
+            "Ce este asta?",
+            "Alege tipul: Formulă, Definiție, Exemplu, Diagramă, Tabel, Grafic sau Observație importantă.",
+            "Tip prietenos, nu metadata tehnică.",
+        ),
+        _voila_v0855_read_only_field(
+            "Text / zonă verificată",
+            "Aici va apărea textul sau zona vizuală confirmată din document.",
+            "Doar material verificat manual ajunge mai departe.",
+        ),
+        _voila_v0855_read_only_field(
+            "Explicație pe înțeles",
+            "Scriem ideea pe scurt, ca pentru un elev sau adult fără context tehnic.",
+            "Fără jargon inutil. O singură limbă pentru lecție.",
+        ),
+        _voila_v0855_read_only_field(
+            "De ce este important?",
+            "Explicăm de ce merită învățată noțiunea și unde se folosește.",
+            "Ajută Study și Exam Prep să fie utile, nu doar să copieze text.",
+        ),
+        _voila_v0855_read_only_field(
+            "Sursa: pagina X",
+            "Exemplu: pagina 3",
+            "Fiecare noțiune trebuie să rămână legată de document.",
+        ),
+        _voila_v0855_read_only_field(
+            "Limba lecției",
+            "Română / English",
+            "Nu amestecăm română și engleză în același flux de învățare.",
+        ),
+        _voila_v0855_read_only_field(
+            "Gata pentru studiu",
+            "Momentan blocat — doar previzualizare read-only.",
+            "Salvarea va veni într-un milestone separat, după aprobare explicită.",
+        ),
+    ]
+
+    return f"""
+<section data-testid="review-document-friendly-explanation-shell" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">Pasul 4</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Explicație prietenoasă</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Aici pregătim forma finală a unei noțiuni înainte să intre în Study curat. Acum este doar o machetă read-only: nu salvăm, nu trimitem și nu creăm carduri.</p>
+  <p data-testid="friendly-explanation-read-only-status" style="margin:0 0 14px;color:#e0f2fe;font-weight:750;">Machetă statică · Doar citire · Fără salvare</p>
+  <div style="display:grid;gap:10px;">{''.join(fields)}</div>
+  <details data-testid="friendly-explanation-diagnostic" style="margin-top:14px;">
+    <summary>Diagnostic tehnic pentru Explicație prietenoasă</summary>
+    <p>Slice: <code>v0.8.55 static read-only explanation shell</code></p>
+    <p>Nu există formular HTML cu submit. Nu există POST. Nu s-a scris niciun artefact.</p>
+  </details>
+</section>
+"""
+
+
+def _voila_v0855_inject_friendly_explanation_shell(html_text: str) -> str:
+    if not isinstance(html_text, str) or "review-document-friendly-explanation-shell" in html_text:
+        return html_text
+
+    section = _voila_v0855_friendly_explanation_section()
+
+    formulas_anchor = 'data-testid="review-document-formulas-images-queue"'
+    section_end = "</section>"
+    if formulas_anchor in html_text:
+        start = html_text.find(formulas_anchor)
+        end = html_text.find(section_end, start)
+        if end != -1:
+            insert_at = end + len(section_end)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    corrections_anchor = 'data-testid="review-document-corrections-suggested-queue"'
+    if corrections_anchor in html_text:
+        start = html_text.find(corrections_anchor)
+        end = html_text.find(section_end, start)
+        if end != -1:
+            insert_at = end + len(section_end)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    text_anchor = 'data-testid="review-document-text-detected-queue"'
+    if text_anchor in html_text:
+        start = html_text.find(text_anchor)
+        end = html_text.find(section_end, start)
+        if end != -1:
+            insert_at = end + len(section_end)
+            return html_text[:insert_at] + "\n" + section + html_text[insert_at:]
+
+    step_marker = "</ol>"
+    if step_marker in html_text:
+        return html_text.replace(step_marker, step_marker + "\n" + section, 1)
+
+    fallback = "</article>"
+    if fallback in html_text:
+        return html_text.replace(fallback, section + "\n" + fallback, 1)
+
+    return html_text + section
+
+
+@app.middleware("http")
+async def _voila_v0855_friendly_explanation_read_only_shell_middleware(request: _VoilaV0855Request, call_next):
+    response = await call_next(request)
+
+    if not (request.url.path == "/review-document" or request.url.path.startswith("/review-document/")):
+        return response
+
+    pdf_name, course_id = _voila_v0852_extract_review_target(request)
+    if not pdf_name and not course_id:
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode("utf-8", errors="replace")
+    updated = _voila_v0855_inject_friendly_explanation_shell(html_text)
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return _VoilaV0855HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_55_FRIENDLY_EXPLANATION_FORM_READ_ONLY_STATIC_DRAFT_SHELL_END
