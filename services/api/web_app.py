@@ -832,7 +832,7 @@ def _voila_tester_flow_bottom_nav_html() -> str:
     addLink(nav, "OCR Review", "/review-ocr-corrected?pdf=" + q + "&page=1", false);
 
     var courseId = pdf.replace(/\.pdf$/i, "");
-    addLink(nav, "OCR Math", "/owner/ocr-math-report/" + enc(courseId) + "/view", false);
+    // VOILA_V0_8_66_HIDE_DEPRECATED_BOTTOM_OCRMATH_LINK: global OCR Math report hidden from user-facing nav.
   }
 
   addLink(nav, "Exam Prep", "/exam-prep", false);
@@ -2085,20 +2085,11 @@ def home(generated: str | None = Query(default=None), uploaded: str | None = Que
                     f'<span class="meta">{_ut("ui.html_will_be_rebuilt_on_open", "HTML will be rebuilt automatically when opened.")}</span>'
                 )
 
-        if hybrid_figures_html.exists():
-            actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "figures_hybrid", "figures_hybrid.html")}">{_ut("ui.figures", "Figures")}</a>'
-            )
-
-        elif figures_html.exists():
-            actions.append(
-                f'<a class="btn" href="{output_url(pdf.stem, "figures", "figures.html")}">{_ut("ui.figures", "Figures")}</a>'
-            )
-
-        if hybrid_manifest.exists():
-            actions.append(
-                f'<a class="btn" href="/edit-crops?pdf={quote(pdf.name)}">{_ut("ui.edit_crops", "Edit crops")}</a>'
-            )
+        # VOILA_V0_8_66_HIDE_DEPRECATED_HOME_VISUAL_LINKS_START
+        # Deprecated old Figures/Edit crops links are hidden from Home user-facing actions.
+        # The routes/artifacts remain available only as owner-local technical diagnostics.
+        # Canonical future flow: Review Document -> bbox -> real crop -> OCR Math on crop -> manual validation.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_HOME_VISUAL_LINKS_END
 
         if quiz_file.exists():
             actions.append(
@@ -8566,9 +8557,9 @@ def _voila_tools_bar(pdf_name: str, active: str = "") -> str:
         (_ut("ui.progress", _ut("progress", "Progress")), f"/progress?pdf={q}", "progress"),
         (_ut("ui.review_ocr_text", "Review OCR Text"), f"/review-ocr-corrected?pdf={q}&page=1", "ocr"),
         (_ut("ui.review_concepts", "Review Concepts"), f"/review-concepts?pdf={q}", "concepts"),
-        (_ut("ui.figures", "Figures"), f"/view-figures?pdf={q}", "figures"),
-        (_ut("ui.edit_crops", "Edit crops"), f"/edit-crops?pdf={q}", "crops"),
-        ("OCR Math", f"/owner/ocr-math-report/{_nav_quote(course_id)}/view", "ocr_math"),
+        # VOILA_V0_8_66_HIDE_DEPRECATED_TOOLS_BAR_FIGURES_LINK: old Figures link hidden from tools bar.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_TOOLS_BAR_EDIT_CROPS_LINK: old Edit crops link hidden from tools bar.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_TOOLS_BAR_OCRMATH_LINK: global OCR Math link hidden from tools bar.
         (_ut("ui.exam_prep", "Exam Prep"), "/exam-prep", "exam_prep"),
         (_ut("ui.library", _ut("library", "Library")), "/", "library"),
     ]
@@ -8991,13 +8982,10 @@ def course_tools(pdf: str = Query("")):
             "/exam-prep",
             True,
         ),
-        card(
-            "OCR Math Diagnostic",
-            ocr_math_description,
-            f"/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view",
-            ocr_math_available,
-            "Lipsește ocr_math_report.md. Activează hook-ul local OCR Math și regenerează dacă vrei diagnostic.",
-        ),
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_OCRMATH_CARD_START
+        # Global OCR Math report is hidden from primary Course Tools.
+        # It remains as owner-local technical diagnostics only.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_OCRMATH_CARD_END
         card(
             "Formula Visual Evidence",
             formula_visual_description,
@@ -9005,20 +8993,14 @@ def course_tools(pdf: str = Query("")):
             formula_visual_available,
             "Lipsește formula_visual_evidence.manifest.json. Rulează manifest builder local pentru crop-uri formulă/simbol.",
         ),
-        card(
-            _ut("ui.figures", "Figures"),
-            "Galerie figuri extrase din document.",
-            f"/view-figures?pdf={q}",
-            figures_available,
-            "Lipsește figures_hybrid.html sau figures.html.",
-        ),
-        card(
-            _ut("ui.edit_crops", "Edit crops"),
-            "Editor local pentru crop-uri de figuri.",
-            f"/edit-crops?pdf={q}",
-            crops_available,
-            "Lipsește figures_manifest.hybrid.json.",
-        ),
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_FIGURES_CARD_START
+        # Old Figures gallery is hidden from primary Course Tools.
+        # Canonical visual review will use bbox-based visual items.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_FIGURES_CARD_END
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_EDIT_CROPS_CARD_START
+        # Old shrink/hybrid Edit crops flow is hidden from primary Course Tools.
+        # Real crop artifacts should come from bbox visual review.
+        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_EDIT_CROPS_CARD_END
         card(
             "Quiz JSON",
             "Deschide quiz.json ca artefact local.",
@@ -9164,7 +9146,7 @@ def course_tools(pdf: str = Query("")):
       <a href="/progress?pdf={q}">Progres</a>
       <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
       <a href="/exam-prep">Exam Prep</a>
-      <a href="/owner/ocr-math-report/{quote(pdf_path.stem, safe='')}/view">OCR Math</a>
+      <!-- VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_BOTTOM_OCRMATH_LINK: global OCR Math bottom nav link hidden. -->
       <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
     </nav>
     """
