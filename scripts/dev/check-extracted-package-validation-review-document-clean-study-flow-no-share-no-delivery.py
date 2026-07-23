@@ -118,6 +118,15 @@ onedrive_root = Path(os.environ.get("USERPROFILE", r"C:\Users\liian")) / "OneDri
 if is_inside(zip_path, onedrive_root):
     fail("FAILED_V0862_SOURCE_ZIP_INSIDE_ONEDRIVE=" + str(zip_path))
 
+# stop any previous packaged/repo app before deleting extracted files,
+# because Windows can keep .pyd files locked inside the packaged .venv.
+subprocess.run(
+    ["pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / "dev" / "stop-voila.ps1")],
+    cwd=str(repo_root),
+    check=False,
+)
+time.sleep(3)
+
 run_root.mkdir(parents=True, exist_ok=True)
 if extract_root.exists():
     shutil.rmtree(extract_root)
@@ -392,4 +401,3 @@ for key, value in summary.items():
 
 print("EVIDENCE_JSON=" + str(out_json))
 print("EVIDENCE_MD=" + str(out_md))
-

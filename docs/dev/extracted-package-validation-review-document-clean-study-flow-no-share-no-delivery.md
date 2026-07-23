@@ -70,6 +70,20 @@ The extracted package validation checks:
 14. No Progress is written.
 15. No share or delivery is performed.
 
+## Windows cleanup lock fix
+
+The validation stops any running local Voila process before removing the previous extracted package folder.
+
+This avoids Windows file locks from a previously started packaged .venv, for example locked .pyd files.
+
+This is validation cleanup only.
+
+It does not modify application behavior.
+
+It does not rebuild the ZIP.
+
+It does not create a new ZIP.
+
 ## Policy
 
 Owner-local extracted package validation only.
@@ -91,5 +105,3 @@ No public release.
 ## Recommended next
 
 v0.8.63 — final no-delivery package validation review, owner-local only.
-
-
