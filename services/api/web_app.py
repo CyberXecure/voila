@@ -18284,3 +18284,213 @@ async def _voila_v0882_review_document_clean_study_refresh_ui_control_middleware
     except Exception:
         return response
 # VOILA_V0_8_82_REVIEW_DOCUMENT_CLEAN_STUDY_REFRESH_UI_CONTROL_END
+
+# VOILA_V0_8_85_CLEAN_STUDY_PREVIEW_VISUAL_ITEMS_READONLY_UI_START
+def _voila_v0885_safe_crop_data_uri(output_dir, crop_path):
+    import base64 as _voila_v0885_base64
+
+    rel = str(crop_path or "").strip().replace("\\", "/")
+    if not rel or rel.startswith("/") or ":" in rel or ".." in rel.split("/"):
+        return ""
+
+    try:
+        root = output_dir.resolve()
+        candidate = (output_dir / rel).resolve()
+        candidate.relative_to(root)
+    except Exception:
+        return ""
+
+    if not candidate.exists() or not candidate.is_file():
+        return ""
+
+    suffix = candidate.suffix.lower()
+    if suffix == ".png":
+        mime = "image/png"
+    elif suffix in (".jpg", ".jpeg"):
+        mime = "image/jpeg"
+    else:
+        return ""
+
+    try:
+        data = candidate.read_bytes()
+    except Exception:
+        return ""
+
+    if not data or len(data) > 2000000:
+        return ""
+
+    encoded = _voila_v0885_base64.b64encode(data).decode("ascii")
+    return "data:" + mime + ";base64," + encoded
+
+
+def _voila_v0885_output_dir_for_clean_study(course_id):
+    from pathlib import Path as _voila_v0885_path
+
+    course_id = _voila_v0877_safe_identifier(course_id)
+    if not course_id:
+        return None
+
+    try:
+        repo_root = _voila_v0885_path(__file__).resolve().parents[2]
+        output_root = (repo_root / "data" / "output").resolve()
+        candidate = (output_root / course_id).resolve()
+        candidate.relative_to(output_root)
+        if candidate.exists() and candidate.is_dir():
+            return candidate
+    except Exception:
+        return None
+
+    return None
+
+
+def _voila_v0885_load_clean_study_visual_items(course_id):
+    course_id = _voila_v0877_safe_identifier(course_id)
+    if not course_id:
+        return None, None, "course_id_invalid"
+
+    output_dir = _voila_v0885_output_dir_for_clean_study(course_id)
+    if output_dir is None:
+        return None, None, "course_missing"
+
+    visual_path = output_dir / "formula_visual_evidence" / "visual_items.clean-study.preview.json"
+    payload = _voila_v0877_read_json(visual_path)
+    if not isinstance(payload, dict):
+        return output_dir, None, "not_refreshed"
+
+    items = payload.get("items")
+    if not isinstance(items, list):
+        return output_dir, None, "invalid_payload"
+
+    return output_dir, items, ""
+
+
+def _voila_v0885_visual_items_section_html(course_id):
+    from html import escape as _voila_v0885_escape
+
+    output_dir, items, status = _voila_v0885_load_clean_study_visual_items(course_id)
+    safe_course_id = _voila_v0877_safe_identifier(course_id)
+
+    if status == "not_refreshed":
+        return (
+            '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
+            '<h2>Elemente vizuale validate</h2>'
+            '<p>Lecția curată nu a fost actualizată încă.</p>'
+            '<p><a href="/review-document/' + _voila_v0885_escape(str(safe_course_id), quote=True) + '">Înapoi la Revizuire document</a></p>'
+            '</section>'
+        )
+
+    if status:
+        return ""
+
+    safe_items = [item for item in items if isinstance(item, dict)]
+    if not safe_items:
+        return (
+            '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
+            '<h2>Elemente vizuale validate</h2>'
+            '<p>Nu există încă elemente vizuale validate pentru lecție.</p>'
+            '</section>'
+        )
+
+    cards = []
+    for item in safe_items:
+        page = item.get("page")
+        if not isinstance(page, int) or page < 1:
+            page = "?"
+
+        title = str(item.get("title") or "Element vizual validat").strip()
+        prompt = str(item.get("prompt") or "").strip()
+        answer = str(item.get("answer") or "").strip()
+        explanation = str(item.get("explanation") or "").strip()
+
+        image_payload = item.get("image") if isinstance(item.get("image"), dict) else {}
+        crop_path = str(image_payload.get("crop_path") or "").strip()
+        alt = str(image_payload.get("alt") or "Element vizual validat").strip()
+
+        image_html = ""
+        if output_dir is not None and crop_path:
+            data_uri = _voila_v0885_safe_crop_data_uri(output_dir, crop_path)
+            if data_uri:
+                image_html = (
+                    '<figure><img src="' + data_uri + '" alt="' + _voila_v0885_escape(alt, quote=True) + '"></figure>'
+                )
+            else:
+                image_html = '<p>Imaginea validată nu este disponibilă momentan.</p>'
+
+        cards.append(
+            '<article class="clean-study-visual-item-card">'
+            '<h3>' + _voila_v0885_escape(title) + '</h3>'
+            '<p><strong>Sursa: pagina</strong> ' + _voila_v0885_escape(str(page)) + '</p>'
+            + image_html +
+            ('<p><strong>Întrebare</strong><br>' + _voila_v0885_escape(prompt) + '</p>' if prompt else '') +
+            ('<p><strong>Răspuns validat</strong><br>' + _voila_v0885_escape(answer) + '</p>' if answer else '') +
+            ('<p><strong>Explicație</strong><br>' + _voila_v0885_escape(explanation) + '</p>' if explanation else '') +
+            '<p><em>Verificat în Revizuire document.</em></p>'
+            '</article>'
+        )
+
+    return (
+        '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
+        '<h2>Elemente vizuale validate</h2>'
+        + ''.join(cards) +
+        '</section>'
+    )
+
+
+def _voila_v0885_response_with_visual_items(response, course_id):
+    from starlette.responses import HTMLResponse as _VoilaV0885HTMLResponse
+
+    body = getattr(response, "body", b"")
+    if isinstance(body, bytes):
+        html = body.decode("utf-8", errors="replace")
+    else:
+        html = str(body)
+
+    if "clean-study-visual-items-readonly-ui" not in html:
+        section = _voila_v0885_visual_items_section_html(course_id)
+        if section:
+            if "</main>" in html:
+                html = html.replace("</main>", section + "</main>", 1)
+            elif "</body>" in html:
+                html = html.replace("</body>", section + "</body>", 1)
+            else:
+                html = html + section
+
+    return _VoilaV0885HTMLResponse(
+        content=html,
+        status_code=getattr(response, "status_code", 200),
+    )
+
+
+def _voila_v0885_install_clean_study_preview_visual_items_route_wrapper():
+    import inspect as _voila_v0885_inspect
+    from starlette.routing import request_response as _voila_v0885_request_response
+
+    for route in app.routes:
+        if getattr(route, "path", "") != "/study-clean-preview/{course_id}":
+            continue
+
+        original_endpoint = getattr(route, "endpoint", None)
+        if original_endpoint is None:
+            return False
+
+        async def _voila_v0885_clean_study_preview_visual_items_wrapped_route(course_id: str):
+            result = original_endpoint(course_id)
+            if _voila_v0885_inspect.isawaitable(result):
+                result = await result
+            return _voila_v0885_response_with_visual_items(result, course_id)
+
+        route.endpoint = _voila_v0885_clean_study_preview_visual_items_wrapped_route
+        if hasattr(route, "dependant"):
+            route.dependant.call = _voila_v0885_clean_study_preview_visual_items_wrapped_route
+        if hasattr(route, "get_route_handler"):
+            route.app = _voila_v0885_request_response(route.get_route_handler())
+
+        return True
+
+    return False
+
+
+_VOILA_V0_8_85_CLEAN_STUDY_PREVIEW_VISUAL_ITEMS_ROUTE_WRAPPED = (
+    _voila_v0885_install_clean_study_preview_visual_items_route_wrapper()
+)
+# VOILA_V0_8_85_CLEAN_STUDY_PREVIEW_VISUAL_ITEMS_READONLY_UI_END
