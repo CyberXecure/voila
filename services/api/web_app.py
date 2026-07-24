@@ -17545,9 +17545,10 @@ def _voila_v0874_load_visual_validation_items(course_id):
         return []
 
     visual_dir = output_dir / "formula_visual_evidence"
+    # VOILA_V0_8_79_POST_SAVE_READBACK_PREFERS_VALIDATED_ARTIFACT
     candidate_paths = [
-        visual_dir / "visual_items.bbox.with-ocrmath-candidates.json",
         visual_dir / "visual_items.bbox.validated.json",
+        visual_dir / "visual_items.bbox.with-ocrmath-candidates.json",
     ]
 
     payload = None
