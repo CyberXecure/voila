@@ -652,6 +652,83 @@ foreach ($dir in $FinalRemoveDirs) {
     }
 }
 
+Write-Host "=== Clean Python runtime cache before ZIP ==="
+
+$PythonRuntimeCacheDirs = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -Directory `
+        -Recurse `
+        -Force `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -eq "__pycache__"
+        } |
+        Sort-Object FullName -Descending
+)
+
+foreach ($CacheDir in $PythonRuntimeCacheDirs) {
+    Remove-Item `
+        -LiteralPath $CacheDir.FullName `
+        -Recurse `
+        -Force `
+        -ErrorAction Stop
+}
+
+$PythonRuntimeBytecodeFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Extension -in @(".pyc", ".pyo")
+        }
+)
+
+foreach ($BytecodeFile in $PythonRuntimeBytecodeFiles) {
+    Remove-Item `
+        -LiteralPath $BytecodeFile.FullName `
+        -Force `
+        -ErrorAction Stop
+}
+
+$RemainingPythonRuntimeCacheDirs = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -Directory `
+        -Recurse `
+        -Force `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -eq "__pycache__"
+        }
+)
+
+$RemainingPythonRuntimeBytecodeFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Extension -in @(".pyc", ".pyo")
+        }
+)
+
+if (
+    $RemainingPythonRuntimeCacheDirs.Count -ne 0 `
+    -or $RemainingPythonRuntimeBytecodeFiles.Count -ne 0
+) {
+    throw "Python runtime cache cleanup failed before ZIP."
+}
+
+Write-Host "Removed Python cache directories: $($PythonRuntimeCacheDirs.Count)"
+Write-Host "Removed standalone Python bytecode files: $($PythonRuntimeBytecodeFiles.Count)"
+Write-Host "Python runtime cache cleanup passed."
+
 $DataDir = Join-Path $AppDir "data"
 if (Test-Path $DataDir) {
     Write-Host "Reset data dir before ZIP: $DataDir"
