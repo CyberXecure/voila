@@ -1,4 +1,6 @@
 from __future__ import annotations
+# VOILA_V0_8_91_WINDOWS_NO_CONSOLE_IMPORT
+import os as _voila_v091_os
 
 import shutil
 import datetime as dt
@@ -63,7 +65,7 @@ def ensure_crop_editor_running() -> None:
             "info",
         ],
         cwd=str(PROJECT_ROOT),
-        creationflags=subprocess.CREATE_NEW_CONSOLE,
+        **({"creationflags": subprocess.CREATE_NO_WINDOW} if _voila_v091_os.name == "nt" else {}),
     )
 
     for _ in range(30):
@@ -3295,10 +3297,10 @@ def owner_study_items_preview_view(course_id: str):
     # VOILA_V0_7_86_STUDY_ITEMS_PREVIEW_STATUS_COPY_POLISH_START
     quality_status_normalized = str(quality_status or "").strip().upper()
     if quality_status_normalized == "PASS":
-        study_status_copy = "Owner-local · read-only · integrat în Study când Quality gate este PASS"
+        study_status_copy = "Diagnostic local · doar vizualizare · integrat în Studiu când verificarea de calitate este validată"
         study_integration_badge = "activă"
     else:
-        study_status_copy = "Owner-local · read-only · neintegrat în Study: Quality gate nu este PASS"
+        study_status_copy = "Diagnostic local · doar vizualizare · neintegrat în Studiu: verificarea de calitate nu este validată"
         study_integration_badge = "inactivă"
     # VOILA_V0_7_86_STUDY_ITEMS_PREVIEW_STATUS_COPY_POLISH_END
 
@@ -3567,7 +3569,7 @@ def owner_formula_visual_evidence_view(course_id: str):
     <main>
       <section class="card v0790-formula-summary">
         <h1>Formula visual evidence</h1>
-        <p class="meta">Owner-local · read-only · crop-uri vizuale pentru candidați formulă/simbol</p>
+        <p class="meta">Diagnostic local · doar vizualizare · decupaje vizuale pentru candidați de formulă/simbol</p>
         <p><code>formula_visual_evidence.manifest.json</code></p>
 
         <div class="v0790-formula-badges">
@@ -4972,7 +4974,7 @@ def owner_manual_learning_evidence_skeleton(course_id: str, page_number: int = Q
 
     <h1>Manual Learning Evidence · skeleton</h1>
     <p class="meta">
-      Owner-local · read-only · follows v0.7.94 Direction Charter and v0.7.95 UI design.
+      Diagnostic local · doar vizualizare · urmează Carta de direcție v0.7.94 și designul interfeței v0.7.95.
     </p>
 
     <div class="toolbar">
@@ -6800,25 +6802,53 @@ def log(pdf: str = Query(...)) -> PlainTextResponse:
 
 
 @app.get("/edit-crops")
-def edit_crops(pdf: str = ""):
-    from fastapi.responses import HTMLResponse, RedirectResponse
+def edit_crops(
+    pdf: str = "",
+    lang: str = "",
+):
+    from fastapi.responses import RedirectResponse
+    from urllib.parse import quote
 
-    ensure_crop_editor_running()
+    safe_pdf = (
+        pdf.strip()
+        if _voila_v0850_valid_pdf_name(pdf)
+        else ""
+    )
 
-    if not crop_editor_is_running():
-        return HTMLResponse(
-            """
-            <h1>{_ut("ui.heading.crop_editor_not_started", "Crop Editor did not start")}</h1>
-            <p>{_ut("ui.message.crop_editor_port_not_responding", "Port 8790 is not responding. Start it manually:")}</p>
-            <pre>python -m uvicorn crop_editor_app:app --app-dir services/api --host 127.0.0.1 --port 8790</pre>
-            """,
-            status_code=503,
+    requested = str(lang or "").strip().lower()
+
+    try:
+        ui_lang = _voila_v091_resolve_ui_language(
+            safe_pdf,
+            requested,
+        )
+    except Exception:
+        ui_lang = "en" if requested == "en" else "ro"
+
+    query = (
+        "lang="
+        + quote(ui_lang)
+        + "&section=visual"
+    )
+
+    if safe_pdf:
+        query = (
+            "pdf="
+            + quote(safe_pdf)
+            + "&"
+            + query
         )
 
-    if pdf:
-        return RedirectResponse("http://127.0.0.1:8790/?pdf=" + quote(pdf))
+    target = (
+        "/review-document?"
+        + query
+        + "#review-document-visual-validation-readonly-ui"
+    )
 
-    return RedirectResponse("http://127.0.0.1:8790/")
+    return RedirectResponse(
+        target,
+        status_code=307,
+    )
 
 
 def _safe_pdf_name(value: str) -> str:
@@ -8833,6 +8863,8 @@ def course_tools(pdf: str = Query("")):
 
     output_dir = OUTPUT_DIR / pdf_path.stem
     q = quote(pdf_path.name)
+    ui_lang = _voila_v091_resolve_ui_language(pdf_path.name, "")
+    ct = lambda key: _voila_v091_t(key, ui_lang)
 
     course_md = output_dir / "course.cleaned.md"
     course_html = output_dir / "course.cleaned.html"
@@ -8916,13 +8948,13 @@ def course_tools(pdf: str = Query("")):
     def card(title: str, description: str, href: str, available: bool, missing: str = "") -> str:
         title_html = html.escape(str(title))
         description_html = html.escape(str(description))
-        status_label = _ut("ui.available", "Available") if available else _ut("ui.unavailable", "Unavailable")
+        status_label = ct("ui.available") if available else ct("ui.unavailable")
         status_class = "ok" if available else "missing"
 
         if available:
-            action = f'<a class="btn primary" href="{href}">{_ut("ui.open", "Open")}</a>'
+            action = f'<a class="btn primary" href="{href}">{ct("ui.open")}</a>'
         else:
-            action = f'<span class="btn disabled">{_ut("ui.unavailable", "Unavailable")}</span>'
+            action = f'<span class="btn disabled">{ct("ui.unavailable")}</span>'
 
         missing_html = ""
         if missing and not available:
@@ -8941,90 +8973,37 @@ def course_tools(pdf: str = Query("")):
         """
 
     cards = [
+        _voila_v0851_review_document_course_tools_card(pdf_path.name),
         card(
-            _ut("ui.open_course", _ut("open_course", "Open course")),
-            "Deschide cursul generat. Dacă există doar course.cleaned.md, Voila reconstruiește automat course.cleaned.html.",
+            ct("ui.open_course"),
+            ct("course_tools.open_course_description"),
             f"/course-open?pdf={q}",
             course_available,
-            "Lipsește course.cleaned.md. Rulează Generate pentru acest PDF.",
+            ct("course_tools.open_course_missing"),
         ),
         card(
-            _ut("ui.study", _ut("study", "Study")),
-            "Întrebări de studiu din study_items.preview.json când Quality gate este PASS, cu fallback la quiz.json / quiz.study.json.",
+            ct("ui.study"),
+            ct("course_tools.study_description"),
             f"/study?pdf={q}",
             study_available,
-            "Lipsește study_items.preview.json PASS sau quiz.json / quiz.study.json. Rulează Generate pentru acest PDF.",
+            ct("course_tools.study_missing"),
         ),
         card(
-            "Study Items Preview",
-            "Previzualizare owner-local read-only pentru întrebările pedagogice generate din learning pack. Study folosește artifactul când Quality gate este PASS; nu modifică BKT sau Progress.",
-            f"/owner/study-items-preview/{quote(pdf_path.stem, safe='')}/view",
-            study_items_preview_available,
-            "Lipsește study_items.preview.json. Rulează generatorul preview pentru acest curs.",
-        ),
-        card(
-            _ut("ui.progress", _ut("progress", "Progress")),
-            "Dashboard de progres pentru întrebările de studiu disponibile în Study.",
+            ct("ui.progress"),
+            ct("course_tools.progress_description"),
             f"/progress?pdf={q}",
             study_available,
-            "Progress are nevoie de study_items.preview.json PASS sau quiz.json / quiz.study.json.",
+            ct("course_tools.progress_missing"),
         ),
         card(
-            _ut("ui.review_ocr_text", "OCR Review"),
-            "Revizuiește textul OCR extras din pages.json / ocr_pages.json.",
-            f"/review-ocr-corrected?pdf={q}&page=1",
-            ocr_available,
-            "Lipsește pages.json sau ocr_pages.json. Rulează Generate/OCR pentru acest PDF.",
-        ),
-        card(
-            _ut("ui.exam_prep", "Exam Prep"),
-            "Dashboard pentru pregătire examen; disponibil ca flux separat.",
+            ct("ui.exam_prep"),
+            ct("course_tools.exam_prep_description"),
             "/exam-prep",
             True,
         ),
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_OCRMATH_CARD_START
-        # Global OCR Math report is hidden from primary Course Tools.
-        # It remains as owner-local technical diagnostics only.
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_OCRMATH_CARD_END
         card(
-            "Formula Visual Evidence",
-            formula_visual_description,
-            f"/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view",
-            formula_visual_available,
-            "Lipsește formula_visual_evidence.manifest.json. Rulează manifest builder local pentru crop-uri formulă/simbol.",
-        ),
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_FIGURES_CARD_START
-        # Old Figures gallery is hidden from primary Course Tools.
-        # Canonical visual review will use bbox-based visual items.
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_FIGURES_CARD_END
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_EDIT_CROPS_CARD_START
-        # Old shrink/hybrid Edit crops flow is hidden from primary Course Tools.
-        # Real crop artifacts should come from bbox visual review.
-        # VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_EDIT_CROPS_CARD_END
-        card(
-            "Quiz JSON",
-            "Deschide quiz.json ca artefact local.",
-            output_url(pdf_path.stem, "quiz.json"),
-            quiz_json.exists(),
-            "Lipsește quiz.json.",
-        ),
-        card(
-            "Flashcards JSON",
-            "Deschide flashcards.json ca artefact local.",
-            output_url(pdf_path.stem, "flashcards.json"),
-            flashcards_json.exists(),
-            "Lipsește flashcards.json.",
-        ),
-        card(
-            "Glossary JSON",
-            "Deschide glossary.json ca artefact local.",
-            output_url(pdf_path.stem, "glossary.json"),
-            glossary_json.exists(),
-            "Lipsește glossary.json.",
-        ),
-        card(
-            _ut("ui.library", _ut("library", "Library")),
-            "Înapoi la biblioteca principală.",
+            ct("ui.library"),
+            ct("course_tools.library_description"),
             "/",
             True,
         ),
@@ -9137,19 +9116,17 @@ def course_tools(pdf: str = Query("")):
 </style>
 """
 
-    bottom_nav = f"""
+    bottom_nav = f'''
     <nav class="bottom-actions" aria-label="Voila tester bottom navigation">
-      <a class="primary" href="/">Bibliotecă</a>
-      <a href="/course-tools?pdf={q}">Instrumente curs</a>
-      <a href="/course-open?pdf={q}">Deschide cursul</a>
-      <a href="/study?pdf={q}">Studiu</a>
-      <a href="/progress?pdf={q}">Progres</a>
-      <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
-      <a href="/exam-prep">Exam Prep</a>
-      <!-- VOILA_V0_8_66_HIDE_DEPRECATED_COURSE_TOOLS_BOTTOM_OCRMATH_LINK: global OCR Math bottom nav link hidden. -->
-      <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
+      <a class="primary" href="/">{ct("ui.library")}</a>
+      <a href="/course-tools?pdf={q}">{ct("ui.course_tools")}</a>
+      <a href="/review-document?pdf={q}&lang={ui_lang}">{ct("review_document.title")}</a>
+      <a href="/course-open?pdf={q}">{ct("ui.open_course")}</a>
+      <a href="/study?pdf={q}">{ct("ui.study")}</a>
+      <a href="/progress?pdf={q}">{ct("ui.progress")}</a>
+      <a href="/exam-prep">{ct("ui.exam_prep")}</a>
     </nav>
-    """
+    '''
 
     # VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_COURSE_TOOLS_LINK_START
     manual_learning_evidence_href = html.escape(
@@ -9158,43 +9135,47 @@ def course_tools(pdf: str = Query("")):
     )
     # VOILA_V0_7_97_MANUAL_LEARNING_EVIDENCE_COURSE_TOOLS_LINK_END
 
-    page_html = f"""<!doctype html>
-<html>
+    course_status = (
+        ct("course_tools.generated")
+        if course_html.exists()
+        else ct("course_tools.html_pending")
+        if course_md.exists()
+        else ct("course_tools.not_generated")
+    )
+
+    page_html = f'''<!doctype html>
+<html lang="{ui_lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_ut("ui.course_tools", "Course Tools")} · Voila!</title>
+  <title>{ct("ui.course_tools")} · Voila!</title>
   {css}
 </head>
 <body>
-  <main class="wrap course-tools" data-testid="course-tools">
+  <main class="wrap course-tools" data-testid="course-tools" data-ui-language="{ui_lang}">
     <section class="topbar">
       <div>
-        <h1>{_ut("ui.course_tools", "Course Tools")}</h1>
+        <h1>{ct("ui.course_tools")}</h1>
         <div class="muted">PDF: <b>{html.escape(pdf_path.name)}</b></div>
-        <div class="muted">Status curs: <b>{html.escape("HTML + Markdown" if course_html.exists() else "Markdown generated · HTML pending" if course_md.exists() else "Negenerat")}</b></div>
+        <div class="muted">{ct("course_tools.status")}: <b>{html.escape(course_status)}</b></div>
       </div>
       <nav class="tools-nav" aria-label="Voila tester top navigation">
-        <a class="active" href="/course-tools?pdf={q}">Instrumente curs</a>
-        <a href="/course-open?pdf={q}">Deschide cursul</a>
-        <a href="/study?pdf={q}">Studiu</a>
-        <a href="/progress?pdf={q}">Progres</a>
-        <a href="/review-ocr-corrected?pdf={q}&page=1">OCR Review</a>
-        <a href="/owner/formula-visual-evidence/{quote(pdf_path.stem, safe='')}/view">Formula evidence</a>
-        <a href="{manual_learning_evidence_href}">Manual evidence</a>
-        <a href="/exam-prep">Exam Prep</a>
-        <a href="/">Bibliotecă</a>
+        <a class="active" href="/course-tools?pdf={q}">{ct("ui.course_tools")}</a>
+        <a href="/review-document?pdf={q}&lang={ui_lang}">{ct("review_document.title")}</a>
+        <a href="/course-open?pdf={q}">{ct("ui.open_course")}</a>
+        <a href="/study?pdf={q}">{ct("ui.study")}</a>
+        <a href="/progress?pdf={q}">{ct("ui.progress")}</a>
+        <a href="/exam-prep">{ct("ui.exam_prep")}</a>
+        <a href="/">{ct("ui.library")}</a>
       </nav>
     </section>
-
     <section class="grid">
       {''.join(cards)}
     </section>
-
     {bottom_nav}
   </main>
 </body>
-</html>"""
+</html>'''
 
     return HTMLResponse(page_html)
 
@@ -10042,6 +10023,7 @@ async def voila_run_ocr_page(request: _VoilaRequest):
             errors="replace",
             capture_output=True,
             timeout=240,
+            **({"creationflags": subprocess.CREATE_NO_WINDOW} if _voila_v091_os.name == "nt" else {}),
         )
     except subprocess.TimeoutExpired:
         return JSONResponse(
@@ -15344,6 +15326,91 @@ async def _voila_v0842_exam_document_workflow_ux_polish_middleware(request, call
     return _VoilaV0842HTMLResponse(content=html_text, status_code=response.status_code, headers=headers)
 # VOILA_V0_8_42_EXAM_DOCUMENT_WORKFLOW_UX_POLISH_END
 
+
+# VOILA_V0_8_91_UI_LANGUAGE_RESOLUTION_START
+def _voila_v091_document_text_sample(pdf_name: str) -> str:
+    safe_pdf = Path(str(pdf_name or "")).name
+    if not safe_pdf:
+        return ""
+
+    out_dir = PROJECT_ROOT / "data" / "output" / Path(safe_pdf).stem
+    candidates = (
+        out_dir / "course.cleaned.md",
+        out_dir / "course.md",
+        out_dir / "pages.json",
+        out_dir / "ocr_pages.json",
+    )
+
+    parts = []
+    for candidate in candidates:
+        if not candidate.is_file():
+            continue
+        try:
+            parts.append(candidate.read_text(encoding="utf-8", errors="replace")[:120000])
+        except Exception:
+            continue
+        if sum(len(part) for part in parts) >= 120000:
+            break
+    return "\n".join(parts)
+
+
+def _voila_v091_resolve_ui_language(pdf_name: str = "", requested: str = "") -> str:
+    requested_value = str(requested or "").strip().lower()
+    if requested_value in {"ro", "en"}:
+        return requested_value
+
+    try:
+        import i18n as _voila_v091_i18n
+
+        settings_file = _voila_v091_i18n.settings_path(PROJECT_ROOT)
+        if settings_file.is_file():
+            configured = str(
+                _voila_v091_i18n.get_ui_language(PROJECT_ROOT).get("ui_language") or ""
+            ).strip().lower()
+            return configured if configured in {"ro", "en"} else "en"
+    except Exception:
+        pass
+
+    try:
+        import document_language as _voila_v091_document_language
+
+        document_value = str(
+            _voila_v091_document_language.get_document_language(
+                PROJECT_ROOT,
+                pdf_name,
+            ).get("document_language")
+            or "auto"
+        ).strip().lower()
+
+        # VOILA_V0_8_91_RESOLVER_AUTO_FALLBACK_FIX_START
+        if document_value == "auto":
+            detected_value = str(
+                _voila_v091_document_language.detect_language_from_text(
+                    _voila_v091_document_text_sample(pdf_name)
+                )
+                or ""
+            ).strip().lower()
+
+            if detected_value in {"ro", "en"}:
+                return detected_value
+
+            if detected_value and detected_value != "auto":
+                return "en"
+
+            return "ro"
+        # VOILA_V0_8_91_RESOLVER_AUTO_FALLBACK_FIX_END
+
+        return document_value if document_value in {"ro", "en"} else "en"
+    except Exception:
+        return "ro"
+
+
+def _voila_v091_t(key: str, language: str) -> str:
+    import i18n as _voila_v091_i18n
+
+    return _voila_v091_i18n.t(PROJECT_ROOT, key, language)
+# VOILA_V0_8_91_UI_LANGUAGE_RESOLUTION_END
+
 # VOILA_V0_8_50_REVIEW_DOCUMENT_SHELL_READ_ONLY_FIRST_SLICE_START
 from starlette.responses import HTMLResponse as _VoilaV0850HTMLResponse
 import html as _voila_v0850_html
@@ -15386,7 +15453,7 @@ def _voila_v0850_valid_course_id(value: str) -> bool:
     return _voila_v0850_ascii_name_is_safe(value, require_pdf=False)
 
 
-def _voila_v0850_review_document_shell_html(*, pdf_name: str = "", course_id: str = "", lang: str = "ro") -> str:
+def _voila_v0850_review_document_shell_html(*, pdf_name: str = "", course_id: str = "", lang: str = "") -> str:
     safe_pdf = pdf_name.strip() if _voila_v0850_valid_pdf_name(pdf_name) else ""
     safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
 
@@ -15396,248 +15463,91 @@ def _voila_v0850_review_document_shell_html(*, pdf_name: str = "", course_id: st
     if safe_course and not safe_pdf:
         safe_pdf = safe_course + ".pdf"
 
-    selected_lang = "en" if str(lang).strip().lower() == "en" else "ro"
+    ui_lang = _voila_v091_resolve_ui_language(safe_pdf, lang)
+    tr = lambda key: _voila_v091_t(key, ui_lang)
 
-    display_document = safe_pdf or safe_course or "documentul selectat"
+    display_document = safe_pdf or safe_course or (
+        "documentul selectat" if ui_lang == "ro" else "selected document"
+    )
     display_document_html = _voila_v0850_html.escape(display_document)
+    language_label = "Română" if ui_lang == "ro" else "English"
 
     safe_pdf_q = _voila_v0850_urllib_parse.quote(safe_pdf) if safe_pdf else ""
     course_tools_href = f"/course-tools?pdf={safe_pdf_q}" if safe_pdf_q else "/"
 
-    language_badge_ro = "selectată" if selected_lang == "ro" else "disponibilă"
-    language_badge_en = "selected" if selected_lang == "en" else "available"
-
-    return f"""<!doctype html>
-<html lang="ro">
+    return f'''<!doctype html>
+<html lang="{ui_lang}">
 <head>
   <meta charset="utf-8">
-  <title>Revizuire document · Voila</title>
+  <title>{tr("review_document.title")} · Voila</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root {{
-      color-scheme: dark;
-      --bg: #0f172a;
-      --panel: rgba(15, 23, 42, .86);
-      --panel-soft: rgba(30, 41, 59, .78);
-      --border: rgba(148, 163, 184, .28);
-      --text: #f8fafc;
-      --muted: #cbd5e1;
-      --accent: #e0f2fe;
-      --accent-text: #0f172a;
-    }}
-    body {{
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(59, 130, 246, .24), transparent 30rem),
-        radial-gradient(circle at bottom right, rgba(14, 165, 233, .16), transparent 26rem),
-        var(--bg);
-      color: var(--text);
-    }}
-    main {{
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 28px 18px 42px;
-    }}
-    .hero {{
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 24px;
-      background: linear-gradient(135deg, rgba(15, 23, 42, .96), rgba(30, 64, 175, .22));
-      box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
-    }}
-    .eyebrow {{
-      color: var(--muted);
-      margin: 0 0 8px;
-      font-size: .95rem;
-    }}
-    h1 {{
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      letter-spacing: -.04em;
-    }}
-    .subtitle {{
-      color: var(--muted);
-      max-width: 820px;
-      line-height: 1.6;
-      margin: 0;
-    }}
-    .meta-row {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }}
-    .pill {{
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, .52);
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: .95rem;
-    }}
-    .pill strong {{
-      color: var(--text);
-    }}
-    .layout {{
-      display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(280px, .8fr);
-      gap: 16px;
-      margin-top: 18px;
-    }}
-    @media (max-width: 860px) {{
-      .layout {{
-        grid-template-columns: 1fr;
-      }}
-    }}
-    .card {{
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--panel);
-      padding: 18px;
-    }}
-    .steps {{
-      display: grid;
-      gap: 10px;
-      counter-reset: reviewSteps;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }}
-    .step {{
-      counter-increment: reviewSteps;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 12px;
-      align-items: start;
-      padding: 14px;
-      border-radius: 16px;
-      background: var(--panel-soft);
-      border: 1px solid rgba(148, 163, 184, .18);
-    }}
-    .step::before {{
-      content: counter(reviewSteps);
-      display: inline-grid;
-      place-items: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: var(--accent);
-      color: var(--accent-text);
-      font-weight: 800;
-    }}
-    .step strong {{
-      display: block;
-      margin-bottom: 4px;
-    }}
-    .step span {{
-      color: var(--muted);
-      line-height: 1.45;
-    }}
-    .guidance h2,
-    .card h2 {{
-      margin-top: 0;
-      letter-spacing: -.02em;
-    }}
-    .guidance p,
-    .guidance li {{
-      color: var(--muted);
-      line-height: 1.55;
-    }}
-    .actions {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }}
-    .button {{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      padding: 10px 14px;
-      text-decoration: none;
-      font-weight: 750;
-      background: var(--accent);
-      color: var(--accent-text);
-    }}
-    .button.secondary {{
-      background: rgba(226, 232, 240, .10);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }}
-    details {{
-      margin-top: 16px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 14px;
-      background: rgba(15, 23, 42, .56);
-    }}
-    summary {{
-      cursor: pointer;
-      font-weight: 750;
-    }}
-    code {{
-      color: #bfdbfe;
-    }}
+    :root {{ color-scheme: dark; --bg:#0f172a; --panel:rgba(15,23,42,.86); --panel-soft:rgba(30,41,59,.78); --border:rgba(148,163,184,.28); --text:#f8fafc; --muted:#cbd5e1; --accent:#e0f2fe; --accent-text:#0f172a; }}
+    body {{ margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:radial-gradient(circle at top left,rgba(59,130,246,.24),transparent 30rem),radial-gradient(circle at bottom right,rgba(14,165,233,.16),transparent 26rem),var(--bg); color:var(--text); }}
+    main {{ max-width:1120px; margin:0 auto; padding:34px 18px 60px; }}
+    .hero,.card {{ border:1px solid var(--border); border-radius:24px; background:var(--panel); box-shadow:0 18px 50px rgba(2,6,23,.26); }}
+    .hero {{ padding:24px; }} .eyebrow {{ margin:0 0 8px; color:#bae6fd; font-weight:800; }} h1 {{ margin:0; font-size:clamp(2rem,5vw,3.4rem); }}
+    .subtitle {{ max-width:760px; color:var(--muted); line-height:1.65; }} .meta-row,.actions {{ display:flex; flex-wrap:wrap; gap:10px; }}
+    .pill {{ display:inline-flex; gap:5px; border:1px solid var(--border); border-radius:999px; padding:7px 11px; background:var(--panel-soft); color:var(--muted); }}
+    .layout {{ display:grid; grid-template-columns:minmax(0,1.45fr) minmax(280px,.75fr); gap:18px; margin-top:18px; }} .card {{ padding:20px; }}
+    .steps {{ margin:0; padding:0; list-style:none; display:grid; gap:12px; }} .step {{ border:1px solid var(--border); border-radius:17px; padding:14px; background:var(--panel-soft); }}
+    .step strong,.step span {{ display:block; }} .step span {{ margin-top:5px; color:var(--muted); line-height:1.55; }}
+    .button {{ display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:12px; padding:10px 14px; text-decoration:none; font-weight:800; background:var(--accent); color:var(--accent-text); }}
+    .button.secondary {{ background:transparent; color:var(--text); }} details {{ margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }} summary {{ cursor:pointer; font-weight:800; }} code {{ color:#bfdbfe; }}
+    @media (max-width:820px) {{ .layout {{ grid-template-columns:1fr; }} }}
   </style>
 </head>
 <body>
-<main data-testid="review-document-shell-read-only" data-voila-version="v0.8.50">
-  <section class="hero" aria-label="Revizuire document">
-    <p class="eyebrow">Voila! — Documentele tale, lecții clare</p>
-    <h1>Revizuire document</h1>
-    <p class="subtitle">Verifică textul, formulele și imaginile înainte să creezi lecția. Acest prim slice este read-only: arată noul flux ghidat, fără să scrie date și fără să pornească motoare.</p>
+<main data-testid="review-document-shell-read-only" data-voila-version="v0.8.91" data-ui-language="{ui_lang}">
+  <section class="hero" aria-label="{tr("review_document.title")}">
+    <p class="eyebrow">{tr("review_document.entry_eyebrow")}</p>
+    <h1>{tr("review_document.title")}</h1>
+    <p class="subtitle">{tr("review_document.subtitle")}</p>
     <div class="meta-row">
-      <span class="pill">Document: <strong>{display_document_html}</strong></span>
-      <span class="pill">Limba lecției: <strong>Română</strong> · {language_badge_ro}</span>
-      <span class="pill">English · {language_badge_en}</span>
-      <span class="pill">Mod: <strong>read-only</strong></span>
+      <span class="pill">{tr("review_document.document")}: <strong>{display_document_html}</strong></span>
+      <span class="pill">{tr("review_document.interface_language")}: <strong>{language_label}</strong></span>
+      <span class="pill">{tr("review_document.mode")}: <strong>{tr("review_document.read_only")}</strong></span>
     </div>
   </section>
-
   <section class="layout">
-    <article class="card" aria-label="Pași de revizuire">
-      <h2>Pașii pentru pregătirea lecției</h2>
+    <article class="card" aria-label="{tr("review_document.steps_title")}">
+      <h2>{tr("review_document.steps_title")}</h2>
       <ol class="steps">
-        <li class="step" data-testid="review-step-text-detected"><div><strong>Text detectat</strong><span>Verifici textul extras din document, pe pagini și fragmente clare.</span></div></li>
-        <li class="step" data-testid="review-step-corrections"><div><strong>Corecturi sugerate</strong><span>Primești sugestii prietenoase pentru corectarea textului.</span></div></li>
-        <li class="step" data-testid="review-step-visuals"><div><strong>Formule și imagini</strong><span>Selectezi formule, diagrame, desene, tabele sau grafice importante.</span></div></li>
-        <li class="step" data-testid="review-step-important-concepts"><div><strong>Noțiuni importante</strong><span>Alegi ce merită să intre în lecție și adaugi explicații pe înțeles.</span></div></li>
-        <li class="step" data-testid="review-step-ready-study"><div><strong>Gata pentru studiu</strong><span>Confirmi ce este pregătit pentru Study curat.</span></div></li>
+        <li class="step" data-testid="review-step-text-detected"><div><strong>{tr("review_document.step.text.title")}</strong><span>{tr("review_document.step.text.body")}</span></div></li>
+        <li class="step" data-testid="review-step-corrections"><div><strong>{tr("review_document.step.corrections.title")}</strong><span>{tr("review_document.step.corrections.body")}</span></div></li>
+        <li class="step" data-testid="review-step-visuals"><div><strong>{tr("review_document.step.visuals.title")}</strong><span>{tr("review_document.step.visuals.body")}</span></div></li>
+        <li class="step" data-testid="review-step-important-concepts"><div><strong>{tr("review_document.step.concepts.title")}</strong><span>{tr("review_document.step.concepts.body")}</span></div></li>
+        <li class="step" data-testid="review-step-ready-study"><div><strong>{tr("review_document.step.ready.title")}</strong><span>{tr("review_document.step.ready.body")}</span></div></li>
       </ol>
       <div class="actions">
-        <a class="button" href="{course_tools_href}" data-testid="review-document-back-course-tools">Înapoi la Course Tools</a>
-        <a class="button secondary" href="/" data-testid="review-document-back-home">Acasă</a>
+        <a class="button" href="{course_tools_href}" data-testid="review-document-back-course-tools">{tr("review_document.back_course_tools")}</a>
+        <a class="button secondary" href="/" data-testid="review-document-back-home">{tr("review_document.home")}</a>
       </div>
     </article>
-
-    <aside class="card guidance" aria-label="Ghid pentru student">
-      <h2>Ce faci aici?</h2>
-      <p>Voila te va ghida pas cu pas. Motoarele tehnice rulează în fundal; tu trebuie doar să confirmi ce este corect și ce merită învățat.</p>
+    <aside class="card guidance" aria-label="{tr("review_document.guidance_title")}">
+      <h2>{tr("review_document.guidance_title")}</h2>
+      <p>{tr("review_document.guidance_body")}</p>
       <ul>
-        <li>Nu trebuie să știi ce înseamnă OCR, bbox sau JSON.</li>
-        <li>Nu editezi metadata.</li>
-        <li>Pregătești explicații clare pentru lecție.</li>
+        <li>{tr("review_document.guidance.no_technical")}</li>
+        <li>{tr("review_document.guidance.no_metadata")}</li>
+        <li>{tr("review_document.guidance.explanations")}</li>
       </ul>
-      <p><strong>Următorul pas:</strong> legăm acest shell din Course Tools, apoi adăugăm coada pentru Text detectat.</p>
-
       <details data-testid="review-document-technical-diagnostic">
-        <summary>Diagnostic tehnic</summary>
-        <p>Slice: <code>v0.8.50 read-only learner shell</code></p>
-        <p>Rută primară: <code>/review-document?pdf={{pdf_name}}</code></p>
+        <summary>{tr("review_document.diagnostic")}</summary>
+        <p>{tr("review_document.diagnostic_policy")}</p>
+        <p>Route: <code>/review-document?pdf={{pdf_name}}</code></p>
         <p>Alias: <code>/review-document/{{course_id}}</code></p>
-        <p>Nu scrie date, nu rulează OCR, nu rulează LanguageTool, nu rulează crop, nu schimbă Study.</p>
+        <p>UI: <code>{ui_lang}</code></p>
       </details>
     </aside>
   </section>
 </main>
 </body>
-</html>"""
+</html>'''
 
 
 @app.get("/review-document", response_class=_VoilaV0850HTMLResponse)
-async def _voila_v0850_review_document_shell_query(pdf: str = "", lang: str = "ro"):
+async def _voila_v0850_review_document_shell_query(pdf: str = "", lang: str = ""):
     safe_pdf = pdf.strip() if _voila_v0850_valid_pdf_name(pdf) else ""
     return _VoilaV0850HTMLResponse(
         content=_voila_v0850_review_document_shell_html(pdf_name=safe_pdf, lang=lang),
@@ -15646,7 +15556,7 @@ async def _voila_v0850_review_document_shell_query(pdf: str = "", lang: str = "r
 
 
 @app.get("/review-document/{course_id}", response_class=_VoilaV0850HTMLResponse)
-async def _voila_v0850_review_document_shell_course(course_id: str, lang: str = "ro"):
+async def _voila_v0850_review_document_shell_course(course_id: str, lang: str = ""):
     safe_course = course_id.strip() if _voila_v0850_valid_course_id(course_id) else ""
     return _VoilaV0850HTMLResponse(
         content=_voila_v0850_review_document_shell_html(course_id=safe_course, lang=lang),
@@ -15665,17 +15575,19 @@ def _voila_v0851_review_document_course_tools_card(pdf_name: str) -> str:
     if not safe_pdf:
         return ""
 
+    ui_lang = _voila_v091_resolve_ui_language(safe_pdf, "")
+    tr = lambda key: _voila_v091_t(key, ui_lang)
     safe_pdf_q = _voila_v0851_urllib_parse.quote(safe_pdf)
-    href = "/review-document?pdf=" + safe_pdf_q
+    href = "/review-document?pdf=" + safe_pdf_q + "&lang=" + ui_lang
 
-    return f"""
-<section class="voila-v0851-review-document-entry" data-testid="course-tools-review-document-entry" style="margin:18px 0;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.76);">
-  <p style="margin:0 0 6px;color:#cbd5e1;">Voila! — Documentele tale, lecții clare</p>
-  <h2 style="margin:0 0 8px;color:#f8fafc;">Revizuire document</h2>
-  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Înainte de Study curat, verifică textul, corecturile, formulele și imaginile într-un flux ghidat.</p>
-  <a data-testid="course-tools-review-document-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Deschide Revizuire document</a>
+    return f'''
+<section class="voila-v0851-review-document-entry" data-testid="course-tools-review-document-entry" data-ui-language="{ui_lang}" style="margin:18px 0;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.76);">
+  <p style="margin:0 0 6px;color:#cbd5e1;">{tr("review_document.entry_eyebrow")}</p>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">{tr("review_document.title")}</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">{tr("review_document.entry_description")}</p>
+  <a data-testid="course-tools-review-document-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">{tr("review_document.open")}</a>
 </section>
-"""
+'''
 
 
 def _voila_v0851_inject_review_document_entry(html_text: str, pdf_name: str) -> str:
@@ -16795,8 +16707,8 @@ def _voila_v0855_friendly_explanation_section() -> str:
         ),
         _voila_v0855_read_only_field(
             "Limba lecției",
-            "Română / English",
-            "Nu amestecăm română și engleză în același flux de învățare.",
+            "Limba lecției",
+            "Păstrăm aceeași limbă în întregul flux de învățare.",
         ),
         _voila_v0855_read_only_field(
             "Gata pentru studiu",
@@ -16809,7 +16721,7 @@ def _voila_v0855_friendly_explanation_section() -> str:
 <section data-testid="review-document-friendly-explanation-shell" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
   <p style="margin:0 0 6px;color:#cbd5e1;">Pasul 4</p>
   <h2 style="margin:0 0 8px;color:#f8fafc;">Explicație prietenoasă</h2>
-  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Aici pregătim forma finală a unei noțiuni înainte să intre în Study curat. Acum este doar o machetă read-only: nu salvăm, nu trimitem și nu creăm carduri.</p>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Aici pregătim forma finală a unei noțiuni înainte să intre în Lecție pregătită. Acum este doar o machetă de previzualizare: nu salvăm, nu trimitem și nu creăm carduri.</p>
   <p data-testid="friendly-explanation-read-only-status" style="margin:0 0 14px;color:#e0f2fe;font-weight:750;">Machetă statică · Doar citire · Fără salvare</p>
   <div style="display:grid;gap:10px;">{''.join(fields)}</div>
   <details data-testid="friendly-explanation-diagnostic" style="margin-top:14px;">
@@ -17044,7 +16956,7 @@ def _voila_v0856_save_result_page(ok: bool, message: str, draft, course_id: str)
     <p><strong>Titlu scurt:</strong> {title or "—"}</p>
     <p><strong>Limba lecției:</strong> {language or "—"}</p>
     <p><strong>Sursa:</strong> {source_page or "—"}</p>
-    <p data-testid="friendly-explanation-local-only-policy">Local-only · nu s-a creat Study card · nu s-a scris Progress · nu s-a făcut delivery.</p>
+    <p data-testid="friendly-explanation-local-only-policy">Doar local · nu s-a creat niciun card de studiu · progresul nu a fost modificat · nu s-au distribuit date.</p>
     <details>
       <summary>Diagnostic tehnic</summary>
       <p>Artefact: <code>explanation_drafts.preview.json</code></p>
@@ -17084,7 +16996,7 @@ def _voila_v0856_draft_ui(pdf_name: str = "", course_id: str = "", show_form: bo
 <section data-testid="friendly-explanation-save-entry" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
   <p style="margin:0 0 6px;color:#cbd5e1;">Salvare locală controlată</p>
   <h2 style="margin:0 0 8px;color:#f8fafc;">Draft explicație</h2>
-  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Poți crea un draft local pentru explicația prietenoasă. Draftul nu intră încă în Study și nu scrie Progress.</p>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Poți crea un draft local pentru explicația prietenoasă. Draftul nu intră încă în lecția de studiu și nu modifică progresul.</p>
   <a data-testid="friendly-explanation-open-draft-form" href="{form_href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Creează draft local</a>
 </section>
 """
@@ -17093,7 +17005,7 @@ def _voila_v0856_draft_ui(pdf_name: str = "", course_id: str = "", show_form: bo
 <section data-testid="friendly-explanation-save-form-shell" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
   <p style="margin:0 0 6px;color:#cbd5e1;">Salvare locală controlată</p>
   <h2 style="margin:0 0 8px;color:#f8fafc;">Creează draft local</h2>
-  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Acest formular salvează doar un draft local. Nu creează Study cards, nu scrie Progress și nu face delivery.</p>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Acest formular salvează doar un draft local. Nu creează carduri de studiu, nu modifică progresul și nu distribuie date.</p>
   <form data-testid="friendly-explanation-save-form" method="post" action="/review-drafts/save-explanation-draft" style="display:grid;gap:12px;">
     {_voila_v0856_hidden_inputs(safe_pdf, safe_course)}
     <label>Titlu scurt<br><input name="title" maxlength="160" value="Vectori — explicație verificată"></label>
@@ -17102,7 +17014,7 @@ def _voila_v0856_draft_ui(pdf_name: str = "", course_id: str = "", show_form: bo
     <label>Explicație pe înțeles<br><textarea name="friendly_explanation" maxlength="1600" rows="4">Explicația pe înțeles va fi scrisă aici.</textarea></label>
     <label>De ce este important?<br><textarea name="importance" maxlength="800" rows="3">Această noțiune este importantă pentru lecție și exerciții.</textarea></label>
     <label>Sursa: pagina X<br><input name="source_page" maxlength="40" value="pagina 1"></label>
-    <label>Limba lecției<br><select name="lesson_language"><option>Română</option><option>English</option></select></label>
+    <label>Limba lecției<br><select name="lesson_language"><option value="Română">Română</option><option value="English">Engleză</option></select></label>
     <label><input name="ready_for_study" type="checkbox" value="1"> Gata pentru studiu</label>
     <button data-testid="friendly-explanation-save-button" type="submit">Salvează draft local</button>
   </form>
@@ -17110,7 +17022,7 @@ def _voila_v0856_draft_ui(pdf_name: str = "", course_id: str = "", show_form: bo
     <summary>Diagnostic tehnic pentru salvare draft</summary>
     <p>Endpoint: <code>/review-drafts/save-explanation-draft</code></p>
     <p>Artefact: <code>explanation_drafts.preview.json</code></p>
-    <p>Nu creează Study cards. Nu scrie Progress. Nu face delivery.</p>
+    <p>Nu creează carduri de studiu. Nu modifică progresul. Nu distribuie date.</p>
   </details>
 </section>
 """
@@ -17318,7 +17230,7 @@ def _voila_v0857_clean_study_preview_page(course_id: str) -> str:
     else:
         cards_html = """
 <section data-testid="study-clean-preview-empty-state" style="padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:20px;background:rgba(15,23,42,.78);">
-  <h2 style="margin:0 0 8px;color:#f8fafc;">Nu ai încă noțiuni gata pentru Study curat.</h2>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Nu ai încă noțiuni gata pentru Lecție pregătită.</h2>
   <p style="margin:0;color:#cbd5e1;line-height:1.55;">Salvează mai întâi un draft local în Revizuire document și marchează-l ca „Gata pentru studiu".</p>
 </section>
 """
@@ -17328,15 +17240,15 @@ def _voila_v0857_clean_study_preview_page(course_id: str) -> str:
 <html lang="ro">
 <head>
   <meta charset="utf-8">
-  <title>Study curat - previzualizare · Voila</title>
+  <title>Lecție pregătită - previzualizare · Voila</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#f8fafc;">
 <main data-testid="study-clean-preview-route" style="max-width:980px;margin:0 auto;padding:32px 18px;">
   <section style="padding:22px;border:1px solid rgba(148,163,184,.28);border-radius:24px;background:rgba(15,23,42,.82);">
     <p style="margin:0 0 6px;color:#cbd5e1;">Voila! - Documentele tale, lecții clare</p>
-    <h1 style="margin:0 0 10px;color:#f8fafc;">Study curat - previzualizare</h1>
-    <p data-testid="study-clean-preview-read-only-status" style="margin:0 0 12px;color:#e0f2fe;font-weight:800;">Read-only · nu creează carduri reale · nu scrie Progress</p>
+    <h1 style="margin:0 0 10px;color:#f8fafc;">Lecție pregătită - previzualizare</h1>
+    <p data-testid="study-clean-preview-read-only-status" style="margin:0 0 12px;color:#e0f2fe;font-weight:800;">Doar vizualizare · nu creează carduri reale · nu modifică progresul</p>
     <p style="margin:0;color:#cbd5e1;line-height:1.55;">{_voila_v0857_e(state_text)}</p>
     <a href="{back_href}" style="display:inline-flex;margin-top:14px;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Înapoi la Revizuire document</a>
   </section>
@@ -17350,7 +17262,7 @@ def _voila_v0857_clean_study_preview_page(course_id: str) -> str:
     <p>Slice: <code>v0.8.57 clean Study read-only preview</code></p>
     <p>State: <code>{_voila_v0857_e(state)}</code></p>
     <p>Artefact citit: <code>{_voila_v0857_e(artifact_label or "none")}</code></p>
-    <p>Nu s-a creat niciun Study card real. Nu s-a scris Progress. Nu s-a făcut delivery.</p>
+    <p>Nu s-a creat niciun card de studiu real. Progresul nu a fost modificat. Nu s-au distribuit date.</p>
   </details>
 </main>
 </body>
@@ -17373,9 +17285,9 @@ def _voila_v0857_clean_study_link_html(pdf_name: str = "", course_id: str = "") 
     return f"""
 <section data-testid="clean-study-preview-entry" style="margin-top:18px;padding:18px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:rgba(15,23,42,.72);">
   <p style="margin:0 0 6px;color:#cbd5e1;">Pasul următor</p>
-  <h2 style="margin:0 0 8px;color:#f8fafc;">Study curat - previzualizare</h2>
-  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Vezi cum ar arăta noțiunile salvate ca drafturi într-un mod de învățare curat. Această previzualizare este read-only.</p>
-  <a data-testid="clean-study-preview-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Deschide previzualizare Study curat</a>
+  <h2 style="margin:0 0 8px;color:#f8fafc;">Lecție pregătită - previzualizare</h2>
+  <p style="margin:0 0 14px;color:#cbd5e1;line-height:1.55;">Vezi cum ar arăta noțiunile salvate ca drafturi într-un mod de învățare curat. Această previzualizare este doar pentru vizualizare.</p>
+  <a data-testid="clean-study-preview-link" href="{href}" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:750;background:#e0f2fe;color:#0f172a;">Deschide previzualizarea Lecție pregătită</a>
 </section>
 """
 
@@ -17577,133 +17489,593 @@ def _voila_v0874_load_visual_validation_items(course_id):
     return items
 
 
-def _voila_v0874_visual_validation_readonly_section(course_id):
-    safe_course_id = _voila_v0874_safe_course_id(course_id)
-    items = _voila_v0874_load_visual_validation_items(safe_course_id)
+def _voila_v0874_visual_validation_readonly_section(
+    course_id,
+    ui_lang="ro",
+):
+    safe_course_id = _voila_v0874_safe_course_id(
+        course_id
+    )
+
+    language = (
+        "en"
+        if str(ui_lang or "").strip().lower() == "en"
+        else "ro"
+    )
+
+    items = _voila_v0874_load_visual_validation_items(
+        safe_course_id
+    )
+
+    output_dir = _voila_v0874_find_output_dir(
+        safe_course_id
+    )
+
+    labels = {
+        "ro": {
+            "heading": "Formule și zone din pagină",
+            "intro": (
+                "Pentru fiecare zonă, stabilește ce reprezintă "
+                "și cum trebuie folosită în Lecția pregătită."
+            ),
+            "element": "Element vizual",
+            "source": "Sursa",
+            "page": "pagina",
+            "type": "Tip",
+            "status": "Status",
+            "image": "Zona selectată din document",
+            "image_missing": "Imaginea zonei nu este disponibilă încă.",
+            "detected": "Text detectat sau conținut verificat",
+            "visual_type": "Ce conține zona?",
+            "short_title": "Titlu scurt",
+            "represents": "Ce reprezintă în curs?",
+            "importance": "Cât de importantă este?",
+            "study_uses": "Cum trebuie folosită în Studiu?",
+            "concepts": "Noțiuni asociate",
+            "concepts_help": "Separate prin virgulă.",
+            "corrected": "Corectează textul detectat, când este necesar",
+            "integration": "Stare pentru Lecția pregătită",
+            "eligible": "Eligibil după salvare",
+            "incomplete": "Incomplet",
+            "excluded": "Exclus",
+            "accept": "Acceptă textul detectat",
+            "edit": "Salvează corectarea",
+            "ignore": "Ignoră elementul",
+            "empty": (
+                "Nu există încă formule, tabele, diagrame, grafice "
+                "sau imagini pregătite pentru verificare."
+            ),
+            "empty_help": (
+                "Secțiunea va afișa elementele după pregătirea locală "
+                "a zonelor din pagină."
+            ),
+            "diagnostic": "Diagnostic tehnic",
+            "diagnostic_text": (
+                "Coordonatele bbox, numele brute de fișiere și căile "
+                "locale nu sunt afișate în formularul studentului."
+            ),
+        },
+        "en": {
+            "heading": "Formulas and page regions",
+            "intro": (
+                "For each region, define what it represents "
+                "and how it should be used in the Prepared Lesson."
+            ),
+            "element": "Visual element",
+            "source": "Source",
+            "page": "page",
+            "type": "Type",
+            "status": "Status",
+            "image": "Selected region from the document",
+            "image_missing": "The region image is not available yet.",
+            "detected": "Detected text or verified content",
+            "visual_type": "What does the region contain?",
+            "short_title": "Short title",
+            "represents": "What does it represent in the course?",
+            "importance": "How important is it?",
+            "study_uses": "How should it be used in Study?",
+            "concepts": "Related concepts",
+            "concepts_help": "Separate them with commas.",
+            "corrected": "Correct the detected text when needed",
+            "integration": "Prepared Lesson status",
+            "eligible": "Eligible after saving",
+            "incomplete": "Incomplete",
+            "excluded": "Excluded",
+            "accept": "Accept detected text",
+            "edit": "Save correction",
+            "ignore": "Ignore element",
+            "empty": (
+                "No formulas, tables, diagrams, graphs, or images "
+                "are ready for review yet."
+            ),
+            "empty_help": (
+                "This section will display items after local page-region "
+                "preparation."
+            ),
+            "diagnostic": "Technical diagnostics",
+            "diagnostic_text": (
+                "BBox coordinates, raw filenames, and local paths "
+                "are not shown in the student form."
+            ),
+        },
+    }[language]
 
     cards = []
-    for index, item in enumerate(items, start=1):
+
+    for index, item in enumerate(
+        items,
+        start=1,
+    ):
         page = item.get("page")
+
         if not isinstance(page, int) or page < 1:
             page = "?"
-        kind_label = _voila_v0874_kind_label(item.get("kind"))
-        candidate_text = str(item.get("ocr_math_candidate_text") or "").strip()
-        corrected_text = str(item.get("user_corrected_text") or "").strip()
-        explanation_text = str(item.get("user_explanation") or "").strip()
+
+        item_id = str(
+            item.get("item_id")
+            or ""
+        ).strip()
+
+        visual_type = _voila_v091_visual_type_value(
+            item.get("visual_type")
+            or item.get("kind")
+        )
+
+        short_title = str(
+            item.get("short_title")
+            or item.get("title")
+            or ""
+        ).strip()[:160]
+
+        represents = str(
+            item.get("what_it_represents")
+            or item.get("user_explanation")
+            or ""
+        ).strip()[:1200]
+
+        importance = _voila_v091_importance_value(
+            item.get("importance")
+        )
+
+        study_uses = _voila_v091_study_use_values(
+            item.get("study_uses")
+        )
+
+        linked_concepts = (
+            _voila_v091_linked_concept_values(
+                item.get("linked_concepts")
+            )
+        )
+
+        candidate_text = str(
+            item.get("ocr_math_candidate_text")
+            or ""
+        ).strip()
+
+        corrected_text = str(
+            item.get("user_corrected_text")
+            or ""
+        ).strip()
+
         crop_exists = item.get("crop_exists") is True
-        decision = str(item.get("user_decision") or "pending").strip()
-        ready = item.get("ready_for_study") is True
 
-        visible_text = corrected_text if decision == "edit" and corrected_text else candidate_text
+        crop_path = str(
+            item.get("crop_path")
+            or ""
+        ).strip()
+
+        decision = str(
+            item.get("user_decision")
+            or "pending"
+        ).strip()
+
+        visible_text = (
+            corrected_text
+            if decision == "edit" and corrected_text
+            else candidate_text
+        )
+
         if not visible_text:
-            visible_text = "Nu există încă text detectat pentru acest element."
+            visible_text = "—"
 
-        crop_label = "disponibilă pentru verificare" if crop_exists else "nu este disponibilă încă"
-        ready_label = "Gata pentru lecție" if ready else "Nu intră încă în lecție"
-        status_label = _voila_v0874_status_label(item)
+        semantic_complete = (
+            _voila_v091_visual_semantic_complete(
+                item
+            )
+        )
+
+        integration_status = str(
+            item.get("integration_status")
+            or ""
+        ).strip()
+
+        if decision == "ignore":
+            integration_label = labels["excluded"]
+        elif semantic_complete:
+            integration_label = labels["eligible"]
+        else:
+            integration_label = labels["incomplete"]
+
+        status_label = _voila_v0874_status_label(
+            item
+        )
+
+        type_options = []
+
+        for value, label in (
+            _voila_v091_visual_type_labels(
+                language
+            )
+        ):
+            selected = (
+                " selected"
+                if value == visual_type
+                else ""
+            )
+
+            type_options.append(
+                '<option value="'
+                + _voila_v0874_escape(value)
+                + '"'
+                + selected
+                + ">"
+                + _voila_v0874_escape(label)
+                + "</option>"
+            )
+
+        importance_options = []
+
+        for value, label in (
+            _voila_v091_importance_labels(
+                language
+            )
+        ):
+            selected = (
+                " selected"
+                if value == importance
+                else ""
+            )
+
+            importance_options.append(
+                '<option value="'
+                + _voila_v0874_escape(value)
+                + '"'
+                + selected
+                + ">"
+                + _voila_v0874_escape(label)
+                + "</option>"
+            )
+
+        study_use_controls = []
+
+        for value, label in (
+            _voila_v091_study_use_labels(
+                language
+            )
+        ):
+            checked = (
+                " checked"
+                if value in study_uses
+                else ""
+            )
+
+            study_use_controls.append(
+                '<label class="review-document-visual-study-use">'
+                '<input type="checkbox" name="study_uses" value="'
+                + _voila_v0874_escape(value)
+                + '"'
+                + checked
+                + ">"
+                + _voila_v0874_escape(label)
+                + "</label>"
+            )
+
+        image_html = (
+            '<p class="muted">'
+            + _voila_v0874_escape(
+                labels["image_missing"]
+            )
+            + "</p>"
+        )
+
+        if (
+            crop_exists
+            and crop_path
+            and output_dir is not None
+        ):
+            try:
+                data_uri = (
+                    _voila_v0885_safe_crop_data_uri(
+                        output_dir,
+                        crop_path,
+                    )
+                )
+            except Exception:
+                data_uri = ""
+
+            if data_uri:
+                image_html = (
+                    '<figure class="review-document-visual-region">'
+                    '<img src="'
+                    + _voila_v0874_escape(data_uri)
+                    + '" alt="'
+                    + _voila_v0874_escape(
+                        short_title
+                        or labels["element"]
+                    )
+                    + '">'
+                    "</figure>"
+                )
 
         cards.append(
             '<article class="card review-document-visual-validation-card">'
-            f'<h3>Element vizual {index}</h3>'
+            '<h3>'
+            + _voila_v0874_escape(labels["element"])
+            + " "
+            + str(index)
+            + "</h3>"
             '<p class="muted">'
-            f'Sursa: pagina {_voila_v0874_escape(page)} · '
-            f'Tip: {_voila_v0874_escape(kind_label)} · '
-            f'Status: {_voila_v0874_escape(status_label)}'
-            '</p>'
-            '<p><strong>Imagine extrasă din document:</strong> '
-            f'{_voila_v0874_escape(crop_label)}</p>'
-            '<p><strong>Text detectat:</strong></p>'
-            f'<pre class="review-document-visual-validation-text">{_voila_v0874_escape(visible_text)}</pre>'
-            '<p><strong>Explicație pe înțeles:</strong> '
-            f'{_voila_v0874_escape(explanation_text or "Nu este completată încă.")}</p>'
-            '<p><strong>Eligibilitate Clean Study:</strong> '
-            f'{_voila_v0874_escape(ready_label)}</p>'
-            '<div class="review-document-visual-validation-controls" '
-            'data-voila-marker="VOILA_V0_8_78_REVIEW_DOCUMENT_VISUAL_VALIDATION_FORM_CONTROLS">'
-            '<form method="post" action="/review-document/visual-validation/save">'
-            f'<input type="hidden" name="course_id" value="{_voila_v0874_escape(safe_course_id)}">'
-            f'<input type="hidden" name="item_id" value="{_voila_v0874_escape(str(item.get("item_id") or ""))}">'
-            '<input type="hidden" name="decision" value="accept">'
-            f'<input type="hidden" name="user_explanation" value="{_voila_v0874_escape(explanation_text)}">'
-            '<button type="submit">Acceptă</button>'
-            '</form>'
-            '<form method="post" action="/review-document/visual-validation/save">'
-            f'<input type="hidden" name="course_id" value="{_voila_v0874_escape(safe_course_id)}">'
-            f'<input type="hidden" name="item_id" value="{_voila_v0874_escape(str(item.get("item_id") or ""))}">'
-            '<input type="hidden" name="decision" value="edit">'
-            '<label>Corectare</label>'
-            f'<textarea name="user_corrected_text" rows="3">{_voila_v0874_escape(corrected_text or candidate_text)}</textarea>'
-            '<label>Explicație pe înțeles</label>'
-            f'<textarea name="user_explanation" rows="3">{_voila_v0874_escape(explanation_text)}</textarea>'
-            '<button type="submit">Salvează corectarea</button>'
-            '</form>'
-            '<form method="post" action="/review-document/visual-validation/save">'
-            f'<input type="hidden" name="course_id" value="{_voila_v0874_escape(safe_course_id)}">'
-            f'<input type="hidden" name="item_id" value="{_voila_v0874_escape(str(item.get("item_id") or ""))}">'
-            '<input type="hidden" name="decision" value="ignore">'
-            f'<input type="hidden" name="user_explanation" value="{_voila_v0874_escape(explanation_text)}">'
-            '<button type="submit">Ignoră</button>'
-            '</form>'
-            '</div>'
-            '</article>'
+            + _voila_v0874_escape(labels["source"])
+            + ": "
+            + _voila_v0874_escape(labels["page"])
+            + " "
+            + _voila_v0874_escape(page)
+            + " · "
+            + _voila_v0874_escape(labels["status"])
+            + ": "
+            + _voila_v0874_escape(status_label)
+            + "</p>"
+            '<p><strong>'
+            + _voila_v0874_escape(labels["image"])
+            + "</strong></p>"
+            + image_html
+            + '<p><strong>'
+            + _voila_v0874_escape(labels["detected"])
+            + "</strong></p>"
+            '<pre class="review-document-visual-validation-text">'
+            + _voila_v0874_escape(visible_text)
+            + "</pre>"
+            '<form class="review-document-visual-learning-form" '
+            'method="post" '
+            'action="/review-document/visual-validation/save">'
+            '<input type="hidden" name="course_id" value="'
+            + _voila_v0874_escape(safe_course_id)
+            + '">'
+            '<input type="hidden" name="item_id" value="'
+            + _voila_v0874_escape(item_id)
+            + '">'
+            '<input type="hidden" name="ui_lang" value="'
+            + _voila_v0874_escape(language)
+            + '">'
+            '<label>'
+            + _voila_v0874_escape(labels["visual_type"])
+            + '<select name="visual_type" required>'
+            '<option value=""></option>'
+            + "".join(type_options)
+            + "</select></label>"
+            '<label>'
+            + _voila_v0874_escape(labels["short_title"])
+            + '<input name="short_title" maxlength="160" required value="'
+            + _voila_v0874_escape(short_title)
+            + '"></label>'
+            '<label>'
+            + _voila_v0874_escape(labels["represents"])
+            + '<textarea name="what_it_represents" maxlength="1200" '
+            'rows="3" required>'
+            + _voila_v0874_escape(represents)
+            + "</textarea></label>"
+            '<label>'
+            + _voila_v0874_escape(labels["importance"])
+            + '<select name="importance" required>'
+            '<option value=""></option>'
+            + "".join(importance_options)
+            + "</select></label>"
+            '<fieldset class="review-document-visual-study-uses">'
+            '<legend>'
+            + _voila_v0874_escape(labels["study_uses"])
+            + "</legend>"
+            + "".join(study_use_controls)
+            + "</fieldset>"
+            '<label>'
+            + _voila_v0874_escape(labels["concepts"])
+            + '<input name="linked_concepts" maxlength="1200" value="'
+            + _voila_v0874_escape(
+                ", ".join(linked_concepts)
+            )
+            + '">'
+            '<small>'
+            + _voila_v0874_escape(labels["concepts_help"])
+            + "</small></label>"
+            '<label>'
+            + _voila_v0874_escape(labels["corrected"])
+            + '<textarea name="user_corrected_text" maxlength="4000" '
+            'rows="3">'
+            + _voila_v0874_escape(
+                corrected_text
+                or candidate_text
+            )
+            + "</textarea></label>"
+            '<p><strong>'
+            + _voila_v0874_escape(labels["integration"])
+            + ":</strong> "
+            + _voila_v0874_escape(integration_label)
+            + "</p>"
+            '<div class="review-document-visual-validation-controls">'
+            '<button type="submit" name="decision" value="accept">'
+            + _voila_v0874_escape(labels["accept"])
+            + "</button>"
+            '<button type="submit" name="decision" value="edit">'
+            + _voila_v0874_escape(labels["edit"])
+            + "</button>"
+            '<button type="submit" name="decision" value="ignore" '
+            'formnovalidate>'
+            + _voila_v0874_escape(labels["ignore"])
+            + "</button>"
+            "</div>"
+            "</form>"
+            "</article>"
         )
 
     if not cards:
         cards.append(
             '<article class="card review-document-visual-validation-card">'
-            '<p>Nu există încă formule sau imagini pregătite pentru verificare vizuală.</p>'
-            '<p class="muted">Această secțiune va afișa elementele după pașii locali de bbox, crop și OCR Math pe crop.</p>'
-            '</article>'
+            "<p>"
+            + _voila_v0874_escape(labels["empty"])
+            + "</p>"
+            '<p class="muted">'
+            + _voila_v0874_escape(labels["empty_help"])
+            + "</p>"
+            "</article>"
         )
 
     return (
-        '<section id="review-document-visual-validation-readonly-ui" class="card">'
-        '<h2>Formule și imagini de verificat</h2>'
-        '<p class="muted">Deciziile se salvează local prin acțiuni explicite. Nu modifică direct lecția.</p>'
+        '<section id="review-document-visual-validation-readonly-ui" '
+        'class="card">'
+        "<h2>"
+        + _voila_v0874_escape(labels["heading"])
+        + "</h2>"
+        '<p class="muted">'
+        + _voila_v0874_escape(labels["intro"])
+        + "</p>"
         + "".join(cards)
-        + '<details class="muted"><summary>Diagnostic tehnic</summary>'
-        '<p>v0.8.74 afișează doar date existente din artifactele locale validate anterior. '
-        'Coordonatele bbox, numele brute de fișiere și căile locale absolute nu sunt afișate în cardurile principale.</p>'
-        '</details>'
-        '</section>'
+        + '<details class="muted"><summary>'
+        + _voila_v0874_escape(labels["diagnostic"])
+        + "</summary><p>"
+        + _voila_v0874_escape(labels["diagnostic_text"])
+        + "</p></details>"
+        "</section>"
     )
 
 
 @app.middleware("http")
-async def _voila_v0874_review_document_visual_validation_readonly_ui_middleware(request, call_next):
+async def _voila_v0874_review_document_visual_validation_readonly_ui_middleware(
+    request,
+    call_next,
+):
     response = await call_next(request)
 
     try:
-        method = str(getattr(request, "method", "") or "").upper()
-        path = str(getattr(getattr(request, "url", None), "path", "") or "")
-        content_type = str(response.headers.get("content-type", "") or "").lower()
+        method = str(
+            getattr(request, "method", "")
+            or ""
+        ).upper()
+
+        path = str(
+            getattr(
+                getattr(request, "url", None),
+                "path",
+                "",
+            )
+            or ""
+        )
+
+        content_type = str(
+            response.headers.get(
+                "content-type",
+                "",
+            )
+            or ""
+        ).lower()
 
         if method != "GET":
             return response
-        if not (path == "/review-document" or path.startswith("/review-document/")):
+
+        if not (
+            path == "/review-document"
+            or path.startswith(
+                "/review-document/"
+            )
+        ):
             return response
+
         if "text/html" not in content_type:
             return response
 
         body = b""
+
         async for chunk in response.body_iterator:
             body += chunk
 
-        html_text = body.decode("utf-8", errors="replace")
-        if "review-document-visual-validation-readonly-ui" in html_text:
-            return response.__class__(content=body, status_code=response.status_code, headers=dict(response.headers))
+        html_text = body.decode(
+            "utf-8",
+            errors="replace",
+        )
 
-        course_id = _voila_v0874_course_id_from_review_request(request)
-        section = _voila_v0874_visual_validation_readonly_section(course_id)
+        if (
+            "review-document-visual-validation-readonly-ui"
+            in html_text
+        ):
+            return response.__class__(
+                content=body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+            )
+
+        course_id = (
+            _voila_v0874_course_id_from_review_request(
+                request
+            )
+        )
+
+        requested_lang = str(
+            request.query_params.get(
+                "lang",
+                "",
+            )
+            or ""
+        )
+
+        pdf_name = str(
+            request.query_params.get(
+                "pdf",
+                "",
+            )
+            or ""
+        )
+
+        if not pdf_name and course_id:
+            pdf_name = str(course_id) + ".pdf"
+
+        try:
+            ui_lang = (
+                _voila_v091_resolve_ui_language(
+                    pdf_name,
+                    requested_lang,
+                )
+            )
+        except Exception:
+            ui_lang = (
+                "en"
+                if requested_lang.strip().lower()
+                == "en"
+                else "ro"
+            )
+
+        section = (
+            _voila_v0874_visual_validation_readonly_section(
+                course_id,
+                ui_lang=ui_lang,
+            )
+        )
 
         if "</main>" in html_text:
-            html_text = html_text.replace("</main>", section + "\n</main>", 1)
+            html_text = html_text.replace(
+                "</main>",
+                section + "\n</main>",
+                1,
+            )
         elif "</body>" in html_text:
-            html_text = html_text.replace("</body>", section + "\n</body>", 1)
+            html_text = html_text.replace(
+                "</body>",
+                section + "\n</body>",
+                1,
+            )
         else:
             html_text = html_text + section
 
-        from starlette.responses import Response as _VoilaV0874Response
+        from starlette.responses import (
+            Response as _VoilaV0874Response,
+        )
 
         headers = dict(response.headers)
         headers.pop("content-length", None)
@@ -17715,6 +18087,7 @@ async def _voila_v0874_review_document_visual_validation_readonly_ui_middleware(
             headers=headers,
             media_type="text/html",
         )
+
     except Exception:
         return response
 # VOILA_V0_8_74_REVIEW_DOCUMENT_VISUAL_VALIDATION_READONLY_UI_END
@@ -17836,17 +18209,23 @@ def _voila_v0877_count_decisions(items):
 
 
 async def _voila_v0877_parse_save_form(request):
-    from urllib.parse import parse_qs as _voila_v0877_parse_qs
+    from urllib.parse import (
+        parse_qs as _voila_v0877_parse_qs,
+    )
 
     body = await request.body()
+
     if len(body) > 65536:
         return None, "Formularul este prea mare."
 
     try:
         parsed = _voila_v0877_parse_qs(
-            body.decode("utf-8", errors="replace"),
+            body.decode(
+                "utf-8",
+                errors="replace",
+            ),
             keep_blank_values=True,
-            max_num_fields=12,
+            max_num_fields=40,
         )
     except Exception:
         return None, "Formularul nu poate fi citit."
@@ -17855,25 +18234,98 @@ async def _voila_v0877_parse_save_form(request):
         values = parsed.get(name, [""])
         value = values[0] if values else ""
         value = str(value or "").strip()
+
         if len(value) > max_len:
             return None
+
         return value
 
-    course_id = _voila_v0877_safe_identifier(one("course_id", 160))
-    item_id = _voila_v0877_safe_identifier(one("item_id", 160))
-    decision = one("decision", 20)
-    corrected = _voila_v0877_trimmed_text(one("user_corrected_text", 4000), 4000)
-    explanation = _voila_v0877_trimmed_text(one("user_explanation", 4000), 4000)
+    course_id = _voila_v0877_safe_identifier(
+        one("course_id", 160)
+    )
 
-    if corrected is None or explanation is None:
+    item_id = _voila_v0877_safe_identifier(
+        one("item_id", 160)
+    )
+
+    decision = one("decision", 20)
+
+    corrected = _voila_v0877_trimmed_text(
+        one("user_corrected_text", 4000),
+        4000,
+    )
+
+    short_title = _voila_v0877_trimmed_text(
+        one("short_title", 160),
+        160,
+    )
+
+    represents = _voila_v0877_trimmed_text(
+        one("what_it_represents", 1200),
+        1200,
+    )
+
+    linked_concepts_text = (
+        _voila_v0877_trimmed_text(
+            one("linked_concepts", 1200),
+            1200,
+        )
+    )
+
+    if (
+        corrected is None
+        or short_title is None
+        or represents is None
+        or linked_concepts_text is None
+    ):
         return None, "Textul introdus este prea lung."
+
+    study_uses = (
+        _voila_v091_study_use_values(
+            parsed.get(
+                "study_uses",
+                [],
+            )
+        )
+    )
 
     form = {
         "course_id": course_id,
         "item_id": item_id,
-        "decision": str(decision or "").strip(),
-        "user_corrected_text": corrected or "",
-        "user_explanation": explanation or "",
+        "decision": str(
+            decision or ""
+        ).strip(),
+        "ui_lang": (
+            "en"
+            if str(
+                one("ui_lang", 8)
+                or ""
+            ).strip().lower()
+            == "en"
+            else "ro"
+        ),
+        "visual_type":
+            _voila_v091_visual_type_value(
+                one("visual_type", 80)
+            ),
+        "short_title":
+            short_title or "",
+        "what_it_represents":
+            represents or "",
+        "user_explanation":
+            represents or "",
+        "importance":
+            _voila_v091_importance_value(
+                one("importance", 80)
+            ),
+        "study_uses":
+            study_uses,
+        "linked_concepts":
+            _voila_v091_linked_concept_values(
+                linked_concepts_text or ""
+            ),
+        "user_corrected_text":
+            corrected or "",
     }
 
     return form, ""
@@ -17909,91 +18361,425 @@ from starlette.requests import Request as _VoilaV0877Request
 
 
 @app.post("/review-document/visual-validation/save")
-async def _voila_v0877_review_document_visual_validation_save_action(request: _VoilaV0877Request):
-    form, form_error = await _voila_v0877_parse_save_form(request)
+async def _voila_v0877_review_document_visual_validation_save_action(
+    request: _VoilaV0877Request,
+):
+    form, form_error = (
+        await _voila_v0877_parse_save_form(
+            request
+        )
+    )
+
+    ui_lang = (
+        form.get("ui_lang", "ro")
+        if isinstance(form, dict)
+        else "ro"
+    )
+
     if form is None:
-        return _voila_v0877_html_result(form_error or "Formular invalid.", status_code=400)
+        return _voila_v0877_html_result(
+            form_error
+            or _voila_v091_visual_message(
+                ui_lang,
+                "invalid_form",
+            ),
+            status_code=400,
+        )
 
     course_id = form["course_id"]
     item_id = form["item_id"]
     decision = form["decision"]
 
     if not course_id or not item_id:
-        return _voila_v0877_html_result("Course ID sau item ID invalid.", status_code=400)
+        return _voila_v0877_html_result(
+            _voila_v091_visual_message(
+                ui_lang,
+                "invalid_ids",
+            ),
+            status_code=400,
+        )
 
-    if decision not in {"accept", "edit", "ignore"}:
-        return _voila_v0877_html_result("Decizie invalidă.", status_code=400, course_id=course_id)
+    if decision not in {
+        "accept",
+        "edit",
+        "ignore",
+    }:
+        return _voila_v0877_html_result(
+            _voila_v091_visual_message(
+                ui_lang,
+                "invalid_decision",
+            ),
+            status_code=400,
+            course_id=course_id,
+        )
 
-    output_dir = _voila_v0877_safe_output_dir(course_id)
+    output_dir = _voila_v0877_safe_output_dir(
+        course_id
+    )
+
     if output_dir is None:
-        return _voila_v0877_html_result("Nu găsesc cursul local pentru validare.", status_code=404, course_id=course_id)
+        return _voila_v0877_html_result(
+            _voila_v091_visual_message(
+                ui_lang,
+                "course_missing",
+            ),
+            status_code=404,
+            course_id=course_id,
+        )
 
-    payload, source_path = _voila_v0877_load_visual_payload(output_dir)
+    payload, source_path = (
+        _voila_v0877_load_visual_payload(
+            output_dir
+        )
+    )
+
     if payload is None or source_path is None:
-        return _voila_v0877_html_result("Nu există elemente vizuale pregătite pentru validare.", status_code=404, course_id=course_id)
+        return _voila_v0877_html_result(
+            _voila_v091_visual_message(
+                ui_lang,
+                "items_missing",
+            ),
+            status_code=404,
+            course_id=course_id,
+        )
 
     items = payload.get("items")
     target_item = None
+
     for item in items:
-        if isinstance(item, dict) and str(item.get("item_id") or "").strip() == item_id:
+        if (
+            isinstance(item, dict)
+            and str(
+                item.get("item_id")
+                or ""
+            ).strip()
+            == item_id
+        ):
             target_item = item
             break
 
     if target_item is None:
-        return _voila_v0877_html_result("Elementul vizual nu a fost găsit.", status_code=404, course_id=course_id)
+        return _voila_v0877_html_result(
+            _voila_v091_visual_message(
+                ui_lang,
+                "item_missing",
+            ),
+            status_code=404,
+            course_id=course_id,
+        )
 
-    crop_exists = target_item.get("crop_exists") is True
-    crop_path = str(target_item.get("crop_path") or "").strip()
-    candidate_text = str(target_item.get("ocr_math_candidate_text") or "").strip()
-    corrected_text = form["user_corrected_text"]
-    explanation_text = form["user_explanation"]
+    crop_exists = (
+        target_item.get("crop_exists")
+        is True
+    )
+
+    crop_path = str(
+        target_item.get("crop_path")
+        or ""
+    ).strip()
+
+    candidate_text = str(
+        target_item.get(
+            "ocr_math_candidate_text"
+        )
+        or ""
+    ).strip()
+
+    corrected_text = form[
+        "user_corrected_text"
+    ]
+
+    visual_type = (
+        form["visual_type"]
+        or _voila_v091_visual_type_value(
+            target_item.get("visual_type")
+            or target_item.get("kind")
+        )
+    )
+
+    short_title = (
+        form["short_title"]
+        or str(
+            target_item.get("short_title")
+            or target_item.get("title")
+            or ""
+        ).strip()[:160]
+    )
+
+    what_it_represents = (
+        form["what_it_represents"]
+        or str(
+            target_item.get(
+                "what_it_represents"
+            )
+            or target_item.get(
+                "user_explanation"
+            )
+            or ""
+        ).strip()[:1200]
+    )
+
+    importance = (
+        form["importance"]
+        or _voila_v091_importance_value(
+            target_item.get("importance")
+        )
+    )
+
+    study_uses = (
+        form["study_uses"]
+        or _voila_v091_study_use_values(
+            target_item.get("study_uses")
+        )
+    )
+
+    linked_concepts = (
+        form["linked_concepts"]
+        or _voila_v091_linked_concept_values(
+            target_item.get(
+                "linked_concepts"
+            )
+        )
+    )
+
+    semantic_candidate = {
+        "visual_type": visual_type,
+        "short_title": short_title,
+        "what_it_represents":
+            what_it_represents,
+        "importance": importance,
+        "study_uses": study_uses,
+    }
+
+    semantic_complete = (
+        _voila_v091_visual_semantic_complete(
+            semantic_candidate
+        )
+    )
 
     if decision == "accept":
-        if not crop_exists or not crop_path or not candidate_text:
-            return _voila_v0877_html_result("Acceptarea necesită crop și text detectat.", status_code=400, course_id=course_id)
+        if (
+            not crop_exists
+            or not crop_path
+            or not candidate_text
+        ):
+            return _voila_v0877_html_result(
+                _voila_v091_visual_message(
+                    ui_lang,
+                    "accept_needs_crop",
+                ),
+                status_code=400,
+                course_id=course_id,
+            )
+
+        if not semantic_complete:
+            return _voila_v0877_html_result(
+                _voila_v091_visual_message(
+                    ui_lang,
+                    "semantic_incomplete",
+                ),
+                status_code=400,
+                course_id=course_id,
+            )
+
         target_item["user_decision"] = "accept"
-        target_item["ocr_math_status"] = "validated_by_user"
-        target_item["ready_for_study"] = True
+        target_item["ocr_math_status"] = (
+            "validated_by_user"
+        )
         target_item["user_corrected_text"] = ""
-        target_item["user_explanation"] = explanation_text
 
     elif decision == "edit":
-        if not crop_exists or not crop_path or not corrected_text:
-            return _voila_v0877_html_result("Corectarea necesită crop și text corectat.", status_code=400, course_id=course_id)
+        if (
+            not crop_exists
+            or not crop_path
+            or not corrected_text
+        ):
+            return _voila_v0877_html_result(
+                _voila_v091_visual_message(
+                    ui_lang,
+                    "edit_needs_crop",
+                ),
+                status_code=400,
+                course_id=course_id,
+            )
+
+        if not semantic_complete:
+            return _voila_v0877_html_result(
+                _voila_v091_visual_message(
+                    ui_lang,
+                    "semantic_incomplete",
+                ),
+                status_code=400,
+                course_id=course_id,
+            )
+
         target_item["user_decision"] = "edit"
-        target_item["ocr_math_status"] = "validated_by_user"
-        target_item["ready_for_study"] = True
-        target_item["user_corrected_text"] = corrected_text
-        target_item["user_explanation"] = explanation_text
+        target_item["ocr_math_status"] = (
+            "validated_by_user"
+        )
+        target_item[
+            "user_corrected_text"
+        ] = corrected_text
 
     else:
         target_item["user_decision"] = "ignore"
-        target_item["ocr_math_status"] = "not_applicable"
-        target_item["ready_for_study"] = False
-        target_item["user_corrected_text"] = ""
-        target_item["user_explanation"] = explanation_text
+        target_item["ocr_math_status"] = (
+            "not_applicable"
+        )
+        target_item[
+            "user_corrected_text"
+        ] = ""
 
-    visual_dir = output_dir / "formula_visual_evidence"
-    validated_path = visual_dir / "visual_items.bbox.validated.json"
-    summary_path = visual_dir / "visual_items.bbox.validation-summary.json"
+    target_item["visual_type"] = visual_type
+    target_item["kind"] = (
+        visual_type
+        or str(
+            target_item.get("kind")
+            or "other_visual"
+        ).strip()
+    )
+    target_item["short_title"] = short_title
+    target_item["title"] = short_title
+    target_item[
+        "what_it_represents"
+    ] = what_it_represents
+    target_item[
+        "user_explanation"
+    ] = what_it_represents
+    target_item["importance"] = importance
+    target_item["study_uses"] = study_uses
+    target_item[
+        "linked_concepts"
+    ] = linked_concepts
+    target_item[
+        "semantic_contract_version"
+    ] = "v0.8.91"
+    target_item[
+        "semantic_complete"
+    ] = bool(
+        semantic_complete
+        and decision in {"accept", "edit"}
+    )
+
+    if (
+        decision in {"accept", "edit"}
+        and semantic_complete
+    ):
+        target_item[
+            "integration_status"
+        ] = "eligible"
+        target_item[
+            "ready_for_study"
+        ] = True
+    else:
+        target_item[
+            "integration_status"
+        ] = "excluded"
+        target_item[
+            "ready_for_study"
+        ] = False
+
+    visual_dir = (
+        output_dir
+        / "formula_visual_evidence"
+    )
+
+    validated_path = (
+        visual_dir
+        / "visual_items.bbox.validated.json"
+    )
+
+    summary_path = (
+        visual_dir
+        / "visual_items.bbox.validation-summary.json"
+    )
 
     payload["items"] = items
-    _voila_v0877_write_json_replace(validated_path, payload)
 
-    counts = _voila_v0877_count_decisions(items)
+    _voila_v0877_write_json_replace(
+        validated_path,
+        payload,
+    )
+
+    counts = _voila_v0877_count_decisions(
+        items
+    )
+
+    semantic_eligible_count = sum(
+        1
+        for item in items
+        if isinstance(item, dict)
+        and item.get(
+            "integration_status"
+        )
+        == "eligible"
+        and item.get(
+            "ready_for_study"
+        )
+        is True
+    )
+
+    semantic_incomplete_count = sum(
+        1
+        for item in items
+        if isinstance(item, dict)
+        and str(
+            item.get("user_decision")
+            or "pending"
+        )
+        in {"accept", "edit"}
+        and not _voila_v091_visual_semantic_complete(
+            item
+        )
+    )
+
     summary = {
-        "schema_version": "v0.8.77",
+        "schema_version": "v0.8.91",
+        "semantic_contract_version":
+            "v0.8.91",
         "course_id": course_id,
         "updated_item_id": item_id,
         "decision": decision,
-        "source_visual_items_path": source_path.name,
-        "validated_visual_items_path": validated_path.name,
-        "clean_study_write_performed": False,
+        "integration_status":
+            target_item[
+                "integration_status"
+            ],
+        "semantic_complete":
+            target_item[
+                "semantic_complete"
+            ],
+        "semantic_eligible_count":
+            semantic_eligible_count,
+        "semantic_incomplete_count":
+            semantic_incomplete_count,
+        "source_visual_items_path":
+            source_path.name,
+        "validated_visual_items_path":
+            validated_path.name,
+        "clean_study_write_performed":
+            False,
         **counts,
     }
-    _voila_v0877_write_json_replace(summary_path, summary)
 
-    return _voila_v0877_html_result("DECIZIE_SALVATA=PASS", status_code=200, course_id=course_id)
+    _voila_v0877_write_json_replace(
+        summary_path,
+        summary,
+    )
+
+    message_key = (
+        "ignored"
+        if decision == "ignore"
+        else "saved"
+    )
+
+    return _voila_v0877_html_result(
+        _voila_v091_visual_message(
+            ui_lang,
+            message_key,
+        ),
+        status_code=200,
+        course_id=course_id,
+    )
 # VOILA_V0_8_77_REVIEW_DOCUMENT_VISUAL_VALIDATION_SAVE_ACTION_END
 
 # VOILA_V0_8_81_REVIEW_DOCUMENT_CLEAN_STUDY_REFRESH_ACTION_START
@@ -18029,107 +18815,313 @@ def _voila_v0881_prompt_for_visual_kind(kind, page):
     return f"{base} Sursa: pagina {page}."
 
 
-def _voila_v0881_build_clean_study_payload(course_id, source_pdf, validated_path, items):
+def _voila_v0881_build_clean_study_payload(
+    course_id,
+    source_pdf,
+    validated_path,
+    items,
+):
     clean_items = []
     excluded_items = []
 
     for item in items:
         if not isinstance(item, dict):
-            excluded_items.append({"reason": "malformed_item"})
+            excluded_items.append(
+                {
+                    "reason":
+                        "malformed_item",
+                }
+            )
             continue
 
-        item_id = str(item.get("item_id") or "").strip()
-        decision = str(item.get("user_decision") or "pending").strip()
-        ready = item.get("ready_for_study") is True
-        crop_exists = item.get("crop_exists") is True
-        crop_path = str(item.get("crop_path") or "").strip()
+        item_id = str(
+            item.get("item_id")
+            or ""
+        ).strip()
+
+        decision = str(
+            item.get("user_decision")
+            or "pending"
+        ).strip()
+
+        ready = (
+            item.get("ready_for_study")
+            is True
+        )
+
+        integration_status = str(
+            item.get("integration_status")
+            or ""
+        ).strip()
+
+        crop_exists = (
+            item.get("crop_exists")
+            is True
+        )
+
+        crop_path = str(
+            item.get("crop_path")
+            or ""
+        ).strip()
+
         page = item.get("page")
-        kind = str(item.get("kind") or "unknown").strip() or "unknown"
+
+        visual_type = (
+            _voila_v091_visual_type_value(
+                item.get("visual_type")
+                or item.get("kind")
+            )
+        )
+
+        short_title = str(
+            item.get("short_title")
+            or item.get("title")
+            or ""
+        ).strip()
+
+        what_it_represents = str(
+            item.get("what_it_represents")
+            or item.get("user_explanation")
+            or ""
+        ).strip()
+
+        importance = (
+            _voila_v091_importance_value(
+                item.get("importance")
+            )
+        )
+
+        study_uses = (
+            _voila_v091_study_use_values(
+                item.get("study_uses")
+            )
+        )
+
+        linked_concepts = (
+            _voila_v091_linked_concept_values(
+                item.get("linked_concepts")
+            )
+        )
 
         if not isinstance(page, int) or page < 1:
-            excluded_items.append({
-                "source_visual_item_id": item_id,
-                "user_decision": decision or "pending",
-                "ready_for_study": bool(ready),
-                "reason": "invalid_page",
-            })
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision or "pending",
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "invalid_page",
+                }
+            )
             continue
 
-        if not ready or decision not in {"accept", "edit"}:
-            excluded_items.append({
-                "source_visual_item_id": item_id,
-                "user_decision": decision or "pending",
-                "ready_for_study": bool(ready),
-                "reason": "not_ready_or_not_accept_edit",
-            })
+        if (
+            not ready
+            or decision
+            not in {"accept", "edit"}
+        ):
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision or "pending",
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "not_ready_or_not_accept_edit",
+                }
+            )
+            continue
+
+        if integration_status != "eligible":
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision,
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "integration_not_eligible",
+                }
+            )
+            continue
+
+        if not _voila_v091_visual_semantic_complete(
+            item
+        ):
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision,
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "semantic_metadata_incomplete",
+                }
+            )
             continue
 
         if not crop_exists or not crop_path:
-            excluded_items.append({
-                "source_visual_item_id": item_id,
-                "user_decision": decision,
-                "ready_for_study": bool(ready),
-                "reason": "missing_crop",
-            })
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision,
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "missing_crop",
+                }
+            )
             continue
 
-        answer = _voila_v0881_study_answer_for_visual_item(item)
+        answer = (
+            _voila_v0881_study_answer_for_visual_item(
+                item
+            )
+        )
+
         if not answer:
-            excluded_items.append({
-                "source_visual_item_id": item_id,
-                "user_decision": decision,
-                "ready_for_study": bool(ready),
-                "reason": "missing_answer_text",
-            })
+            excluded_items.append(
+                {
+                    "source_visual_item_id":
+                        item_id,
+                    "user_decision":
+                        decision,
+                    "ready_for_study":
+                        bool(ready),
+                    "reason":
+                        "missing_answer_text",
+                }
+            )
             continue
 
-        explanation = str(item.get("user_explanation") or "").strip()
-
-        clean_items.append({
-            "schema_version": "v0.8.81",
-            "study_item_id": "visual-study-" + item_id,
-            "source_visual_item_id": item_id,
-            "source_pdf": source_pdf,
-            "page": page,
-            "kind": kind,
-            "title": f"Element vizual validat — pagina {page}",
-            "prompt": _voila_v0881_prompt_for_visual_kind(kind, page),
-            "answer": answer,
-            "explanation": explanation,
-            "image": {
-                "crop_path": crop_path,
-                "alt": f"Element vizual validat din pagina {page}",
-            },
-            "learning_source": "validated_bbox_visual_item",
-            "user_decision": decision,
-            "ready_for_clean_study": True,
-        })
+        clean_items.append(
+            {
+                "schema_version": "v0.8.91",
+                "semantic_contract_version":
+                    "v0.8.91",
+                "study_item_id":
+                    "visual-study-" + item_id,
+                "source_visual_item_id":
+                    item_id,
+                "source_pdf":
+                    source_pdf,
+                "page":
+                    page,
+                "kind":
+                    visual_type,
+                "visual_type":
+                    visual_type,
+                "title":
+                    short_title,
+                "what_it_represents":
+                    what_it_represents,
+                "prompt":
+                    _voila_v0881_prompt_for_visual_kind(
+                        visual_type,
+                        page,
+                    ),
+                "answer":
+                    answer,
+                "explanation":
+                    what_it_represents,
+                "importance":
+                    importance,
+                "study_uses":
+                    study_uses,
+                "linked_concepts":
+                    linked_concepts,
+                "image": {
+                    "crop_path":
+                        crop_path,
+                    "alt":
+                        short_title,
+                },
+                "learning_source":
+                    "validated_bbox_visual_item",
+                "user_decision":
+                    decision,
+                "integration_status":
+                    "eligible",
+                "ready_for_clean_study":
+                    True,
+            }
+        )
 
     payload = {
-        "schema_version": "v0.8.81",
-        "course_id": course_id,
-        "source_pdf": source_pdf,
-        "source_visual_items_path": validated_path.name,
-        "item_count": len(clean_items),
-        "items": clean_items,
-        "excluded_count": len(excluded_items),
-        "excluded_items": excluded_items,
+        "schema_version": "v0.8.91",
+        "semantic_contract_version":
+            "v0.8.91",
+        "course_id":
+            course_id,
+        "source_pdf":
+            source_pdf,
+        "source_visual_items_path":
+            validated_path.name,
+        "item_count":
+            len(clean_items),
+        "items":
+            clean_items,
+        "excluded_count":
+            len(excluded_items),
+        "excluded_items":
+            excluded_items,
     }
 
     summary = {
-        "schema_version": "v0.8.81",
-        "course_id": course_id,
-        "source_visual_items_path": validated_path.name,
-        "clean_study_visual_items_path": "visual_items.clean-study.preview.json",
-        "source_item_count": len(items),
-        "clean_study_item_count": len(clean_items),
-        "excluded_item_count": len(excluded_items),
-        "accepted_count": sum(1 for item in clean_items if item.get("user_decision") == "accept"),
-        "edited_count": sum(1 for item in clean_items if item.get("user_decision") == "edit"),
-        "ignored_or_pending_excluded": len(excluded_items),
-        "validated_visual_decisions_preserved": True,
-        "study_route_changed": False,
-        "progress_write_performed": False,
+        "schema_version": "v0.8.91",
+        "semantic_contract_version":
+            "v0.8.91",
+        "course_id":
+            course_id,
+        "source_visual_items_path":
+            validated_path.name,
+        "clean_study_visual_items_path":
+            "visual_items.clean-study.preview.json",
+        "source_item_count":
+            len(items),
+        "clean_study_item_count":
+            len(clean_items),
+        "excluded_item_count":
+            len(excluded_items),
+        "accepted_count":
+            sum(
+                1
+                for item in clean_items
+                if item.get(
+                    "user_decision"
+                )
+                == "accept"
+            ),
+        "edited_count":
+            sum(
+                1
+                for item in clean_items
+                if item.get(
+                    "user_decision"
+                )
+                == "edit"
+            ),
+        "semantic_eligible_count":
+            len(clean_items),
+        "ignored_or_pending_excluded":
+            len(excluded_items),
+        "validated_visual_decisions_preserved":
+            True,
+        "study_route_changed":
+            False,
+        "progress_write_performed":
+            False,
     }
 
     return payload, summary
@@ -18202,32 +19194,60 @@ async def _voila_v0881_review_document_clean_study_refresh_action(request: _Voil
 # VOILA_V0_8_81_REVIEW_DOCUMENT_CLEAN_STUDY_REFRESH_ACTION_END
 
 # VOILA_V0_8_82_REVIEW_DOCUMENT_CLEAN_STUDY_REFRESH_UI_CONTROL_START
-def _voila_v0882_clean_study_refresh_control_html(course_id):
-    from html import escape as _voila_v0882_escape
+def _voila_v0882_clean_study_refresh_control_html(
+    course_id,
+):
+    from html import (
+        escape as _voila_v0882_escape,
+    )
 
-    safe_course_id = _voila_v0877_safe_identifier(course_id)
+    safe_course_id = (
+        _voila_v0877_safe_identifier(
+            course_id
+        )
+    )
+
     if not safe_course_id:
         return ""
 
-    escaped_course_id = _voila_v0882_escape(safe_course_id, quote=True)
-    clean_study_href = "/study-clean-preview/" + escaped_course_id
+    escaped_course_id = (
+        _voila_v0882_escape(
+            safe_course_id,
+            quote=True,
+        )
+    )
+
+    prepared_lesson_href = (
+        "/study-clean-preview/"
+        + escaped_course_id
+    )
 
     return (
         '<section id="review-document-clean-study-refresh-control" '
         'data-voila-clean-study-refresh-control="1" '
-        'style="margin-top: 1rem; padding: 1rem; border: 1px solid rgba(148,163,184,.35); border-radius: 14px;">'
-        '<h2>Actualizează lecția curată</h2>'
-        '<p>Elementele acceptate și corectate pot intra în lecție. '
-        'Elementele ignorate sau încă nevalidate rămân în afara lecției.</p>'
-        '<p>Actualizarea este locală. Nu modifică documentul original, nu scrie Progress, '
-        'nu publică și nu partajează nimic.</p>'
-        '<form method="post" action="/review-document/visual-validation/refresh-clean-study-preview" '
+        'style="margin-top:1rem;padding:1rem;'
+        'border:1px solid rgba(148,163,184,.35);'
+        'border-radius:14px;">'
+        "<h2>Actualizează Lecția pregătită</h2>"
+        "<p>Numai elementele acceptate sau corectate, "
+        "cu descriere pedagogică completă, pot intra în lecție.</p>"
+        "<p>Elementele ignorate, incomplete sau încă nevalidate "
+        "rămân în afara lecției.</p>"
+        "<p>Actualizarea este locală. Nu modifică documentul original, "
+        "nu modifică progresul, nu publică și nu partajează nimic.</p>"
+        '<form method="post" '
+        'action="/review-document/visual-validation/'
+        'refresh-clean-study-preview" '
         'data-voila-clean-study-refresh-form="1">'
-        '<input type="hidden" name="course_id" value="' + escaped_course_id + '">'
-        '<button type="submit">Actualizează lecția curată</button>'
-        '</form>'
-        '<p><a href="' + clean_study_href + '">Deschide lecția curată</a></p>'
-        '</section>'
+        '<input type="hidden" name="course_id" value="'
+        + escaped_course_id
+        + '">'
+        "<button type=\"submit\">Actualizează Lecția pregătită</button>"
+        "</form>"
+        '<p><a href="'
+        + prepared_lesson_href
+        + '">Deschide Lecția pregătită</a></p>'
+        "</section>"
     )
 
 
@@ -18364,75 +19384,216 @@ def _voila_v0885_load_clean_study_visual_items(course_id):
     return output_dir, items, ""
 
 
-def _voila_v0885_visual_items_section_html(course_id):
-    from html import escape as _voila_v0885_escape
+def _voila_v0885_visual_items_section_html(
+    course_id,
+):
+    from html import (
+        escape as _voila_v0885_escape,
+    )
 
-    output_dir, items, status = _voila_v0885_load_clean_study_visual_items(course_id)
-    safe_course_id = _voila_v0877_safe_identifier(course_id)
+    output_dir, items, status = (
+        _voila_v0885_load_clean_study_visual_items(
+            course_id
+        )
+    )
+
+    safe_course_id = (
+        _voila_v0877_safe_identifier(
+            course_id
+        )
+    )
 
     if status == "not_refreshed":
         return (
-            '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
-            '<h2>Elemente vizuale validate</h2>'
-            '<p>Lecția curată nu a fost actualizată încă.</p>'
-            '<p><a href="/review-document/' + _voila_v0885_escape(str(safe_course_id), quote=True) + '">Înapoi la Revizuire document</a></p>'
-            '</section>'
+            '<section id="clean-study-visual-items-readonly-ui" '
+            'data-voila-clean-study-visual-items="1">'
+            "<h2>Elemente vizuale validate</h2>"
+            "<p>Lecția pregătită nu a fost actualizată încă.</p>"
+            '<p><a href="/review-document/'
+            + _voila_v0885_escape(
+                str(safe_course_id),
+                quote=True,
+            )
+            + '#review-document-visual-validation-readonly-ui">'
+            "Înapoi la Revizuire document</a></p>"
+            "</section>"
         )
 
     if status:
         return ""
 
-    safe_items = [item for item in items if isinstance(item, dict)]
+    safe_items = [
+        item
+        for item in items
+        if isinstance(item, dict)
+    ]
+
     if not safe_items:
         return (
-            '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
-            '<h2>Elemente vizuale validate</h2>'
-            '<p>Nu există încă elemente vizuale validate pentru lecție.</p>'
-            '</section>'
+            '<section id="clean-study-visual-items-readonly-ui" '
+            'data-voila-clean-study-visual-items="1">'
+            "<h2>Elemente vizuale validate</h2>"
+            "<p>Nu există încă elemente vizuale eligibile pentru lecție.</p>"
+            "</section>"
         )
 
     cards = []
+
     for item in safe_items:
         page = item.get("page")
+
         if not isinstance(page, int) or page < 1:
             page = "?"
 
-        title = str(item.get("title") or "Element vizual validat").strip()
-        prompt = str(item.get("prompt") or "").strip()
-        answer = str(item.get("answer") or "").strip()
-        explanation = str(item.get("explanation") or "").strip()
+        title = str(
+            item.get("title")
+            or "Element vizual validat"
+        ).strip()
 
-        image_payload = item.get("image") if isinstance(item.get("image"), dict) else {}
-        crop_path = str(image_payload.get("crop_path") or "").strip()
-        alt = str(image_payload.get("alt") or "Element vizual validat").strip()
+        visual_type = str(
+            item.get("visual_type")
+            or item.get("kind")
+            or ""
+        ).strip()
+
+        represents = str(
+            item.get("what_it_represents")
+            or item.get("explanation")
+            or ""
+        ).strip()
+
+        prompt = str(
+            item.get("prompt")
+            or ""
+        ).strip()
+
+        answer = str(
+            item.get("answer")
+            or ""
+        ).strip()
+
+        importance = str(
+            item.get("importance")
+            or ""
+        ).strip()
+
+        study_uses = (
+            _voila_v091_study_use_values(
+                item.get("study_uses")
+            )
+        )
+
+        linked_concepts = (
+            _voila_v091_linked_concept_values(
+                item.get("linked_concepts")
+            )
+        )
+
+        image_payload = (
+            item.get("image")
+            if isinstance(
+                item.get("image"),
+                dict,
+            )
+            else {}
+        )
+
+        crop_path = str(
+            image_payload.get("crop_path")
+            or ""
+        ).strip()
+
+        alt = str(
+            image_payload.get("alt")
+            or title
+        ).strip()
 
         image_html = ""
+
         if output_dir is not None and crop_path:
-            data_uri = _voila_v0885_safe_crop_data_uri(output_dir, crop_path)
+            data_uri = (
+                _voila_v0885_safe_crop_data_uri(
+                    output_dir,
+                    crop_path,
+                )
+            )
+
             if data_uri:
                 image_html = (
-                    '<figure><img src="' + data_uri + '" alt="' + _voila_v0885_escape(alt, quote=True) + '"></figure>'
+                    '<figure><img src="'
+                    + data_uri
+                    + '" alt="'
+                    + _voila_v0885_escape(
+                        alt,
+                        quote=True,
+                    )
+                    + '"></figure>'
                 )
             else:
-                image_html = '<p>Imaginea validată nu este disponibilă momentan.</p>'
+                image_html = (
+                    "<p>Imaginea validată nu este disponibilă momentan.</p>"
+                )
+
+        use_label = ", ".join(
+            study_uses
+        ) or "—"
+
+        concepts_label = ", ".join(
+            linked_concepts
+        ) or "—"
 
         cards.append(
             '<article class="clean-study-visual-item-card">'
-            '<h3>' + _voila_v0885_escape(title) + '</h3>'
-            '<p><strong>Sursa: pagina</strong> ' + _voila_v0885_escape(str(page)) + '</p>'
-            + image_html +
-            ('<p><strong>Întrebare</strong><br>' + _voila_v0885_escape(prompt) + '</p>' if prompt else '') +
-            ('<p><strong>Răspuns validat</strong><br>' + _voila_v0885_escape(answer) + '</p>' if answer else '') +
-            ('<p><strong>Explicație</strong><br>' + _voila_v0885_escape(explanation) + '</p>' if explanation else '') +
-            '<p><em>Verificat în Revizuire document.</em></p>'
-            '</article>'
+            "<h3>"
+            + _voila_v0885_escape(title)
+            + "</h3>"
+            "<p><strong>Tip:</strong> "
+            + _voila_v0885_escape(visual_type)
+            + "</p>"
+            "<p><strong>Sursa: pagina</strong> "
+            + _voila_v0885_escape(str(page))
+            + "</p>"
+            + image_html
+            + (
+                "<p><strong>Ce reprezintă</strong><br>"
+                + _voila_v0885_escape(represents)
+                + "</p>"
+                if represents
+                else ""
+            )
+            + (
+                "<p><strong>Întrebare</strong><br>"
+                + _voila_v0885_escape(prompt)
+                + "</p>"
+                if prompt
+                else ""
+            )
+            + (
+                "<p><strong>Răspuns validat</strong><br>"
+                + _voila_v0885_escape(answer)
+                + "</p>"
+                if answer
+                else ""
+            )
+            + "<p><strong>Importanță:</strong> "
+            + _voila_v0885_escape(importance or "—")
+            + "</p>"
+            + "<p><strong>Utilizare în Studiu:</strong> "
+            + _voila_v0885_escape(use_label)
+            + "</p>"
+            + "<p><strong>Noțiuni asociate:</strong> "
+            + _voila_v0885_escape(concepts_label)
+            + "</p>"
+            + "<p><em>Verificat în Revizuire document.</em></p>"
+            "</article>"
         )
 
     return (
-        '<section id="clean-study-visual-items-readonly-ui" data-voila-clean-study-visual-items="1">'
-        '<h2>Elemente vizuale validate</h2>'
-        + ''.join(cards) +
-        '</section>'
+        '<section id="clean-study-visual-items-readonly-ui" '
+        'data-voila-clean-study-visual-items="1">'
+        "<h2>Elemente vizuale validate</h2>"
+        + "".join(cards)
+        + "</section>"
     )
 
 
@@ -18494,3 +19655,2241 @@ _VOILA_V0_8_85_CLEAN_STUDY_PREVIEW_VISUAL_ITEMS_ROUTE_WRAPPED = (
     _voila_v0885_install_clean_study_preview_visual_items_route_wrapper()
 )
 # VOILA_V0_8_85_CLEAN_STUDY_PREVIEW_VISUAL_ITEMS_READONLY_UI_END
+
+# VOILA_V0_8_91_SECONDARY_UI_LANGUAGE_BRIDGE_START
+def _voila_v091_secondary_ui_bridge(
+    html_text: str,
+    ui_lang: str,
+) -> str:
+    import re as _voila_v091_secondary_re
+
+    if not isinstance(html_text, str):
+        return html_text
+
+    language = (
+        "en"
+        if str(ui_lang or "").strip().lower() == "en"
+        else "ro"
+    )
+
+    updated = html_text
+
+    html_lang_pattern = (
+        r'<html(?:\s+lang="[^"]*")?>'
+    )
+
+    if _voila_v091_secondary_re.search(
+        html_lang_pattern,
+        updated,
+        flags=_voila_v091_secondary_re.IGNORECASE,
+    ):
+        updated = _voila_v091_secondary_re.sub(
+            html_lang_pattern,
+            f'<html lang="{language}">',
+            updated,
+            count=1,
+            flags=_voila_v091_secondary_re.IGNORECASE,
+        )
+
+    def _add_language_to_href(match):
+        href = match.group(1)
+
+        if "lang=" in href:
+            return f'href="{href}"'
+
+        separator = "&" if "?" in href else "?"
+
+        return (
+            f'href="{href}{separator}lang={language}"'
+        )
+
+    updated = _voila_v091_secondary_re.sub(
+        r'href="([^"]*(?:review-document|study-clean-preview)[^"]*)"',
+        _add_language_to_href,
+        updated,
+    )
+
+    updated = updated.replace(
+        'action="/review-drafts/save-explanation-draft"',
+        (
+            'action="/review-drafts/'
+            'save-explanation-draft?lang='
+            + language
+            + '"'
+        ),
+    )
+
+    if language != "en":
+        return updated
+
+    replacements = (
+        (
+            "Voila! — Documentele tale, lecții clare",
+            "Voila! — Your documents, clear lessons",
+        ),
+        (
+            "Salvare locală controlată",
+            "Controlled local save",
+        ),
+        (
+            "Draft explicație",
+            "Explanation draft",
+        ),
+        (
+            "Poți crea un draft local pentru explicația prietenoasă. Draftul nu intră încă în lecția de studiu și nu modifică progresul.",
+            "You can create a local draft for the clear explanation. The draft does not enter the study lesson yet and does not change progress.",
+        ),
+        (
+            "Creează draft local",
+            "Create local draft",
+        ),
+        (
+            "Acest formular salvează doar un draft local. Nu creează carduri de studiu, nu modifică progresul și nu distribuie date.",
+            "This form saves only a local draft. It does not create study cards, change progress, or distribute data.",
+        ),
+        (
+            "Titlu scurt",
+            "Short title",
+        ),
+        (
+            "Vectori — explicație verificată",
+            "Vectors — verified explanation",
+        ),
+        (
+            "Ce este asta?",
+            "What is this?",
+        ),
+        (
+            ">Definiție<",
+            ">Definition<",
+        ),
+        (
+            ">Formulă<",
+            ">Formula<",
+        ),
+        (
+            ">Exemplu<",
+            ">Example<",
+        ),
+        (
+            ">Diagramă<",
+            ">Diagram<",
+        ),
+        (
+            ">Tabel<",
+            ">Table<",
+        ),
+        (
+            ">Grafic<",
+            ">Chart<",
+        ),
+        (
+            ">Observație importantă<",
+            ">Important observation<",
+        ),
+        (
+            "Text / zonă verificată",
+            "Verified text / area",
+        ),
+        (
+            "Text verificat din document.",
+            "Verified text from the document.",
+        ),
+        (
+            "Explicație pe înțeles",
+            "Clear explanation",
+        ),
+        (
+            "Explicația pe înțeles va fi scrisă aici.",
+            "The clear explanation will be written here.",
+        ),
+        (
+            "De ce este important?",
+            "Why is it important?",
+        ),
+        (
+            "Această noțiune este importantă pentru lecție și exerciții.",
+            "This concept is important for the lesson and exercises.",
+        ),
+        (
+            "Sursa: pagina X",
+            "Source: page X",
+        ),
+        (
+            'value="pagina 1"',
+            'value="page 1"',
+        ),
+        (
+            "Limba lecției",
+            "Lesson language",
+        ),
+        (
+            '<option value="Română">Română</option><option value="English">Engleză</option>',
+            '<option value="Română">Romanian</option><option value="English">English</option>',
+        ),
+        (
+            "Gata pentru studiu",
+            "Ready for study",
+        ),
+        (
+            "Salvează draft local",
+            "Save local draft",
+        ),
+        (
+            "Diagnostic tehnic pentru salvare draft",
+            "Technical draft-save diagnostics",
+        ),
+        (
+            "Nu creează carduri de studiu. Nu modifică progresul. Nu distribuie date.",
+            "It does not create study cards, change progress, or distribute data.",
+        ),
+        (
+            "Salvat local",
+            "Saved locally",
+        ),
+        (
+            "Nu s-a salvat",
+            "Not saved",
+        ),
+        (
+            "Draftul local a fost salvat.",
+            "The local draft was saved.",
+        ),
+        (
+            "Doar local · nu s-a creat niciun card de studiu · progresul nu a fost modificat · nu s-au distribuit date.",
+            "Local only · no study card was created · progress was not changed · no data was distributed.",
+        ),
+        (
+            "Înapoi la Revizuire document",
+            "Back to Review Document",
+        ),
+        (
+            "Lecție pregătită - previzualizare",
+            "Prepared Lesson — Preview",
+        ),
+        (
+            "Nu ai încă noțiuni gata pentru Lecție pregătită.",
+            "You do not have any concepts ready for the Prepared Lesson yet.",
+        ),
+        (
+            "Salvează mai întâi un draft local în Revizuire document și marchează-l ca „Gata pentru studiu\".",
+            'First save a local draft in Review Document and mark it as "Ready for study".',
+        ),
+        (
+            "Nu există încă drafturi gata pentru studiu.",
+            "No drafts are ready for study yet.",
+        ),
+        (
+            "Doar vizualizare · nu creează carduri reale · nu modifică progresul",
+            "Read-only · does not create real cards · does not change progress",
+        ),
+        (
+            "Diagnostic tehnic",
+            "Technical diagnostics",
+        ),
+        (
+            "Artefact citit:",
+            "Artifact read:",
+        ),
+        (
+            "Nu s-a creat niciun card de studiu real. Progresul nu a fost modificat. Nu s-au distribuit date.",
+            "No real study card was created. Progress was not changed. No data was distributed.",
+        ),
+        (
+            "Pasul următor",
+            "Next step",
+        ),
+        (
+            "Vezi cum ar arăta noțiunile salvate ca drafturi într-un mod de învățare curat. Această previzualizare este doar pentru vizualizare.",
+            "See how concepts saved as drafts would appear in a clean learning mode. This preview is read-only.",
+        ),
+        (
+            "Deschide previzualizarea Lecție pregătită",
+            "Open Prepared Lesson Preview",
+        ),
+        (
+            ">Tip:<",
+            ">Type:<",
+        ),
+        (
+            ">Noțiune<",
+            ">Concept<",
+        ),
+        (
+            "Noțiune verificată",
+            "Verified concept",
+        ),
+        (
+            ">Întrebare<",
+            ">Question<",
+        ),
+        (
+            "Ce trebuie să înțeleg despre:",
+            "What should I understand about:",
+        ),
+        (
+            ">Răspuns<",
+            ">Answer<",
+        ),
+        (
+            "Răspunsul va fi completat din conținutul verificat.",
+            "The answer will be completed from the verified content.",
+        ),
+        (
+            "De ce este important",
+            "Why it is important",
+        ),
+        (
+            ">Sursa<",
+            ">Source<",
+        ),
+        (
+            "Păstrăm aceeași limbă în întregul flux de învățare.",
+            "We keep the same language throughout the learning flow.",
+        ),
+        (
+            "Revizuire document",
+            "Review Document",
+        ),
+    )
+
+    for old, new in replacements:
+        updated = updated.replace(old, new)
+
+    updated = _voila_v091_secondary_re.sub(
+        r"\bCard (\d+) din (\d+)\b",
+        r"Card \1 of \2",
+        updated,
+    )
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_secondary_ui_language_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    path = str(request.url.path or "")
+
+    target_path = (
+        path == "/review-document"
+        or path.startswith("/review-document/")
+        or path == "/study-clean-preview"
+        or path.startswith("/study-clean-preview/")
+        or path == "/review-drafts/save-explanation-draft"
+    )
+
+    if not target_path:
+        return response
+
+    content_type = str(
+        response.headers.get("content-type", "")
+    ).lower()
+
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    pdf_name = str(
+        request.query_params.get("pdf", "")
+        or ""
+    )
+
+    course_id = str(
+        request.query_params.get("course_id", "")
+        or ""
+    )
+
+    requested = str(
+        request.query_params.get("lang", "")
+        or ""
+    )
+
+    if path.startswith("/study-clean-preview/"):
+        course_id = path.rsplit("/", 1)[-1]
+
+    if not pdf_name and course_id:
+        pdf_name = course_id + ".pdf"
+
+    try:
+        if (
+            path == "/review-document"
+            or path.startswith("/review-document/")
+        ):
+            review_pdf, review_course = (
+                _voila_v0852_extract_review_target(
+                    request
+                )
+            )
+
+            pdf_name = review_pdf or pdf_name
+            course_id = review_course or course_id
+
+            if not pdf_name and course_id:
+                pdf_name = course_id + ".pdf"
+    except Exception:
+        pass
+
+    ui_lang = _voila_v091_resolve_ui_language(
+        pdf_name,
+        requested,
+    )
+
+    html_text = body.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    updated = _voila_v091_secondary_ui_bridge(
+        html_text,
+        ui_lang,
+    )
+
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+
+    return HTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_91_SECONDARY_UI_LANGUAGE_BRIDGE_END
+
+# VOILA_V0_8_91_FINAL_VISIBLE_RO_EN_COPY_CLEANUP_START
+import re as _voila_v091_final_re
+from starlette.responses import (
+    HTMLResponse as _VoilaV091FinalHTMLResponse,
+)
+
+
+def _voila_v091_final_balanced_end(
+    html_text: str,
+    start: int,
+    tag: str,
+) -> int:
+    pattern = _voila_v091_final_re.compile(
+        rf"</?{_voila_v091_final_re.escape(tag)}\b[^>]*>",
+        flags=_voila_v091_final_re.IGNORECASE,
+    )
+
+    depth = 0
+
+    for match in pattern.finditer(
+        html_text,
+        start,
+    ):
+        token = match.group(0)
+
+        if token.startswith("</"):
+            depth -= 1
+
+            if depth == 0:
+                return match.end()
+        elif not token.rstrip().endswith("/>"):
+            depth += 1
+
+    return -1
+
+
+def _voila_v091_final_remove_container(
+    html_text: str,
+    marker: str,
+) -> str:
+    updated = html_text
+
+    while marker in updated:
+        marker_index = updated.find(marker)
+        removed = False
+
+        for tag in (
+            "section",
+            "article",
+            "div",
+        ):
+            opening = updated.rfind(
+                "<" + tag,
+                0,
+                marker_index,
+            )
+
+            if opening < 0:
+                continue
+
+            closing = (
+                _voila_v091_final_balanced_end(
+                    updated,
+                    opening,
+                    tag,
+                )
+            )
+
+            if (
+                closing > marker_index
+                and marker
+                in updated[opening:closing]
+            ):
+                updated = (
+                    updated[:opening]
+                    + updated[closing:]
+                )
+
+                removed = True
+                break
+
+        if not removed:
+            updated = updated.replace(
+                marker,
+                "",
+                1,
+            )
+
+    return updated
+
+
+def _voila_v091_final_visible_copy_cleanup(
+    html_text: str,
+    ui_lang: str,
+    path: str,
+) -> str:
+    if not isinstance(html_text, str):
+        return html_text
+
+    language = (
+        "en"
+        if str(ui_lang or "").strip().lower()
+        == "en"
+        else "ro"
+    )
+
+    updated = html_text
+
+    # Panourile owner/internal nu fac parte din
+    # interfața principală pentru testeri.
+    if path == "/course-tools":
+        for marker in (
+            'data-testid="manual-study-default-preview-link"',
+            'data-testid="manual-study-default-shadow-link"',
+            "Manual Study Integration Dry Run",
+            "Study Manual Shadow",
+            "Manual Study Preview",
+            "manual_study_items.preview.json",
+        ):
+            updated = (
+                _voila_v091_final_remove_container(
+                    updated,
+                    marker,
+                )
+            )
+
+    # Aplică bridge-ul existent și pentru Course Tools.
+    try:
+        updated = (
+            _voila_v091_secondary_ui_bridge(
+                updated,
+                language,
+            )
+        )
+    except Exception:
+        pass
+
+    if language == "ro":
+        replacements = (
+            (
+                "Un titlu simplu, ușor de recunoscut în Study.",
+                "Un titlu simplu, ușor de recunoscut în Studiu.",
+            ),
+            (
+                "Ajută Study și Exam Prep să fie utile, nu doar să copieze text.",
+                "Ajută Studiu și Pregătire examene să fie utile, nu doar să copieze text.",
+            ),
+            (
+                "Momentan blocat — doar previzualizare read-only.",
+                "Momentan blocat — doar pentru vizualizare.",
+            ),
+            (
+                "nu scrie Progress",
+                "nu modifică progresul",
+            ),
+            (
+                "Transformă documentul în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Study.",
+                "Transformă documentul în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Studiu.",
+            ),
+            (
+                "Deschide Study și parcurge cardurile verificate.",
+                "Deschide Studiu și parcurge cardurile verificate.",
+            ),
+            (
+                "Study verificat",
+                "Studiu verificat",
+            ),
+            (
+                "Important pentru Study curat și exerciții.",
+                "Important pentru lecția pregătită și exerciții.",
+            ),
+            (
+                "Study curat",
+                "lecția pregătită",
+            ),
+        )
+    else:
+        replacements = (
+            (
+                "Pasul 4",
+                "Step 4",
+            ),
+            (
+                "Explicație prietenoasă",
+                "Clear explanation",
+            ),
+            (
+                "Aici pregătim forma finală a unei noțiuni înainte să intre în Lecție pregătită. Acum este doar o machetă de previzualizare: nu salvăm, nu trimitem și nu creăm carduri.",
+                "Here we prepare the final form of a concept before it enters the Prepared Lesson. This is currently only a preview: it does not save, send, or create cards.",
+            ),
+            (
+                "Machetă statică · Doar citire · Fără salvare",
+                "Static preview · Read-only · No saving",
+            ),
+            (
+                "Exemplu: Vectori — definiție și reprezentare",
+                "Example: Vectors — definition and representation",
+            ),
+            (
+                "Un titlu simplu, ușor de recunoscut în Studiu.",
+                "A simple title that is easy to recognize in Study.",
+            ),
+            (
+                "Alege tipul: Formulă, Definiție, Exemplu, Diagramă, Tabel, Grafic sau Observație importantă.",
+                "Choose the type: Formula, Definition, Example, Diagram, Table, Chart, or Important observation.",
+            ),
+            (
+                "Tip prietenos, nu metadata tehnică.",
+                "Student-friendly type, not technical metadata.",
+            ),
+            (
+                "Fără jargon inutil.",
+                "No unnecessary jargon.",
+            ),
+            (
+                "O singură limbă pentru lecție.",
+                "One language for the lesson.",
+            ),
+            (
+                "Ajută Studiu și Pregătire examene să fie utile, nu doar să copieze text.",
+                "It helps Study and Exam Prep remain useful instead of merely copying text.",
+            ),
+            (
+                "Exemplu: pagina 3",
+                "Example: page 3",
+            ),
+            (
+                "Fiecare noțiune trebuie să rămână legată de document.",
+                "Each concept must remain linked to the document.",
+            ),
+            (
+                "Momentan blocat — doar pentru vizualizare.",
+                "Currently blocked — preview only.",
+            ),
+            (
+                "Actualizarea este locală. Nu modifică documentul original, nu modifică progresul, nu publică și nu partajează nimic.",
+                "The update is local. It does not change the original document or progress, and it does not publish or share anything.",
+            ),
+            (
+                "Pregătire pentru examen din acest document",
+                "Exam preparation from this document",
+            ),
+            (
+                "Transformă documentul în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Studiu.",
+                "Turn the document into clear learning steps, with verified text, formulas, and concepts before they enter Study.",
+            ),
+            (
+                "Revizuiește documentul",
+                "Review the document",
+            ),
+            (
+                "Corectează textul, formulele și zonele importante din pagină.",
+                "Correct the text, formulas, and important areas on the page.",
+            ),
+            (
+                "Alege noțiuni importante",
+                "Choose important concepts",
+            ),
+            (
+                "Marchează definiții, formule, exemple și teoreme utile.",
+                "Mark useful definitions, formulas, examples, and theorems.",
+            ),
+            (
+                "Creează material de învățare",
+                "Create learning material",
+            ),
+            (
+                "Pregătește cardurile care vor intra în lecția de studiu.",
+                "Prepare the cards that will enter the study lesson.",
+            ),
+            (
+                "Învață acum",
+                "Study now",
+            ),
+            (
+                "Deschide Studiu și parcurge cardurile verificate.",
+                "Open Study and work through the verified cards.",
+            ),
+            (
+                "Exersează pentru examen",
+                "Practice for the exam",
+            ),
+            (
+                "Folosește noțiunile clare ca bază pentru întrebări și recapitulare.",
+                "Use the clear concepts as the basis for questions and review.",
+            ),
+            (
+                "Studiu verificat",
+                "Verified Study",
+            ),
+            (
+                "Diagnostic tehnic",
+                "Technical diagnostics",
+            ),
+            (
+                "Lecție pregătită",
+                "Prepared Lesson",
+            ),
+        )
+
+    for old, new in replacements:
+        updated = updated.replace(
+            old,
+            new,
+        )
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_final_visible_copy_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    path = str(
+        request.url.path or ""
+    )
+
+    target = (
+        path == "/review-document"
+        or path.startswith("/review-document/")
+        or path == "/study-clean-preview"
+        or path.startswith("/study-clean-preview/")
+        or path == "/course-tools"
+    )
+
+    if not target:
+        return response
+
+    content_type = str(
+        response.headers.get(
+            "content-type",
+            "",
+        )
+    ).lower()
+
+    if "text/html" not in content_type:
+        return response
+
+    body = b""
+
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    requested = str(
+        request.query_params.get(
+            "lang",
+            "",
+        )
+        or ""
+    )
+
+    pdf_name = str(
+        request.query_params.get(
+            "pdf",
+            "",
+        )
+        or ""
+    )
+
+    course_id = str(
+        request.query_params.get(
+            "course_id",
+            "",
+        )
+        or ""
+    )
+
+    if path.startswith("/review-document/"):
+        course_id = path.rsplit(
+            "/",
+            1,
+        )[-1]
+
+    if path.startswith("/study-clean-preview/"):
+        course_id = path.rsplit(
+            "/",
+            1,
+        )[-1]
+
+    if not pdf_name and course_id:
+        pdf_name = course_id + ".pdf"
+
+    ui_lang = (
+        _voila_v091_resolve_ui_language(
+            pdf_name,
+            requested,
+        )
+    )
+
+    html_text = body.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    updated = (
+        _voila_v091_final_visible_copy_cleanup(
+            html_text,
+            ui_lang,
+            path,
+        )
+    )
+
+    headers = dict(response.headers)
+    headers.pop(
+        "content-length",
+        None,
+    )
+
+    return _VoilaV091FinalHTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_91_FINAL_VISIBLE_RO_EN_COPY_CLEANUP_END
+
+# VOILA_V0_8_91_EN_LAST_MILE_COPY_FIX_START
+from starlette.responses import (
+    HTMLResponse as _VoilaV091LastMileHTMLResponse,
+)
+
+
+def _voila_v091_en_last_mile_copy(
+    html_text: str,
+) -> str:
+    if not isinstance(html_text, str):
+        return html_text
+
+    updated = html_text
+
+    replacements = (
+        (
+            "Doar citire",
+            "Read-only",
+        ),
+        (
+            "Instrumente curs",
+            "Course Tools",
+        ),
+        (
+            "Progres",
+            "Progress",
+        ),
+        (
+            "Transformă documentul",
+            "Turn the document",
+        ),
+    )
+
+    for old, new in replacements:
+        updated = updated.replace(
+            old,
+            new,
+        )
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_en_last_mile_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    path = str(
+        request.url.path or ""
+    )
+
+    target = (
+        path == "/review-document"
+        or path.startswith("/review-document/")
+        or path == "/study-clean-preview"
+        or path.startswith("/study-clean-preview/")
+        or path == "/course-tools"
+    )
+
+    if not target:
+        return response
+
+    content_type = str(
+        response.headers.get(
+            "content-type",
+            "",
+        )
+    ).lower()
+
+    if "text/html" not in content_type:
+        return response
+
+    requested = str(
+        request.query_params.get(
+            "lang",
+            "",
+        )
+        or ""
+    )
+
+    pdf_name = str(
+        request.query_params.get(
+            "pdf",
+            "",
+        )
+        or ""
+    )
+
+    course_id = str(
+        request.query_params.get(
+            "course_id",
+            "",
+        )
+        or ""
+    )
+
+    if path.startswith("/review-document/"):
+        course_id = path.rsplit(
+            "/",
+            1,
+        )[-1]
+
+    if path.startswith("/study-clean-preview/"):
+        course_id = path.rsplit(
+            "/",
+            1,
+        )[-1]
+
+    if not pdf_name and course_id:
+        pdf_name = course_id + ".pdf"
+
+    ui_lang = (
+        _voila_v091_resolve_ui_language(
+            pdf_name,
+            requested,
+        )
+    )
+
+    if ui_lang != "en":
+        return response
+
+    body = b""
+
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    updated = (
+        _voila_v091_en_last_mile_copy(
+            html_text
+        )
+    )
+
+    headers = dict(response.headers)
+    headers.pop(
+        "content-length",
+        None,
+    )
+
+    return _VoilaV091LastMileHTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_91_EN_LAST_MILE_COPY_FIX_END
+
+# VOILA_V0_8_91_COURSE_TOOLS_EN_FINAL_BRIDGE_START
+import re as _voila_v091_course_en_re
+from starlette.responses import (
+    HTMLResponse as _VoilaV091CourseEnHTMLResponse,
+)
+
+
+def _voila_v091_course_tools_en_final_html(
+    html_text: str,
+) -> str:
+    if not isinstance(html_text, str):
+        return html_text
+
+    updated = html_text
+
+    # Rutele owner/internal sunt păstrate în aplicație,
+    # dar nu sunt expuse în fluxul principal al testerului.
+    updated = _voila_v091_course_en_re.sub(
+        (
+            r'href="/owner/manual-learning-evidence/'
+            r'([^"?/]+)\?page=1"'
+        ),
+        lambda match: (
+            'href="/review-document?pdf='
+            + match.group(1)
+            + '.pdf&amp;lang=en"'
+        ),
+        updated,
+        flags=_voila_v091_course_en_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_en_re.sub(
+        (
+            r'href="/owner/manual-study-preview/'
+            r'([^"?/]+)"'
+        ),
+        lambda match: (
+            'href="/review-document?pdf='
+            + match.group(1)
+            + '.pdf&amp;lang=en"'
+        ),
+        updated,
+        flags=_voila_v091_course_en_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_en_re.sub(
+        (
+            r'href="/study\?manual_study_shadow=1'
+            r'(?:&amp;|&)course_id=([^"&]+)"'
+        ),
+        lambda match: (
+            'href="/study?pdf='
+            + match.group(1)
+            + '.pdf"'
+        ),
+        updated,
+        flags=_voila_v091_course_en_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_en_re.sub(
+        (
+            r'<a\b[^>]*'
+            r'href="/owner/manual-study-integration-dry-run/'
+            r'[^"]*"[^>]*>.*?</a>'
+        ),
+        "",
+        updated,
+        flags=(
+            _voila_v091_course_en_re.IGNORECASE
+            | _voila_v091_course_en_re.DOTALL
+        ),
+    )
+
+    # Limba tuturor linkurilor Review Document.
+    updated = updated.replace(
+        "&amp;lang=ro",
+        "&amp;lang=en",
+    )
+
+    updated = updated.replace(
+        "&lang=ro",
+        "&lang=en",
+    )
+
+    updated = updated.replace(
+        "?lang=ro",
+        "?lang=en",
+    )
+
+    # Înlocuirile lungi trebuie aplicate înaintea
+    # etichetelor scurte.
+    replacements = (
+        (
+            "Învață pentru examen din acest document",
+            "Exam preparation from this document",
+        ),
+        (
+            "Turn the document în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Study.",
+            "Turn the document into clear learning steps, with verified text, formulas, and concepts before they enter Study.",
+        ),
+        (
+            "Transformă documentul în pași clari de învățare, cu text, formule și noțiuni verificate înainte să ajungă în Study.",
+            "Turn the document into clear learning steps, with verified text, formulas, and concepts before they enter Study.",
+        ),
+        (
+            "Înainte de lecția de studiu, verifică textul, corecturile, formulele și imaginile într-un flux ghidat.",
+            "Before studying, review the text, corrections, formulas, and images in a guided flow.",
+        ),
+        (
+            "Corectează textul, formulele și zonele importante din pagină.",
+            "Correct the text, formulas, and important areas on the page.",
+        ),
+        (
+            "Marchează definiții, formule, exemple și teoreme utile.",
+            "Mark useful definitions, formulas, examples, and theorems.",
+        ),
+        (
+            "Pregătește cardurile care vor intra în lecția de studiu.",
+            "Prepare the cards that will enter the study lesson.",
+        ),
+        (
+            "Folosește noțiunile clare ca bază pentru întrebări și recapitulare.",
+            "Use the clear concepts as the basis for questions and review.",
+        ),
+        (
+            "Înapoi la biblioteca principală.",
+            "Return to the main library.",
+        ),
+        (
+            "Citește cursul generat cu navigare.",
+            "Read the generated course with navigation.",
+        ),
+        (
+            "Vezi progresul de studiu.",
+            "View study progress.",
+        ),
+        (
+            "Status curs: HTML și Markdown",
+            "Course status: HTML and Markdown",
+        ),
+        (
+            "Deschide Review Document",
+            "Open Review Document",
+        ),
+        (
+            "Deschide Bibliotecă",
+            "Open Library",
+        ),
+        (
+            "Deschide cursul",
+            "Open course",
+        ),
+        (
+            "Study verificat",
+            "Verified Study",
+        ),
+        (
+            "Studiu verificat",
+            "Verified Study",
+        ),
+        (
+            "Revizuiește documentul",
+            "Review the document",
+        ),
+        (
+            "Alege noțiuni importante",
+            "Choose important concepts",
+        ),
+        (
+            "Creează material de învățare",
+            "Create learning material",
+        ),
+        (
+            "Învață acum",
+            "Study now",
+        ),
+        (
+            "Exersează pentru examen",
+            "Practice for the exam",
+        ),
+        (
+            "Status curs",
+            "Course status",
+        ),
+        (
+            "HTML și Markdown",
+            "HTML and Markdown",
+        ),
+        (
+            "Pregătire examene",
+            "Exam Prep",
+        ),
+        (
+            "Bibliotecă",
+            "Library",
+        ),
+        (
+            "Indisponibil",
+            "Unavailable",
+        ),
+        (
+            "Disponibil",
+            "Available",
+        ),
+        (
+            "Instrumente curs",
+            "Course Tools",
+        ),
+        (
+            "Revizuire document",
+            "Review Document",
+        ),
+        (
+            "Deschide",
+            "Open",
+        ),
+        (
+            "Studiu",
+            "Study",
+        ),
+    )
+
+    for old, new in replacements:
+        updated = updated.replace(
+            old,
+            new,
+        )
+
+    # Înlocuire exactă, nu subșir în „Progress”.
+    updated = _voila_v091_course_en_re.sub(
+        r"(?<![A-Za-z])Progres(?![A-Za-z])",
+        "Progress",
+        updated,
+    )
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_course_tools_en_final_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    if str(request.url.path or "") != "/course-tools":
+        return response
+
+    content_type = str(
+        response.headers.get(
+            "content-type",
+            "",
+        )
+    ).lower()
+
+    if "text/html" not in content_type:
+        return response
+
+    requested = str(
+        request.query_params.get(
+            "lang",
+            "",
+        )
+        or ""
+    )
+
+    pdf_name = str(
+        request.query_params.get(
+            "pdf",
+            "",
+        )
+        or ""
+    )
+
+    ui_lang = (
+        _voila_v091_resolve_ui_language(
+            pdf_name,
+            requested,
+        )
+    )
+
+    if ui_lang != "en":
+        return response
+
+    body = b""
+
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    updated = (
+        _voila_v091_course_tools_en_final_html(
+            html_text
+        )
+    )
+
+    headers = dict(response.headers)
+    headers.pop(
+        "content-length",
+        None,
+    )
+
+    return _VoilaV091CourseEnHTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_91_COURSE_TOOLS_EN_FINAL_BRIDGE_END
+# VOILA_V0_8_91_EXACT_WINDOWS_PROCESS_CALLS_PATCH
+
+# VOILA_V0_8_91_COURSE_TOOLS_RO_FINAL_BRIDGE_START
+import re as _voila_v091_course_ro_re
+from starlette.responses import (
+    HTMLResponse as _VoilaV091CourseRoHTMLResponse,
+)
+
+
+def _voila_v091_course_tools_ro_final_html(
+    html_text: str,
+) -> str:
+    if not isinstance(html_text, str):
+        return html_text
+
+    updated = html_text
+
+    # Fluxul principal RO folosește exclusiv rutele
+    # canonice pentru testeri. Rutele owner/internal
+    # rămân implementate, dar nu sunt expuse aici.
+    updated = _voila_v091_course_ro_re.sub(
+        (
+            r'href="/owner/manual-learning-evidence/'
+            r'([^"?/]+)\?page=1"'
+        ),
+        lambda match: (
+            'href="/review-document?pdf='
+            + match.group(1)
+            + '.pdf&amp;lang=ro"'
+        ),
+        updated,
+        flags=_voila_v091_course_ro_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_ro_re.sub(
+        (
+            r'href="/owner/manual-study-preview/'
+            r'([^"?/]+)"'
+        ),
+        lambda match: (
+            'href="/review-document?pdf='
+            + match.group(1)
+            + '.pdf&amp;lang=ro"'
+        ),
+        updated,
+        flags=_voila_v091_course_ro_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_ro_re.sub(
+        (
+            r'href="/study\?manual_study_shadow=1'
+            r'(?:&amp;|&)course_id=([^"&]+)"'
+        ),
+        lambda match: (
+            'href="/study?pdf='
+            + match.group(1)
+            + '.pdf"'
+        ),
+        updated,
+        flags=_voila_v091_course_ro_re.IGNORECASE,
+    )
+
+    updated = _voila_v091_course_ro_re.sub(
+        (
+            r'<a\b[^>]*'
+            r'href="/owner/manual-study-integration-dry-run/'
+            r'[^"]*"[^>]*>.*?</a>'
+        ),
+        "",
+        updated,
+        flags=(
+            _voila_v091_course_ro_re.IGNORECASE
+            | _voila_v091_course_ro_re.DOTALL
+        ),
+    )
+
+    # Orice link Review Document rămas pe pagina RO
+    # trebuie să păstreze explicit limba română.
+    updated = updated.replace(
+        "&amp;lang=en",
+        "&amp;lang=ro",
+    )
+
+    updated = updated.replace(
+        "&lang=en",
+        "&lang=ro",
+    )
+
+    updated = updated.replace(
+        "?lang=en",
+        "?lang=ro",
+    )
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_course_tools_ro_final_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    if str(request.url.path or "") != "/course-tools":
+        return response
+
+    content_type = str(
+        response.headers.get(
+            "content-type",
+            "",
+        )
+    ).lower()
+
+    if "text/html" not in content_type:
+        return response
+
+    requested = str(
+        request.query_params.get(
+            "lang",
+            "",
+        )
+        or ""
+    )
+
+    pdf_name = str(
+        request.query_params.get(
+            "pdf",
+            "",
+        )
+        or ""
+    )
+
+    ui_lang = (
+        _voila_v091_resolve_ui_language(
+            pdf_name,
+            requested,
+        )
+    )
+
+    if ui_lang != "ro":
+        return response
+
+    body = b""
+
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    html_text = body.decode(
+        "utf-8",
+        errors="replace",
+    )
+
+    updated = (
+        _voila_v091_course_tools_ro_final_html(
+            html_text
+        )
+    )
+
+    headers = dict(response.headers)
+    headers.pop(
+        "content-length",
+        None,
+    )
+
+    return _VoilaV091CourseRoHTMLResponse(
+        content=updated,
+        status_code=response.status_code,
+        headers=headers,
+    )
+# VOILA_V0_8_91_COURSE_TOOLS_RO_FINAL_BRIDGE_END
+
+# VOILA_V0_8_91_CANONICAL_VISUAL_LEARNING_CONTRACT_START
+
+VOILA_V0_8_91_LEGACY_CROP_EDITOR_DISABLED = True
+
+_VOILA_V091_VISUAL_TYPES = {
+    "formula",
+    "table",
+    "diagram",
+    "graph",
+    "image",
+    "worked_example",
+    "other_visual",
+}
+
+_VOILA_V091_IMPORTANCE_LEVELS = {
+    "essential",
+    "useful",
+    "contextual",
+}
+
+_VOILA_V091_STUDY_USES = {
+    "explain",
+    "illustration",
+    "recap",
+    "question",
+    "exercise",
+    "formula_sheet",
+    "memorization",
+}
+
+
+def _voila_v091_visual_type_value(value):
+    raw = str(value or "").strip().lower()
+
+    aliases = {
+        "formulă": "formula",
+        "formula": "formula",
+        "table": "table",
+        "tabel": "table",
+        "diagram": "diagram",
+        "diagramă": "diagram",
+        "schema": "diagram",
+        "schemă": "diagram",
+        "graph": "graph",
+        "chart": "graph",
+        "grafic": "graph",
+        "image": "image",
+        "imagine": "image",
+        "worked_example": "worked_example",
+        "worked example": "worked_example",
+        "exemplu": "worked_example",
+        "exemplu rezolvat": "worked_example",
+        "other": "other_visual",
+        "unknown": "other_visual",
+        "other_visual": "other_visual",
+    }
+
+    normalized = aliases.get(raw, raw)
+
+    if normalized in _VOILA_V091_VISUAL_TYPES:
+        return normalized
+
+    return ""
+
+
+def _voila_v091_importance_value(value):
+    raw = str(value or "").strip().lower()
+
+    aliases = {
+        "esențială": "essential",
+        "esentiala": "essential",
+        "essential": "essential",
+        "utilă": "useful",
+        "utila": "useful",
+        "useful": "useful",
+        "contextuală": "contextual",
+        "contextuala": "contextual",
+        "contextual": "contextual",
+    }
+
+    normalized = aliases.get(raw, raw)
+
+    if normalized in _VOILA_V091_IMPORTANCE_LEVELS:
+        return normalized
+
+    return ""
+
+
+def _voila_v091_study_use_values(values):
+    if isinstance(values, str):
+        values = re.split(
+            r"[,;\n]+",
+            values,
+        )
+
+    if not isinstance(values, (list, tuple)):
+        return []
+
+    result = []
+
+    for value in values:
+        normalized = str(value or "").strip().lower()
+
+        if (
+            normalized in _VOILA_V091_STUDY_USES
+            and normalized not in result
+        ):
+            result.append(normalized)
+
+    return result[:7]
+
+
+def _voila_v091_linked_concept_values(value):
+    if isinstance(value, list):
+        raw_values = value
+    else:
+        raw_values = re.split(
+            r"[,;\n]+",
+            str(value or ""),
+        )
+
+    result = []
+
+    for raw in raw_values:
+        cleaned = re.sub(
+            r"\s+",
+            " ",
+            str(raw or ""),
+        ).strip()[:120]
+
+        if cleaned and cleaned not in result:
+            result.append(cleaned)
+
+    return result[:12]
+
+
+def _voila_v091_visual_semantic_complete(item):
+    if not isinstance(item, dict):
+        return False
+
+    visual_type = _voila_v091_visual_type_value(
+        item.get("visual_type")
+        or item.get("kind")
+    )
+
+    short_title = str(
+        item.get("short_title")
+        or item.get("title")
+        or ""
+    ).strip()
+
+    represents = str(
+        item.get("what_it_represents")
+        or item.get("user_explanation")
+        or ""
+    ).strip()
+
+    importance = _voila_v091_importance_value(
+        item.get("importance")
+    )
+
+    study_uses = _voila_v091_study_use_values(
+        item.get("study_uses")
+    )
+
+    return bool(
+        visual_type
+        and short_title
+        and represents
+        and importance
+        and study_uses
+    )
+
+
+def _voila_v091_visual_type_labels(ui_lang):
+    if str(ui_lang or "").strip().lower() == "en":
+        return (
+            ("formula", "Formula"),
+            ("table", "Table"),
+            ("diagram", "Diagram or schematic"),
+            ("graph", "Graph"),
+            ("image", "Explanatory image"),
+            ("worked_example", "Worked example"),
+            ("other_visual", "Other visual element"),
+        )
+
+    return (
+        ("formula", "Formulă"),
+        ("table", "Tabel"),
+        ("diagram", "Diagramă sau schemă"),
+        ("graph", "Grafic"),
+        ("image", "Imagine explicativă"),
+        ("worked_example", "Exemplu rezolvat"),
+        ("other_visual", "Alt element vizual"),
+    )
+
+
+def _voila_v091_importance_labels(ui_lang):
+    if str(ui_lang or "").strip().lower() == "en":
+        return (
+            ("essential", "Essential"),
+            ("useful", "Useful"),
+            ("contextual", "Contextual"),
+        )
+
+    return (
+        ("essential", "Esențială"),
+        ("useful", "Utilă"),
+        ("contextual", "Contextuală"),
+    )
+
+
+def _voila_v091_study_use_labels(ui_lang):
+    if str(ui_lang or "").strip().lower() == "en":
+        return (
+            ("explain", "Explain in the lesson"),
+            ("illustration", "Show as an illustration"),
+            ("recap", "Include in review"),
+            ("question", "Create a review question"),
+            ("exercise", "Create an exercise"),
+            ("formula_sheet", "Include in the formula sheet"),
+            ("memorization", "Include in material to memorize"),
+        )
+
+    return (
+        ("explain", "Explică în lecție"),
+        ("illustration", "Afișează ca ilustrație"),
+        ("recap", "Include în recapitulare"),
+        ("question", "Creează întrebare de verificare"),
+        ("exercise", "Creează exercițiu"),
+        ("formula_sheet", "Include în fișa de formule"),
+        ("memorization", "Include în materialul de memorat"),
+    )
+
+
+def _voila_v091_visual_message(ui_lang, key):
+    language = (
+        "en"
+        if str(ui_lang or "").strip().lower() == "en"
+        else "ro"
+    )
+
+    messages = {
+        "ro": {
+            "invalid_form": "Formular invalid.",
+            "invalid_ids": "Identificatorul cursului sau al elementului este invalid.",
+            "invalid_decision": "Decizie invalidă.",
+            "course_missing": "Nu găsesc cursul local pentru validare.",
+            "items_missing": "Nu există elemente vizuale pregătite pentru validare.",
+            "item_missing": "Elementul vizual nu a fost găsit.",
+            "accept_needs_crop": "Acceptarea necesită imaginea zonei și text detectat.",
+            "edit_needs_crop": "Corectarea necesită imaginea zonei și text corectat.",
+            "semantic_incomplete": (
+                "Completează tipul, titlul, ce reprezintă, importanța "
+                "și cel puțin o utilizare în Studiu."
+            ),
+            "saved": "Elementul vizual a fost salvat.",
+            "ignored": "Elementul vizual a fost exclus din Lecția pregătită.",
+        },
+        "en": {
+            "invalid_form": "Invalid form.",
+            "invalid_ids": "The course or item identifier is invalid.",
+            "invalid_decision": "Invalid decision.",
+            "course_missing": "The local course could not be found.",
+            "items_missing": "No visual elements are ready for validation.",
+            "item_missing": "The visual element could not be found.",
+            "accept_needs_crop": "Accepting requires the region image and detected text.",
+            "edit_needs_crop": "Editing requires the region image and corrected text.",
+            "semantic_incomplete": (
+                "Complete the type, title, meaning, importance, "
+                "and at least one Study use."
+            ),
+            "saved": "The visual element was saved.",
+            "ignored": "The visual element was excluded from the Prepared Lesson.",
+        },
+    }
+
+    return messages[language].get(
+        key,
+        messages[language]["invalid_form"],
+    )
+
+
+# VOILA_V0_8_91_CANONICAL_VISUAL_LEARNING_CONTRACT_END
+
+# VOILA_V0_8_91_REVIEW_DOCUMENT_CANONICAL_STAGE_STRUCTURE_START
+
+import html as _voila_v091_stage_html
+import re as _voila_v091_stage_re
+
+
+def _voila_v091_stage_extract_section(
+    html_text,
+    marker,
+):
+    if (
+        not isinstance(html_text, str)
+        or not marker
+    ):
+        return html_text, ""
+
+    marker_index = html_text.find(marker)
+
+    if marker_index < 0:
+        return html_text, ""
+
+    section_start = html_text.rfind(
+        "<section",
+        0,
+        marker_index,
+    )
+
+    if section_start < 0:
+        return html_text, ""
+
+    tag_pattern = _voila_v091_stage_re.compile(
+        r"<section\b|</section\s*>",
+        flags=_voila_v091_stage_re.IGNORECASE,
+    )
+
+    depth = 0
+
+    for match in tag_pattern.finditer(
+        html_text,
+        section_start,
+    ):
+        token = match.group(0).lower()
+
+        if token.startswith("<section"):
+            depth += 1
+        else:
+            depth -= 1
+
+            if depth == 0:
+                section_end = match.end()
+
+                block = html_text[
+                    section_start:section_end
+                ]
+
+                updated = (
+                    html_text[:section_start]
+                    + html_text[section_end:]
+                )
+
+                return updated, block
+
+    return html_text, ""
+
+
+def _voila_v091_stage_find_section_end(
+    html_text,
+    marker,
+):
+    marker_index = html_text.find(marker)
+
+    if marker_index < 0:
+        return -1
+
+    section_start = html_text.rfind(
+        "<section",
+        0,
+        marker_index,
+    )
+
+    if section_start < 0:
+        return -1
+
+    tag_pattern = _voila_v091_stage_re.compile(
+        r"<section\b|</section\s*>",
+        flags=_voila_v091_stage_re.IGNORECASE,
+    )
+
+    depth = 0
+
+    for match in tag_pattern.finditer(
+        html_text,
+        section_start,
+    ):
+        token = match.group(0).lower()
+
+        if token.startswith("<section"):
+            depth += 1
+        else:
+            depth -= 1
+
+            if depth == 0:
+                return match.end()
+
+    return -1
+
+
+def _voila_v091_review_stage_copy(
+    ui_lang,
+):
+    language = (
+        "en"
+        if str(ui_lang or "").strip().lower()
+        == "en"
+        else "ro"
+    )
+
+    if language == "en":
+        return {
+            "navigation":
+                "Review Document workflow",
+            "text":
+                "Text & OCR",
+            "text_description":
+                "Review the extracted text and OCR corrections.",
+            "visual":
+                "Formulas and page regions",
+            "visual_description":
+                "Classify visual elements and define how they support learning.",
+            "concepts":
+                "Concepts to learn",
+            "concepts_description":
+                "Choose the verified concepts that may enter the Prepared Lesson.",
+        }
+
+    return {
+        "navigation":
+            "Fluxul Revizuire document",
+        "text":
+            "Text și OCR",
+        "text_description":
+            "Verifică textul extras și corecturile OCR.",
+        "visual":
+            "Formule și zone din pagină",
+        "visual_description":
+            "Clasifică elementele vizuale și stabilește cum susțin învățarea.",
+        "concepts":
+            "Noțiuni de învățat",
+        "concepts_description":
+            "Alege noțiunile verificate care pot intra în Lecția pregătită.",
+    }
+
+
+def _voila_v091_review_stage_navigation(
+    ui_lang,
+):
+    copy = _voila_v091_review_stage_copy(
+        ui_lang
+    )
+
+    escape = _voila_v091_stage_html.escape
+
+    return (
+        '<nav id="review-document-canonical-stage-navigation" '
+        'data-voila-review-stage-navigation="1" '
+        'aria-label="'
+        + escape(
+            copy["navigation"],
+            quote=True,
+        )
+        + '" '
+        'style="margin:0 0 18px;padding:16px;'
+        'border:1px solid rgba(148,163,184,.32);'
+        'border-radius:18px;background:rgba(15,23,42,.70);">'
+        '<ol style="display:grid;'
+        'grid-template-columns:repeat(auto-fit,minmax(190px,1fr));'
+        'gap:10px;margin:0;padding:0;list-style:none;">'
+
+        '<li><a href="#review-document-text-ocr-stage">'
+        '<strong>1. '
+        + escape(copy["text"])
+        + '</strong><span style="display:block;margin-top:5px;">'
+        + escape(copy["text_description"])
+        + "</span></a></li>"
+
+        '<li><a href="#review-document-visual-validation-readonly-ui">'
+        '<strong>2. '
+        + escape(copy["visual"])
+        + '</strong><span style="display:block;margin-top:5px;">'
+        + escape(copy["visual_description"])
+        + "</span></a></li>"
+
+        '<li><a href="#review-document-concepts-stage">'
+        '<strong>3. '
+        + escape(copy["concepts"])
+        + '</strong><span style="display:block;margin-top:5px;">'
+        + escape(copy["concepts_description"])
+        + "</span></a></li>"
+
+        "</ol>"
+        "</nav>"
+    )
+
+
+def _voila_v091_review_text_stage(
+    ui_lang,
+):
+    copy = _voila_v091_review_stage_copy(
+        ui_lang
+    )
+
+    escape = _voila_v091_stage_html.escape
+
+    return (
+        '<section id="review-document-text-ocr-stage" '
+        'data-voila-review-stage="text-ocr" '
+        'style="margin:0 0 18px;">'
+        "<h2>"
+        + escape(copy["text"])
+        + "</h2>"
+        '<p class="muted">'
+        + escape(copy["text_description"])
+        + "</p>"
+        "</section>"
+    )
+
+
+def _voila_v091_review_concepts_stage(
+    ui_lang,
+    moved_blocks,
+):
+    copy = _voila_v091_review_stage_copy(
+        ui_lang
+    )
+
+    escape = _voila_v091_stage_html.escape
+
+    return (
+        '<section id="review-document-concepts-stage" '
+        'data-voila-review-stage="concepts" '
+        'style="margin-top:18px;">'
+        "<h2>"
+        + escape(copy["concepts"])
+        + "</h2>"
+        '<p class="muted">'
+        + escape(
+            copy["concepts_description"]
+        )
+        + "</p>"
+        + "".join(
+            block
+            for block in moved_blocks
+            if block
+        )
+        + "</section>"
+    )
+
+
+def _voila_v091_apply_review_stage_structure(
+    html_text,
+    ui_lang,
+):
+    if not isinstance(html_text, str):
+        return html_text
+
+    if (
+        'id="review-document-canonical-stage-navigation"'
+        in html_text
+    ):
+        return html_text
+
+    updated = html_text
+    moved_blocks = []
+
+    concept_markers = (
+        'data-testid="review-document-friendly-explanation-shell"',
+        'data-testid="friendly-explanation-save-entry"',
+        'data-testid="friendly-explanation-save-form-shell"',
+        'data-testid="clean-study-preview-entry"',
+    )
+
+    for marker in concept_markers:
+        updated, block = (
+            _voila_v091_stage_extract_section(
+                updated,
+                marker,
+            )
+        )
+
+        if block:
+            moved_blocks.append(block)
+
+    navigation = (
+        _voila_v091_review_stage_navigation(
+            ui_lang
+        )
+    )
+
+    text_stage = (
+        _voila_v091_review_text_stage(
+            ui_lang
+        )
+    )
+
+    main_match = _voila_v091_stage_re.search(
+        r"<main\b[^>]*>",
+        updated,
+        flags=_voila_v091_stage_re.IGNORECASE,
+    )
+
+    if main_match:
+        insertion_point = main_match.end()
+
+        updated = (
+            updated[:insertion_point]
+            + navigation
+            + text_stage
+            + updated[insertion_point:]
+        )
+    else:
+        updated = (
+            navigation
+            + text_stage
+            + updated
+        )
+
+    concepts_stage = (
+        _voila_v091_review_concepts_stage(
+            ui_lang,
+            moved_blocks,
+        )
+    )
+
+    visual_end = (
+        _voila_v091_stage_find_section_end(
+            updated,
+            'id="review-document-visual-validation-readonly-ui"',
+        )
+    )
+
+    if visual_end >= 0:
+        updated = (
+            updated[:visual_end]
+            + concepts_stage
+            + updated[visual_end:]
+        )
+
+    elif "</main>" in updated:
+        updated = updated.replace(
+            "</main>",
+            concepts_stage + "</main>",
+            1,
+        )
+
+    elif "</body>" in updated:
+        updated = updated.replace(
+            "</body>",
+            concepts_stage + "</body>",
+            1,
+        )
+
+    else:
+        updated += concepts_stage
+
+    return updated
+
+
+@app.middleware("http")
+async def _voila_v091_review_document_canonical_stage_structure_middleware(
+    request,
+    call_next,
+):
+    response = await call_next(request)
+
+    try:
+        if request.method.upper() != "GET":
+            return response
+
+        path = str(request.url.path or "")
+
+        if (
+            path != "/review-document"
+            and not path.startswith(
+                "/review-document/"
+            )
+        ):
+            return response
+
+        if getattr(
+            response,
+            "status_code",
+            0,
+        ) != 200:
+            return response
+
+        content_type = str(
+            response.headers.get(
+                "content-type",
+                "",
+            )
+            or ""
+        ).lower()
+
+        if "text/html" not in content_type:
+            return response
+
+        chunks = []
+
+        async for chunk in response.body_iterator:
+            chunks.append(
+                chunk
+                if isinstance(chunk, bytes)
+                else bytes(chunk)
+            )
+
+        html_text = b"".join(
+            chunks
+        ).decode(
+            "utf-8",
+            errors="replace",
+        )
+
+        requested = str(
+            request.query_params.get(
+                "lang",
+                "",
+            )
+            or ""
+        )
+
+        pdf_name = str(
+            request.query_params.get(
+                "pdf",
+                "",
+            )
+            or ""
+        )
+
+        if not pdf_name:
+            course_id = (
+                _voila_v0874_course_id_from_review_request(
+                    request
+                )
+            )
+
+            if course_id:
+                pdf_name = (
+                    str(course_id)
+                    + ".pdf"
+                )
+
+        try:
+            ui_lang = (
+                _voila_v091_resolve_ui_language(
+                    pdf_name,
+                    requested,
+                )
+            )
+        except Exception:
+            ui_lang = (
+                "en"
+                if requested.strip().lower()
+                == "en"
+                else "ro"
+            )
+
+        updated = (
+            _voila_v091_apply_review_stage_structure(
+                html_text,
+                ui_lang,
+            )
+        )
+
+        from starlette.responses import (
+            HTMLResponse as _VoilaV091StageHTMLResponse,
+        )
+
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+        headers.pop("content-encoding", None)
+        headers.pop("content-type", None)
+
+        return _VoilaV091StageHTMLResponse(
+            content=updated,
+            status_code=response.status_code,
+            headers=headers,
+        )
+
+    except Exception:
+        return response
+
+
+# VOILA_V0_8_91_REVIEW_DOCUMENT_CANONICAL_STAGE_STRUCTURE_END
