@@ -333,6 +333,158 @@ Invoke-RobocopyChecked -Source $ProjectRoot -Destination $AppDir -RoboArgs @(
     ".env"
 )
 
+# V0.8.92e: begin fail-closed portable staging prune
+Write-Host "=== Prune forbidden non-runtime content from portable staging ==="
+
+$ForbiddenPortableStageDirectories = @(
+    (Join-Path $AppDir ".github"),
+    (Join-Path $AppDir ".git"),
+    (Join-Path $AppDir ".venv"),
+    (Join-Path $AppDir "docs"),
+    (Join-Path $AppDir "scripts\dev"),
+    (Join-Path $AppDir "scripts\release"),
+    (Join-Path $AppDir "test"),
+    (Join-Path $AppDir "tests"),
+    (Join-Path $AppDir "testdata"),
+    (Join-Path $AppDir "fixture"),
+    (Join-Path $AppDir "fixtures")
+)
+
+foreach ($forbiddenStageDirectory in $ForbiddenPortableStageDirectories) {
+    if (Test-Path -LiteralPath $forbiddenStageDirectory) {
+        Remove-Item `
+            -LiteralPath $forbiddenStageDirectory `
+            -Recurse `
+            -Force
+    }
+}
+
+$ForbiddenPortableStageRootFiles = @(
+    (Join-Path $AppDir ".gitattributes"),
+    (Join-Path $AppDir ".gitignore")
+)
+
+foreach ($forbiddenStageRootFile in $ForbiddenPortableStageRootFiles) {
+    if (Test-Path -LiteralPath $forbiddenStageRootFile -PathType Leaf) {
+        Remove-Item `
+            -LiteralPath $forbiddenStageRootFile `
+            -Force
+    }
+}
+
+$ForbiddenPortableStagePdfFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -Filter "*.pdf" `
+        -ErrorAction SilentlyContinue
+)
+
+foreach ($forbiddenStagePdfFile in $ForbiddenPortableStagePdfFiles) {
+    Remove-Item `
+        -LiteralPath $forbiddenStagePdfFile.FullName `
+        -Force
+}
+
+$ForbiddenPortableStageDraftFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -Filter "package-rebuild-preflight-after-visual-flow-no-share-no-delivery*" `
+        -ErrorAction SilentlyContinue
+)
+
+foreach ($forbiddenStageDraftFile in $ForbiddenPortableStageDraftFiles) {
+    Remove-Item `
+        -LiteralPath $forbiddenStageDraftFile.FullName `
+        -Force
+}
+
+$RemainingForbiddenPortableStageItems =
+    [System.Collections.Generic.List[string]]::new()
+
+foreach ($forbiddenStagePath in @(
+    $ForbiddenPortableStageDirectories
+    $ForbiddenPortableStageRootFiles
+)) {
+    if (Test-Path -LiteralPath $forbiddenStagePath) {
+        $RemainingForbiddenPortableStageItems.Add(
+            $forbiddenStagePath
+        )
+    }
+}
+
+$RemainingForbiddenNestedDirectories = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -Directory `
+        -Recurse `
+        -Force `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -in @(
+                ".git"
+                ".venv"
+            )
+        }
+)
+
+foreach ($remainingDirectory in $RemainingForbiddenNestedDirectories) {
+    $RemainingForbiddenPortableStageItems.Add(
+        $remainingDirectory.FullName
+    )
+}
+
+$RemainingForbiddenPdfFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -Filter "*.pdf" `
+        -ErrorAction SilentlyContinue
+)
+
+foreach ($remainingPdfFile in $RemainingForbiddenPdfFiles) {
+    $RemainingForbiddenPortableStageItems.Add(
+        $remainingPdfFile.FullName
+    )
+}
+
+$RemainingForbiddenDraftFiles = @(
+    Get-ChildItem `
+        -LiteralPath $AppDir `
+        -File `
+        -Recurse `
+        -Force `
+        -Filter "package-rebuild-preflight-after-visual-flow-no-share-no-delivery*" `
+        -ErrorAction SilentlyContinue
+)
+
+foreach ($remainingDraftFile in $RemainingForbiddenDraftFiles) {
+    $RemainingForbiddenPortableStageItems.Add(
+        $remainingDraftFile.FullName
+    )
+}
+
+if ($RemainingForbiddenPortableStageItems.Count -ne 0) {
+    $RemainingForbiddenPortableStageItems |
+        Sort-Object -Unique |
+        ForEach-Object {
+            Write-Host "FORBIDDEN_PORTABLE_STAGE_ITEM=$_"
+        }
+
+    throw "Forbidden non-runtime content remains in portable staging."
+}
+
+Write-Host "Portable staging forbidden-content prune passed."
+# V0.8.92e: end fail-closed portable staging prune
+
+
 Write-Host ""
 Write-Host "=== Curăț foldere locale care nu intră în runtime ==="
 
