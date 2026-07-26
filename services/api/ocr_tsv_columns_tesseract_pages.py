@@ -1,4 +1,6 @@
 from __future__ import annotations
+# VOILA_V0_8_91_WINDOWS_NO_CONSOLE_IMPORT
+import os as _voila_v091_os
 
 import argparse
 import csv
@@ -122,6 +124,7 @@ def run_tesseract_tsv(
             errors="replace",
             capture_output=True,
             env=env,
+            **({"creationflags": subprocess.CREATE_NO_WINDOW} if _voila_v091_os.name == "nt" else {}),
         )
 
         elapsed = time.time() - start
@@ -631,3 +634,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+# VOILA_V0_8_91_EXACT_WINDOWS_PROCESS_CALLS_PATCH
